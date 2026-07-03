@@ -134,13 +134,20 @@ public class ParatextService : DisposableBase, IParatextService
                 HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
             _dblServerUri = "https://pt-resources-adapter.staging.library.bible/";
             _registryServerUri = "https://registry-dev.paratext.org";
-            _registryClient.BaseAddress = new Uri(_registryServerUri);
             _sendReceiveServerUri = InternetAccess.uriDevelopment;
         }
-        else
-        {
-            _registryClient.BaseAddress = new Uri(_registryServerUri);
-        }
+
+        ParatextOptions options = paratextOptions.Value;
+        if (!string.IsNullOrWhiteSpace(options?.DblServerUri))
+            _dblServerUri = options.DblServerUri;
+        if (!string.IsNullOrWhiteSpace(options?.RegistryServerUri))
+            _registryServerUri = options.RegistryServerUri;
+        if (!string.IsNullOrWhiteSpace(options?.SendReceiveServerUri))
+            _sendReceiveServerUri = options.SendReceiveServerUri;
+
+        // The trailing slash is required for relative request paths (e.g. "api8/token") to resolve
+        // correctly when the registry URI includes a path prefix.
+        _registryClient.BaseAddress = new Uri(_registryServerUri.TrimEnd('/') + "/");
         _registryClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         ScrTextCollection = new LazyScrTextCollection();
 

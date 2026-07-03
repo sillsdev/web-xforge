@@ -18,6 +18,15 @@ Instructions for what to look for when performing a code review can be found in 
 
 The software and a backing database can be run using the [dev container](.devcontainer).
 
+## Local mock services
+
+External dependencies (Auth0, Paratext registry, Paratext send/receive archives, DBL resources)
+can be replaced with local mocks: start [src/MockServices](src/MockServices) (`npm start`) and run
+the backend with `SF_MOCK_SERVICES=true`. Log in without credentials by POSTing
+`{"authId":"oauth2|paratext|mock-admin"}` to `http://localhost:5100/_control/next-login` and then
+clicking Log In. Scenarios (projects, Paratext-side edits, failure injection) are scripted via
+the control API — see [src/MockServices/README.md](src/MockServices/README.md).
+
 ## Running commands
 
 - If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `npm run test:headless -- --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`

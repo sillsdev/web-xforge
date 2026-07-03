@@ -12,7 +12,9 @@ public class OpenIdConnectSigningKeyResolver(string authority)
 {
     private readonly OpenIdConnectConfiguration _openIdConfig = new ConfigurationManager<OpenIdConnectConfiguration>(
         $"{authority.TrimEnd('/')}/.well-known/openid-configuration",
-        new OpenIdConnectConfigurationRetriever()
+        new OpenIdConnectConfigurationRetriever(),
+        // Allow http:// authorities (local mock auth server)
+        new HttpDocumentRetriever { RequireHttps = authority.StartsWith("https://") }
     )
         .GetConfigurationAsync()
         .GetAwaiter()

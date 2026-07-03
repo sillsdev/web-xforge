@@ -37,7 +37,7 @@ public class AuthService : DisposableBase, IAuthService
         _authOptions = authOptions;
         _exceptionHandler = exceptionHandler;
         _httpClient = httpClientFactory.CreateClient();
-        _httpClient.BaseAddress = new Uri($"https://{_authOptions.Value.Domain}");
+        _httpClient.BaseAddress = new Uri(_authOptions.Value.Authority);
     }
 
     public async Task<Tokens?> GetParatextTokensAsync(string authId, CancellationToken token)

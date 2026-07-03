@@ -14,7 +14,7 @@ namespace SIL.XForge.Services;
 public class HangfireDashboardAuthorizationFilter(AuthOptions authOptions) : IDashboardAuthorizationFilter
 {
     private readonly OpenIdConnectSigningKeyResolver _keyResolver = new OpenIdConnectSigningKeyResolver(
-        $"https://{authOptions.Domain}/"
+        authOptions.Authority
     );
 
     public bool Authorize(DashboardContext context)
@@ -35,7 +35,7 @@ public class HangfireDashboardAuthorizationFilter(AuthOptions authOptions) : IDa
                 ValidAudience = authOptions.Audience,
                 ValidateIssuer = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = $"https://{authOptions.Domain}/",
+                ValidIssuer = authOptions.Authority,
                 ValidateLifetime = true,
                 IssuerSigningKeyResolver = (_, _, kid, _) => _keyResolver.GetSigningKey(kid),
             };

@@ -1,0 +1,2604 @@
+swagger: '2.0'
+info:
+  title: Paratext Registry
+  version: ''
+  description: API for interacting with the Paratext registry
+host: registry-dev.paratext.org
+schemes:
+  - https
+basePath: /api8
+
+consumes:
+  - application/json
+  - application/x-www-form-urlencoded
+produces:
+  - application/json
+
+# Authentication
+securityDefinitions:
+  basic:
+    type: basic
+    description: |
+      Authenticate for a particular user using Paratext username and
+      registration code.
+  apiKey:
+    type: apiKey
+    in: header
+    name: Authorization
+    description: |
+      Authenticate using a JSON Web Token signed by a trusted issuer.
+  authorization:
+    type: oauth2
+    flow: accessCode
+    authorizationUrl: https://registry-dev.paratext.org/auth
+    tokenUrl: https://registry-dev.paratext.org/api8/token
+    scopes:
+      openid: Acquire OpenID Connect identity tokens through OAuth.
+      orgs: Read, write, and create organisations.
+      orgs:read: List organisations, read organisation profile.
+      orgs:write: Modify organisation information.
+      orgs.roles: Fully manage user roles in an organisation.
+      orgs.roles:read: List users in an organisation with respective roles.
+      orgs.roles:write: Add/remove users, modify user roles in an organisation.
+      users:create: Create new users on the server.
+      users:read: Extract a list of users from the system.
+      users.org:read: Read information about a user's primary organisation.
+      users.roles:read: Read user roles in organisations.
+      projects: Read, write, and create projects.
+      projects:read: Read project metadata.
+      projects:link: Connect project to external system.
+      projects:write: Modify project metadata.
+      projects.progress: Read and write basic progress information.
+      projects.progress:read: Read basic progress information.
+      projects.progress:write: Modify basic progress information.
+      projects.members: Manage users in a project.
+      projects.members:read: Read user roles in projects.
+      projects.members:write: Change users in projects.
+      projects.live: Access Paratext Live sessions.
+      progress: Read detailed progress information.
+  token:
+    type: oauth2
+    flow: password
+    tokenUrl: https://registry-dev.paratext.org/api8/token
+    description: |
+      Used by trusted clients to obtain a bearer access token that permits
+      them to act on a user's behalf for a limited period of time.
+    scopes:
+      oauth:password: Ability to use OAuth 2 to obtain API tokens acting on behalf of a user, given a username and registration code.
+      openid: Acquire OpenID Connect identity tokens through OAuth.
+      orgs: Read, write, and create organisations.
+      orgs:read: List organisations, read organisation profile.
+      orgs:write: Modify organisation information.
+      orgs.roles: Fully manage user roles in an organisation.
+      orgs.roles:read: List users in an organisation with respective roles.
+      orgs.roles:write: Add/remove users, modify user roles in an organisation.
+      users:create: Create new users on the server.
+      users:read: Extract a list of users from the system.
+      users.org:read: Read information about a user's primary organisation.
+      users.roles:read: Read user roles in organisations.
+      projects: Read, write, and create projects.
+      projects:read: Read project metadata.
+      projects:link: Connect project to external system.
+      projects:write: Modify project metadata.
+      projects.progress: Read and write basic progress information.
+      projects.progress:read: Read basic progress information.
+      projects.progress:write: Modify basic progress information.
+      projects.members: Manage users in a project.
+      projects.members:read: Read user roles in projects.
+      projects.members:write: Change users in projects.
+      projects.live: Access Paratext Live sessions.
+      progress: Read detailed progress information.
+
+# Section headers
+tags:
+  - name: Authentication
+    description: |
+      The API is only accessible from HTTPS, under the following URL:
+
+          https://registry.paratext.org/api8/
+
+      There is a separate database for testing purposes, which should be used
+      when experimenting with the API, under the following URL:
+
+          https://registry-dev.paratext.org/api8/
+
+      # Access on behalf of Paratext
+
+      When Paratext accesses the Registry it will always pass the username and
+      registrationCode to the HTTP request.  The Registry will verify the user
+      and registration code in order to authenticate the request.
+
+      The user name and registration code will be included in the HTTP
+      Authorization header, as the base64-encoded string of
+      `username:registrationCode` (separated by colon), for example:
+
+          Authorization: Basic dXNlcjpwYXNzd29yZA==
+
+      This is a very limited scheme and should not be used by thirdparty
+      clients.  Also see "Access on behalf of thirdparty clients", below.
+
+      # Access on behalf of server applications
+      For requests originating from one of a list of trusted application
+      servers, e.g. the Digital Bible Library, the application server first
+      needs to be registered as a service account in the Registry.  This has
+      to be done by a system administrator, who will authorise the account for
+      one of more scopes, which indicate the APIs that are available to the
+      service.
+
+      A service account is usually associated with one or more organisations
+      in the registry, whose administrators authorise the service account to
+      access their organisation and/or project data.  However, access to
+      confidential project data and sensitive user information is restricted
+      for privacy and security reasons.  To access this information, OAuth 2
+      is needed to obtain authorisation, as described in the following
+      sections.
+
+      Once registered, the application administrator can use the Registry web
+      interface to generate one or more long-lived access tokens.  These
+      access tokens need to be passed via the Authorization header, for
+      example:
+
+          Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ
+
+      This access token happens to be a [JSON Web Token](https://jwt.io/)
+      asserting the following claims:
+
+      * `iat`: required.  Time at which the token is generated.
+      * `iss`: required.  String that identifies the issuer of the token.  The
+        token is be signed using a private key corresponding to the issuer.
+      * `jti`: required.  String containing a unique ID for this token,
+        scoped to the issuer.  For tokens issued by the Registry, this will be
+        a randomly generated string.
+      * `nbf`: optional.  Time at which the token should become valid.  If
+        this is not specified, the token will be valid from the moment of
+        issuance.
+      * `exp`: optional.  Time at which the token should expire.  If this is
+        not specified, the token will never expire.
+      * `aud`: required.  The server name that should accept the key, eg.
+        `registry-dev.paratext.org`.  This may be an array that includes other
+        hosts if the requested API scopes are provided by different servers.
+      * `azp`: optional.  This contains the identifier of the service account
+        representing the client that is authorised to present this token.
+      * `sub`: optional.  If specified, this token is valid for the user with
+        the given userId, and has all the access restrictions of that user.
+        In many cases, this will be the same as azp.
+      * `scopes`: required.  An array indicating which parts of the API can be
+        accessed by this client.
+
+      # Access on behalf of thirdparty clients
+      Thirdparty desktop clients cannot safeguard a long-lived access token.
+      If this were encoded into an application binary that is distributed to
+      end-users, malicious users could extract the access token and use it to
+      access potentially sensitive information.
+
+      This is also necessary for web applications that need access to
+      sensitive user data or confidential projects, which requires some form
+      of explicit authorisation due to our privacy policy.
+
+      Instead, these services will have to use an authorisation grant in order
+      to obtain an access token that grants access to the user's resources for
+      a limited period of time.  We use OAuth 2 for the process of obtaining
+      such authorisation and generating access tokens.
+
+      The following OAuth 2 flows are supported:
+      * [Authorization Code](https://tools.ietf.org/html/rfc6749#section-4.1):
+        Prompt the user to authorize your application, after you will receive
+        an authorization code which you can exchange for an access token at
+        the `/token` endpoint, described further below.  This may also allow
+        for continued access via refresh tokens.
+      * [Implicit](https://tools.ietf.org/html/rfc6749#section-4.2):
+        Alternative to Authorization Code for JavaScript applications.  With
+        this route, the access token is generated right away and passed via
+        a URL fragment to the redirect URI.  This flow does not allow storing
+        tokens or remembering authorisation, and is purely for applications
+        that need to make requests from the browser instead of from a server.
+      * [Resource Owner Credentials](https://tools.ietf.org/html/rfc6749#section-4.3):
+        If you know the Paratext username and registration code of a user,
+        you can use them to obtain an access token.  However, the level of
+        access is restricted.
+
+      Please contact the Registry developers if you are writing a desktop or
+      server application that needs to contact the Registry API, so that we
+      can discuss the best solution for your needs.
+
+      # Requesting authorisation
+      To request authorisation from the user to access data on their behalf,
+      redirect the user's browser (or open a pop-up window) to the Registry's
+      authorisation page.  Here, the user will be asked to log in (if they
+      have not already) and consent to giving your application access to their
+      data.
+
+      https://registry-dev.paratext.org/auth?response_type=code&client_id=CLIENT_ID&scope=openid%20email&redirect_uri=http://my.website/oauth/callback
+
+      This URL takes the following query parameters:
+      * `client_id`: required.  The user identifier of your service account.
+      * `response_type`: required.  Normally `code` in the authorization code
+        flow, but other values are possible in the implicit flow.
+      * `scope`: required.  A list of space-separated scopes that indicate
+        what data you would like to access on behalf of the user.  See the
+        next section.
+      * `redirect_uri`: required.  The URI to redirect to on a successful or
+        failed response.
+      * `state`: optional.  This can contain any value, which is passed back
+        to the client via the `redirect_uri`.
+      * `login_hint`: optional.  If you know the e-mail address of the user in
+        question, the log-in field will be prefilled with this address.  The
+        log-in step may even be entirely skipped.
+
+      On successful authorisation, the user's browser will redirect to the
+      provided `redirect_uri`, passing in the generated code as `code` query
+      parameter.  On failure, it will instead set an `error` query parameter.
+
+      # Authorisation scopes
+      Scopes are permissions embedded into an access token.  They indicate
+      which information the presenter is able to access on behalf of the token
+      subject.
+
+      When requesting authorisation from a user to access the Registry on
+      their behalf, you have to list the scopes you are requesting to access
+      on behalf of the user.  The user is then shown a consent screen asking
+      permission for your application to do so.  If the user consents, the
+      resulting access token will be authorised for these scopes.
+
+      Please note that the set of scopes requested during an authorisation
+      request is not dependent on the set of scopes associated with the
+      long-lived access token you are using to make the call to the token
+      endpoint.  The only scope that you need to obtain an access token is
+      `oauth:authorization_code`, but the resulting token may be authorised
+      for many more scopes.
+
+      * `openid`: obtain an identity token containing basic information about
+        the user.
+      * `email`: if `openid` is also provided, obtain the user's e-mail
+        address as part of the identity token.
+      * `offline_access`: obtain a refresh token that you can exchange for
+        additional access tokens in the future.  See next section.
+      * `projects:read`: obtain read access to the user's projects.
+      * ...
+
+      # Refresh tokens
+      Service accounts that have been given the `oauth:refresh_token` scope
+      are allowed to request authorisation for the `offline_access` scope,
+      which will enable them to obtain additional access tokens when their
+      existing ones expire without asking for explicit user consent.
+
+      If the `offline_access` scope has been granted, the result of the
+      `/token` endpoint will contain an additional `refresh_token` field.
+      This token does not have a fixed expiration (although it may be revoked
+      by the user), so it can be used in the future to exchange it for another
+      access token at the `/token` endpoint.
+
+      Please note that obtaining a different access token via the
+      `authorization_code` or `refresh_token` grant will invalidate the
+      existing refresh token and issue a new one if appropriate.
+
+  - name: Users
+    description: |
+      The user APIs allow getting information about a user and the projects
+      that they are a member of.  Due to the sensitive nature of this
+      information, some of the calls in this category are restricted.
+
+      To get basic information about the authenticated user, it is instead
+      recommended to use the `/userinfo` call instead, which is not a
+      restricted API.
+
+      When authenticating as a specific user rather than as a server process,
+      the special prefix URL `/my` is a shortcut for the currently logged in
+      user.  For example, when authenticating as `JWbq3qYn3Nknb6aRE`, the
+      following calls are exactly equivalent:
+
+          /api8/my/projects
+          /api8/users/me/projects
+          /api8/users/JWbq3qYn3Nknb6aRE/projects
+
+# Definitions of URL parameters
+parameters:
+  project-id:
+    in: path
+    name: project-id
+    type: string
+    description: Project identifier
+    pattern: /^([2-9ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz]{17}|[0-9a-f]{40})$/
+    minLength: 17
+    maxLength: 40
+    required: true
+  user-id:
+    in: path
+    name: user-id
+    type: string
+    description: |
+      User identifier.  May use 'me' as special value to refer to the
+      currently authenticated user, if any.
+    pattern: /^(me|[2-9ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz]{17})$/
+    required: true
+  org-id:
+    in: path
+    name: org-id
+    type: string
+    description: Organisation identifier
+    pattern: /^[0-9a-f]{24}$/
+    required: true
+  system-type:
+    in: path
+    name: system-type
+    type: string
+    description: System type
+    enum: ["dbl", "tms", "paratext", "biblica"]
+    required: true
+  book-id:
+    in: path
+    name: book-id
+    type: string
+    description: Book identifier
+    pattern: /^[0-9A-Z]{3}$/
+    required: true
+  repo-id:
+    in: path
+    name: repo-id
+    type: string
+    description: Paratext GUID
+    pattern: /^[0-9a-f]{40}$/
+    minLength: 40
+    maxLength: 40
+    required: true
+
+responses:
+  304:
+    description: |
+      Returned if the request headers include `If-Modified-Since` and the
+      server can guarantee that the result has not been modified since the
+      date given in the header.  No body is returned.
+
+paths:
+  /token:
+    post:
+      tags:
+        - Authentication
+      summary: Get access token
+      description: |
+        This call is used to obtain a new access token acting on behalf of a
+        particular user.  The returned access token has a limited expiration.
+
+        The accepted arguments depend on the `grant_type`, which can be one of
+        the following:
+
+        * `password`: requires `username` and `password` fields, which are set
+          to the user's registration name and code, respectively.  Accepts a
+          `scope` argument which is a space-separated list of requested scopes
+          that will be used for the access token.
+        * `authorization_code`: requires `code` field containing a code
+          obtained via the /auth page.  The `scope` field is ignored.
+        * `refresh_token`: exchange a refresh token for another access token.
+          The new token will have the same scopes as the original one.
+
+        In order to use this call, your authentication requires a scope
+        matching the grant type.  For example, to be able to use the
+        `password` grant type, you need the `oauth:password` scope.
+      security2:
+        - token:
+          - oauth:password
+          - oauth:authorization_code
+          - oauth:refresh_token
+          - openid
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required:
+              - grant_type
+              - username
+              - password
+            properties:
+              grant_type:
+                type: string
+                enum: ["password", "authorization_code", "refresh_token"]
+                description: The OAuth 2 grant type.  See the OAuth2 spec.
+              username:
+                type: string
+                description: |
+                  The Paratext username of the user, if grant_type is "password".
+              password:
+                type: string
+                description: |
+                  The registration code of the user, if grant_type is "password".
+              scope:
+                type: string
+                default: users.org:read orgs:read
+                description: |
+                  Specify a space-separated list of API scopes that the token
+                  should give access to.  The default scope list is
+                  "users.org:read orgs:read" but may be subject to change
+                  given the experimental nature of the scopes system.
+                  Ignored if grant_type is "authorization_code".
+      responses:
+        200:
+          description: Returns a JSON object.
+          schema:
+            type: object
+            required: ['access_token']
+            properties:
+              access_token:
+                type: string
+                description: |
+                  Token that can be passed in an Authorization header.
+              token_type:
+                type: string
+                description: Indicates the type of the returned access token.
+                example: Bearer
+              expires_in:
+                type: number
+                description: The lifetime in seconds of the access token.
+              id_token:
+                type: string
+                description: |
+                  A JWT-encoded OpenID Connect style identification token.
+                  The userId value is in the `sub` claim.
+        400:
+          description: Bad request.  Returns a JSON-encoded error description.
+          schema:
+            type: object
+            required: ['error']
+            properties:
+              error:
+                type: string
+                enum:
+                  - invalid_request
+                  - invalid_client
+                  - invalid_grant
+                  - unauthorized_client
+                  - access_denied
+                  - unsupported_response_type
+                  - unsupported_grant_type
+                  - invalid_scope
+                  - server_error
+                  - temporarily_unavailable
+              error_description:
+                type: string
+
+  /userinfo:
+    get:
+      tags:
+        - Authentication
+      summary: Get user information
+      description: |
+        This call returns information about the authenticated user as a JSON
+        object.  It can optionally be signed using JWS by requesting a
+        content type of `application/jwt` in the `Accept` header.
+      produces:
+        - application/json
+        - application/jwt
+      responses:
+        200:
+          description: |
+            Returns an object containing information about the authenticated user.
+          schema:
+            $ref: '#/definitions/UserInfo'
+
+  /projects:
+    get:
+      tags:
+        - Projects
+      summary: List projects
+      description: |
+        The projects endpoint returns the metadata of all projects visible to
+        the user.  The results can be narrowed down using one or more filters.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:read
+      parameters:
+        - name: language_iso
+          in: query
+          type: string
+          description: |
+            Only show projects with the given language ISO.  This is a
+            three-letter code defined by
+            [ISO 639-3](http://www-01.sil.org/iso639-3/).
+          pattern: /^[a-z]{3}$/
+          maxLength: 3
+        - name: language_rod
+          in: query
+          type: string
+          description: |
+            Only show projects with the given dialect code.  This is a 5-digit
+            code defined by the
+            [Registry of Dialects](http://globalrecordings.net/research/rod).
+          pattern: /^[0-9]{5}$/
+          maxLength: 5
+        - name: identification_shortName
+          in: query
+          type: string
+          description: Limit results to projects with the given Paratext name.
+        - name: confidential
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to confidential projects.  If `false`,
+            limits results to non-confidential projects.
+        - name: identification_scope
+          in: query
+          type: string
+          description: |
+            Limits results to only ones with an identification_scope field of
+            the given value.  Multiple may be specified, separated by |.
+      responses:
+        200:
+          description: |
+            An array of requested projects visible to the authenticated user.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectMetadata'
+        304:
+          $ref: '#/responses/304'
+        400:
+          description: Failed to parse a query parameter.
+    post:
+      tags:
+        - Projects
+      summary: Register new project
+      description: |
+        This call creates a new project in the registry.  If authenticated as
+        a user, this will automatically add the user as an administrator to
+        the newly created project.
+      security2:
+        - token:
+          - projects
+          - projects:read
+      parameters:
+        - in: body
+          name: body
+          description: Metadata object of the new project to create.
+          schema:
+            $ref: '#/definitions/ProjectMetadata'
+      responses:
+        201:
+          description: |
+            The project was created successfully.  The response body contains
+            the URL of the created resource, from which the project ID can be
+            extracted.
+        400:
+          description: |
+            The project metadata object in the request body did not pass
+            validation.  The response body contains an error message.
+
+  /orgs/{org-id}/projects:
+    parameters:
+      - $ref: '#/parameters/org-id'
+    get:
+      tags:
+        - Projects
+      summary: List projects per organisation
+      description: |
+        This is identical to the projects endpoint, except that it limits the
+        result to projects belonging to the given organisation.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:read
+      parameters:
+        - name: language_iso
+          in: query
+          type: string
+          description: |
+            Only show projects with the given language ISO.  This is a
+            three-letter code defined by
+            [ISO 639-3](http://www-01.sil.org/iso639-3/).
+          pattern: /^[a-z]{3}$/
+          maxLength: 3
+        - name: language_rod
+          in: query
+          type: string
+          description: |
+            Only show projects with the given dialect code.  This is a 5-digit
+            code defined by the
+            [Registry of Dialects](http://globalrecordings.net/research/rod).
+          pattern: /^[0-9]{5}$/
+          maxLength: 5
+        - name: identification_shortName
+          in: query
+          type: string
+          description: Limit results to projects with the given Paratext name.
+        - name: confidential
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to confidential projects.  If `false`,
+            limits results to non-confidential projects.
+        - name: identification_scope
+          in: query
+          type: string
+          description: |
+            Limits results to only ones with an identification_scope field of
+            the given value.  Multiple may be specified, separated by |.
+      responses:
+        200:
+          description: |
+            An array of requested projects visible to the authenticated user.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectMetadata'
+        304:
+          $ref: '#/responses/304'
+        400:
+          description: Failed to parse a query parameter.
+
+  /projects/{project-id}:
+    parameters:
+      - $ref: '#/parameters/project-id'
+    get:
+      tags:
+        - Projects
+      summary: Get project metadata
+      description: |
+        This endpoint returns the metadata object associated with the given
+        project ID.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:read
+      parameters:
+        - name: extend
+          in: query
+          type: boolean
+          description: Set to true to include additional information.
+      responses:
+        200:
+          description: |
+            The project metadata returned as a JSON object.
+          schema:
+            $ref: '#/definitions/ProjectMetadata'
+        403:
+          description: |
+            The project with the given ID exists but the authenticated user is
+            not authorised to view it.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+        410:
+          description: |
+            The project with the given ID once existed, but no longer does.
+    put:
+      tags:
+        - Projects
+      summary: Modify project metadata
+      description: |
+        This endpoint can be used to replace the metadata for a project with
+        an updated metadata object.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:write
+      parameters:
+        - in: body
+          name: body
+          description: New project metadata object to replace the old with.
+          schema:
+            $ref: '#/definitions/ProjectMetadata'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: |
+            The project metadata object in the request body did not pass
+            validation.  The response body contains an error message.
+        403:
+          description: |
+            The authenticated user is not an administrator or consultant in
+            the project.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    patch:
+      tags:
+        - Projects
+      summary: Modify project metadata fields
+      description: |
+        This is similar to a `PUT` call, except that only the fields that are
+        specified will be replaced.  Please note that the `Content-Type` of
+        the request **MUST** be `application/merge-patch+json`, as specified
+        in [RFC 7396](https://tools.ietf.org/html/rfc7396).
+      consumes:
+        - application/merge-patch+json
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:write
+      parameters:
+        - in: body
+          name: body
+          description: |
+            JSON Merge Patch specifying the fields that should be updated.
+          schema:
+            $ref: '#/definitions/ProjectMetadata'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: One of the project fields did not pass validation.
+        403:
+          description: |
+            The authenticated user is not an administrator or consultant in
+            the project.
+        404:
+          description: |
+            The requested project does not exist or the authenticated
+            user is not authorised to view it.
+        415:
+          description: The request content-type header was not supported.
+    delete:
+      tags:
+        - Projects
+      summary: Delete project
+      description: |
+        This endpoint completely deletes a project from the registry.  Please
+        be careful; it is not easy to recover deleted projects.
+
+        If this is called by accident, please contact an administrator.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:write
+      responses:
+        204:
+          description: The project was successfully deleted.
+        403:
+          description: |
+            The authenticated user is not an administrator or consultant in
+            the project.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+
+  /projects/{project-id}/identification_systemId/{system-type}/text:
+    parameters:
+      - $ref: '#/parameters/project-id'
+      - $ref: '#/parameters/system-type'
+    get:
+      tags:
+        - Projects
+      summary: Get project system identifier
+      description: |
+        This is a convenience endpoint to return a particular system
+        identifier of a project.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:read
+      responses:
+        200:
+          description: Returns the system identifier as string.
+        304:
+          $ref: '#/responses/304'
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it, or it has no system identifier
+            with the indicated type.
+    put:
+      tags:
+        - Projects
+      summary: Modify project system identifier
+      description: |
+        This is a convenience endpoint to change a particular system
+        identifier in the project metadata.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:write
+      parameters:
+        - in: body
+          name: body
+          description: New system identifier object to replace the old with.
+          schema:
+            type: string
+      responses:
+        201:
+          description: |
+            A system identifier with the given type was added successfully.
+        202:
+          description: |
+            The authentication was accepted, and the request has been queued
+            for processing in the background.  This is not a guarantee for
+            success, however; the entry may not even exist.
+        204:
+          description: |
+            The metadata already contained a system identifier of the given
+            type, which was successfully updated.
+        400:
+          description: |
+            The new system identifier text in the request body did not pass
+            validation.  The response body contains an error message.
+        403:
+          description: |
+            The authenticated user is not permitted to edit the metadata.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it, or it has no system identifier
+            with the indicated type.
+        409:
+          description: |
+            The given system identifier is already associated with a different
+            project.
+    delete:
+      tags:
+        - Projects
+      summary: Delete project system identifier
+      description: |
+        This endpoint removes a particular system identifier associated with a
+        project.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:write
+      responses:
+        204:
+          description: The identifier was successfully deleted.
+        403:
+          description: |
+            The authenticated user is not permitted to edit the metadata.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it, or it has no system identifier
+            with the indicated type.
+
+  /projects/{project-id}/progress:
+    parameters:
+      - $ref: '#/parameters/project-id'
+    get:
+      tags:
+        - Project Progress
+      summary: Get project progress
+      description: |
+        This endpoint returns the progress object associated with the given
+        project ID.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+          - projects.progress:read
+      parameters:
+        - name: unapproved
+          in: query
+          type: boolean
+          description: |
+            If `true`, includes unapproved progress information if unapproved
+            progress exists that is newer than the latest approved progress,
+            and permissions allow.
+        - name: chapters
+          in: query
+          type: boolean
+          description: |
+            If 'true', includes chapter-level progress information if the project
+            settings and permissions allow.
+        - name: before
+          in: query
+          type: date
+          description: |
+            Return the progress as known before a particular date.
+      responses:
+        200:
+          description: |
+            The project progress returned as a JSON object.
+          schema:
+            $ref: '#/definitions/ExtendedProjectProgress'
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    put:
+      tags:
+        - Project Progress
+      summary: Modify project progress
+      description: |
+        This endpoint can be used to replace the progress for a project with
+        an updated progress object.  Only the basic progress fields can be
+        modified with this call.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+          - projects.progress:write
+      parameters:
+        - in: body
+          name: body
+          description: New project progress object to replace the old with.
+          schema:
+            $ref: '#/definitions/ProjectProgress'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: |
+            The project progress object in the request body did not pass
+            validation.  The response body contains an error message.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    patch:
+      tags:
+        - Project Progress
+      summary: Modify project progress fields
+      description: |
+        This is similar to a `PUT` call, except that only the fields that are
+        specified will be replaced.  Please note that the `Content-Type` of
+        the request **MUST** be `application/merge-patch+json`, as specified
+        in [RFC 7396](https://tools.ietf.org/html/rfc7396).
+      consumes:
+        - application/merge-patch+json
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+          - projects.progress:write
+      parameters:
+        - in: body
+          name: body
+          description: |
+            JSON Merge Patch specifying the fields that should be updated.
+          schema:
+            $ref: '#/definitions/ProjectProgress'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: One of the progress fields did not pass validation.
+        404:
+          description: |
+            The requested project does not exist or the authenticated
+            user is not authorised to view it.
+        415:
+          description: The request content-type header was not supported.
+
+  /projects/{project-id}/progress/history:
+    parameters:
+      - $ref: '#/parameters/project-id'
+    post:
+      tags:
+        - Project Progress
+      summary: Push approved project progress
+      description: |
+        This endpoint can be used to update the progress for a project with
+        new approved progress information.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+      parameters:
+        - in: body
+          name: body
+          description: Current state of progress of the project.
+          schema:
+            $ref: '#/definitions/ProgressUpdate'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: |
+            The object in the request body did not pass validation.  The
+            response body contains an error message.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+
+  /projects/{project-id}/progress/approved:
+    parameters:
+      - $ref: '#/parameters/project-id'
+    get:
+      tags:
+        - Project Progress
+      summary: Get project approval status
+      descrition:  This endpoint returns 'false' if the project has unapproved progress, 'true' otherwise.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+      responses:
+        200:
+          description: |
+            'true' or 'false'.
+          schema:
+            type: boolean
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    put:
+      tags:
+        - Project Progress
+      summary: Approve project progress
+      description: |
+        This endpoint can be used to approve the project progress.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+      parameters:
+        - name: before
+          in: query
+          type: date
+          description: |
+            Approve progress before the specified date.
+        - in: body
+          name: body
+          description: Only the boolean "true" is accepted for the moment.
+          type: boolean
+          schema:
+            type: boolean
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: |
+            A value other than the boolean "true" was passed in.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+
+  /projects/{project-id}/progress/books/{book-id}:
+    parameters:
+      - $ref: '#/parameters/project-id'
+      - $ref: '#/parameters/book-id'
+    get:
+      tags:
+        - Project Progress
+      summary: Get progress for a specific book
+      description: |
+        This endpoint can be used to get progress for a specific book.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+      responses:
+        200:
+          description: The book information returned as JSON object.
+          schema:
+            $ref: '#/definitions/BookProgress'
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it, or the book does not exist.
+    delete:
+      tags:
+        - Project Progress
+      summary: Remove book from project progress plan
+      description: |
+        This endpoint can be used to remove an erroneously pushed book from
+        the approved progress information.  The percentage will be updated.
+      security2:
+        - basic: []
+        - token:
+          - projects.progress
+      responses:
+        204:
+          description: The book was successfully removed.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it, or the book does not exist.
+
+  /projects/{project-id}/license:
+    parameters:
+      - $ref: '#/parameters/project-id'
+    get:
+      tags:
+        - Projects
+      summary: Get project registration
+      description: |
+        This endpoint returns the registration object associated with the
+        given project ID.
+      security2:
+        - basic: []
+        - token:
+          - projects
+          - projects:read
+      responses:
+        200:
+          description: |
+            The project registration returned as a JSON object, or `null` if
+            the project does not have a valid registration.
+          schema:
+            $ref: '#/definitions/ProjectRegistration'
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+
+  /projects/{project-id}/members:
+    parameters:
+      - $ref: '#/parameters/project-id'
+    get:
+      tags:
+        - Project Members
+      summary: Get project members
+      description: |
+        This endpoint returns a list of all users who are a direct member of
+        the project with the given identifier.
+      security2:
+        - basic: []
+        - token:
+          - projects.members
+          - projects.members:read
+      responses:
+        200:
+          description: An array of member objects.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectMember'
+        304:
+          $ref: '#/responses/304'
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    put:
+      tags:
+        - Project Members
+      summary: Replace project members
+      description: |
+        This endpoint can be used to replace the entire list of members of a
+        project.  This call exists because it may be more convenient to update
+        all members in one go instead of making individual calls to add and
+        remove users when synchronising the member list from Paratext.
+
+        Individual members may be specified using a `userId` or a Paratext
+        `username`, but it is not legal to specify both.
+
+        Be careful, because removing a member may mean losing access to a
+        project.  Contact an administrator when locked out of a project.
+      security2:
+        - basic: []
+        - token:
+          - projects.members
+          - projects.members:write
+      parameters:
+        - in: body
+          name: body
+          description: |
+            Array containing a new set of members to replace the old with.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectMember'
+      responses:
+        204:
+          description: The update was made successfully.
+          schema:
+            type: object
+            required: ['errors']
+            properties:
+              message:
+                type: string
+                description: A human-readable error message.
+              errors:
+                type: array
+                description: A list of errors in the input data.
+                items:
+                  type: object
+                  required:
+                    - index
+                    - code
+                    - message
+                  properties:
+                    index:
+                      type: integer
+                      description: |
+                        The zero-based index of the member in the input array
+                        that contains the error.
+                    code:
+                      type: integer
+                      enum: [400, 403, 404, 409]
+                      description: |
+                        A machine-readable code explaining the type of error.
+                        For example, 400 indicates a schema violation, 403
+                        indicates that this user is not permitted to be an
+                        admin or consultant, 404 indicates that no such user
+                        exists, and 409 indicates that the user is listed more
+                        than once or is already on a project with the same
+                        short name.
+                      example: 404
+                    message:
+                      type: string
+                      description: A human-readable description of the error.
+                      example: username not found
+                    username:
+                      type: string
+                      description: username of the member that was in error.
+                    userId:
+                      type: string
+                      description: userId of the member that was in error.
+                      example: DrPaKo7424xtzu3gu
+        400:
+          description: |
+            The project member array in the request body did not pass
+            validation.  The response body contains a JSON object explaining
+            the issues with the input request.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    post:
+      tags:
+        - Project Members
+      summary: Add project member
+      description: |
+        This endpoint adds a user with a given role as member to the project.
+      parameters:
+        - in: body
+          name: body
+          description: |
+            JSON object identifying the user by either `userId` or `username`,
+            as well as the role they should receive in the project.
+          schema:
+            $ref: '#/definitions/ProjectMember'
+      security2:
+        - basic: []
+        - token:
+          - projects.members
+          - projects.members:write
+      responses:
+        201:
+          description: The user was successfully added to the project.
+        400:
+          description: |
+            The project member object in the request body did not pass
+            validation.  The response body contains an error message.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+        409:
+          description: The specified user is already a member of this project.
+
+  /projects/{project-id}/members/{user-id}:
+    parameters:
+      - $ref: '#/parameters/project-id'
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Project Members
+      summary: Get member information
+      description: |
+        This endpoint returns membership information of the given user in the
+        the project with the given identifier.
+      security2:
+        - basic: []
+        - token:
+          - projects.members
+          - projects.members:read
+      responses:
+        200:
+          description: |
+            An object containing information about the user's membership in
+            the project, such as their userId, username and role.
+          schema:
+            $ref: '#/definitions/ProjectMember'
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    put:
+      tags:
+        - Project Members
+      summary: Set user role
+      description: |
+        This endpoint can be used to change the role of a user who is a member
+        of the project or add a user to the project.
+
+        Individual members may be specified using a `userId` or a Paratext
+        `username`, but it is not legal to specify both.
+
+        Be careful, because removing a role may mean losing access to a
+        project.  Contact an administrator when locked out of a project.
+      security2:
+        - basic: []
+        - token:
+          - projects.members
+          - projects.members:write
+      parameters:
+        - in: body
+          name: body
+          description: Project member object specifying user and role.
+          schema:
+            $ref: '#/definitions/ProjectMember'
+      responses:
+        201:
+          description: The user did not exist and was added to the project.
+        204:
+          description: The user existed and their role was modified.
+        400:
+          description: |
+            The project member array in the request body did not pass
+            validation.  The response body contains an error message.
+        404:
+          description: |
+            The project with the given ID does not exist or the authenticated
+            user is not authorised to view it.
+    delete:
+      tags:
+        - Project Members
+      summary: Remove project member
+      description: |
+        This endpoint removes a user from the project.  As a special
+        exception, authentication as a project admin or consultant is not
+        required to remove oneself from a project.
+      security2:
+        - basic: []
+        - token:
+          - projects.members
+          - projects.members:write
+      responses:
+        204:
+          description: The user was successfully removed from the project.
+        404:
+          description: |
+            Either the user was not a member of the project, or the project
+            with the given ID does not exist, or the authenticated user is not
+            authorised to view the project.
+        409:
+          description: The specified user is already a member of this project.
+
+  /projects/{repo-id}/live:
+    parameters:
+      - $ref: '#/parameters/repo-id'
+    get:
+      tags:
+        - Paratext Live
+      summary: Get running Live session information
+      description: |
+        This endpoint returns information on a running Paratext Live session.
+      security2:
+        - basic: []
+        - token:
+          - projects.live
+          - projects.live:read
+      responses:
+        200:
+          description: |
+            An object containing connection information for the running session.
+          schema:
+            $ref: '#/definitions/LiveSession'
+        404:
+          description: |
+            No Live session is currently running or the authenticated user is
+            not a member of the project, or the project does not exist.
+    post:
+      tags:
+        - Paratext Live
+      summary: Start a new Live session
+      description: |
+        This endpoint returns information on a running Paratext Live session.
+      security2:
+        - basic: []
+        - token:
+          - projects.live
+          - projects.live:write
+      responses:
+        203:
+          description: |
+            Information of the newly created session.
+          schema:
+            $ref: '#/definitions/LiveSession'
+        403:
+          description: |
+            The user does not have the appropriate role on the project to be
+            able to start a new session.
+        404:
+          description: |
+            The project does not exist or the user is not authorized to see it.
+        409:
+          description: |
+            A session already exists, the payload contains its connection info.
+          schema:
+            $ref: '#/definitions/LiveSession'
+        503:
+          description: |
+            The server is not configured with this feature enabled.
+    delete:
+      tags:
+        - Paratext Live
+      summary: Terminate a Live session
+      description: |
+        This endpoint is used to signal that a Paratext Live session has ended.
+      security2:
+        - basic: []
+        - token:
+          - projects.live
+          - projects.live:write
+      responses:
+        204:
+          description: |
+            The session was terminated successfully.
+        403:
+          description: |
+            The user does not have the permissions to terminate this session.
+        404:
+          description: |
+            There is no running session, or the user is not authorized to know
+            about the project, or the project does not exist.
+
+  /orgs:
+    get:
+      tags:
+        - Organisations
+      summary: List organisations
+      description: |
+        The orgs endpoint returns a list of the organisations known to the
+        registry and related systems.  Please note that depending on the
+        authentication used, not all organisation objects may be returned, due
+        to the fact that some organisations may be internal and invisible to
+        the authenticated user.
+
+        #### Sensitive information
+        When using client certificate authentication, all organisations will
+        be returned, including internal and private organisations.  This
+        information may be sensitive and care should be taken to preserve its
+        confidentiality.
+      security2:
+        - token:
+          - orgs
+          - orgs:read
+      parameters:
+        - name: sort
+          in: query
+          type: string
+          description: |
+            Specifies fields to sort by.  Multiple fields may be separated by
+            comma.  Each field may be prefixed by a - or + to indicate the
+            direction of sort.
+        - name: public
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to public organisations.  If `false`,
+            limits results to non-public organisations.
+        - name: active
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to active organisations.  If `false`,
+            limits results to non-active organisations.
+        - name: in_dbl
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to organisations that are known to DBL.
+            If `false`, limits results to organisations that are not.
+        - name: authorizedForParatext
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to organisations that have agreed to the
+            Paratext Terms of Use and are authorised for Paratext.
+            If `false`, limits results to organisations that are not.
+        - name: shareBasicProgressInfo
+          in: query
+          type: boolean
+          description: |
+            If `true`, limits results to organisations that have agreed to
+            share basic progress information.
+            If `false`, limits results to organisations that have not.
+        - name: abbr
+          in: query
+          type: string
+          description: |
+            Returns only organisations with the given abbreviation.
+        - name: name
+          in: query
+          type: string
+          description: |
+            Returns only organisations with the given name.
+        - name: nameLocal
+          in: query
+          type: string
+          description: |
+            Returns only organisations with the given local name.
+        - name: parent
+          in: query
+          type: string
+          description: |
+            Returns only organisations with the given parent identifier.
+        - name: url
+          in: query
+          type: string
+          description: |
+            Returns only organisations with the given URL.
+        - name: location
+          in: query
+          type: string
+          description: Returns only organisations with the given location.
+        - name: country_iso
+          in: query
+          type: string
+          description: Returns only organisations with the given country code.
+      responses:
+        200:
+          description: |
+            An array of all organisations visible to the authenticated user.
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/OrgMetadata'
+        304:
+          $ref: '#/responses/304'
+    post:
+      tags:
+        - Organisations
+      summary: Create new organisation
+      description: |
+        This call creates a new organisation and adds it to the registry.
+        This is only available to trusted clients.
+      parameters:
+        - in: body
+          name: body
+          description: Organisation object to be added
+          schema:
+            $ref: '#/definitions/OrgMetadata'
+      security2:
+        - token:
+          - orgs
+      responses:
+        201:
+          description: The organisation was successfully created.
+          schema:
+            type: string
+            description: Local URL of the created resource
+        400:
+          description: The given organisation object did not pass validation.
+        403:
+          description: Not authorised for creating organisations.
+        409:
+          description: Last six characters of id field conflict with that of another organisation.
+
+  /orgs/{org-id}:
+    parameters:
+      - $ref: '#/parameters/org-id'
+    get:
+      tags:
+        - Organisations
+      summary: Get organisation
+      description: |
+        This call allows querying information about a single organisation.
+      security2:
+        - token:
+          - orgs
+          - orgs:read
+      responses:
+        200:
+          description: The requested organisation object
+          schema:
+            $ref: '#/definitions/OrgMetadata'
+        404:
+          description: |
+            The requested organisation does not exist or the authenticated
+            user is not authorised to view it.
+    put:
+      tags:
+        - Organisations
+      summary: Replace organisation data
+      description: |
+        This call allows updating the metadata associated with a particular
+        organisation.  The organisation object in the database will be wholly
+        replaced by the given object.
+
+        For backward compatibility reasons, if the keys `domains`,
+        `authorizedForParatext` or `shareBasicProgressInfo` are omitted, the
+        respective fields will not be unset but be kept at their existing
+        values.
+      security2:
+        - token:
+          - orgs
+          - orgs:write
+      parameters:
+        - in: body
+          name: body
+          description: New organisation object to replace the old with.
+          schema:
+            $ref: '#/definitions/OrgMetadata'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: The given organisation object did not pass validation.
+        404:
+          description: |
+            The requested organisation does not exist or the authenticated
+            user is not authorised to view it.
+    patch:
+      tags:
+        - Organisations
+      summary: Modify organisation fields
+      description: |
+        This is similar to a `PUT` call, except that only the fields that are
+        specified will be replaced.  Please note that the `Content-Type` of
+        the request **MUST** be `application/merge-patch+json`, as specified
+        in [RFC 7396](https://tools.ietf.org/html/rfc7396).
+      security2:
+        - token:
+          - orgs
+          - orgs:write
+      consumes:
+        - application/merge-patch+json
+      parameters:
+        - in: body
+          name: body
+          description: |
+            JSON Merge Patch specifying the fields that should be updated.
+          schema:
+            $ref: '#/definitions/OrgMetadata'
+      responses:
+        204:
+          description: The update was made successfully.
+        400:
+          description: One of the organisation fields did not pass validation.
+        404:
+          description: |
+            The requested organisation does not exist or the authenticated
+            user is not authorised to view it.
+        415:
+          description: The request content-type header was not supported.
+    delete:
+      tags:
+        - Organisations
+      summary: Delete organisation
+      description: |
+        This call deletes an organisation from the registry.
+      security2:
+        - token:
+          - orgs
+          - orgs:write
+      responses:
+        204:
+          description: The organisation was successfully deleted.
+        400:
+          description: |
+            The organisation had sub-orgs, which must be deleted or reparented
+            before their parent organisation may be deleted.
+        404:
+          description: |
+            The requested organisation does not exist or the authenticated
+            user is not authorised to view it.
+        409:
+          description: |
+            The organisation has sub-orgs, which must be deleted before their
+            parent organisation may be deleted.
+
+  /orgs/{org-id}/roles/{user-id}:
+    parameters:
+      - $ref: '#/parameters/org-id'
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Organisations
+      summary: Get user roles in organisation
+      description: |
+        This call returns the roles the given user has within an organisation.
+      security2:
+        - token:
+          - orgs.roles
+          - orgs.roles:read
+      responses:
+        200:
+          description: Returns a list of roles
+          schema:
+            type: array
+            items:
+              type: string
+              description: Role identifier
+        404:
+          description: |
+            The requested organisation or user does not exist or the
+            authenticated user is not authorised to view it.
+    post:
+      tags:
+        - Organisations
+      summary: Add role to user in organisation
+      description: |
+        This call assigns the given role to the user in the organisation.
+      security2:
+        - token:
+          - orgs.roles
+          - orgs.roles:write
+      parameters:
+        - in: body
+          name: role
+          schema:
+            type: string
+            description: Role identifier
+      responses:
+        204:
+          description: Successfully assigned role
+        404:
+          description: |
+            The requested organisation or user does not exist or the
+            authenticated user is not authorised to view it.
+
+  /orgs/{org-id}/roles/{user-id}/{role}:
+    parameters:
+      - $ref: '#/parameters/org-id'
+      - $ref: '#/parameters/user-id'
+      - in: path
+        name: role
+        type: string
+        description: Role identifier
+        required: true
+    delete:
+      tags:
+        - Organisations
+      summary: Remove role from user in organisation
+      description: |
+        This call removes the given role from the user in the organisation.
+      security2:
+        - token:
+          - orgs.roles
+          - orgs.roles:write
+      responses:
+        204:
+          description: Successfully removed role
+        404:
+          description: |
+            The requested organisation or user does not exist or the
+            authenticated user is not authorised to view it.
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List users
+      parameters:
+        - name: username
+          in: query
+          type: string
+          description: |
+            Limit result set to users with a given username.
+        - name: emails.address
+          in: query
+          type: string
+          description: |
+            Limit result set to users with a given e-mail address.
+      security2:
+        - token:
+          - users:read
+      responses:
+        200:
+          description: Returns an array of objects containing user data
+        304:
+          $ref: '#/responses/304'
+    post:
+      tags:
+        - Users
+      summary: Register a user
+      security2:
+        - token:
+          - users:create
+      parameters:
+        - in: body
+          name: body
+          schema:
+            type: object
+            required:
+              - username
+              - orgId
+              - profile
+            properties:
+              username:
+                type: string
+                description: The username of the new user to register.
+                example: "John Doe"
+              orgId:
+                type: string
+                description: The organisation to create the user in.
+                example: 5494956f5117ad586f2e2f40
+              profile:
+                type: object
+                properties:
+                  firstName:
+                    type: string
+                    description: The user's first name.
+                    example: "John"
+                  lastName:
+                    type: string
+                    description: The user's last name.
+                    example: "Doe"
+      responses:
+        200:
+          description: Returns an array of objects containing user data
+        409:
+          description: This username already exists on the server.
+
+  /users/{user-id}/username:
+    parameters:
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Users
+      summary: Get a user's registration name
+      security2:
+        - basic: []
+        - token: []
+      responses:
+        200:
+          description: Returns a string with the user's registration name
+          schema:
+            type: string
+        404:
+          description: |
+            The requested user does not exist or the authenticated user is not
+            authorised to view it.
+
+  /users/{user-id}/org:
+    parameters:
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Users
+      summary: Get a user's primary organisation
+      security2:
+        - token:
+          - users.org:read
+      responses:
+        200:
+          description: Returns null or an org object.
+          schema:
+            $ref: '#/definitions/OrgMetadata'
+        404:
+          description: |
+            The requested user does not exist or the authenticated user is not
+            authorised to view it.
+
+  /users/{user-id}/projects:
+    parameters:
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Users
+      summary: Get metadata of a user's projects
+      parameters:
+        - name: active
+          in: query
+          type: boolean
+          description: |
+            If set to true, restricts output to only projects with active
+            licenses.  If set to false, only to projects of which the license
+            has expired or been revoked.  If omitted, includes all projects.
+      security2:
+        - basic: []
+        - token: []
+      responses:
+        200:
+          description: Returns a list of project metadata objects
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectMetadata'
+        304:
+          $ref: '#/responses/304'
+        404:
+          description: |
+            The requested user does not exist or the authenticated user is not
+            authorised to view it.
+
+  /users/{user-id}/licenses:
+    parameters:
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Users
+      summary: Get licenses of a user's projects
+      parameters:
+        - name: active
+          in: query
+          type: boolean
+          description: |
+            If set to true, restricts output to only projects with active
+            licenses.  If set to false, only to projects of which the license
+            has expired or been revoked.  If omitted, includes all projects.
+      security2:
+        - basic: []
+        - token: []
+      responses:
+        200:
+          description: Returns a list of project registration objects
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ProjectRegistration'
+        304:
+          $ref: '#/responses/304'
+        404:
+          description: |
+            The requested user does not exist or the authenticated user is not
+            authorised to view it.
+  /users/{userId}/roles:
+    parameters:
+      - $ref: '#/parameters/user-id'
+    get:
+      tags:
+        - Users
+      summary: Get user's roles
+      description: |
+        This endpoint returns a list of all a user's roles across all organizations.
+      responses:
+        200:
+          description: Returns a list of role objects
+          schema:
+            type: array
+            items:
+              ref: '#definitions/UserRole'
+              
+        404:
+          description: |
+            The requested user does not exist or the authenticated user is not
+            authorised to view it.
+    post:
+      tags:
+        - Users
+      summary: Add role to user in organisation
+      description: |
+        This call assigns the given role to the user in the given organisation.
+      security2:
+        - token:
+          - users.roles
+      parameters:
+        - in: body
+          name: role
+          schema:
+            type: string
+            description: Role identifier
+      responses:
+        204:
+          description: Successfully assigned role
+        404:
+          description: |
+            The requested organisation or user does not exist or the
+            authenticated user is not authorised to view it.
+
+
+definitions:
+  SystemId:
+    type: object
+    required: ["type", "text"]
+    properties:
+      type:
+        type: string
+        enum: ["dbl", "tms", "paratext", "biblica"]
+        example: paratext
+      name:
+        type: string
+      fullname:
+        type: string
+      text:
+        type: string
+        description: System identifier
+        pattern: /^[-0-9a-f]{16,40}$/
+        example: 4a5464f729ae3603078842b4517454f70610ffa8
+
+  OrgId:
+    type: object
+    required: ["id"]
+    properties:
+      id:
+        type: string
+        description: Unique organisation identifier consisting of 24 alphanumeric characters
+        format: org-id
+        pattern: /^[0-9a-f]{24}$/
+        example: 5494956f5117ad586f2e2f40
+
+  Contributor:
+    type: object
+    required: ["id"]
+    properties:
+      id:
+        type: string
+        format: org-id
+        description: Unique organisation identifier consisting of 24 alphanumeric characters
+        pattern: /^[0-9a-f]{24}$/
+        example: 5494956f5117ad586f2e2f40
+      content:
+        type: boolean
+      publication:
+        type: boolean
+      management:
+        type: boolean
+      qa:
+        type: boolean
+      finance:
+        type: boolean
+
+  ProjectMetadata:
+    type: object
+    required:
+      - identification_name
+      - agencies_rightsHolders
+      - language_iso
+      - countries
+      - identification_abbreviation
+      - type_translationType
+    properties:
+      _id:
+        type: string
+        description: Registry Identifier
+        example: "Zf8nG95bsEQQ78Bce"
+
+      # Fields from here  to <END GBC FIELDS> are shared between the Registry
+      # and GBC.  They MUST NOT have their definitions changed here unless the
+      # same change is made in GBC.
+      identification_systemId:
+        type: array
+        description: System identifiers
+        items:
+          $ref: '#/definitions/SystemId'
+        default: []
+        example:
+        - type: paratext
+          id: dbb4aeddf353585b42792940575442a70c09885b
+          name: ShortName
+
+      identification_name:
+        type: string
+        description: Full Name
+        minLength: 1
+
+      # MUST be equal to "name" field in identification_systemId[type="paratext"]
+      identification_shortName:
+        type: string
+        description: Paratext Name
+        example: ShortName
+
+      identification_description:
+        type: string
+        description: Description
+        default: ""
+
+      identification_scope:
+        type: string
+        description: Scope
+        enum: [
+          "Bible", "Bible with Deuterocanon", "Deuterocanon", "New Testament",
+          "New Testament+", "Old Testament", "Old Testament + Deuterocanon",
+          "Old Testament+", "Portions", "Selections", "Shorter Bible", ""]
+
+      agencies_rightsHolders:
+        type: array
+        description: Rights Holders
+        items:
+          $ref: '#/definitions/OrgId'
+        minItems: 1
+
+      agencies_rightsAdmin:
+        $ref: '#/definitions/OrgId'
+
+      agencies_contributors:
+        type: array
+        description: List of agencies that contribut to the project
+        items:
+          $ref: '#/definitions/Contributor'
+        default: []
+        example:
+          - id: 5494956f5117ad586f2e2f40
+            content: true
+            publication: false
+            management: false
+            qa: false
+            finance: false
+
+      language_iso:
+        type: string
+        description: ISO 639-3 language code
+        pattern: /^[a-z][a-z][a-z]$/
+        example: eng
+
+      language_ldml:
+        type: string
+        description: BCP 47 language tag
+        pattern: /^[a-z]{2,3}([-][A-Za-z0-9]+){0,3}$/
+        example: en-GB
+
+      language_rod:
+        type: string
+        description: |
+          Dialect code.  This is a 5-digit code defined by the
+          Registry of Dialects.
+        pattern: /^[0-9]{5}$/
+        example: "03222"
+
+      countries:
+        type: array
+        description: |
+          List of ISO 3166 alpha-2 country codes targeted by the project
+        items:
+          type: string
+          description: ISO 3166 alpha-2 country code
+          pattern: /^[A-Z][A-Z]$/
+          example: "GB"
+        minItems: 1
+
+      identification_nameLocal:
+        type: string
+        description: Localised Full Name
+
+      identification_abbreviation:
+        type: string
+        description: Abbreviation
+        pattern: /^[A-Za-z0-9_]{2,16}$/
+
+      identification_abbreviationLocal:
+        type: string
+        description: Localised Abbreviation
+        pattern: /^.{0,16}$/
+
+      language_scriptCode:
+        type: string
+        description: ISO 15924 script code
+        pattern: /^[A-Z][a-z][a-z][a-z]$/
+        example: Latn
+
+      language_numerals:
+        type: string
+        description: Numerals
+        enum: [
+          "Arabic", "Bengali", "Burmese", "Devanagari", "Ethiopic", "Farsi",
+          "Gujarati", "Gurmukhi", "Hebrew", "Hindi", "Kannada", "Khmer",
+          "Malayalam", "Oriya", "Tamil", "Telugu", "Thai", "Tibetan", ""]
+
+      copyright:
+        type: string
+        description: Copyright
+
+      promotion_promoVersionInfo:
+        type: string
+        description: Promotion Text
+
+      type_translationType:
+        type: string
+        description: Translation Type
+        enum: ["First", "New", "Revision", "Study / Help Material", ""]
+
+      type_audience:
+        type: string
+        description: Audience
+        enum: ["Children", "Basic", "Common", "Common - Literary",
+               "Literary", "Literary - Liturgical", "Liturgical", ""]
+
+      type_media:
+        type: array
+        description: Media
+        items:
+          type: string
+          description: Medium
+          enum: ["Print", "Electronic", "Audio", "Video", ""]
+        default: []
+        example: ["Print", "Electronic"]
+
+      comments:
+        type: string
+        description: Comments
+
+      visibility:
+        type: boolean
+        description: Visibility
+        enum: ["Public", "Test or Training", "Confidential"]
+        default: "Public"
+
+      # <END GBC FIELDS>
+
+      revisionBase_name:
+        type: string
+        description: Full name of text this revision is based on
+
+      revisionBase_rightsHolders:
+        type: array
+        description: Rightsholders of the base text for this revision
+        items:
+          $ref: '#/definitions/OrgId'
+
+      # Are you expecting a financial return?
+      expectingFinancialReturn:
+        type: boolean
+        description: Financial Return Expectation
+
+      # Church or other faith community represented. UI needs to allow picking from a list or naming a new entry
+      faithCommunities:
+        type: array
+        description: Faith Communities
+        items:
+          type: string
+          description: Church or faith community
+        default: []
+
+      # In what respects is your translation unique? How does it relate to any existing translations?
+      projectDescription:
+        type: string
+
+      # What needs is this translation intended to address?
+      descriptionOfNeed:
+        type: string
+        description: Description of Need
+
+  ProjectProgress:
+    type: object
+    required:
+      - status
+    properties:
+      status:
+        type: string
+        enum: ["Projected", "Active", "Typesetting", "Completed", "Published", "Inactive", ""]
+      dateStarted:
+        type: string
+        format: date-time
+      dateCompleted:
+        type: string
+        format: date-time
+      dateExpectedCompletion:
+        type: string
+        format: date-time
+      dateComputerEstimatedCompletion:
+        type: string
+        format: date-time
+      dateProgressUpdated:
+        type: string
+        format: date-time
+        description: When the progress information was last updated.
+      dateProgressApproved:
+        type: string
+        format: date-time
+        description: When the progress information was last approved.
+      percentage:
+        type: number
+        minimum: 0
+        maximum: 100
+
+  ProgressRecord:
+    type: object
+    required:
+      - systemId
+      - books
+      - stages
+      - history
+    properties:
+      systemId:
+        $ref: '#/definitions/SystemId'
+      approved:
+        type: boolean
+        description: True if the latest progress data has been approved.
+      books:
+        type: array
+        description: Per-book progress information
+        items:
+          $ref: '#/definitions/BookProgress'
+      history:
+        type: array
+        description: Progress history
+        items:
+          type: object
+          required: ["name", "percentage"]
+          properties:
+            date:
+              type: date
+              example: "1996-12-01"
+            percentage:
+              type: number
+              example: 5.32
+            stages:
+              type: array
+              example: [100, 50, 0, 0]
+              items:
+                type: number
+      stages:
+        type: array
+        description: Stage information
+        items:
+          type: object
+          required: ["name", "percentage"]
+          properties:
+            name:
+              type: string
+              example: Stage 1
+            percentage:
+              type: number
+              example: 6.67
+
+  BookProgress:
+    type: object
+    required: ["id"]
+    properties:
+      id:
+        type: string
+        description: Book code
+        example: GEN
+      verses:
+        type: integer
+        description: Number of verses in this book
+        example: 1533
+      percentage:
+        type: number
+        description: Total percentage 0-100 of progress made in this book
+      stages:
+        type: array
+        description: Per-stage completion percentage
+        example: [100, 50, 0, 0]
+        items:
+          type: number
+      stageDifficulties:
+        type: array
+        description: Difficulty of each stage
+        example: [23.45, 12.01, 2.2, 2.3]
+        items:
+          type: number
+      stagesStarted:
+        type: array
+        description: Start date (or null) per stage
+        example: ["2018-01-01", "2018-12-01", "2018-12-01", "2018-12-01"]
+        items:
+          type: date
+          nullable: true
+      stagesCompleted:
+        type: array
+        description: Start date (or null) per stage
+        example: ["2018-12-01", "2019-01-01", "2019-02-01", "2019-03-01"]
+        items:
+          type: date
+          nullable: true
+
+  ExtendedProjectProgress:
+    allOf:
+      - $ref: '#/definitions/ProjectProgress'
+      - $ref: '#/definitions/ProgressRecord'
+
+  ProgressUpdate:
+    type: object
+    required:
+      - percentage
+      - percentages
+    properties:
+      date:
+        type: date
+        description: Date at which the progress was updated
+        example: "2019-04-05"
+      percentage:
+        type: number
+        description: Calculated percentage for the progress
+        example: 75.0
+      percentages:
+        type: object
+        description: Per-book per-stage percentages
+        example:
+          GEN: [100, 100, 100, 100]
+          EXO: [100, 50, 0, 0]
+        additionalProperties:
+          type: array
+          example: [100, 50, 3.45, 0]
+          items:
+            type: number
+
+  ProjectRegistration:
+    type: object
+    required:
+      - type
+      - licensedToParatextId
+      - licensedToOrgs
+      - issuedAt
+      - revoked
+      - signature
+    properties:
+      type:
+        type: string
+        description: License type granted to this project
+        enum: ["translator", "publisher"]
+      licensedToParatextId:
+        type: string
+        description: |
+          Snapshot of Paratext project ID at time of license generation (?),
+          so we know what went wrong if the license goes invalid
+        example: dbb4aeddf353585b42792940575442a70c09885b
+      licensedToOrgs:
+        type: array
+        description: Snapshot of agencies_rightsHolders (?)
+        items:
+          type: string
+          description: Organisation identifier
+          format: org-id
+          pattern: /^[0-9a-f]{24}$/
+          example: 5494956f5117ad586f2e2f40
+      issuedAt:
+        type: string
+        format: date-time
+        description: Date license requested.
+      expiresAt:
+        type: string
+        format: date-time
+        description: Date at which the license expires, or null if it doesn't
+      revoked:
+        type: boolean
+        description: True if the license has been revoked (this is rare)
+      signature:
+        type: string
+        description: |
+          Base-64 cryptographic signature that can be used to verify the
+          authenticity of this license
+
+  ProjectMember:
+    type: object
+    required: ["role"]
+    properties:
+      userId:
+        type: string
+        description: May be absent in the case of a Paratext 7 user.
+        example: DrPaKo7424xtzu3gu
+      username:
+        type: string
+        description: |
+          May be absent if the user has not yet obtained a registration code.
+      role:
+        type: string
+        description: Role of the user in the project
+        enum:
+          - pt_administrator
+          - pt_consultant
+          - pt_translator
+          - pt_observer
+          - pt_read
+          - pt_write_note
+
+  OrgMetadata:
+    type: object
+    required:
+      - id
+      - name
+      - parent
+    properties:
+      id:
+        type: string
+        description: |
+          Unique organisation identifier consisting of 24 alphanumeric
+          characters.
+        pattern: /^[0-9a-f]{24}$/
+        example: 5494956f5117ad586f2e2f40
+      name:
+        type: string
+        description: English name of the organisation.
+      nameLocal:
+        type: string
+        description: Name of the organisation in its native language.
+      abbr:
+        type: string
+        description: An abbreviation under which the organisation is known.
+      parent:
+        type: string
+        description: |
+          Identifier of the parent organisation.  Top-level organisations
+          should have a parent ID of 545d2cb003f5772898d5891d
+        format: org-id
+        pattern: /^[0-9a-f]{24}$/
+        default: 545d2cb003f5772898d5891d
+      in_dbl:
+        type: boolean
+        description: |
+          If true, indicates that this entry is managed in DBL.  This means
+          that the name, nameLocal, abbr, parent and url fields may not be
+          changed in the Registry.  Temporary field.
+      url:
+        type: string
+        description: URL of the organisation's web site
+        example: 'https://example.com'
+      country_iso:
+        type: string
+        description: |
+          ISO 3166 alpha-2 country code indicating where the organisation is
+          headquartered.
+        format: countryCode
+        pattern: /^[A-Z][A-Z]$/
+        example: US
+      location:
+        type: string
+        description: |
+          Location, normally a city, where the organisation is headquartered.
+      area:
+        type: string
+        description: Area in which the organisation is primarily active.
+        enum: ["Americas", "Europe", "Africa", "Asia", "Asia/Pacific", "Pacific"]
+      active:
+        type: boolean
+        description: Whether the organisation is currently active.
+      public:
+        type: boolean
+        description: |
+          Organisations not marked public are not visible to users who are not
+          a member of the organisation or a parent organisation.
+        default: false
+        example: true
+      domains:
+        type: array
+        description: |
+          List of e-mail domains used by the organisation.  This should only
+          include an e-mail domain if e-mail addresses under this domain are
+          exclusively available to people who belong to this organisation.
+        items:
+          type: string
+      authorizedForParatext:
+        type: boolean
+        description: Authorised for Paratext
+        default: false
+      shareBasicProgressInfo:
+        type: boolean
+        description: Share basic progress info
+
+  UserInfo:
+    type: object
+    required: ['sub']
+    properties:
+      sub:
+        type: string
+        description: The unique 17-character user identifier.
+      username:
+        type: string
+        description: The user's registration name, if their
+          registration has been completed.
+      primary_org_id:
+        type: string
+        description: |
+          The unique 24-characterorganisation identifier of the user's
+          primary organisation.
+      pt_approved:
+        type: boolean
+        description: If true, the user is an approved translator in
+          an organisation that is approved for Paratext.
+      picture:
+        type: string
+        description: URL to profile picture.
+  
+  UserRole:
+    type: object
+    properties:
+      orgId:
+        type: string
+        description: Unique organisation identifier consisting of 24 alphanumeric characters.
+        format: org-id
+        pattern: /^[0-9a-f]{24}$/
+        example: 5494956f5117ad586f2e2f40
+      type:
+        type: string
+        description: Role identifier
+      orgPath:
+        type: array
+        description: |
+          Ancestry of the organization.
+        items:
+          type: string
+          description: | 
+            The last 6 digits of an organization's 24-character
+            alphanumeric identifier.
+          pattern: /^[0-9a-f]{6}$/
+
+  LiveSession:
+    type: object
+    required: ['uri', 'queue']
+    properties:
+      sub:
+        type: string
+        description: URI to an AMQP server.
+        example: amqps://username:password@1.2.3.4:5671
+      queue:
+        type: string
+        description: Name of the queue to connect to.
+        example: Mtj91rM-X1RDoUEaggJQdAg5PhTM539-hdBcOBH0GgH

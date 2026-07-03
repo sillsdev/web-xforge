@@ -321,7 +321,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
             _realtimeOptions.Value.SecurePort,
             CertificatePath = certificatePath,
             PrivateKeyPath = privateKeyPath,
-            Authority = $"https://{_authOptions.Value.Domain}/",
+            Authority = _authOptions.Value.Authority,
             _authOptions.Value.Audience,
             _authOptions.Value.Scope,
             Origin = _configuration.GetValue<string>("Site:Origin"),

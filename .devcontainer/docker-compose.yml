@@ -35,8 +35,22 @@ services:
       - mongo-data:/data/db
       - mongo-config:/data/configdb
 
+  # Local mock servers for external services (Auth0, PT registry, PT archives, DBL).
+  # Used when the app runs with SF_MOCK_SERVICES=true; see src/MockServices/README.md.
+  mock-services:
+    image: node:20
+    restart: unless-stopped
+    working_dir: /workspaces/web-xforge/src/MockServices
+    volumes:
+      - ..:/workspaces/web-xforge:cached
+      - mock-services-data:/workspaces/web-xforge/src/MockServices/.data
+    command: sh -c "npm install --no-audit --no-fund && npm start"
+    ports:
+      - "5100:5100"
+
 volumes:
   mongo-data:
   mongo-config:
   scriptureforge-data:
   xforge-data:
+  mock-services-data:
