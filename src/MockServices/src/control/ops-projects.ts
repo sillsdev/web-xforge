@@ -47,7 +47,6 @@ export async function createProject(spec: CreateProjectSpec): Promise<MockProjec
 
   const dir = repoDir(ptId);
   await hg.init(dir);
-  fs.writeFileSync(path.join(dir, 'Settings.xml'), settingsXml(project));
   const books = [
     ...(spec.templateBooks ?? []).map(code => {
       const template = BOOK_TEMPLATES[code];
@@ -56,6 +55,14 @@ export async function createProject(spec: CreateProjectSpec): Promise<MockProjec
     }),
     ...(spec.books ?? [])
   ];
+  // Settings.xml must list the present books (BooksPresent) or SF syncs the project as blank.
+  fs.writeFileSync(
+    path.join(dir, 'Settings.xml'),
+    settingsXml(
+      project,
+      books.map(b => b.bookCode)
+    )
+  );
   for (const book of books) {
     fs.writeFileSync(path.join(dir, bookFileName(book.bookCode)), book.usfm);
   }
