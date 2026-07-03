@@ -11,24 +11,28 @@ export async function applyDefaultSeed(): Promise<void> {
     email: 'admin@mock.local',
     name: 'Mock Admin',
     authId: 'oauth2|paratext|mock-admin',
+    xfUserId: 'mockadmin000000000000001',
     paratext: { ptUserId: 'pt-user-admin', ptUsername: 'Mock Admin' }
   });
   const translator = createUser({
     email: 'translator@mock.local',
     name: 'Mock Translator',
     authId: 'oauth2|paratext|mock-translator',
+    xfUserId: 'mocktranslator0000000002',
     paratext: { ptUserId: 'pt-user-translator', ptUsername: 'Mock Translator' }
   });
   const observer = createUser({
     email: 'observer@mock.local',
     name: 'Mock Observer',
     authId: 'oauth2|paratext|mock-observer',
+    xfUserId: 'mockobserver000000000003',
     paratext: { ptUserId: 'pt-user-observer', ptUsername: 'Mock Observer' }
   });
   createUser({
     email: 'unlinked@mock.local',
     name: 'Mock Unlinked',
-    authId: 'auth0|mock-unlinked'
+    authId: 'auth0|mock-unlinked',
+    xfUserId: 'mockunlinked000000000004'
   });
 
   const source = await createProject({
