@@ -207,7 +207,8 @@ public class JwtInternetSharedRepositorySourceTests
                 MockHgWrapper,
                 ptUser,
                 "sr-server-uri",
-                Logger
+                Logger,
+                false
             );
             MockPTArchivesClient = Substitute.For<RESTClient>("pt-archives-server.example.com", "product-version-123");
             RepoSource.Configure().GetClient().Returns(MockPTArchivesClient);

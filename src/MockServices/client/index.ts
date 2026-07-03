@@ -93,6 +93,20 @@ export class MockServicesClient {
     return this.call('POST', '/projects', project);
   }
 
+  /**
+   * Imports an existing local Paratext project directory (an absolute path on the machine running
+   * mock-services). Members get linked mock users created automatically when missing.
+   */
+  importProject(
+    dir: string,
+    options: { registered?: boolean } = {}
+  ): Promise<{
+    project: { ptId: string; shortName: string };
+    createdUsers: { authId: string; name: string }[];
+  }> {
+    return this.call('POST', '/projects/import', { dir, ...options });
+  }
+
   /** Simulates an edit made in Paratext: commits into the server-side hg repo. */
   commit(ptId: string, change: CommitRequest): Promise<{ tipId: string }> {
     return this.call('POST', `/projects/${ptId}/commit`, change);

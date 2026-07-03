@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsPackable>false</IsPackable>
+    <!-- Same ICU4C/RID compatibility setting as SIL.XForge.Scripture (see its csproj). -->
+    <UseRidGraph>true</UseRidGraph>
+    <!-- Do not display NuGet package vulnerabilities as errors -->
+    <WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Keep in lockstep with the ParatextData version in SIL.XForge.Scripture.csproj so that
+         projects produced by this tool match what the SF backend parses. -->
+    <PackageReference Include="ParatextData" Version="9.5.0.24" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- ScrStylesheet resolves usfm.sty from the ScrTextCollection settings directory; the tool
+         installs this copy there at startup (same mechanism as ParatextService.InstallStyles). -->
+    <None Include="..\SIL.XForge.Scripture\usfm.sty" Link="usfm.sty" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

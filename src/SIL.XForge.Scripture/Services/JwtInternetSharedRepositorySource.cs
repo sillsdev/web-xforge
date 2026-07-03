@@ -51,6 +51,20 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
 
     public InternetSharedRepositorySource AsInternetSharedRepositorySource() => this;
 
+    /// <summary>
+    /// Determines whether send/receive is allowed for the project. Mock projects cannot pass the
+    /// base implementation's license check: it requires either a license.json in the project repo
+    /// or a registry license whose RSA signature verifies against Paratext's (private) signing
+    /// key, neither of which a local mock can produce. When running against mock services,
+    /// SharingLogic's Share1Project would therefore always fail, silently, with no failure
+    /// message — so allow send/receive unconditionally in that case.
+    /// </summary>
+    public override bool SendReceiveAllowedForProject(
+        ScrText scrText,
+        bool allowExpiredOrRevoked,
+        ProjectLicense license = null
+    ) => _mockServicesEnabled || base.SendReceiveAllowedForProject(scrText, allowExpiredOrRevoked, license);
+
     public bool CanUserAuthenticateToPTArchives()
     {
         try

@@ -25,7 +25,10 @@ can be replaced with local mocks: start [src/MockServices](src/MockServices) (`n
 the backend with `SF_MOCK_SERVICES=true`. Log in without credentials by POSTing
 `{"authId":"oauth2|paratext|mock-admin"}` to `http://localhost:5100/_control/next-login` and then
 clicking Log In. Scenarios (projects, Paratext-side edits, failure injection) are scripted via
-the control API — see [src/MockServices/README.md](src/MockServices/README.md).
+the control API — see [src/MockServices/README.md](src/MockServices/README.md). Test projects are
+created and modified through real ParatextData via [src/ParatextProjectTool](src/ParatextProjectTool)
+(create/commit ops and `import-project` for existing local Paratext project directories), so they
+can be connected, synced, and edited on either the Paratext or Scripture Forge side.
 
 ## Running commands
 
