@@ -3,7 +3,7 @@ import express from 'express';
 import { state } from '../state.js';
 import { applySeed, seedNames } from '../seeds/index.js';
 import { createUser } from './ops-users.js';
-import { commitToProject, createProject, setMembers } from './ops-projects.js';
+import { commitToProject, createProject, importProject, setMembers } from './ops-projects.js';
 import { createResource } from './ops-resources.js';
 import type { ChaosRule } from '../types.js';
 
@@ -45,6 +45,11 @@ controlRouter.post(
 controlRouter.post(
   '/projects',
   handle(req => createProject(req.body))
+);
+
+controlRouter.post(
+  '/projects/import',
+  handle(req => importProject(req.body))
 );
 
 controlRouter.post(

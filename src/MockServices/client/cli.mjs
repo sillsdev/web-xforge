@@ -5,6 +5,7 @@
 //   state
 //   user '{"email":"x@y","name":"X","paratext":{"ptUsername":"X"}}'
 //   project '{"shortName":"ABC","templateBooks":["RUT"],"members":[...]}'
+//   import-project /abs/path/to/ParatextProjectDir
 //   commit <ptId> '{"bookCode":"RUT","usfm":"\\id RUT ..."}'
 //   members <ptId> '[{"ptUserId":"...","role":"pt_translator"}]'
 //   resource '{"name":"Res"}'
@@ -41,6 +42,9 @@ switch (command) {
     break;
   case 'project':
     await call('POST', '/projects', json(rest[0]));
+    break;
+  case 'import-project':
+    await call('POST', '/projects/import', { dir: rest[0], ...json(rest[1]) });
     break;
   case 'commit':
     await call('POST', `/projects/${rest[0]}/commit`, json(rest[1]));

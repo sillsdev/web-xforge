@@ -23,6 +23,11 @@ npm install
 npm start                      # listens on http://localhost:5100, applies the default seed
 ```
 
+Project create/modify operations shell out to `src/ParatextProjectTool` (a small dotnet console
+tool that drives ParatextData — the same library and version the SF backend uses), so the dotnet
+SDK is a hard dependency of this package. The tool is built automatically (`dotnet build`) on the
+first project operation; set `MOCK_DOTNET_EXE` if `dotnet` is not on PATH.
+
 Then run the app against it:
 
 ```bash
@@ -81,6 +86,15 @@ await control.revokeTokens({ authId: "oauth2|paratext|mock-admin", kind: "parate
 `POST /_control/reset?seed=default` wipes state + repos and reapplies a seed (`src/seeds/`).
 `GET /_control/state` dumps everything for assertions.
 
+An existing local Paratext project directory (e.g. a real test project) can be imported as a
+mock project — its members get linked mock users created automatically, so any of them can log
+in and connect the project right away:
+
+```bash
+node client/cli.mjs import-project /path/to/MyParatextProject
+node client/cli.mjs next-login 'oauth2|paratext|<member-slug>'   # then click Log In
+```
+
 ## State model
 
 - Users/projects/resources/tokens: in-memory, snapshotted to `.data/state.json` (survives
@@ -88,6 +102,10 @@ await control.revokeTokens({ authId: "oauth2|paratext|mock-admin", kind: "parate
 - Project repositories: real hg repos under `.data/repos/{ptId}` — the source of truth for
   scripture content. "Simulate a Paratext edit" = write USFM + `hg commit` (that's what
   `/_control/projects/{ptId}/commit` does), so merge/conflict behavior is hg's real behavior.
+- Project files (Settings.xml, ProjectUserAccess.xml, book files) are written by ParatextData
+  itself via `src/ParatextProjectTool`, so file naming (`08RUT<ShortName>.SFM`), BooksPresent
+  bookkeeping, role strings and book-permission assignments are byte-faithful to real Paratext
+  output. The archives mock's `getfile` serves ProjectUserAccess.xml straight from the repo.
 - One RS256 keypair (`.data/mock-rsa-private-key.pem`, generated on first run) signs everything;
   registry/archives/DBL validate Bearer JWTs against it.
 
@@ -105,18 +123,21 @@ Known deviations from the real services (kept intentionally):
 - Interactive /authorize is a user picker with no passwords (mock world has no secrets).
 - DBL download serves the `.p8z` directly with 200 instead of a 302 to CloudFront (the client
   follows redirects, so behavior is equivalent).
-- `ProjectUserAccess.xml` and project `Settings.xml` are hand-written approximations; capture
-  from a real sync dir is an open task (spec §7).
+- Project licenses cannot be validly signed (Paratext's license-signing key is private), so in
+  mock mode the SF backend skips ParatextData's license gate
+  (`JwtInternetSharedRepositorySource.SendReceiveAllowedForProject`) — without this, every
+  send/receive would fail silently.
 - Access tokens default to 10-minute expiry (`MOCK_TOKEN_TTL` to change) so refresh paths
   actually get exercised.
 
 ## Environment variables
 
-| Var              | Default                         | Purpose                                                           |
-| ---------------- | ------------------------------- | ----------------------------------------------------------------- |
-| `MOCK_PORT`      | 5100                            | Listen port                                                       |
-| `MOCK_BASE_URL`  | `http://localhost:${MOCK_PORT}` | Must match the app's configured URLs; token `iss` derives from it |
-| `MOCK_DATA_DIR`  | `<package>/.data`               | Keys, snapshot, hg repos, p8z fixtures                            |
-| `MOCK_TOKEN_TTL` | 600                             | Access-token lifetime (seconds)                                   |
-| `MOCK_HG_EXE`    | `hg`                            | Mercurial executable (needs ≥4.1 for zstd-v2)                     |
-| `MOCK_QUIET`     | —                               | `true` silences request logging                                   |
+| Var               | Default                         | Purpose                                                           |
+| ----------------- | ------------------------------- | ----------------------------------------------------------------- |
+| `MOCK_PORT`       | 5100                            | Listen port                                                       |
+| `MOCK_BASE_URL`   | `http://localhost:${MOCK_PORT}` | Must match the app's configured URLs; token `iss` derives from it |
+| `MOCK_DATA_DIR`   | `<package>/.data`               | Keys, snapshot, hg repos, p8z fixtures                            |
+| `MOCK_TOKEN_TTL`  | 600                             | Access-token lifetime (seconds)                                   |
+| `MOCK_HG_EXE`     | `hg`                            | Mercurial executable (needs ≥4.1 for zstd-v2)                     |
+| `MOCK_DOTNET_EXE` | `dotnet`                        | dotnet CLI used to build/run ParatextProjectTool                  |
+| `MOCK_QUIET`      | —                               | `true` silences request logging                                   |

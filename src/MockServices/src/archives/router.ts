@@ -28,12 +28,13 @@
 
 import { Router, type Request, type Response } from 'express';
 import express from 'express';
+import fs from 'node:fs';
+import path from 'node:path';
 import { bearerToken } from '../jwt.js';
 import { verifyPtToken } from '../pt-tokens.js';
 import { state } from '../state.js';
 import * as hg from '../hg.js';
 import { repoDir } from '../control/ops-projects.js';
-import { projectUserAccessXml } from '../templates.js';
 import type { MockProject, MockUser } from '../types.js';
 
 export const archivesRouter = Router();
@@ -293,7 +294,8 @@ function checkLock(project: MockProject, user: MockUser): string | null {
   return null;
 }
 
-// GET getfile — base64 body; ProjectUserAccess.xml is generated; unknown file -> 410.
+// GET getfile — base64 body; ProjectUserAccess.xml is served from the repo working dir (the file
+// there was written by ParatextData via ParatextProjectTool); unknown file -> 410.
 archivesRouter.get('/getfile', (req, res) => {
   const user = authUser(req);
   if (!user) return void res.status(401).type('text/plain').send('unauthorized');
@@ -301,9 +303,10 @@ archivesRouter.get('/getfile', (req, res) => {
   if (!resolved) return;
   const filename = String(req.query.filename ?? '');
   if (filename === 'ProjectUserAccess.xml') {
-    const xml = projectUserAccessXml(resolved.project.members);
+    const filePath = path.join(repoDir(resolved.project.ptId), 'ProjectUserAccess.xml');
+    if (!fs.existsSync(filePath)) return void res.status(410).type('text/plain').send('file not available');
     // GetFile: raw base64 body (not the <data> wrapper). Client trims then base64-decodes.
-    return void res.type('text/plain').send(Buffer.from(xml, 'utf8').toString('base64'));
+    return void res.type('text/plain').send(fs.readFileSync(filePath).toString('base64'));
   }
   res.status(410).type('text/plain').send('file not available');
 });

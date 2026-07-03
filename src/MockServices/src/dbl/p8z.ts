@@ -26,7 +26,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { RESOURCES_DIR } from '../config.js';
-import { BOOK_TEMPLATES, bookFileName } from '../templates.js';
+import { BOOK_TEMPLATES, resourceBookFileName } from '../templates.js';
 import type { MockResource } from '../types.js';
 
 /** Stable dummy checksum derived from resource id + suffix. Not a real hash of the file. */
@@ -103,7 +103,7 @@ export async function buildP8z(resource: MockResource, templateBooks: string[]):
       console.warn(`[mock/p8z] unknown book code ${bookCode} — skipping`);
       continue;
     }
-    zip.addFile(bookFileName(bookCode), Buffer.from(tmpl.usfm, 'utf8'));
+    zip.addFile(resourceBookFileName(bookCode), Buffer.from(tmpl.usfm, 'utf8'));
   }
 
   const outPath = path.join(RESOURCES_DIR, `${resource.id}.p8z`);
