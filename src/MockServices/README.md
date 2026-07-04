@@ -102,7 +102,9 @@ avatars) is redirected to a gitignored `.sf-local-data/` folder at the repo root
 required subdirectories are created automatically at startup (see `Program.cs`). This keeps mock
 data out of `/var/lib` and out of your real dev data, and is separate from `xforge_mock` (Mongo).
 
-In the dev container, the `mock-services` compose service runs this package automatically.
+In the dev container, run this package inside the app container (`npm start` here) — it needs
+the dotnet SDK and hg, both of which the app container has, and the app reaches it via the
+localhost URLs in `appsettings.Mock.json`.
 
 ## Local Serval (pre-translation drafting)
 
