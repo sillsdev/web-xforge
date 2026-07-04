@@ -9,6 +9,7 @@
   },
   "scripts": {
     "start": "tsx src/server.ts",
+    "serval": "scripts/run-serval.sh",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

@@ -276,7 +276,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         JObject? license = GetJson<JObject>($"projects/{paratextId}/license");
         if (license is null)
             return null;
-        var projectLicense = new ProjectLicense(license);
+        ProjectLicense projectLicense = CreateProjectLicense(license);
         if (projectLicense.IsInvalid || projectLicense.IsExpired)
             return null;
         return projectLicense;
@@ -318,15 +318,43 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         List<ProjectLicense> result = [];
         foreach (JObject license in licenses.Cast<JObject>())
         {
-            var projLicense = new ProjectLicense(license);
-            // Mock license responses can't carry a valid Paratext RSA signature, so they always
-            // report IsInvalid. Keep them anyway when running against mock services so the repo
-            // list isn't silently emptied; the license's ProjectId is still populated.
+            ProjectLicense projLicense = CreateProjectLicense(license);
             if (!_mockServicesEnabled && (projLicense.IsInvalid || projLicense.IsExpired))
                 continue;
             result.Add(projLicense);
         }
         return result;
+    }
+
+    /// <summary>
+    /// Creates a <see cref="ProjectLicense"/> from a registry license response. Mock license
+    /// responses can't carry a valid Paratext RSA signature (the signing key is private), so
+    /// ParatextData's validation leaves them invalid with a null ProjectId — which makes
+    /// GetRepositories drop every repo (it matches repos to licenses by ProjectId) and every
+    /// license gate fail. When running against mock services, repair the license via reflection
+    /// so it behaves like a valid one.
+    /// </summary>
+    private ProjectLicense CreateProjectLicense(JObject license)
+    {
+        var projectLicense = new ProjectLicense(license);
+        if (!_mockServicesEnabled || !projectLicense.IsInvalid)
+            return projectLicense;
+        try
+        {
+            const System.Reflection.BindingFlags privateInstance =
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+            Type type = typeof(ProjectLicense);
+            HexId? projectId = HexId.FromStr((string)license["licensedToParatextId"]);
+            type.GetField("projectId", privateInstance)?.SetValue(projectLicense, projectId);
+            type.GetField("registryId", privateInstance)?.SetValue(projectLicense, (string)license["_id"] ?? "");
+            type.GetField("isInvalid", privateInstance)?.SetValue(projectLicense, false);
+            type.GetField("isLimited", privateInstance)?.SetValue(projectLicense, false);
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Failed to repair a mock project license; sync will likely fail.");
+        }
+        return projectLicense;
     }
 
     private T? GetJson<T>(string cgiCall)

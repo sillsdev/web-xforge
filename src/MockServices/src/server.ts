@@ -1,6 +1,8 @@
 import express from 'express';
 import fs from 'node:fs';
-import { BASE_URL, DATA_DIR, PORT, REPOS_DIR, RESOURCES_DIR } from './config.js';
+import https from 'node:https';
+import { BASE_URL, DATA_DIR, PORT, REPOS_DIR, RESOURCES_DIR, TLS_BASE_URL, TLS_PORT } from './config.js';
+import { loadOrCreateTlsCert } from './keys.js';
 import { chaosFor } from './chaos.js';
 import { state } from './state.js';
 import { applySeed } from './seeds/index.js';
@@ -30,10 +32,7 @@ app.use((req, res, next) => {
   res.setHeader('Vary', 'Origin');
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-    res.setHeader(
-      'Access-Control-Allow-Headers',
-      (req.headers['access-control-request-headers'] as string) ?? '*'
-    );
+    res.setHeader('Access-Control-Allow-Headers', (req.headers['access-control-request-headers'] as string) ?? '*');
     res.setHeader('Access-Control-Max-Age', '86400');
     res.status(204).end();
     return;
@@ -68,4 +67,11 @@ if (!state.load()) {
 
 app.listen(PORT, () => {
   console.log(`[mock] sf-mock-services listening on ${BASE_URL} (seed: ${state.seedName})`);
+});
+
+// HTTPS listener for clients that require a TLS authority (a local Serval validates SF's tokens
+// against https://…/auth0/). Self-signed: point such clients at the cert via SSL_CERT_FILE.
+const tls = loadOrCreateTlsCert();
+https.createServer({ cert: tls.cert, key: tls.key }, app).listen(TLS_PORT, () => {
+  console.log(`[mock] TLS listener on ${TLS_BASE_URL} (cert: ${tls.certPath})`);
 });

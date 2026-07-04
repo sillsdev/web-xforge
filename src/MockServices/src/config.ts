@@ -11,6 +11,41 @@ export const BASE_URL = process.env.MOCK_BASE_URL ?? `http://localhost:${PORT}`;
 export const AUTH0_ISSUER = `${BASE_URL}/auth0/`;
 export const REGISTRY_ISSUER = `${BASE_URL}/registry/`;
 
+/**
+ * HTTPS listener. Serval's ApiServer builds its Auth0 authority as "https://{Auth:Domain}/"
+ * (scheme hardcoded), so the fake Auth0 must also be reachable over TLS for local Serval to
+ * validate SF's tokens. The self-signed certificate lives in the data dir; point Serval's
+ * process at it with SSL_CERT_FILE.
+ */
+export const TLS_PORT = Number(process.env.MOCK_TLS_PORT ?? 5101);
+export const TLS_BASE_URL = process.env.MOCK_TLS_BASE_URL ?? `https://localhost:${TLS_PORT}`;
+/** Issuer of tokens minted for Serval; must byte-match Serval's Auth:Domain-derived authority. */
+export const AUTH0_TLS_ISSUER = `${TLS_BASE_URL}/auth0/`;
+
+/** Serval client-credentials client (SF's Serval:ClientId/Secret in appsettings.Mock.json). */
+export const SERVAL_AUDIENCE = 'https://serval-api.org/';
+export const SERVAL_CLIENT_ID = 'sf-mock-serval-client';
+export const SERVAL_CLIENT_SECRET = 'sf-mock-serval-secret';
+/** All scopes Serval's API policies check (Serval Scopes.All). */
+export const SERVAL_SCOPE = [
+  'create:translation_engines',
+  'read:translation_engines',
+  'update:translation_engines',
+  'delete:translation_engines',
+  'create:word_alignment_engines',
+  'read:word_alignment_engines',
+  'update:word_alignment_engines',
+  'delete:word_alignment_engines',
+  'create:hooks',
+  'read:hooks',
+  'delete:hooks',
+  'create:files',
+  'read:files',
+  'update:files',
+  'delete:files',
+  'read:status'
+].join(' ');
+
 export const AUDIENCE = 'https://scriptureforge.org/';
 export const MANAGEMENT_AUDIENCE = `${BASE_URL}/auth0/api/v2/`;
 export const FRONTEND_CLIENT_ID = 'sf-mock-frontend-client';

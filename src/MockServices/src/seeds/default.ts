@@ -34,6 +34,15 @@ export async function applyDefaultSeed(): Promise<void> {
     authId: 'auth0|mock-unlinked',
     xfUserId: 'mockunlinked000000000004'
   });
+  // Serval administrator: can enable pre-translation drafting on projects (Serval Administration
+  // page), which the draft-generation flow requires.
+  createUser({
+    email: 'serval-admin@mock.local',
+    name: 'Mock Serval Admin',
+    authId: 'auth0|mock-serval-admin',
+    xfUserId: 'mockservaladmin000000005',
+    sfRole: 'serval_admin'
+  });
 
   const source = await createProject({
     shortName: 'MSRC',

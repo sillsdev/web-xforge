@@ -4,10 +4,15 @@ import {
   ACCESS_TOKEN_TTL_SECONDS,
   AUDIENCE,
   AUTH0_ISSUER,
+  AUTH0_TLS_ISSUER,
   BACKEND_CLIENT_ID,
   BACKEND_CLIENT_SECRET,
   MANAGEMENT_AUDIENCE,
   REFRESH_ROTATION_GRACE_SECONDS,
+  SERVAL_AUDIENCE,
+  SERVAL_CLIENT_ID,
+  SERVAL_CLIENT_SECRET,
+  SERVAL_SCOPE,
   USER_SCOPE
 } from '../config.js';
 import { bearerToken, signJwt, verifyJwt } from '../jwt.js';
@@ -31,13 +36,16 @@ auth0Router.use(express.urlencoded({ extended: true }));
 const CUSTOM_CLAIM_USER_ID = 'http://xforge.org/userid';
 const CUSTOM_CLAIM_ROLE = 'http://xforge.org/role';
 
-auth0Router.get('/.well-known/openid-configuration', (_req, res) => {
+auth0Router.get('/.well-known/openid-configuration', (req, res) => {
+  // Clients arriving over the HTTPS listener (a local Serval validating SF's tokens) must see
+  // the TLS issuer; JwtBearer requires token iss to byte-match the discovery document's issuer.
+  const issuer = req.secure ? AUTH0_TLS_ISSUER : AUTH0_ISSUER;
   res.json({
-    issuer: AUTH0_ISSUER,
-    authorization_endpoint: `${AUTH0_ISSUER}authorize`,
-    token_endpoint: `${AUTH0_ISSUER}oauth/token`,
-    userinfo_endpoint: `${AUTH0_ISSUER}userinfo`,
-    jwks_uri: `${AUTH0_ISSUER}.well-known/jwks.json`,
+    issuer,
+    authorization_endpoint: `${issuer}authorize`,
+    token_endpoint: `${issuer}oauth/token`,
+    userinfo_endpoint: `${issuer}userinfo`,
+    jwks_uri: `${issuer}.well-known/jwks.json`,
     response_types_supported: ['code'],
     subject_types_supported: ['public'],
     id_token_signing_alg_values_supported: ['RS256'],
@@ -183,6 +191,17 @@ function interactiveLoginPage(req: express.Request): string {
 
 auth0Router.post('/oauth/token', (req, res) => {
   const body = req.body as Record<string, string | undefined>;
+  // Clients may authenticate with HTTP Basic instead of body credentials (client_secret_basic —
+  // e.g. Duende.AccessTokenManagement, which SF uses for Serval tokens).
+  const authHeader = req.headers.authorization;
+  if (body.client_id === undefined && authHeader?.startsWith('Basic ') === true) {
+    const decoded = Buffer.from(authHeader.slice('Basic '.length), 'base64').toString('utf8');
+    const separator = decoded.indexOf(':');
+    if (separator > 0) {
+      body.client_id = decodeURIComponent(decoded.slice(0, separator));
+      body.client_secret = decodeURIComponent(decoded.slice(separator + 1));
+    }
+  }
   const fail = (status: number, error: string, description: string): void => {
     res.status(status).json({ error, error_description: description });
   };
@@ -238,6 +257,30 @@ auth0Router.post('/oauth/token', (req, res) => {
     }
 
     case 'client_credentials': {
+      // Serval tokens: SF's Duende token client (Serval:ClientId/TokenUrl) requests these; a
+      // local Serval validates them against the HTTPS listener, so they carry the TLS issuer.
+      if (body.client_id === SERVAL_CLIENT_ID) {
+        if (body.client_secret !== SERVAL_CLIENT_SECRET) {
+          return fail(401, 'access_denied', 'Bad secret for Serval client');
+        }
+        if (body.audience !== SERVAL_AUDIENCE) {
+          return fail(403, 'access_denied', `Unexpected audience ${body.audience}`);
+        }
+        const servalToken = signJwt(
+          { azp: body.client_id, scope: SERVAL_SCOPE, gty: 'client-credentials' },
+          {
+            issuer: AUTH0_TLS_ISSUER,
+            audience: SERVAL_AUDIENCE,
+            subject: `${body.client_id}@clients`,
+            expiresInSeconds: ACCESS_TOKEN_TTL_SECONDS
+          }
+        );
+        return void res.json({
+          access_token: servalToken,
+          expires_in: ACCESS_TOKEN_TTL_SECONDS,
+          token_type: 'Bearer'
+        });
+      }
       if (body.client_id !== BACKEND_CLIENT_ID || body.client_secret !== BACKEND_CLIENT_SECRET) {
         return fail(401, 'access_denied', 'Unknown client or bad secret');
       }
