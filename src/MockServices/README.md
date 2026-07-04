@@ -15,6 +15,9 @@ One Node/TypeScript process, one port (**5100**), path-prefixed services:
 | `/dbl`                                | Mock DBL resources adapter: resource list + `.p8z` download                                                                                                                |
 | `/_control`                           | Control API for scenario scripting (reset/seed, users, projects, commits, chaos)                                                                                           |
 
+Serval (machine translation / drafting) is handled differently: the **real Serval application**
+runs locally with its echo engine — see "Local Serval" below.
+
 ## Quick start
 
 ```bash
@@ -47,6 +50,33 @@ data out of `/var/lib` and out of your real dev data, and is separate from `xfor
 
 In the dev container, the `mock-services` compose service runs this package automatically.
 
+## Local Serval (pre-translation drafting)
+
+Serval is not mocked — the real Serval application (sillsdev/serval, pinned to the release
+matching the backend's Serval.Client version) runs locally with its in-process **Echo** engine,
+which makes the whole Generate-draft flow work without ClearML/GPU infrastructure:
+
+```bash
+npm run serval        # clones + builds + runs Serval.ApiServer on http://localhost:5150
+```
+
+Requirements: MongoDB running as a single-node replica set (Serval's build long-polling uses
+change streams — `mongod --replSet rs0` + `rs.initiate()`), and mock-services started once first
+(it generates the TLS certificate Serval needs, see below).
+
+How the pieces fit (already configured in `appsettings.Mock.json`):
+
+- SF requests Serval tokens from the fake Auth0 (`Serval:TokenUrl`, client-credentials with
+  HTTP Basic) using the mock client `sf-mock-serval-client`.
+- Serval's auth authority scheme is hardcoded `https`, so mock-services also listens on
+  **https://localhost:5101** (self-signed; `.data/mock-tls-cert.pem`). Serval-audience tokens
+  carry that TLS issuer, and `run-serval.sh` points Serval's process at the certificate via
+  `SSL_CERT_FILE`.
+- In the UI: log in as `serval-admin@mock.local` to enable "Pre-Translation Drafting Enabled" on
+  a project (Serval Administration), then as a project admin enable developer mode (click the
+  version number 7×), Generate draft → Advanced → "Use Echo Translation Engine". The echo
+  engine requires source and target languages to match and echoes the source as the draft.
+
 ### One-time Paratext setup for sync (send/receive)
 
 ParatextData refuses network access unless its `InternetSettings.xml`
@@ -65,7 +95,8 @@ node client/cli.mjs next-login 'oauth2|paratext|mock-admin'
 ```
 
 or pass `login_hint=<email>` on /authorize. Default seed users: `admin@mock.local`,
-`translator@mock.local`, `observer@mock.local` (Paratext-linked), `unlinked@mock.local`.
+`translator@mock.local`, `observer@mock.local` (Paratext-linked), `unlinked@mock.local`, and
+`serval-admin@mock.local` (system role `serval_admin`, for the Serval Administration page).
 
 ## Scenario scripting (control API)
 

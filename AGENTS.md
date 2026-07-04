@@ -28,7 +28,9 @@ clicking Log In. Scenarios (projects, Paratext-side edits, failure injection) ar
 the control API — see [src/MockServices/README.md](src/MockServices/README.md). Test projects are
 created and modified through real ParatextData via [src/ParatextProjectTool](src/ParatextProjectTool)
 (create/commit ops and `import-project` for existing local Paratext project directories), so they
-can be connected, synced, and edited on either the Paratext or Scripture Forge side.
+can be connected, synced, and edited on either the Paratext or Scripture Forge side. Serval runs
+for real, locally, with its echo engine (`npm run serval` in src/MockServices), so pre-translation
+draft generation also works end to end.
 
 ## Running commands
 
