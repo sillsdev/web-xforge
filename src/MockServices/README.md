@@ -18,6 +18,60 @@ One Node/TypeScript process, one port (**5100**), path-prefixed services:
 Serval (machine translation / drafting) is handled differently: the **real Serval application**
 runs locally with its echo engine — see "Local Serval" below.
 
+## Agent playbook (start here)
+
+Working against the mock system means having four processes up (Mongo, mock-services, the
+Angular dev server, the SF backend) and driving the app in a browser. The two scripts below make
+that mechanical:
+
+```bash
+src/MockServices/scripts/doctor.sh     # says what is down and prints the exact command to fix it
+```
+
+Run it, apply the fixes it prints, and re-run until everything is `[ok]`. All four processes
+(Mongo, mock-services, `ng serve`, the backend) run **simultaneously** — start each one in the
+background and leave it running. Two rules that are easy to get wrong:
+
+- Run the backend with `SF_MOCK_SERVICES=true dotnet run --start-ng-serve listen` and run
+  `npm run start:mock` (ClientApp) yourself. Plain `dotnet run`'s Angular auto-launch waits for
+  output modern Angular never prints, times out after 120 s, and then every `/login` request
+  returns 500 for the life of the process.
+- Give servers time: the Angular dev server takes minutes on a cold build; the backend takes
+  ~30 s. `doctor.sh` passing is the signal to proceed.
+
+Then drive the app headlessly — no Playwright code needed (defaults to the seeded admin user;
+`--as <authId>` to act as someone else):
+
+```bash
+cd src/MockServices
+node scripts/drive.mjs projects                              # what the user sees; SF project ids
+node scripts/drive.mjs connect MSRC                          # connect + initial sync
+node scripts/drive.mjs sync MSRC                             # Sync with Paratext, reports SUCCESS/FAILED
+node scripts/drive.mjs text '/projects/@MSRC/translate/RUT/1'   # page text (@SHORT → SF project id)
+node scripts/drive.mjs shot '/projects/@MSRC' page.png       # screenshot any page
+```
+
+Scenario setup (users, projects, Paratext-side edits, failure injection) goes through the
+control API (`client/cli.mjs`, below). A typical bug-reproduction loop:
+
+```bash
+node client/cli.mjs state | head -50                                  # ids of seeded users/projects
+node scripts/drive.mjs connect MSRC                                   # get the project into SF
+node client/cli.mjs commit <ptId> '{"bookCode":"RUT","usfm":"\\id RUT ..."}'   # "edit made in Paratext"
+node scripts/drive.mjs sync MSRC                                      # pull it into SF
+node scripts/drive.mjs text '/projects/@MSRC/translate/RUT/1'         # observe the result
+```
+
+To verify a backend fix: rebuild + restart the backend (kill the `dotnet run` process, start it
+again with the same command), then repeat the reproduction. Mongo state for assertions lives in
+the `xforge_mock` database (`mongosh xforge_mock`). `node client/cli.mjs summary` prints the
+mock's users/projects/resources compactly.
+
+To start over from a clean slate use `scripts/reset-all.sh` (then restart the backend). A plain
+control-API `reset` only clears mock-services state — the SF side (Mongo `xforge_mock` and the
+backend's project clones under `.sf-local-data/`) survives, and a stale clone makes re-connecting
+a project fail with "A directory for this project already exists".
+
 ## Quick start
 
 ```bash

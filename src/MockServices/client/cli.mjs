@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Human/agent-friendly CLI for the mock-services control API.
 // Usage: node client/cli.mjs <command> [json-args]   (or via the sf-mock bin)
-//   reset [seedName]
+//   reset [seedName]      (mock state only — see scripts/reset-all.sh for a full reset)
 //   state
+//   summary               (compact: users, projects, resources)
 //   user '{"email":"x@y","name":"X","paratext":{"ptUsername":"X"}}'
 //   project '{"shortName":"ABC","templateBooks":["RUT"],"members":[...]}'
 //   import-project /abs/path/to/ParatextProjectDir
@@ -37,6 +38,25 @@ switch (command) {
   case 'state':
     await call('GET', '/state');
     break;
+  case 'summary': {
+    const response = await fetch(`${base}/_control/state`);
+    const state = await response.json();
+    console.log(`seed: ${state.seedName}`);
+    console.log('users:');
+    for (const u of state.users) {
+      console.log(
+        `  ${u.authId}  ${u.name}  ${u.sfRole ?? ''}  ${u.paratext ? `pt=${u.paratext.ptUserId}` : ''}`.trimEnd()
+      );
+    }
+    console.log('projects:');
+    for (const p of state.projects) {
+      const members = p.members.map(m => `${m.ptUserId}:${m.role.replace('pt_', '')}`).join(', ');
+      console.log(`  ${p.ptId}  ${p.shortName} (${p.fullName})  members: ${members}`);
+    }
+    console.log('resources:');
+    for (const r of state.resources) console.log(`  ${r.id}  ${r.name} (${r.fullname})`);
+    break;
+  }
   case 'user':
     await call('POST', '/users', json(rest[0]));
     break;

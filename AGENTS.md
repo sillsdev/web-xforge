@@ -21,11 +21,17 @@ The software and a backing database can be run using the [dev container](.devcon
 ## Local mock services
 
 External dependencies (Auth0, Paratext registry, Paratext send/receive archives, DBL resources)
-can be replaced with local mocks: start [src/MockServices](src/MockServices) (`npm start`) and run
-the backend with `SF_MOCK_SERVICES=true`. Log in without credentials by POSTing
-`{"authId":"oauth2|paratext|mock-admin"}` to `http://localhost:5100/_control/next-login` and then
-clicking Log In. Scenarios (projects, Paratext-side edits, failure injection) are scripted via
-the control API — see [src/MockServices/README.md](src/MockServices/README.md). Test projects are
+can be replaced with local mocks so the whole app runs and is testable offline. To use the mock
+system:
+
+1. Run `src/MockServices/scripts/doctor.sh` — it reports what is down and prints the exact
+   command to fix each thing. Re-run until everything is `[ok]`.
+2. Drive the app headlessly with `src/MockServices/scripts/drive.mjs`
+   (`projects` / `connect` / `sync` / `text` / `shot`) and script scenarios (users, projects,
+   Paratext-side edits, failure injection) with `src/MockServices/client/cli.mjs`.
+
+The "Agent playbook" section of [src/MockServices/README.md](src/MockServices/README.md) has
+copy-paste examples, including a full bug-reproduction loop. Test projects are
 created and modified through real ParatextData via [src/ParatextProjectTool](src/ParatextProjectTool)
 (create/commit ops and `import-project` for existing local Paratext project directories), so they
 can be connected, synced, and edited on either the Paratext or Scripture Forge side. Serval runs
