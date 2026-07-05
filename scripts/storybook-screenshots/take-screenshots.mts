@@ -18,7 +18,7 @@
  */
 
 import { join, resolve } from 'node:path';
-import { chromium, type Browser, type BrowserContext, type Page } from 'npm:playwright@1.56.1';
+import { chromium, type Browser, type BrowserContext, type Page } from 'npm:playwright@1.60.0';
 
 /**
  * The browser window object extended with Storybook's internal preview global and the story

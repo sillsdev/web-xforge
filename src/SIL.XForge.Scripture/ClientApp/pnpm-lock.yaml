@@ -226,7 +226,7 @@ importers:
         specifier: ^1.1.19
         version: 1.2.1(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)(keycharm@0.4.0)(typescript@5.9.3)(vis-data@8.0.4(uuid@8.3.2)(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0)))(vis-util@6.0.0(@egjs/hammerjs@2.0.17)(component-emitter@2.0.0))
       '@playwright/test':
-        specifier: ^1.56.1
+        specifier: ^1.60.0
         version: 1.60.0
       '@storybook/addon-docs':
         specifier: 10.2.14
@@ -382,7 +382,7 @@ importers:
         specifier: ^7.1.0
         version: 7.2.0
       playwright:
-        specifier: ^1.56.1
+        specifier: ^1.60.0
         version: 1.60.0
       prettier:
         specifier: ^3.3.3
