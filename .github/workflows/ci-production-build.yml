@@ -21,7 +21,7 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
         os: [ubuntu-latest]
 
     steps:

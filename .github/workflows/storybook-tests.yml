@@ -16,7 +16,7 @@ jobs:
         os: ["ubuntu-24.04"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
