@@ -2,11 +2,7 @@
   @if (translationSuggestionsEnabled && userHasGeneralEditRight) {
     <app-smt-retirement-notice></app-smt-retirement-notice>
   }
-  <div
-    class="content"
-    [class.reverse-columns]="!isTargetTextRight"
-    [class.target-only]="!showSource && !showPersistedTabsOnSource"
-  >
+  <div class="content" [class.reverse-columns]="!isTargetTextRight" [class.target-only]="!showSourceTab">
     <div class="toolbar">
       <div class="toolbar-options">
         <app-book-chapter-chooser
@@ -16,9 +12,9 @@
           [(chapter)]="chapter"
           [chapters]="chapters"
         ></app-book-chapter-chooser>
-        @if (showSource || translatorSettingsEnabled) {
+        @if (showSourceTab || translatorSettingsEnabled) {
           <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !translatorSettingsEnabled }">&nbsp;</div>
-          @if (showSource) {
+          @if (showSourceTab) {
             <button
               mat-icon-button
               appBlurOnClick
@@ -82,6 +78,13 @@
                   [verse]="verse"
                   [projectId]="projectId"
                 ></app-biblical-terms>
+              }
+              @case ("blank-tab") {
+                <div class="blank-tab-container">
+                  <app-notice icon="help_outline" type="info" mode="outline">
+                    {{ t("blank_tab_notice") }}
+                  </app-notice>
+                </div>
               }
               @case ("project-resource") {
                 <app-editor-resource

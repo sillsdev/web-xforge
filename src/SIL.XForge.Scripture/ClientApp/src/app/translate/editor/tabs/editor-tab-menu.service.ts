@@ -173,6 +173,7 @@ export class EditorTabMenuService implements TabMenuService<EditorTabGroupType> 
   }
 
   private canShowResource(projectDoc: SFProjectProfileDoc): boolean {
-    return this.permissionsService.canSync(projectDoc, this.userService.currentUserId);
+    if (projectDoc.data == null) return false;
+    return isParatextRole(projectDoc.data.userRoles[this.userService.currentUserId]);
   }
 }
