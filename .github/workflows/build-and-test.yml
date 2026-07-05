@@ -21,7 +21,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
       # Continue building in other environments to see which are working.
       fail-fast: false
     runs-on: ${{matrix.os}}
@@ -148,7 +148,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
       fail-fast: false
     runs-on: ${{matrix.os}}
     steps:

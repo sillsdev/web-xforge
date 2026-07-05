@@ -20,7 +20,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
     if: |
       github.event_name != 'pull_request' ||
       contains(github.event.pull_request.labels.*.name, 'e2e') ||
@@ -91,7 +91,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -168,7 +168,7 @@ jobs:
       matrix:
         os: ["ubuntu-24.04"]
         dotnet_version: ["10.0.x"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -255,7 +255,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -323,7 +323,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.9.0"]
+        pnpm_version: ["11.10.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
