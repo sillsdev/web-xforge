@@ -7,13 +7,14 @@ ARG UBUNTU_NAME=noble # 24.04
 
 FROM mcr.microsoft.com/dotnet/aspnet:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS base
 WORKDIR /app
+ARG PNPM_VERSION
 # Setup Volumes
 VOLUME /var/lib/scriptureforge
 VOLUME /var/lib/xforge
 # Add Ubuntu Mirrors
 RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#g' /etc/apt/sources.list
 # Install Node Repository
-RUN apt-get update --fix-missing && apt-get install -y \
+RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
@@ -45,6 +46,7 @@ EXPOSE 5000
 FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS build
 ARG configuration=Release
 WORKDIR /src
+ARG PNPM_VERSION
 # Add Ubuntu Mirrors
 RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#g' /etc/apt/sources.list
 # Install Node Repository

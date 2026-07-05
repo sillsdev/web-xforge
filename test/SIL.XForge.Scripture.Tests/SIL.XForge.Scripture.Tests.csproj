@@ -48,7 +48,7 @@
     </Exec>
     <Error Condition="'$(ErrorCode)' != '0'" Text="pnpm is required to build and run this project. To continue, please install pnpm, and then restart your command prompt or IDE." />
   </Target>
-  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths" Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths">
     <Message Importance="high" Text="Building real-time server..." />
     <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm install" Condition="!Exists('$(RealtimeServerRoot)node_modules') Or '$(NpmInstall)' == 'true'" />
     <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm run build" Condition="Exists('$(RealtimeServerRoot)node_modules') And '$(NpmInstall)' != 'true' " />

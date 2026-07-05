@@ -24,6 +24,7 @@ FROM node:${NODE_VERSION} AS base
 # Build RealtimeServer node application
 FROM base AS build
 WORKDIR /src
+ARG PNPM_VERSION
 COPY src/RealtimeServer .
 RUN npm install --global pnpm@$PNPM_VERSION
 RUN pnpm ci
