@@ -334,6 +334,8 @@
     "error_occurred_login": "An error occurred during login.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
+    "login": "Log in",
+    "login_expired": "Your log in has expired. Please log in again.",
     "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
     "go_to_retrain": "Go to Overview",
     "try_again": "Try Again"
