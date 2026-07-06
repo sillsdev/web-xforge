@@ -1372,6 +1372,22 @@ public class ParatextService : DisposableBase, IParatextService
             nt.Data.Notes.Any(n => !n.Deleted)
         );
 
+        // CommentManager.FindThread scans every comment in the project to build the requested
+        // thread, so calling it once per thread doc is quadratic in the number of threads -
+        // multi-minute syncs on projects with tens of thousands of (mostly resolved) threads.
+        // Build one lookup from the manager's cached thread list instead. The cached threads have
+        // the same comments in the same order as FindThread would return (both are grouped and
+        // ordered by the Comment sort order).
+        Dictionary<string, CommentThread> commentThreadsById = [];
+        foreach (CommentThread commentThread in commentManager.FindThreads())
+        {
+            commentThreadsById.TryAdd(commentThread.Id, commentThread);
+        }
+
+        // Verse text is reconstructed from a chapter's delta on every anchor computation; threads
+        // frequently share verses, so cache it per verse for the duration of this call.
+        var verseTextCache = new Dictionary<(int chapterNum, string verse), string>();
+
         foreach (var threadDoc in activeNoteThreadDocs)
         {
             List<string> matchedCommentIds = [];
@@ -1388,7 +1404,7 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.ExtraHeadingInfo
             );
             // Find the corresponding comment thread
-            CommentThread? existingThread = commentManager.FindThread(threadDoc.Data.ThreadId);
+            commentThreadsById.TryGetValue(threadDoc.Data.ThreadId, out CommentThread? existingThread);
             if (existingThread is null)
             {
                 // The thread has been removed
@@ -1449,7 +1465,7 @@ public class ParatextService : DisposableBase, IParatextService
             if (existingThread.Comments.Count > 0)
             {
                 // Get the text anchor to use for the note
-                TextAnchor range = GetThreadTextAnchor(existingThread, chapterDeltas);
+                TextAnchor range = GetThreadTextAnchor(existingThread, chapterDeltas, verseTextCache);
                 if (!range.Equals(threadDoc.Data.Position))
                     threadChange.Position = range;
             }
@@ -1462,7 +1478,7 @@ public class ParatextService : DisposableBase, IParatextService
         IEnumerable<string> newThreadIds = ptThreadIds.Except(matchedThreadIds);
         foreach (string threadId in newThreadIds)
         {
-            CommentThread? thread = commentManager.FindThread(threadId);
+            commentThreadsById.TryGetValue(threadId, out CommentThread? thread);
             if (thread is null || thread.Comments.All(c => c.Deleted))
                 continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
@@ -1487,7 +1503,7 @@ public class ParatextService : DisposableBase, IParatextService
                     }
             )
             {
-                Position = GetThreadTextAnchor(thread, chapterDeltas),
+                Position = GetThreadTextAnchor(thread, chapterDeltas, verseTextCache),
                 Status = thread.Status.InternalValue,
                 Assignment = GetAssignedUserRef(thread.AssignedUser, ptProjectUsers),
             };
@@ -3706,7 +3722,11 @@ public class ParatextService : DisposableBase, IParatextService
             : string.Empty;
     }
 
-    private static TextAnchor GetThreadTextAnchor(CommentThread thread, Dictionary<int, ChapterDelta> chapterDeltas)
+    private static TextAnchor GetThreadTextAnchor(
+        CommentThread thread,
+        Dictionary<int, ChapterDelta> chapterDeltas,
+        Dictionary<(int chapterNum, string verse), string>? verseTextCache = null
+    )
     {
         Paratext.Data.ProjectComments.Comment comment =
             thread.Comments.LastOrDefault(c => c.Reattached != null) ?? thread.Comments[0];
@@ -3727,8 +3747,14 @@ public class ParatextService : DisposableBase, IParatextService
         if (!chapterDeltas.TryGetValue(verseRef.ChapterNum, out ChapterDelta chapterDelta) || startPos == 0)
             return new TextAnchor();
 
-        string verseText = GetVerseText(chapterDelta.Delta, verseRef);
-        verseText = verseText.Replace("\n", "\0");
+        // Reconstructing verse text walks the whole chapter delta; threads frequently share a
+        // verse, so let callers that process many threads cache it.
+        (int ChapterNum, string) verseKey = (verseRef.ChapterNum, verseRef.ToString());
+        if (verseTextCache is null || !verseTextCache.TryGetValue(verseKey, out string verseText))
+        {
+            verseText = GetVerseText(chapterDelta.Delta, verseRef).Replace("\n", "\0");
+            verseTextCache?[verseKey] = verseText;
+        }
         PtxUtils.StringUtils.MatchContexts(
             verseText,
             contextBefore,
