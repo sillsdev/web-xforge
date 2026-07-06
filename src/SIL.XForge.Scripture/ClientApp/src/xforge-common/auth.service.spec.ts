@@ -524,6 +524,17 @@ describe('AuthService', () => {
     mockedConsole.verify();
   }));
 
+  it('should display prompt to log in again when the token grant is invalid', fakeAsync(() => {
+    const callback = (env: TestEnvironment): void => {
+      env.setInvalidGrantResponse();
+      mockedConsole.expectAndHide(/Unknown or invalid refresh token/);
+    };
+    const env = new TestEnvironment({ isOnline: true, isNewlyLoggedIn: true, callback });
+    expect(env.isLoggedIn).toBe(false);
+    verify(mockedWebAuth.getTokenSilently(anything())).once();
+    verify(mockedDialogService.message(anything(), anything())).once();
+  }));
+
   it('should redirect to url after successful login', fakeAsync(() => {
     const env = new TestEnvironment({
       isOnline: true,
@@ -943,18 +954,18 @@ class TestEnvironment {
     when(mockedWebAuth.getTokenSilently(anything())).thenResolve(this.auth0Response!.token);
   }
 
+  setInvalidGrantResponse(): void {
+    const grantError = new GenericError('invalid_grant', 'Unknown or invalid refresh token.');
+    when(mockedWebAuth.getTokenSilently()).thenThrow(grantError);
+    when(mockedWebAuth.getTokenSilently(anything())).thenThrow(grantError);
+    when(mockedWebAuth.getIdTokenClaims()).thenThrow(grantError);
+  }
+
   setLoginRequiredResponse(): void {
     const loginError = new GenericError('login_required', 'Not logged in');
     when(mockedWebAuth.getTokenSilently()).thenThrow(loginError);
     when(mockedWebAuth.getTokenSilently(anything())).thenThrow(loginError);
     when(mockedWebAuth.getIdTokenClaims()).thenThrow(loginError);
-  }
-
-  setMissingTokenResponse(): void {
-    const tokenError = new GenericError('missing_refresh_token', 'Invalid token');
-    when(mockedWebAuth.getTokenSilently()).thenThrow(tokenError);
-    when(mockedWebAuth.getTokenSilently(anything())).thenThrow(tokenError);
-    when(mockedWebAuth.getIdTokenClaims()).thenThrow(tokenError);
   }
 
   setOnline(isOnline: boolean = true): void {

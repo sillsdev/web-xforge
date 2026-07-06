@@ -535,6 +535,14 @@ export class AuthService {
 
   private async handleLoginError(method: string, error: unknown): Promise<void> {
     console.error(error);
+
+    // Handle invalid_grant from Auth0
+    if (typeof error === 'object' && error !== null && 'error' in error && error.error === 'invalid_grant') {
+      await this.dialogService.message('error_messages.login_expired', 'error_messages.login');
+      return;
+    }
+
+    // Unknown log in error
     this.reportingService.silentError(`Error occurred in ${method}`, ErrorReportingService.normalizeError(error));
     await this.dialogService.message('error_messages.error_occurred_login', 'error_messages.try_again');
   }
