@@ -11,12 +11,12 @@
           hideSingleSelectionIndicator
         >
           <mat-select-trigger>
-            {{ selectedRevision ?? "" | revisionFormat }}
+            {{ selectedRevision ?? "" | revisionFormat: (locale$ | async) }}
           </mat-select-trigger>
           @for (r of historyRevisions; track r) {
             <mat-option [value]="r">
               <div class="option-content">
-                <span>{{ r | revisionFormat }}</span>
+                <span>{{ r | revisionFormat: (locale$ | async) }}</span>
                 <mat-icon>{{
                   r.source === "Draft" ? "auto_awesome" : r.source === "History" ? "history" : ""
                 }}</mat-icon>

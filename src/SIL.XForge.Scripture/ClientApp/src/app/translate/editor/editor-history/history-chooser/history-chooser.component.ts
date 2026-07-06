@@ -36,6 +36,7 @@ import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -98,6 +99,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   @Output() revisionSelect = new EventEmitter<RevisionSelectEvent>();
 
   historyRevisions: Revision[] = [];
+  locale$: Observable<Locale> = this.i18n.locale$;
   selectedRevision: Revision | undefined;
   selectedSnapshot: TextSnapshot | undefined;
 
