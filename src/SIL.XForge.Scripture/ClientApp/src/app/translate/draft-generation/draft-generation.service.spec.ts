@@ -600,6 +600,72 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
+    it('should fail on a Serval outage error', fakeAsync(() => {
+      const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
+
+      // SUT
+      service
+        .startBuildOrGetActiveBuild(buildConfig)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toBeUndefined();
+          verify(mockNoticeService.showError(anything())).once();
+          expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+        });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/pretranslations`);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body).toEqual(buildConfig);
+      req.flush(null, { status: HttpStatusCode.ServiceUnavailable, statusText: 'Serval Down' });
+      tick();
+    }));
+
+    it('should fail on a rate limit error', fakeAsync(() => {
+      const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
+
+      // SUT
+      service
+        .startBuildOrGetActiveBuild(buildConfig)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toBeUndefined();
+          verify(mockNoticeService.showError(anything())).once();
+          expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+        });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/pretranslations`);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body).toEqual(buildConfig);
+      req.flush(null, { status: HttpStatusCode.TooManyRequests, statusText: 'Too many requests' });
+      tick();
+    }));
+
+    it('should fail on an unauthorized error', fakeAsync(() => {
+      const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
+
+      // SUT
+      service
+        .startBuildOrGetActiveBuild(buildConfig)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toBeUndefined();
+          verify(mockNoticeService.showError(anything())).never();
+          expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+        });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/pretranslations`);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body).toEqual(buildConfig);
+      req.flush(null, { status: HttpStatusCode.Unauthorized, statusText: 'Unauthorized' });
+      tick();
+    }));
+
     it('should return already active build job', fakeAsync(() => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));

@@ -33,7 +33,6 @@ public class MachineBackgroundService(
             scope.ServiceProvider.GetRequiredService<ITranslationBuildsClient>();
         IMachineApiService machineApiService = scope.ServiceProvider.GetRequiredService<IMachineApiService>();
         IRepository<SiteConfig> siteConfigs = scope.ServiceProvider.GetRequiredService<IRepository<SiteConfig>>();
-        SiteConfig? siteConfig = null;
 
         // Get the site name from SiteOptions configuration
         string siteName = options.Value.Id;
@@ -46,8 +45,8 @@ public class MachineBackgroundService(
         {
             try
             {
-                // If we do not have it already, load the site_config document by name, creating a new one if missing
-                siteConfig ??=
+                // Reload the site_config document by name, creating a new one if missing
+                SiteConfig siteConfig =
                     await siteConfigs.Query().FirstOrDefaultAsync(s => s.Name == siteName, stoppingToken)
                     ?? new SiteConfig { Id = ObjectId.GenerateNewId().ToString(), Name = siteName };
 
