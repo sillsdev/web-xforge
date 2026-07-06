@@ -69,6 +69,12 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             results = await orderedQuery.ToListAsync();
             unpagedCount = results.Count;
         }
+        else if (pageSize == 0)
+        {
+            // We only want the unpaginated count
+            results = [];
+            unpagedCount = await query.CountAsync();
+        }
         else
         {
             // Execute count and paged results

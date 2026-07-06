@@ -47,9 +47,12 @@ public class MachineBackgroundService(
             try
             {
                 // If we do not have it already, load the site_config document by name, creating a new one if missing
-                siteConfig ??=
-                    await siteConfigs.Query().FirstOrDefaultAsync(s => s.Name == siteName, stoppingToken)
-                    ?? new SiteConfig { Id = ObjectId.GenerateNewId().ToString(), Name = siteName };
+                siteConfig ??= await siteConfigs.Query().FirstOrDefaultAsync(s => s.Name == siteName, stoppingToken);
+                if (siteConfig is null)
+                {
+                    siteConfig = new SiteConfig { Id = ObjectId.GenerateNewId().ToString(), Name = siteName };
+                    await siteConfigs.InsertAsync(siteConfig, stoppingToken);
+                }
 
                 // Poll for the latest build
                 TranslationBuild build = await translationBuildsClient.GetNextFinishedBuildAsync(
@@ -66,7 +69,11 @@ public class MachineBackgroundService(
                 // On failure throw an exception, so the next iteration of the loop will begin.
                 // This is OK, as we will record the last build finished on the next iteration of the loop
                 siteConfig.LastFinishedBuildId = build.Id;
-                await siteConfigs.ReplaceAsync(siteConfig, upsert: true, stoppingToken);
+                await siteConfigs.UpdateAsync(
+                    siteConfig.Id,
+                    u => u.Set(sc => sc.LastFinishedBuildId, build.Id),
+                    cancellationToken: stoppingToken
+                );
 
                 // Reset the consecutive failure count
                 consecutiveFailures = 0;
