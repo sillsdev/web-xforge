@@ -1,5 +1,5 @@
 import { AsyncPipe, NgClass } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatButton } from '@angular/material/button';
 import { MatFormField } from '@angular/material/form-field';
@@ -231,7 +231,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.onlineStatusService.onlineStatus$,
       this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
       this.inputChanged$.pipe(filterNullish()),
-      this.draftText.editorCreated as EventEmitter<any>
+      this.draftText.editorCreated
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
@@ -313,7 +313,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
       this.activatedProjectService.projectDoc$,
-      this.draftText.editorCreated as EventEmitter<any>,
+      this.draftText.editorCreated,
       this.inputChanged$
     ])
       .pipe(
