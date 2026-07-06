@@ -39,6 +39,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -119,6 +120,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     switchMap(projectId => this.draftGenerationService.getLastCompletedBuild(projectId)),
     map(build => this.draftOptionsService.areFormattingOptionsSupportedForBuild(build))
   );
+
+  locale$: Observable<Locale> = this.i18n.locale$;
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
