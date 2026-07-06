@@ -170,7 +170,7 @@ public class MachineBackgroundServiceTests
 
     private class TestEnvironment
     {
-        private const string SiteId = "SF";
+        private const string SiteId = "sf";
 
         public TestEnvironment()
         {
