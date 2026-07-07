@@ -36,7 +36,7 @@
     <button mat-button [mat-dialog-close]="'close'" type="button" id="upload-cancel-btn">
       {{ t("cancel") }}
     </button>
-    <button mat-flat-button color="primary" type="submit" (click)="save()" id="upload-save-btn">
+    <button mat-flat-button color="primary" type="submit" (click)="save()" [disabled]="!appOnline" id="upload-save-btn">
       {{ t("save") }}
     </button>
   </mat-dialog-actions>
