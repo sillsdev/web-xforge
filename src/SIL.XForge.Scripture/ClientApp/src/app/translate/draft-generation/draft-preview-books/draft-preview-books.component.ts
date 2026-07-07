@@ -7,6 +7,7 @@ import { Canon } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { map, Observable, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { expectedBookChapters } from '../../../shared/progress-service/progress.service';
@@ -55,7 +56,8 @@ export class DraftPreviewBooksComponent {
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly i18n: I18nService
   ) {}
 
   linkForBookAndChapter(bookId: string, chapterNumber: number): string[] {

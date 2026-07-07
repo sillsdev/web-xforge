@@ -39,9 +39,11 @@
       @for (msg of copyrightMessages; track msg.banner) {
         <app-copyright-banner [notice]="msg.notice" [banner]="msg.banner"></app-copyright-banner>
       }
-      <button mat-button class="configure-sources-link" (click)="goToConfigureSources()">
-        <mat-icon>settings</mat-icon>{{ t("change_source_configuration") }}
-      </button>
+      @if (canConfigureSources) {
+        <button mat-button class="configure-sources-link" (click)="goToConfigureSources()">
+          <mat-icon>settings</mat-icon>{{ t("change_source_configuration") }}
+        </button>
+      }
     } @else if (page === "draft_books") {
       <h1>{{ t("draft_books.title") }}</h1>
       <h2

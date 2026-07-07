@@ -299,6 +299,7 @@ function setUpMocks(args: StoryArgs): void {
     remoteChanges$: of()
   } as unknown as SFProjectDoc);
   when(mockedPermissionsService.canSync(anything())).thenReturn(true);
+  when(mockedPermissionsService.canConfigureSources(anything())).thenReturn(true);
 }
 
 const meta: Meta<StoryArgs> = {
