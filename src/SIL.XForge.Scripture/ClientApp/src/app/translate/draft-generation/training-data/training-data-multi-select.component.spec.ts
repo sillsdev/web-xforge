@@ -11,6 +11,7 @@ import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -22,6 +23,7 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockDialogService = mock(DialogService);
 const mockFileService = mock(FileService);
 const mockI18nService = mock(I18nService);
+const mockOnlineStatusService = mock(OnlineStatusService);
 const mockTrainingDataService = mock(TrainingDataService);
 const mockTrainingDataUploadDialogComponent = mock<MatDialogRef<TrainingDataUploadDialogComponent>>(MatDialogRef);
 const mockUserService = mock(UserService);
@@ -56,6 +58,7 @@ describe('TrainingDataMultiSelectComponent', () => {
       { provide: DialogService, useMock: mockDialogService },
       { provide: FileService, useMock: mockFileService },
       { provide: I18nService, useMock: mockI18nService },
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: UserService, useMock: mockUserService }
     ]
@@ -105,6 +108,7 @@ describe('TrainingDataMultiSelectComponent', () => {
       mockDialogService.confirm('training_data_multi_select.confirm_delete', 'training_data_multi_select.delete')
     ).thenResolve(true);
     when(mockI18nService.locale$).thenReturn(of(locale));
+    when(mockOnlineStatusService.isOnline).thenReturn(true);
     when(mockTrainingDataUploadDialogComponent.afterClosed()).thenReturn(of({ dataId: 'data04' }));
     fixture = TestBed.createComponent(TrainingDataMultiSelectComponent);
     component = fixture.componentInstance;
@@ -136,6 +140,14 @@ describe('TrainingDataMultiSelectComponent', () => {
     tick();
 
     expect(result).not.toContain(mockTrainingData[0]);
+  }));
+
+  it('cannot show the upload dialog if offline', fakeAsync(() => {
+    when(mockOnlineStatusService.isOnline).thenReturn(false);
+    component.openUploadDialog();
+    tick();
+
+    verify(mockDialogService.openMatDialog(TrainingDataUploadDialogComponent, anything())).never();
   }));
 
   it('should show the upload dialog', fakeAsync(() => {

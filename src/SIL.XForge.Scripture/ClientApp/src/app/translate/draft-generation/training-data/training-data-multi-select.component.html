@@ -18,7 +18,7 @@
       }
     </mat-list>
   }
-  <button mat-button (click)="openUploadDialog()">
+  <button mat-button (click)="openUploadDialog()" [disabled]="!appOnline">
     <mat-icon>file_upload</mat-icon>
     {{ t("upload_spreadsheet") }}
   </button>
