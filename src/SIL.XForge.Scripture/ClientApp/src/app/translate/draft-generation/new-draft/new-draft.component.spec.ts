@@ -328,7 +328,7 @@ describe('NewDraftComponent', () => {
       env.component.next();
 
       expect(env.component.stepError).toBeNull();
-      expect(env.component.page).toBe('suffix');
+      expect(env.component.page).toBe('summary');
     });
 
     it('blocks an unpaired training book even when training is optional', async () => {
