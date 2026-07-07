@@ -996,7 +996,7 @@
     "progress": "Progress",
     "progress_not_available_offline": "Translation progress is not available when offline.",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
+    "translated_verses": "{{ translatedVerses }} of {{ total }} verses"
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",

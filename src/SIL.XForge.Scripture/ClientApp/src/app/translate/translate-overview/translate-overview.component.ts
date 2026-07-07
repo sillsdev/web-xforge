@@ -148,14 +148,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     return this.i18n.localizeBook(bookNum);
   }
 
-  bookTranslatedSegments(bookProgress: BookProgress): number {
-    return bookProgress.verseSegments - bookProgress.blankVerseSegments;
+  bookTranslatedVerses(bookProgress: BookProgress): number {
+    return bookProgress.verses - bookProgress.blankVerses;
   }
 
   bookTranslationRatio(bookProgress: BookProgress): number {
-    if (bookProgress.verseSegments === 0) {
+    if (bookProgress.verses === 0) {
       return 0;
     }
-    return this.bookTranslatedSegments(bookProgress) / bookProgress.verseSegments;
+    return this.bookTranslatedVerses(bookProgress) / bookProgress.verses;
   }
 }

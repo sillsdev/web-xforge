@@ -3,118 +3,6 @@ import { Canon } from '@sillsdev/scripture';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
-/** The expected number of verses per book, calculated from the libpalaso versification files. */
-const verseCounts: Record<string, number> = {
-  GEN: 1533,
-  EXO: 1213,
-  LEV: 859,
-  NUM: 1289,
-  DEU: 959,
-  JOS: 658,
-  JDG: 618,
-  RUT: 85,
-  '1SA': 811,
-  '2SA': 695,
-  '1KI': 817,
-  '2KI': 719,
-  '1CH': 943,
-  '2CH': 822,
-  EZR: 280,
-  NEH: 405,
-  EST: 167,
-  JOB: 1070,
-  PSA: 2527,
-  PRO: 915,
-  ECC: 222,
-  SNG: 117,
-  ISA: 1291,
-  JER: 1364,
-  LAM: 154,
-  EZK: 1273,
-  DAN: 357,
-  HOS: 197,
-  JOL: 73,
-  AMO: 146,
-  OBA: 21,
-  JON: 48,
-  MIC: 105,
-  NAM: 47,
-  HAB: 56,
-  ZEP: 53,
-  HAG: 38,
-  ZEC: 211,
-  MAL: 55,
-  MAT: 1071,
-  MRK: 678,
-  LUK: 1151,
-  JHN: 879,
-  ACT: 1006,
-  ROM: 433,
-  '1CO': 437,
-  '2CO': 256,
-  GAL: 149,
-  EPH: 155,
-  PHP: 104,
-  COL: 95,
-  '1TH': 89,
-  '2TH': 47,
-  '1TI': 113,
-  '2TI': 83,
-  TIT: 46,
-  PHM: 25,
-  HEB: 303,
-  JAS: 108,
-  '1PE': 105,
-  '2PE': 61,
-  '1JN': 105,
-  '2JN': 13,
-  '3JN': 15,
-  JUD: 25,
-  REV: 405,
-  TOB: 248,
-  JDT: 340,
-  ESG: 267,
-  WIS: 435,
-  SIR: 1401,
-  BAR: 141,
-  LJE: 72,
-  S3Y: 67,
-  SUS: 64,
-  BEL: 42,
-  '1MA': 924,
-  '2MA': 555,
-  '3MA': 228,
-  '4MA': 482,
-  '1ES': 434,
-  '2ES': 944,
-  MAN: 15,
-  PS2: 7,
-  ODA: 275,
-  PSS: 293,
-  JSA: 658,
-  JDB: 618,
-  TBS: 248,
-  SST: 64,
-  DNT: 424,
-  BLT: 42,
-  '3ES': 434,
-  EZA: 715,
-  '5EZ': 88,
-  '6EZ': 141,
-  DAG: 424,
-  PS3: 49,
-  '2BA': 613,
-  LBA: 82,
-  JUB: 1217,
-  ENO: 1563,
-  '1MQ': 756,
-  '2MQ': 396,
-  '3MQ': 208,
-  REP: 160,
-  '4BA': 184,
-  LAO: 20
-};
-
 /** The expected number of chapters per book, based primarily on the eng.vrs versification files. */
 export const chapterCounts: Record<string, number> = {
   GEN: 50,
@@ -231,27 +119,40 @@ export interface BookProgress {
   /** The book identifier (e.g. "GEN", "MAT"). */
   bookId: string;
 
-  /** The total number of verse segments in this book. */
-  verseSegments: number;
+  /**
+   * The total number of verse units in this book. A verse unit corresponds to one verse marker in the text (so a
+   * verse range such as "11-12" is one unit).
+   */
+  verses: number;
 
-  /** The number of blank verse segments in this book. */
-  blankVerseSegments: number;
+  /** The number of verse units in this book with no content in any of their segments. */
+  blankVerses: number;
 }
 
 /** A book's translation-progress counts broken down per chapter, for features that need chapter-level detail. */
 export interface BookProgressWithChapterProgress extends BookProgress {
-  chapters: {
-    chapterNumber: number;
-    verseSegments: number;
-    blankVerseSegments: number;
-  }[];
+  chapters: ChapterProgress[];
+  /**
+   * The number of verses the project's versification expects in the whole book. Unlike `verses` this also covers
+   * chapters that do not exist in the project and so have no entry in `chapters`.
+   */
+  expectedVerses: number;
+}
+
+/** A single chapter's translation-progress counts, in the same verse units as {@link BookProgress}. */
+export interface ChapterProgress {
+  chapterNumber: number;
+  verses: number;
+  blankVerses: number;
+  /** The number of verses the project's versification expects in this chapter, or zero if it does not have it. */
+  expectedVerses: number;
 }
 
 export class ProjectProgress {
-  verseSegments = this.books.reduce((acc, book) => acc + book.verseSegments, 0);
-  blankVerseSegments = this.books.reduce((acc, book) => acc + book.blankVerseSegments, 0);
-  translatedVerseSegments = this.verseSegments - this.blankVerseSegments;
-  ratio = this.verseSegments === 0 ? 0 : this.translatedVerseSegments / this.verseSegments;
+  verses = this.books.reduce((acc, book) => acc + book.verses, 0);
+  blankVerses = this.books.reduce((acc, book) => acc + book.blankVerses, 0);
+  translatedVerses = this.verses - this.blankVerses;
+  ratio = this.verses === 0 ? 0 : this.translatedVerses / this.verses;
 
   constructor(readonly books: BookProgress[]) {}
 }
@@ -264,27 +165,20 @@ export class ProjectProgressWithChapterProgress extends ProjectProgress {
 }
 
 /**
- * Given a BookProgress object that indicates the total number of verse segments and number of blank verse segments,
- * determines what the actual likely progress ratio is, based on the number of verses in the book.
- *
- * For most books, this will be the same as the ratio of translated segments to total segments, but if a book has very
- * few segments but many expected verses (total segments < 10% of expected verses), it's unlikely the book actually
- * combines verses so much that it's produced this ratio, and more likely the book is just missing most verses. In this
- * case the function will return the ratio of translated segments to expected verses, which will provide a very rough
- * approximation (since it assumes a 1:1 ratio of segments to verses).
+ * The fraction of a book that is translated, treating chapters that do not exist in the project as untranslated.
+ * Chapters that are present are measured in their own verse units, so verse ranges do not distort the ratio; the
+ * missing chapters contribute the verses the versification expects of them. A book with only a few complete
+ * chapters therefore reports low progress instead of 100%.
  */
-export function estimatedActualBookProgress(bookProgress: BookProgress): number {
-  const MAX_PLAUSIBLE_AVERAGE_VERSES_PER_SEGMENT = 10;
-  const translatedSegments = bookProgress.verseSegments - bookProgress.blankVerseSegments;
-  const expectedNumberOfVerses = verseCounts[bookProgress.bookId] ?? 0;
-  if (
-    expectedNumberOfVerses !== 0 &&
-    bookProgress.verseSegments * MAX_PLAUSIBLE_AVERAGE_VERSES_PER_SEGMENT < expectedNumberOfVerses
-  ) {
-    return translatedSegments / expectedNumberOfVerses;
-  } else {
-    return bookProgress.verseSegments === 0 ? 0 : translatedSegments / bookProgress.verseSegments;
-  }
+export function bookProgressRatio(bookProgress: BookProgressWithChapterProgress): number {
+  const translatedVerses = bookProgress.verses - bookProgress.blankVerses;
+  const expectedVersesInPresentChapters = bookProgress.chapters.reduce(
+    (sum, chapter) => sum + chapter.expectedVerses,
+    0
+  );
+  const expectedVersesInMissingChapters = Math.max(0, bookProgress.expectedVerses - expectedVersesInPresentChapters);
+  const totalVerses = bookProgress.verses + expectedVersesInMissingChapters;
+  return totalVerses === 0 ? 0 : translatedVerses / totalVerses;
 }
 
 /** Returns the expected number of chapters for a given bookId. */
@@ -293,26 +187,26 @@ export function expectedBookChapters(bookId: string): number {
 }
 
 /**
- * Minimum number of translated (non-blank) verse segments a book must have before it can be auto-selected as training
+ * Minimum number of translated (non-blank) verse units a book must have before it can be auto-selected as training
  * data on a project's first draft. See {@link bookAppearsCompleteForTrainingAutoSelection}.
  */
-const MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK = 10;
+const MIN_TRANSLATED_VERSES_TO_AUTO_SELECT_BOOK = 10;
 
 /**
  * Whether a book appears complete enough to be auto-selected as training data on a project's first draft (i.e. when the
  * project has no previously saved training selection). The criteria are:
- *   1. more than {@link MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK} translated (non-blank) verse segments, and
- *   2. at least 99% of the book translated, or no more than 3 blank verse segments.
+ *   1. more than {@link MIN_TRANSLATED_VERSES_TO_AUTO_SELECT_BOOK} translated (non-blank) verse units, and
+ *   2. at least 99% of the book translated, or no more than 3 blank verse units.
  *
  * Auto-selection is intentionally high-conviction: the selection is persisted and reused for later builds, so a wrong
  * pick would silently degrade future drafts. This favors only books that look essentially fully translated. Shared by
  * the legacy draft-generation stepper and the new draft wizard so both flows stay in lockstep.
  */
 export function bookAppearsCompleteForTrainingAutoSelection(bookProgress: BookProgress): boolean {
-  const translatedSegments = bookProgress.verseSegments - bookProgress.blankVerseSegments;
+  const translatedVerses = bookProgress.verses - bookProgress.blankVerses;
   return (
-    translatedSegments > MIN_TRANSLATED_SEGMENTS_TO_AUTO_SELECT_BOOK &&
-    (bookProgress.blankVerseSegments / bookProgress.verseSegments <= 0.01 || bookProgress.blankVerseSegments <= 3)
+    translatedVerses > MIN_TRANSLATED_VERSES_TO_AUTO_SELECT_BOOK &&
+    (bookProgress.blankVerses / bookProgress.verses <= 0.01 || bookProgress.blankVerses <= 3)
   );
 }
 

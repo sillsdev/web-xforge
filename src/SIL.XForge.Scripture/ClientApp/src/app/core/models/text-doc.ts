@@ -43,61 +43,12 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, Range> {
   static readonly COLLECTION = TEXTS_COLLECTION;
   static readonly INDEX_PATHS = TEXT_INDEX_PATHS;
 
-  private readonly blank_tags = ['ib_', 'ie_', 'imte_', '/b_'];
-
   constructor(
     protected readonly realtimeService: RealtimeService,
     public readonly adapter: RealtimeDocAdapter
   ) {
     adapter.submitSource = true;
     super(realtimeService, adapter);
-  }
-
-  getSegmentCount(): { translated: number; blank: number } {
-    let blank = 0;
-    let translated = 0;
-    if (this.data != null && this.data.ops != null) {
-      for (let i = 0; i < this.data.ops.length; i++) {
-        const op = this.data.ops[i];
-        const nextOp = i < this.data.ops.length - 1 ? this.data.ops[i + 1] : undefined;
-        if (op.attributes != null && op.attributes.segment != null) {
-          const segRef: string = op.attributes.segment as string;
-          if ((op.insert as any).blank != null && !this.blank_tags.some(t => segRef.includes(t))) {
-            if (
-              nextOp == null ||
-              nextOp.insert == null ||
-              (nextOp.insert as any).verse == null ||
-              (segRef.startsWith('verse_') && !segRef.includes('/'))
-            ) {
-              blank++;
-            }
-          } else if (!segRef.startsWith('id_')) {
-            // Exclude the id segment from the translated count
-            translated++;
-          }
-        }
-      }
-    }
-    return { translated, blank };
-  }
-
-  getNonEmptyVerses(): string[] {
-    const verses: string[] = [];
-    if (this.data != null && this.data.ops != null) {
-      for (const op of this.data.ops) {
-        if (op.attributes != null && op.attributes.segment != null && (op.insert as any).blank == null) {
-          const segRef: string = op.attributes.segment as string;
-          if (segRef.startsWith('verse_')) {
-            const verse: string | undefined = getVerseStrFromSegmentRef(segRef);
-            if (verse != null && !verses.includes(verse)) {
-              verses.push(verse);
-            }
-          }
-        }
-      }
-    }
-
-    return verses;
   }
 
   getSegmentText(ref: string): string {

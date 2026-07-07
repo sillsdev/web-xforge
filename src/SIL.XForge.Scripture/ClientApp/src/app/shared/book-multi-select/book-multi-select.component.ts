@@ -10,7 +10,11 @@ import { catchError, distinctUntilChanged, filter, map, startWith, switchMap, ta
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { estimatedActualBookProgress, ProgressService, ProjectProgress } from '../progress-service/progress.service';
+import {
+  bookProgressRatio,
+  ProgressService,
+  ProjectProgressWithChapterProgress
+} from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 
 export interface BookOption {
@@ -81,7 +85,7 @@ export class BookMultiSelectComponent implements OnInit, OnChanges {
     const distinctInputs$ = this.renderInputs$.pipe(distinctUntilChanged(isEqual));
 
     // Progress depends only on the project, so isolate it from other input changes.
-    const progress$: Observable<ProjectProgress | undefined> = distinctInputs$.pipe(
+    const progress$: Observable<ProjectProgressWithChapterProgress | undefined> = distinctInputs$.pipe(
       map(inputs => (inputs.showProgress ? inputs.projectId : undefined)),
       distinctUntilChanged(),
       switchMap(projectId => {
@@ -92,7 +96,9 @@ export class BookMultiSelectComponent implements OnInit, OnChanges {
         return this.onlineStatusService.onlineStatus$.pipe(
           filter(isOnline => isOnline),
           take(1),
-          switchMap(() => from(this.progressService.getProgress(projectId, { maxStalenessMs: 30_000 }))),
+          switchMap(() =>
+            from(this.progressService.getProgressWithChapterProgress(projectId, { maxStalenessMs: 30_000 }))
+          ),
           catchError(() => of(undefined)),
           startWith(undefined)
         );
@@ -169,10 +175,10 @@ export class BookMultiSelectComponent implements OnInit, OnChanges {
     });
   }
 
-  private rebuild(inputs: RenderInputs, progress: ProjectProgress | undefined): void {
+  private rebuild(inputs: RenderInputs, progress: ProjectProgressWithChapterProgress | undefined): void {
     const progressByBookNum = (progress?.books ?? []).map(b => ({
       bookNum: Canon.bookIdToNumber(b.bookId),
-      progress: estimatedActualBookProgress(b)
+      progress: bookProgressRatio(b)
     }));
 
     this.bookOptions = inputs.availableBooks.map((book: Book) => ({

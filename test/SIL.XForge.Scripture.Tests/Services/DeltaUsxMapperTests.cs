@@ -17,6 +17,7 @@ using NUnit.Framework;
 using Paratext.Data;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
+using static SIL.XForge.Scripture.Services.UsxTestHelpers;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -4387,65 +4388,4 @@ public class DeltaUsxMapperTests
 
     private static string GetPathToTestProject() =>
         new FileInfo(Assembly.GetExecutingAssembly().Location).Directory.Parent.Parent.Parent.FullName;
-
-    private static XDocument Usx(string code, string? bookInnerText, string usxVersion, params object[] elems) =>
-        new XDocument(new XElement("usx", new XAttribute("version", usxVersion), Book(code, bookInnerText), elems));
-
-    private static XDocument Usx(string code, params object[] elems) =>
-        new XDocument(new XElement("usx", new XAttribute("version", "2.5"), Book(code), elems));
-
-    private static XElement Book(string code, string? innerText = null) =>
-        innerText == null
-            ? new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"))
-            : new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"), innerText);
-
-    private static XElement Para(string style, params object[] contents)
-    {
-        var elem = new XElement("para", new XAttribute("style", style), contents);
-        if (style == "")
-            elem.Add(new XAttribute("status", "unknown"));
-        return elem;
-    }
-
-    private static XElement Chapter(string number, string style = "c") =>
-        new XElement("chapter", new XAttribute("number", number), new XAttribute("style", style));
-
-    private static XElement Verse(string number, string style = "v") =>
-        new XElement("verse", new XAttribute("number", number), new XAttribute("style", style));
-
-    private static XElement Char(string style, params object[] contents) =>
-        new XElement("char", new XAttribute("style", style), contents);
-
-    private static XElement Ref(string loc, string text) => new XElement("ref", new XAttribute("loc", loc), text);
-
-    private static XElement Note(string style, string caller, params object[] contents) =>
-        new XElement("note", new XAttribute("style", style), new XAttribute("caller", caller), contents);
-
-    private static XElement Figure(string file, string size, string reference, string text)
-    {
-        var elem = new XElement("figure", new XAttribute("style", "fig"));
-        if (file != null)
-            elem.Add(new XAttribute("file", file));
-        if (size != null)
-            elem.Add(new XAttribute("size", size));
-        if (reference != null)
-            elem.Add(new XAttribute("ref", reference));
-        if (text != null)
-            elem.Add(text);
-        return elem;
-    }
-
-    private static XElement OptBreak() => new XElement("optbreak");
-
-    private static XElement Milestone(string style) => new XElement("ms", new XAttribute("style", style));
-
-    private static XElement Table(params object[] contents) => new XElement("table", contents);
-
-    private static XElement Row(params object[] contents) =>
-        new XElement("row", new XAttribute("style", "tr"), contents);
-
-    private static XElement Cell(string style, string align, params object[] contents) =>
-        new XElement("cell", new XAttribute("style", style), new XAttribute("align", align), contents);
-
-    private static XElement Unmatched(string marker) => new XElement("unmatched", new XAttribute("marker", marker));
 }

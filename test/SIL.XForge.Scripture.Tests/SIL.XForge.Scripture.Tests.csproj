@@ -25,6 +25,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="EphemeralMongo" Version="3.2.0" />
     <PackageReference Include="JunitXml.TestLogger" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageReference Include="NSubstitute" Version="5.3.0" />

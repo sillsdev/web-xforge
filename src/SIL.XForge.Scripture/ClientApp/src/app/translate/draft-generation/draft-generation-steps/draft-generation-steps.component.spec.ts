@@ -78,12 +78,12 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockProgressService.getProgress(anything(), anything())).thenResolve(
       new ProjectProgress([
-        { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
-        { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
-        { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 },
-        { bookId: 'JDG', verseSegments: 100, blankVerseSegments: 0 }
+        { bookId: 'GEN', verses: 100, blankVerses: 0 },
+        { bookId: 'EXO', verses: 100, blankVerses: 0 },
+        { bookId: 'LEV', verses: 100, blankVerses: 100 },
+        { bookId: 'NUM', verses: 22, blankVerses: 2 },
+        { bookId: 'DEU', verses: 0, blankVerses: 0 },
+        { bookId: 'JDG', verses: 100, blankVerses: 0 }
       ])
     );
     when(mockOnlineStatusService.isOnline).thenReturn(true);
@@ -301,8 +301,8 @@ describe('DraftGenerationStepsComponent', () => {
       const emptyBooksInTarget = [3, 8];
       const books: BookProgress[] = allBooks.map(b => ({
         bookId: Canon.bookNumberToId(b.bookNum),
-        verseSegments: 100,
-        blankVerseSegments: emptyBooksInTarget.includes(b.bookNum) ? 100 : 0
+        verses: 100,
+        blankVerses: emptyBooksInTarget.includes(b.bookNum) ? 100 : 0
       }));
       const progress = new ProjectProgress(books);
       when(mockProgressService.getProgress('project01', anything())).thenResolve(progress);
@@ -1515,8 +1515,8 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
     const books: BookProgress[] = texts.map(b => ({
       bookId: Canon.bookNumberToId(b),
-      verseSegments: 100,
-      blankVerseSegments: emptyBooks.includes(b) ? 100 : 0
+      verses: 100,
+      blankVerses: emptyBooks.includes(b) ? 100 : 0
     }));
     const progress = new ProjectProgress(books);
     when(mockProgressService.getProgress(projectId, anything())).thenResolve(progress);

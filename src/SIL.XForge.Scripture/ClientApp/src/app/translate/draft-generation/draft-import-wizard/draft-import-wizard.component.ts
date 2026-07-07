@@ -33,13 +33,13 @@ import { SelectableProject } from '../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { roleCanEditTexts } from '../../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
-import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { BookProgressWithChapterProgress, ProgressService } from '../../../shared/progress-service/progress.service';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
@@ -95,6 +95,16 @@ export enum DraftApplyStatus {
   Successful = 2,
   Warning = 3,
   Failed = 4
+}
+
+/**
+ * The chapters of a book that hold any translated verse. Any existing text warrants the overwrite warning, unlike the
+ * higher bar the new draft wizard uses to decide which chapters count as having content.
+ */
+function getChaptersWithText(bookProgress: BookProgressWithChapterProgress | undefined): number[] {
+  return (bookProgress?.chapters ?? [])
+    .filter(chapter => chapter.verses - chapter.blankVerses > 0)
+    .map(chapter => chapter.chapterNumber);
 }
 
 /**
@@ -314,6 +324,7 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly draftNotificationService: DraftNotificationService,
     private readonly projectService: SFProjectService,
+    private readonly progressService: ProgressService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly locationService: LocationService,
@@ -614,9 +625,17 @@ export class DraftImportWizardComponent implements OnInit {
     this.booksWithExistingText = [];
     const booksToCheck: BookForImport[] = this.booksToImport;
 
+    // The check happens right before the import can overwrite the target text, so use fresh progress data
+    const progress = await this.progressService.getProgressWithChapterProgress(this.targetProjectId, {
+      maxStalenessMs: 0
+    });
+
     this.selectedBooksWithLowConfidence = 0;
     for (const book of booksToCheck) {
-      let chapterNumbersWithText: number[] = await this.getChaptersWithText(book.bookNum);
+      const bookProgress: BookProgressWithChapterProgress | undefined = progress.books.find(
+        b => b.bookId === book.bookId
+      );
+      let chapterNumbersWithText: number[] = getChaptersWithText(bookProgress);
       // Only warn about chapters we will actually overwrite: the drafted chapters that already have target text. For a
       // whole-book draft (draftedChapters == null) every existing chapter is in scope, as before.
       const draftedChapters = this.draftedChaptersForBook(book.bookNum);
@@ -638,32 +657,6 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     this.showOverwriteConfirmation = this.booksWithExistingText.length > 0;
-  }
-
-  private async getChaptersWithText(bookNum: number): Promise<number[]> {
-    if (this.targetProjectId == null) return [];
-
-    const project = this.targetProjectDoc$.value?.data;
-    if (project == null) return [];
-
-    const targetBook = project.texts.find(t => t.bookNum === bookNum);
-    if (targetBook == null) return [];
-
-    const chaptersWithText: number[] = [];
-    for (const chapter of targetBook.chapters) {
-      const textDocId = new TextDocId(this.targetProjectId, bookNum, chapter.number);
-      const hasText: boolean = await this.hasTextInChapter(textDocId);
-      if (hasText) {
-        chaptersWithText.push(chapter.number);
-      }
-    }
-
-    return chaptersWithText;
-  }
-
-  private async hasTextInChapter(textDocId: TextDocId): Promise<boolean> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
-    return textDoc.getNonEmptyVerses().length > 0;
   }
 
   async startImport(): Promise<void> {

@@ -20,14 +20,13 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { TextDoc } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticCode } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
-import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
+import { ProgressService, ProjectProgressWithChapterProgress } from '../../../shared/progress-service/progress.service';
 import { DraftNotificationService } from '../draft-notification.service';
 import { DraftApplyState, DraftApplyStatus, DraftImportWizardComponent } from './draft-import-wizard.component';
 
@@ -420,18 +419,54 @@ class TestEnvironment {
       )
     });
 
-    when(mockProgressService.getProgress(anything(), anything())).thenResolve(
-      new ProjectProgress([
-        { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
-        { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
-        { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 }
-      ])
+    // Mirrors project04's texts: books 1-3 have text in chapter 1, book 4 in chapters 1 and 2. Deuteronomy exists
+    // but is untranslated, and Genesis 2 is a blank chapter. The other projects have no text at all.
+    const project04Progress = new ProjectProgressWithChapterProgress([
+      {
+        bookId: 'GEN',
+        verses: 100,
+        blankVerses: 25,
+        expectedVerses: 100,
+        chapters: [
+          { chapterNumber: 1, verses: 75, blankVerses: 0, expectedVerses: 75 },
+          { chapterNumber: 2, verses: 25, blankVerses: 25, expectedVerses: 25 }
+        ]
+      },
+      {
+        bookId: 'EXO',
+        verses: 100,
+        blankVerses: 0,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 0, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'LEV',
+        verses: 100,
+        blankVerses: 50,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 50, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'NUM',
+        verses: 22,
+        blankVerses: 2,
+        expectedVerses: 22,
+        chapters: [
+          { chapterNumber: 1, verses: 11, blankVerses: 1, expectedVerses: 11 },
+          { chapterNumber: 2, verses: 11, blankVerses: 1, expectedVerses: 11 }
+        ]
+      },
+      {
+        bookId: 'DEU',
+        verses: 10,
+        blankVerses: 10,
+        expectedVerses: 10,
+        chapters: [{ chapterNumber: 1, verses: 10, blankVerses: 10, expectedVerses: 10 }]
+      }
+    ]);
+    when(mockProgressService.getProgressWithChapterProgress(anything(), anything())).thenCall((projectId: string) =>
+      Promise.resolve(projectId === 'project04' ? project04Progress : new ProjectProgressWithChapterProgress([]))
     );
-    when(mockProjectService.getText(anything())).thenResolve({
-      getNonEmptyVerses: (): string[] => ['verse_1_1']
-    } as TextDoc);
     when(mockProjectService.onlineCreate(anything())).thenResolve('project02');
     when(mockProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)

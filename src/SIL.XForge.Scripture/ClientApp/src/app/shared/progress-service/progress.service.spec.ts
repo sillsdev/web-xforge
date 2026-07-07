@@ -5,8 +5,9 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   BookProgress,
+  bookProgressRatio,
   BookProgressWithChapterProgress,
-  estimatedActualBookProgress,
+  ChapterProgress,
   ProgressService,
   ProjectProgress,
   ProjectProgressWithChapterProgress
@@ -25,8 +26,8 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const expectedBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] },
-      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] },
+      { bookId: 'MAT', verses: 50, blankVerses: 10, expectedVerses: 50, chapters: [] }
     ];
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(expectedBooks);
 
@@ -36,9 +37,9 @@ describe('ProgressService', () => {
 
     expect(result).toBeInstanceOf(ProjectProgress);
     expect(result?.books).toEqual(expectedBooks);
-    expect(result?.verseSegments).toBe(150);
-    expect(result?.blankVerseSegments).toBe(30);
-    expect(result?.translatedVerseSegments).toBe(120);
+    expect(result?.verses).toBe(150);
+    expect(result?.blankVerses).toBe(30);
+    expect(result?.translatedVerses).toBe(120);
     expect(result?.ratio).toBeCloseTo(0.8);
     verify(mockedProjectService.getProjectProgress(projectId)).once();
   }));
@@ -47,7 +48,7 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const expectedBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(expectedBooks);
 
@@ -68,10 +69,10 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const firstBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const secondBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+      { bookId: 'GEN', verses: 120, blankVerses: 15, expectedVerses: 120, chapters: [] }
     ];
 
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(firstBooks).thenResolve(secondBooks);
@@ -95,10 +96,10 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const firstBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const secondBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+      { bookId: 'GEN', verses: 120, blankVerses: 15, expectedVerses: 120, chapters: [] }
     ];
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(firstBooks).thenResolve(secondBooks);
 
@@ -118,10 +119,10 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const staleBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const freshBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+      { bookId: 'GEN', verses: 120, blankVerses: 15, expectedVerses: 120, chapters: [] }
     ];
     let resolveStale: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
     let resolveFresh: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
@@ -149,10 +150,10 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const preSyncBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const postSyncBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+      { bookId: 'GEN', verses: 120, blankVerses: 15, expectedVerses: 120, chapters: [] }
     ];
     when(mockedProjectService.getProjectProgress(projectId)).thenResolve(preSyncBooks).thenResolve(postSyncBooks);
 
@@ -175,10 +176,10 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const preSyncBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const postSyncBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+      { bookId: 'GEN', verses: 120, blankVerses: 15, expectedVerses: 120, chapters: [] }
     ];
     let resolvePreSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
     let resolvePostSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
@@ -218,10 +219,10 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const preSyncBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const postSyncBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+      { bookId: 'GEN', verses: 120, blankVerses: 15, expectedVerses: 120, chapters: [] }
     ];
     let resolvePreSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
     let resolvePostSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
@@ -269,7 +270,7 @@ describe('ProgressService', () => {
     const env = new TestEnvironment();
     const projectId = 'project1';
     const expectedBooks: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
 
     let resolvePromise: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
@@ -300,7 +301,7 @@ describe('ProgressService', () => {
     const error = new Error('Network error');
     when(mockedProjectService.getProjectProgress(projectId))
       .thenReject(error)
-      .thenResolve([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }]);
+      .thenResolve([{ bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }]);
 
     let firstError: unknown;
     env.service.getProgress(projectId, { maxStalenessMs: 1000 }).catch(e => (firstError = e));
@@ -312,17 +313,19 @@ describe('ProgressService', () => {
     env.service.getProgress(projectId, { maxStalenessMs: 1000 }).then(r => (result2 = r as any));
     flushMicrotasks();
 
-    expect(result2?.books).toEqual([{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }]);
+    expect(result2?.books).toEqual([
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
+    ]);
     verify(mockedProjectService.getProjectProgress(projectId)).twice();
   }));
 
   it('should cache independently per project', fakeAsync(() => {
     const env = new TestEnvironment();
     const project1Books: BookProgressWithChapterProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+      { bookId: 'GEN', verses: 100, blankVerses: 20, expectedVerses: 100, chapters: [] }
     ];
     const project2Books: BookProgressWithChapterProgress[] = [
-      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 10, chapters: [] }
+      { bookId: 'MAT', verses: 50, blankVerses: 10, expectedVerses: 50, chapters: [] }
     ];
 
     when(mockedProjectService.getProjectProgress('project1')).thenResolve(project1Books);
@@ -363,149 +366,134 @@ class TestEnvironment {
 describe('ProjectProgress', () => {
   it('should calculate totals correctly with multiple books', () => {
     const books: BookProgress[] = [
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20 },
-      { bookId: 'EXO', verseSegments: 80, blankVerseSegments: 15 },
-      { bookId: 'MAT', verseSegments: 50, blankVerseSegments: 5 }
+      { bookId: 'GEN', verses: 100, blankVerses: 20 },
+      { bookId: 'EXO', verses: 80, blankVerses: 15 },
+      { bookId: 'MAT', verses: 50, blankVerses: 5 }
     ];
 
     const progress = new ProjectProgress(books);
 
-    expect(progress.verseSegments).toBe(230);
-    expect(progress.blankVerseSegments).toBe(40);
-    expect(progress.translatedVerseSegments).toBe(190);
+    expect(progress.verses).toBe(230);
+    expect(progress.blankVerses).toBe(40);
+    expect(progress.translatedVerses).toBe(190);
     expect(progress.ratio).toBeCloseTo(0.8261);
   });
 
   it('should handle empty books array', () => {
     const progress = new ProjectProgress([]);
 
-    expect(progress.verseSegments).toBe(0);
-    expect(progress.blankVerseSegments).toBe(0);
-    expect(progress.translatedVerseSegments).toBe(0);
+    expect(progress.verses).toBe(0);
+    expect(progress.blankVerses).toBe(0);
+    expect(progress.translatedVerses).toBe(0);
     expect(progress.ratio).toBe(0);
   });
 
   it('should handle all blank verses', () => {
-    const books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 100 }];
+    const books: BookProgress[] = [{ bookId: 'GEN', verses: 100, blankVerses: 100 }];
 
     const progress = new ProjectProgress(books);
 
-    expect(progress.verseSegments).toBe(100);
-    expect(progress.blankVerseSegments).toBe(100);
-    expect(progress.translatedVerseSegments).toBe(0);
+    expect(progress.verses).toBe(100);
+    expect(progress.blankVerses).toBe(100);
+    expect(progress.translatedVerses).toBe(0);
     expect(progress.ratio).toBe(0);
   });
 
   it('should handle no blank verses', () => {
-    const books: BookProgress[] = [{ bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 }];
+    const books: BookProgress[] = [{ bookId: 'GEN', verses: 100, blankVerses: 0 }];
 
     const progress = new ProjectProgress(books);
 
-    expect(progress.verseSegments).toBe(100);
-    expect(progress.blankVerseSegments).toBe(0);
-    expect(progress.translatedVerseSegments).toBe(100);
+    expect(progress.verses).toBe(100);
+    expect(progress.blankVerses).toBe(0);
+    expect(progress.translatedVerses).toBe(100);
     expect(progress.ratio).toBe(1);
   });
 });
 
-describe('estimatedActualBookProgress', () => {
-  it('should return normal ratio for books with sufficient segments', () => {
-    const bookProgress: BookProgress = {
-      bookId: 'GEN',
-      verseSegments: 1500, // Close to expected 1533
-      blankVerseSegments: 300
+describe('bookProgressRatio', () => {
+  function chapter(
+    chapterNumber: number,
+    verses: number,
+    blankVerses: number,
+    expectedVerses: number = verses
+  ): ChapterProgress {
+    return { chapterNumber, verses, blankVerses, expectedVerses };
+  }
+
+  it('is the translated fraction of the verse units when every chapter is present', () => {
+    const book: BookProgressWithChapterProgress = {
+      bookId: 'RUT',
+      verses: 85,
+      blankVerses: 17,
+      expectedVerses: 85,
+      chapters: [chapter(1, 22, 5), chapter(2, 23, 4), chapter(3, 18, 4), chapter(4, 22, 4)]
     };
 
-    const result = estimatedActualBookProgress(bookProgress);
-
-    expect(result).toBeCloseTo(0.8); // 1200 / 1500
+    expect(bookProgressRatio(book)).toBeCloseTo(68 / 85);
   });
 
-  it('should return estimated ratio for books with very few segments compared to expected verses', () => {
-    const bookProgress: BookProgress = {
-      bookId: 'GEN', // Expected verses: 1533
-      verseSegments: 50, // Much less than 10% of 1533 (153.3)
-      blankVerseSegments: 10
+  it('counts the verses expected in missing chapters as untranslated', () => {
+    // Only Ruth 1 exists and is fully translated; chapters 2-4 (63 verses) are missing from the project
+    const book: BookProgressWithChapterProgress = {
+      bookId: 'RUT',
+      verses: 22,
+      blankVerses: 0,
+      expectedVerses: 85,
+      chapters: [chapter(1, 22, 0)]
     };
 
-    const result = estimatedActualBookProgress(bookProgress);
-
-    // Should use 40 / 1533 instead of 40 / 50
-    expect(result).toBeCloseTo(40 / 1533);
+    expect(bookProgressRatio(book)).toBeCloseTo(22 / 85);
   });
 
-  it('should handle books at the threshold (exactly 10% of expected verses)', () => {
-    const bookProgress: BookProgress = {
-      bookId: 'GEN', // Expected verses: 1533
-      // 10% of 1533 is 153.3, and the implementation uses a strict "<" comparison.
-      // Use a value just above the threshold to ensure we are in the "normal" ratio branch.
-      verseSegments: 154,
-      blankVerseSegments: 50
+  it('measures present chapters in their own verse units, so verse ranges do not distort the ratio', () => {
+    // Ruth 1 is written as 11 verse ranges (the versification expects 22 verses) and is complete
+    const book: BookProgressWithChapterProgress = {
+      bookId: 'RUT',
+      verses: 11,
+      blankVerses: 0,
+      expectedVerses: 85,
+      chapters: [chapter(1, 11, 0, 22)]
     };
 
-    const result = estimatedActualBookProgress(bookProgress);
-
-    // Should use normal ratio since it's at 10%
-    expect(result).toBeCloseTo(104 / 154);
+    expect(bookProgressRatio(book)).toBeCloseTo(11 / (11 + 63));
   });
 
-  it('should handle books with no expected verse count', () => {
-    const bookProgress: BookProgress = {
-      bookId: 'UNKNOWN',
-      verseSegments: 10,
-      blankVerseSegments: 2
+  it('does not let chapters outside the versification shrink the missing-chapter estimate below zero', () => {
+    // A chapter the versification does not have expects zero verses, and the present chapters together can be
+    // expected to hold more verses than the book, e.g. with a custom versification
+    const book: BookProgressWithChapterProgress = {
+      bookId: 'RUT',
+      verses: 100,
+      blankVerses: 0,
+      expectedVerses: 85,
+      chapters: [chapter(1, 25, 0), chapter(2, 25, 0), chapter(3, 25, 0), chapter(4, 25, 0), chapter(5, 0, 0, 0)]
     };
 
-    const result = estimatedActualBookProgress(bookProgress);
-
-    expect(result).toBeCloseTo(0.8); // 8 / 10
+    expect(bookProgressRatio(book)).toBe(1);
   });
 
-  it('should handle books with zero segments', () => {
-    const bookProgress: BookProgress = {
-      bookId: 'GEN',
-      verseSegments: 0,
-      blankVerseSegments: 0
+  it('is zero for a book with no verse units and nothing expected', () => {
+    const book: BookProgressWithChapterProgress = {
+      bookId: 'RUT',
+      verses: 0,
+      blankVerses: 0,
+      expectedVerses: 0,
+      chapters: []
     };
 
-    const result = estimatedActualBookProgress(bookProgress);
-
-    expect(result).toBe(0);
+    expect(bookProgressRatio(book)).toBe(0);
   });
 
-  it('should handle books with all blank segments', () => {
-    const bookProgress: BookProgress = {
-      bookId: 'GEN',
-      verseSegments: 100,
-      blankVerseSegments: 100
+  it('is zero for a book that exists but has nothing translated', () => {
+    const book: BookProgressWithChapterProgress = {
+      bookId: 'RUT',
+      verses: 22,
+      blankVerses: 22,
+      expectedVerses: 85,
+      chapters: [chapter(1, 22, 22)]
     };
 
-    const result = estimatedActualBookProgress(bookProgress);
-
-    expect(result).toBe(0);
-  });
-
-  it('should handle various book IDs correctly', () => {
-    // Ensure the "estimated" branch is used for each book by keeping verseSegments < 10% of expected verses.
-    const testCases = [
-      { bookId: 'MAT', expectedVerses: 1071, verseSegments: 5, blankVerseSegments: 1 },
-      { bookId: 'RUT', expectedVerses: 85, verseSegments: 5, blankVerseSegments: 1 },
-      { bookId: 'PSA', expectedVerses: 2527, verseSegments: 5, blankVerseSegments: 1 },
-      // For JUD (25 verses), 10% is 2.5, so 5 segments would *not* trigger the estimated branch.
-      { bookId: 'JUD', expectedVerses: 25, verseSegments: 2, blankVerseSegments: 1 }
-    ];
-
-    testCases.forEach(testCase => {
-      const bookProgress: BookProgress = {
-        bookId: testCase.bookId,
-        verseSegments: testCase.verseSegments,
-        blankVerseSegments: testCase.blankVerseSegments
-      };
-
-      const result = estimatedActualBookProgress(bookProgress);
-
-      const translatedSegments: number = testCase.verseSegments - testCase.blankVerseSegments;
-      expect(result).toBeCloseTo(translatedSegments / testCase.expectedVerses);
-    });
+    expect(bookProgressRatio(book)).toBe(0);
   });
 });

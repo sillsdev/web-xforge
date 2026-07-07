@@ -19,6 +19,18 @@ public partial class DeltaUsxMapper(
     IExceptionHandler exceptionHandler
 ) : IDeltaUsxMapper
 {
+    /// <summary>
+    /// Prefix of the segment ref of a verse segment ("verse_{chapter}_{verse}"). Consumers that parse segment refs
+    /// (e.g. <see cref="TextProgressService"/>) must build their patterns from this constant.
+    /// </summary>
+    public const string VerseSegmentPrefix = "verse_";
+
+    /// <summary>
+    /// Separator between a segment's base ref and the continuation suffix added when a segment continues past a
+    /// paragraph or poetry-line break (e.g. "verse_1_8/p_1"). See <see cref="VerseSegmentPrefix"/>.
+    /// </summary>
+    public const string SegmentContinuationSeparator = "/";
+
     private static readonly XmlSchemaSet Schemas = CreateSchemaSet();
 
     private static XmlSchemaSet CreateSchemaSet()
@@ -249,10 +261,17 @@ public partial class DeltaUsxMapper(
                             {
                                 if (state.CurRef != null)
                                 {
-                                    int slashIndex = state.CurRef.IndexOf('/', StringComparison.Ordinal);
+                                    int slashIndex = state.CurRef.IndexOf(
+                                        SegmentContinuationSeparator,
+                                        StringComparison.Ordinal
+                                    );
                                     if (slashIndex != -1)
                                         state.CurRef = state.CurRef[..slashIndex];
-                                    state.CurRef = GetParagraphRef(nextIds, state.CurRef, state.CurRef + "/" + style);
+                                    state.CurRef = GetParagraphRef(
+                                        nextIds,
+                                        state.CurRef,
+                                        state.CurRef + SegmentContinuationSeparator + style
+                                    );
                                 }
                                 else
                                 {
@@ -459,7 +478,7 @@ public partial class DeltaUsxMapper(
     {
         var verse = (string)elem.Attribute("number");
         SegmentEnded(newDelta, state.CurRef);
-        state.CurRef = $"verse_{state.CurChapter}_{verse}";
+        state.CurRef = $"{VerseSegmentPrefix}{state.CurChapter}_{verse}";
         newDelta.InsertEmbed("verse", GetAttributes(elem), attributes: AddInvalidInlineAttribute(invalidNodes, elem));
     }
 

@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import {
   bookAppearsCompleteForTrainingAutoSelection,
+  ChapterProgress,
   ProgressService
 } from '../../../shared/progress-service/progress.service';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 
 /**
- * Minimum fraction of a chapter's verse segments that must be non-blank for the chapter to count as having content.
+ * Minimum fraction of a chapter's verse units that must be non-blank for the chapter to count as having content.
  * Chapters at or below this ratio are treated as untranslated, which drives three decisions off the same policy:
  * whether a source chapter is offered as material to draft from, whether a target chapter counts toward existing
  * content (and so is excluded from the default drafting selection), and whether a book is eligible for partial
@@ -14,12 +15,12 @@ import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-ran
  */
 const MIN_CHAPTER_COMPLETION_RATIO_FOR_CONTENT = 0.1;
 
-/** Whether a chapter has enough non-blank verse segments to count as having content (see the constant above). */
-function chapterHasContent(chapter: { verseSegments: number; blankVerseSegments: number }): boolean {
-  if (chapter.verseSegments === 0) {
+/** Whether a chapter has enough non-blank verse units to count as having content (see the constant above). */
+function chapterHasContent(chapter: ChapterProgress): boolean {
+  if (chapter.verses === 0) {
     return false;
   }
-  const completionRatio = (chapter.verseSegments - chapter.blankVerseSegments) / chapter.verseSegments;
+  const completionRatio = (chapter.verses - chapter.blankVerses) / chapter.verses;
   return completionRatio > MIN_CHAPTER_COMPLETION_RATIO_FOR_CONTENT;
 }
 
@@ -55,7 +56,7 @@ export class DraftProgressService {
 
   private async getChapters(
     projectId: string,
-    includeChapter: (chapter: { verseSegments: number; blankVerseSegments: number }) => boolean
+    includeChapter: (chapter: ChapterProgress) => boolean
   ): Promise<VerboseScriptureRange> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
       maxStalenessMs: DEFAULT_PROGRESS_STALENESS_MS
@@ -77,7 +78,7 @@ export class DraftProgressService {
 
   /**
    * Returns the IDs of the books in a project that appear complete enough to be auto-selected as training data (see
-   * bookAppearsCompleteForTrainingAutoSelection). Derived from the segment-level progress counts that
+   * bookAppearsCompleteForTrainingAutoSelection). Derived from the book-level progress counts that
    * getChaptersWithContent discards, which is why this is computed separately. Reuses the cached progress, so calling
    * it alongside getChaptersWithContent for the same project costs no extra request.
    */

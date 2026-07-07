@@ -69,10 +69,10 @@ describe('TranslateOverviewComponent', () => {
 
     expect(env.progressTitle.textContent).toContain('Progress');
     expect(env.component.projectProgress?.books.length).toEqual(4);
-    env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
-    env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
-    env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
-    env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
+    env.expectContainsTextProgress(0, 'Matthew', '10 of 20 verses');
+    env.expectContainsTextProgress(1, 'Mark', '10 of 20 verses');
+    env.expectContainsTextProgress(2, 'Luke', '10 of 20 verses');
+    env.expectContainsTextProgress(3, 'John', '10 of 20 verses');
 
     discardPeriodicTasks();
   }));
@@ -94,10 +94,10 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn({} as any); // just needs to not be null/undefined
     when(mockedProgressService.getProgress(anything(), anything())).thenResolve(
       new ProjectProgress([
-        { bookId: 'MAT', verseSegments: 20, blankVerseSegments: 10 },
-        { bookId: 'MRK', verseSegments: 20, blankVerseSegments: 10 },
-        { bookId: 'LUK', verseSegments: 20, blankVerseSegments: 10 },
-        { bookId: 'JHN', verseSegments: 20, blankVerseSegments: 10 }
+        { bookId: 'MAT', verses: 20, blankVerses: 10 },
+        { bookId: 'MRK', verses: 20, blankVerses: 10 },
+        { bookId: 'LUK', verses: 20, blankVerses: 10 },
+        { bookId: 'JHN', verses: 20, blankVerses: 10 }
       ])
     );
 

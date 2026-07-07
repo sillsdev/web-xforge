@@ -14,7 +14,7 @@
             <div class="progress" [matTooltip]="projectProgress?.ratio ?? 0 | l10nPercent">
               <app-donut-chart
                 [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
-                [data]="[projectProgress?.translatedVerseSegments ?? 0, projectProgress?.blankVerseSegments ?? 0]"
+                [data]="[projectProgress?.translatedVerses ?? 0, projectProgress?.blankVerses ?? 0]"
                 backgroundColor="var(--sf-translate-progress-track)"
                 [innerThicknessDelta]="0"
                 [thickness]="22"
@@ -30,15 +30,15 @@
                 <mat-icon matListItemIcon class="mirror-rtl">book</mat-icon>
                 <span matListItemTitle>{{ getBookNameFromId(bookProgress.bookId) }}</span>
                 <span matListItemLine>{{
-                  t("translated_segments", {
-                    translatedSegments: (bookTranslatedSegments(bookProgress) | l10nNumber),
-                    total: (bookProgress.verseSegments | l10nNumber)
+                  t("translated_verses", {
+                    translatedVerses: (bookTranslatedVerses(bookProgress) | l10nNumber),
+                    total: (bookProgress.verses | l10nNumber)
                   })
                 }}</span>
                 <div class="progress" matListItemMeta [matTooltip]="bookTranslationRatio(bookProgress) | l10nPercent">
                   <app-donut-chart
                     [colors]="['var(--sf-translate-progress-complete)', 'var(--sf-translate-progress-remaining)']"
-                    [data]="[bookTranslatedSegments(bookProgress), bookProgress.blankVerseSegments]"
+                    [data]="[bookTranslatedVerses(bookProgress), bookProgress.blankVerses]"
                     backgroundColor="var(--sf-translate-progress-track)"
                     [innerThicknessDelta]="0"
                     [thickness]="22"

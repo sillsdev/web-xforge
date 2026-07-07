@@ -59,7 +59,7 @@ import { CopyrightMessage, DraftSource, getCopyrightMessages } from '../draft-so
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 
-const MIN_TRANSLATED_SEGMENTS_FOR_NON_EMPTY_BOOK = 3 as const;
+const MIN_TRANSLATED_VERSES_FOR_NON_EMPTY_BOOK = 3 as const;
 
 export interface DraftGenerationStepsResult {
   trainingDataFiles: string[];
@@ -693,7 +693,7 @@ export class DraftGenerationStepsComponent implements OnInit {
     const bookId: string = Canon.bookNumberToId(bookNum);
     const bookProgress: BookProgress | undefined = textProgress.books.find(p => p.bookId === bookId);
     if (bookProgress == null) return false;
-    return bookProgress.verseSegments - bookProgress.blankVerseSegments >= MIN_TRANSLATED_SEGMENTS_FOR_NON_EMPTY_BOOK;
+    return bookProgress.verses - bookProgress.blankVerses >= MIN_TRANSLATED_VERSES_FOR_NON_EMPTY_BOOK;
   }
 
   private setProjectDisplayNames(target: DraftSource | undefined, draftingSource: DraftSource | undefined): void {

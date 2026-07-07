@@ -20,6 +20,7 @@ public static class SFServiceCollectionExtensions
         services.AddSingleton<IGuidService, GuidService>();
         services.AddSingleton<ISFProjectService, SFProjectService>();
         services.AddSingleton<IProjectService, SFProjectService>();
+        services.AddSingleton<ITextProgressService, TextProgressService>();
         services.AddSingleton<IJwtTokenHelper, JwtTokenHelper>();
         services.AddSingleton<IParatextDataHelper, ParatextDataHelper>();
         services.AddSingleton<IInternetSharedRepositorySourceProvider, InternetSharedRepositorySourceProvider>();

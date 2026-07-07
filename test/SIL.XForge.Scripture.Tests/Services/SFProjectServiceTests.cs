@@ -17,6 +17,7 @@ using Newtonsoft.Json;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using SIL.Scripture;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.EventMetrics;
@@ -4978,6 +4979,48 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task GetProjectProgressAsync_UserOnProject_ReturnsCalculatedProgress()
+    {
+        var env = new TestEnvironment();
+        BookProgress[] progress =
+        [
+            new BookProgress
+            {
+                BookId = "RUT",
+                Verses = 85,
+                BlankVerses = 12,
+            },
+        ];
+        env.TextProgressService.GetBookProgressAsync(Project01, Arg.Any<ScrVers>()).Returns(Task.FromResult(progress));
+
+        Assert.That(await env.Service.GetProjectProgressAsync(User01, Project01), Is.EqualTo(progress));
+    }
+
+    [Test]
+    public async Task GetProjectProgressAsync_UsesTheProjectVersification()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(new ParatextSettings { Versification = ScrVers.Original });
+
+        await env.Service.GetProjectProgressAsync(User01, Project01);
+
+        await env.TextProgressService.Received().GetBookProgressAsync(Project01, ScrVers.Original);
+    }
+
+    [Test]
+    public async Task GetProjectProgressAsync_NoLocalRepository_UsesTheDefaultVersification()
+    {
+        var env = new TestEnvironment();
+        env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns((ParatextSettings?)null);
+
+        await env.Service.GetProjectProgressAsync(User01, Project01);
+
+        await env.TextProgressService.Received().GetBookProgressAsync(Project01, VerseRef.defaultVersification);
+    }
+
+    [Test]
     public async Task UpdateProjectReferencesAsync_NoMatchingSources()
     {
         var env = new TestEnvironment();
@@ -5725,11 +5768,7 @@ public class SFProjectServiceTests
                     SiteDir = "xforge",
                 }
             );
-            IOptions<DataAccessOptions> dataAccessOptions = Microsoft.Extensions.Options.Options.Create(
-                new DataAccessOptions { MongoDatabaseName = "mongoDatabaseName" }
-            );
-
-            MongoClient = Substitute.For<IMongoClient>();
+            TextProgressService = Substitute.For<ITextProgressService>();
 
             var audioService = Substitute.For<IAudioService>();
             EmailService = Substitute.For<IEmailService>();
@@ -6103,7 +6142,6 @@ public class SFProjectServiceTests
             Service = new SFProjectService(
                 RealtimeService,
                 siteOptions,
-                dataAccessOptions,
                 audioService,
                 EmailService,
                 ProjectSecrets,
@@ -6122,7 +6160,7 @@ public class SFProjectServiceTests
                 EventMetricService,
                 ProjectRights,
                 GuidService,
-                MongoClient
+                TextProgressService
             );
         }
 
@@ -6144,7 +6182,7 @@ public class SFProjectServiceTests
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
         public IGuidService GuidService { get; }
-        public IMongoClient MongoClient { get; }
+        public ITextProgressService TextProgressService { get; }
 
         public void AddSyncMetrics()
         {

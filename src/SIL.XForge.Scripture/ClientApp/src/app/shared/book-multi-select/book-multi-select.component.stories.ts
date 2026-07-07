@@ -3,7 +3,11 @@ import { BehaviorSubject } from 'rxjs';
 import { expect, waitFor, within } from 'storybook/test';
 import { anything, instance, mock, reset, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { BookProgress, ProgressService, ProjectProgress } from '../progress-service/progress.service';
+import {
+  BookProgressWithChapterProgress,
+  ProgressService,
+  ProjectProgressWithChapterProgress
+} from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
@@ -13,15 +17,26 @@ const mockedOnlineStatusService = mock(OnlineStatusService);
 // A spread across all three sections: OT (Genesis, Exodus, Leviticus), NT (Matthew, Luke), DC (Tobit, Wisdom).
 const AVAILABLE_BOOK_NUMBERS = [1, 2, 3, 40, 42, 67, 70];
 
+/** Progress for a book whose only chapter is present, so its ratio is simply the translated fraction of its verses. */
+function completeBook(bookId: string, verses: number, blankVerses: number): BookProgressWithChapterProgress {
+  return {
+    bookId,
+    verses,
+    blankVerses,
+    expectedVerses: verses,
+    chapters: [{ chapterNumber: 1, verses, blankVerses, expectedVerses: verses }]
+  };
+}
+
 // Varied progress so the bars render at a range of widths, including 0% and 100%.
-const PROGRESS: BookProgress[] = [
-  { bookId: 'GEN', verseSegments: 0, blankVerseSegments: 0 }, // no data → 0%
-  { bookId: 'EXO', verseSegments: 10_000, blankVerseSegments: 8_500 }, // 15%
-  { bookId: 'LEV', verseSegments: 10_000, blankVerseSegments: 7_000 }, // 30%
-  { bookId: 'MAT', verseSegments: 10_000, blankVerseSegments: 5_500 }, // 45%
-  { bookId: 'LUK', verseSegments: 10_000, blankVerseSegments: 4_000 }, // 60%
-  { bookId: 'TOB', verseSegments: 10_000, blankVerseSegments: 2_000 }, // 80%
-  { bookId: 'WIS', verseSegments: 10_000, blankVerseSegments: 0 } // 100%
+const PROGRESS: BookProgressWithChapterProgress[] = [
+  completeBook('GEN', 0, 0), // no data → 0%
+  completeBook('EXO', 10_000, 8_500), // 15%
+  completeBook('LEV', 10_000, 7_000), // 30%
+  completeBook('MAT', 10_000, 5_500), // 45%
+  completeBook('LUK', 10_000, 4_000), // 60%
+  completeBook('TOB', 10_000, 2_000), // 80%
+  completeBook('WIS', 10_000, 0) // 100%
 ];
 
 interface StoryArgs {
@@ -52,7 +67,9 @@ const meta: Meta<StoryArgs> = {
   render: args => {
     reset(mockedProgressService);
     reset(mockedOnlineStatusService);
-    when(mockedProgressService.getProgress(anything(), anything())).thenResolve(new ProjectProgress(PROGRESS));
+    when(mockedProgressService.getProgressWithChapterProgress(anything(), anything())).thenResolve(
+      new ProjectProgressWithChapterProgress(PROGRESS)
+    );
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(new BehaviorSubject<boolean>(args.online).asObservable());
     return {
       props: {

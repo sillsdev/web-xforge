@@ -8,6 +8,15 @@
         "resolved": "10.0.1",
         "contentHash": "kb5kBe1HioGuH+ZDKysv/oAO9cCUW2yxtrGrRBZp/dIij5f011OfC4XiNMayZ8bGfOv2+n2ocPkaJIGppAZDEg=="
       },
+      "EphemeralMongo": {
+        "type": "Direct",
+        "requested": "[3.2.0, )",
+        "resolved": "3.2.0",
+        "contentHash": "hpsTq0pfgNOs/qV6iUwWd9hXE9fuI7nerIK2qINpDhOUm2wvBciN9enDpayGtFXdfT+sNhlx8/kSU24zeJx9RA==",
+        "dependencies": {
+          "MongoDB.Driver": "3.3.0"
+        }
+      },
       "JunitXml.TestLogger": {
         "type": "Direct",
         "requested": "[8.0.0, )",

@@ -5,12 +5,27 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { anything, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { ProgressService, ProjectProgress } from '../progress-service/progress.service';
+import {
+  BookProgressWithChapterProgress,
+  ProgressService,
+  ProjectProgressWithChapterProgress
+} from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
 const mockedProgressService = mock(ProgressService);
 const mockedI18nService = mock(I18nService);
+
+/** Progress for a book whose only chapter is present, so its ratio is simply the translated fraction of its verses. */
+function completeBook(bookId: string, verses: number, blankVerses: number): BookProgressWithChapterProgress {
+  return {
+    bookId,
+    verses,
+    blankVerses,
+    expectedVerses: verses,
+    chapters: [{ chapterNumber: 1, verses, blankVerses, expectedVerses: verses }]
+  };
+}
 
 describe('BookMultiSelectComponent', () => {
   let component: BookMultiSelectComponent;
@@ -47,15 +62,15 @@ describe('BookMultiSelectComponent', () => {
       { number: 1, selected: true },
       { number: 3, selected: true }
     ];
-    when(mockedProgressService.getProgress(anything(), anything())).thenResolve(
-      new ProjectProgress([
-        { bookId: 'GEN', verseSegments: 0, blankVerseSegments: 0 },
-        { bookId: 'EXO', verseSegments: 10_000, blankVerseSegments: 8_500 },
-        { bookId: 'LEV', verseSegments: 10_000, blankVerseSegments: 7_000 },
-        { bookId: 'MAT', verseSegments: 10_000, blankVerseSegments: 5_500 },
-        { bookId: 'LUK', verseSegments: 10_000, blankVerseSegments: 4_000 },
-        { bookId: 'TOB', verseSegments: 10_000, blankVerseSegments: 2_000 },
-        { bookId: 'WIS', verseSegments: 10_000, blankVerseSegments: 0 }
+    when(mockedProgressService.getProgressWithChapterProgress(anything(), anything())).thenResolve(
+      new ProjectProgressWithChapterProgress([
+        completeBook('GEN', 0, 0),
+        completeBook('EXO', 10_000, 8_500),
+        completeBook('LEV', 10_000, 7_000),
+        completeBook('MAT', 10_000, 5_500),
+        completeBook('LUK', 10_000, 4_000),
+        completeBook('TOB', 10_000, 2_000),
+        completeBook('WIS', 10_000, 0)
       ])
     );
     when(mockedI18nService.localeCode).thenReturn('en');
@@ -101,7 +116,7 @@ describe('BookMultiSelectComponent', () => {
       await settle();
     }
 
-    verify(mockedProgressService.getProgress('test-project-id', anything())).once();
+    verify(mockedProgressService.getProgressWithChapterProgress('test-project-id', anything())).once();
     expect(component.bookOptions.length).toBe(mockBooks.length);
   });
 
@@ -110,7 +125,7 @@ describe('BookMultiSelectComponent', () => {
     component.ngOnChanges();
     await settle();
 
-    verify(mockedProgressService.getProgress('a-different-project-id', anything())).once();
+    verify(mockedProgressService.getProgressWithChapterProgress('a-different-project-id', anything())).once();
     expect().nothing();
   });
 
@@ -124,7 +139,7 @@ describe('BookMultiSelectComponent', () => {
     component.ngOnChanges();
     await settle();
 
-    verify(mockedProgressService.getProgress('no-progress-project', anything())).never();
+    verify(mockedProgressService.getProgressWithChapterProgress('no-progress-project', anything())).never();
     expect(component.bookOptions.length).toBe(mockBooks.length);
     expect(component.bookOptions.every(b => b.progress == null)).toBe(true);
   });
@@ -135,7 +150,7 @@ describe('BookMultiSelectComponent', () => {
     component.ngOnChanges();
     await settle();
 
-    verify(mockedProgressService.getProgress('offline-project', anything())).never();
+    verify(mockedProgressService.getProgressWithChapterProgress('offline-project', anything())).never();
     expect(component.bookOptions.length).toBe(mockBooks.length);
   });
 
@@ -144,17 +159,17 @@ describe('BookMultiSelectComponent', () => {
     component.projectId = 'reconnect-project';
     component.ngOnChanges();
     await settle();
-    verify(mockedProgressService.getProgress('reconnect-project', anything())).never();
+    verify(mockedProgressService.getProgressWithChapterProgress('reconnect-project', anything())).never();
 
     onlineStatus.setIsOnline(true);
     await settle();
-    verify(mockedProgressService.getProgress('reconnect-project', anything())).once();
+    verify(mockedProgressService.getProgressWithChapterProgress('reconnect-project', anything())).once();
     expect().nothing();
   });
 
   it('does not re-fetch progress when the connection drops and returns after it has loaded', async () => {
     // beforeEach already fetched progress for 'test-project-id' while online.
-    verify(mockedProgressService.getProgress('test-project-id', anything())).once();
+    verify(mockedProgressService.getProgressWithChapterProgress('test-project-id', anything())).once();
 
     onlineStatus.setIsOnline(false);
     await settle();
@@ -162,12 +177,14 @@ describe('BookMultiSelectComponent', () => {
     await settle();
 
     // Online status is only a gate for the initial fetch; toggling it must not trigger another fetch.
-    verify(mockedProgressService.getProgress('test-project-id', anything())).once();
+    verify(mockedProgressService.getProgressWithChapterProgress('test-project-id', anything())).once();
     expect().nothing();
   });
 
   it('should not crash when texts have not yet loaded', async () => {
-    when(mockedProgressService.getProgress(anything(), anything())).thenResolve(new ProjectProgress([]));
+    when(mockedProgressService.getProgressWithChapterProgress(anything(), anything())).thenResolve(
+      new ProjectProgressWithChapterProgress([])
+    );
     component.projectId = 'empty-progress-project';
     component.ngOnChanges();
     await settle();
