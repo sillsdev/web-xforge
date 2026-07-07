@@ -216,6 +216,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   bsonType: 'string'
                 }
               },
+              lastAvailableTrainingDataFiles: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
+                }
+              },
               lastSelectedTrainingScriptureRanges: {
                 bsonType: 'array',
                 items: {
