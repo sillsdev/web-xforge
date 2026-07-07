@@ -1726,11 +1726,43 @@ describe('ServalBuildsComponent', () => {
       expect(result).toBe('112233 BSB: GEN 10-11, 16-19; EXO');
     });
 
-    it('compactRangeNotation de-duplicates duplicate chapter numbers', () => {
-      // SUT
-      const result: string = ServalBuildsComponent.compactRangeNotation([10, 10, 11, 10, 16, 16, 17]);
+    it('collapses contiguous full books into an ID range', () => {
+      const projectBooks: ProjectBooks[] = [
+        {
+          sfProjectId: '112233',
+          projectDisplayName: 'BSB',
+          shortName: 'BSB',
+          booksAndChapters: [
+            { bookId: 'GEN' },
+            { bookId: 'EXO' },
+            { bookId: 'LEV' },
+            { bookId: 'NUM', chapters: [1, 2, 3] }
+          ]
+        }
+      ];
 
-      expect(result).toBe('10-11, 16-17');
+      // SUT
+      const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
+
+      expect(result).toBe('112233 BSB: GEN-LEV; NUM 1-3');
+    });
+
+    it('treats a book whose chapters reach the canonical count as a full book', () => {
+      const projectBooks: ProjectBooks[] = [
+        {
+          sfProjectId: '112233',
+          projectDisplayName: 'BSB',
+          shortName: 'BSB',
+          booksAndChapters: [{ bookId: 'GEN', chapters: [1, 2, 3] }, { bookId: 'EXO' }]
+        }
+      ];
+      // All 40 chapters of Exodus, which is the same as the whole book
+      projectBooks[0].booksAndChapters[1].chapters = Array.from({ length: 40 }, (_, i) => i + 1);
+
+      // SUT
+      const result: string = ServalBuildsComponent.formatProjectBooks(projectBooks);
+
+      expect(result).toBe('112233 BSB: GEN 1-3; EXO');
     });
   });
 
