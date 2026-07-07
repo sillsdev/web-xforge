@@ -253,3 +253,46 @@ export class VerboseScriptureRange {
     }
   }
 }
+
+/**
+ * Returns a copy of `range` where each book listed without chapters takes its chapter list from `detail`
+ * (when `detail` has chapters for it). Books that already specify chapters are unchanged, and books that
+ * appear only in `detail` are not added.
+ */
+export function overlayChapterDetail(
+  range: VerboseScriptureRange,
+  detail: VerboseScriptureRange
+): VerboseScriptureRange {
+  const result = range.clone();
+  for (const [bookId, chapters] of result.books) {
+    if (chapters.count() > 0) continue;
+    const detailChapters = detail.books.get(bookId);
+    if (detailChapters != null && detailChapters.count() > 0) {
+      result.books.set(bookId, detailChapters.clone());
+    }
+  }
+  return result;
+}
+
+/**
+ * Prepares a build's training scripture ranges for display as training sources. The target project's entry is not
+ * a source: it records the chapter-level training selection, so it is removed and its chapter detail is overlaid
+ * onto each source entry instead. Entries with an empty range are dropped (a build with no training books still
+ * stores an empty entry for the target). Ranges from the legacy stepper have no target entry and pass through
+ * unchanged.
+ */
+export function trainingSourceRangesWithTargetDetail<T extends { scriptureRange?: string }>(
+  ranges: readonly T[],
+  projectIdOf: (range: T) => string | undefined,
+  targetProjectId: string | undefined
+): T[] {
+  // Guard against a null target ID matching entries whose own project ID is unknown
+  const isTargetEntry = (r: T): boolean => targetProjectId != null && projectIdOf(r) === targetProjectId;
+  const targetDetail = new VerboseScriptureRange(ranges.find(isTargetEntry)?.scriptureRange ?? '');
+  return ranges
+    .filter(r => !isTargetEntry(r) && r.scriptureRange != null && r.scriptureRange !== '')
+    .map(r => ({
+      ...r,
+      scriptureRange: overlayChapterDetail(new VerboseScriptureRange(r.scriptureRange!), targetDetail).toString()
+    }));
+}

@@ -1,14 +1,11 @@
 import { Canon } from '@sillsdev/scripture';
 import { I18nService } from 'xforge-common/i18n.service';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
-
-/**
- * A contiguous run of fully-used training books (rendered as a book range), or a single book that is only partly
- * used as training data (rendered with its chapter range). Partial books are never absorbed into a range.
- */
-export type TrainingBookSegment =
-  | { kind: 'range'; bookNumbers: number[] }
-  | { kind: 'partial'; bookId: string; chapterRange: string };
+import {
+  BookDisplaySegment,
+  formatBookDisplaySegments,
+  segmentBooksForDisplay
+} from '../../../shared/scripture-range-display';
 
 const EMPTY_CHAPTER_SET = new ChapterSet('');
 
@@ -29,32 +26,17 @@ export function segmentTrainingBooks(
   selectedTargetTraining: VerboseScriptureRange,
   availableTargetTraining: VerboseScriptureRange,
   selectedDrafting: VerboseScriptureRange
-): TrainingBookSegment[] {
-  const segments: TrainingBookSegment[] = [];
-  let pendingFullBooks: number[] = [];
-  const flushFullBooks = (): void => {
-    if (pendingFullBooks.length > 0) {
-      segments.push({ kind: 'range', bookNumbers: pendingFullBooks });
-      pendingFullBooks = [];
-    }
-  };
-
-  for (const bookNumber of [...bookNumbers].sort((a, b) => a - b)) {
+): BookDisplaySegment[] {
+  const books = bookNumbers.map(bookNumber => {
     const bookId = Canon.bookNumberToId(bookNumber);
     const selected = selectedTargetTraining.books.get(bookId);
     const available = availableTargetTraining.books.get(bookId) ?? EMPTY_CHAPTER_SET;
     const drafted = selectedDrafting.books.get(bookId) ?? EMPTY_CHAPTER_SET;
     const wholeBook = available.union(drafted);
     const isPartial = selected != null && wholeBook.difference(selected).count() > 0;
-    if (isPartial) {
-      flushFullBooks();
-      segments.push({ kind: 'partial', bookId, chapterRange: selected!.toStringForDisplay() });
-    } else {
-      pendingFullBooks.push(bookNumber);
-    }
-  }
-  flushFullBooks();
-  return segments;
+    return { bookNumber, chapterRange: isPartial ? selected.toStringForDisplay() : null };
+  });
+  return segmentBooksForDisplay(books);
 }
 
 /**
@@ -68,15 +50,8 @@ export function formatTrainingBooksSummary(
   selectedDrafting: VerboseScriptureRange,
   i18n: I18nService
 ): string {
-  const labels = segmentTrainingBooks(
-    bookNumbers,
-    selectedTargetTraining,
-    availableTargetTraining,
-    selectedDrafting
-  ).map(segment =>
-    segment.kind === 'range'
-      ? i18n.formatAndLocalizeBookRange(segment.bookNumbers)
-      : `${i18n.localizeBook(segment.bookId)} (${segment.chapterRange})`
+  return formatBookDisplaySegments(
+    segmentTrainingBooks(bookNumbers, selectedTargetTraining, availableTargetTraining, selectedDrafting),
+    i18n
   );
-  return i18n.enumerateList(labels);
 }

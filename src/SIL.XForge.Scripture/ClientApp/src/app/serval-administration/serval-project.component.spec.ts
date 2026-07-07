@@ -14,13 +14,12 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
@@ -41,7 +40,6 @@ const mockActivatedRoute = mock(ActivatedRoute);
 const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockFileService = mock(FileService);
-const mockedI18nService = mock(I18nService);
 const mockNoticeService = mock(NoticeService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
@@ -49,6 +47,7 @@ const mockTrainingDataService = mock(TrainingDataService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
+    imports: [getTestTranslocoModule()],
     providers: [
       provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
@@ -56,7 +55,6 @@ describe('ServalProjectComponent', () => {
       { provide: AuthService, useMock: mockAuthService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: FileService, useMock: mockFileService },
-      { provide: I18nService, useMock: mockedI18nService },
       { provide: NoticeService, useMock: mockNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
@@ -264,11 +262,31 @@ describe('ServalProjectComponent', () => {
       });
       const trainingSources = env.trainingSources;
       expect(trainingSources.length).toEqual(2);
-      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis - Exodus');
+      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis and Exodus');
       expect(env.getTrainingSourceBookNames(trainingSources[1])).toEqual('Genesis');
       const translationSources = env.translationSources;
       expect(translationSources.length).toEqual(1);
-      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus - Numbers');
+      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus and Numbers');
+    }));
+
+    it('folds the target training entry into the sources as chapter detail instead of listing it', fakeAsync(() => {
+      const env = new TestEnvironment({
+        preTranslate: true,
+        draftConfig: {
+          lastSelectedTrainingScriptureRanges: [
+            { projectId: 'project04', scriptureRange: 'GEN;EXO' },
+            // The entry for the target project itself carries the chapter-level selection
+            { projectId: 'project01', scriptureRange: 'GEN1-3;EXO1-40' }
+          ],
+          lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV2-5' }]
+        } as DraftConfig
+      });
+      const trainingSources = env.trainingSources;
+      expect(trainingSources.length).toEqual(1);
+      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis 1-3 and Exodus');
+      const translationSources = env.translationSources;
+      expect(translationSources.length).toEqual(1);
+      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus 2-5');
     }));
 
     describe('serval configuration', () => {
@@ -495,10 +513,6 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectId$).thenReturn(mockProjectId$);
       when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
-
-      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN')).thenReturn('Genesis');
-      when(mockedI18nService.formatAndLocalizeScriptureRange('GEN;EXO')).thenReturn('Genesis - Exodus');
-      when(mockedI18nService.formatAndLocalizeScriptureRange('LEV;NUM')).thenReturn('Leviticus - Numbers');
 
       when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(
         of(args.lastCompletedBuild)

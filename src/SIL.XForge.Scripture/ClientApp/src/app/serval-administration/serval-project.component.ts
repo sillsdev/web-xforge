@@ -50,6 +50,8 @@ import { InfoComponent } from '../shared/info/info.component';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
+import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../shared/scripture-range';
+import { formatScriptureRangeWithChapters } from '../shared/scripture-range-display';
 import { projectLabel } from '../shared/utils';
 import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
@@ -227,16 +229,22 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           // We have to set the rows this way to trigger the update
           this.rows = rows;
 
-          // Setup the books
+          // Setup the books. The target project's entry is not a training source; it is folded into the source
+          // ranges as chapter detail.
           this.trainingBooksByProject = [];
-          if (draftConfig.lastSelectedTrainingScriptureRanges != null) {
-            let sourceCount = 1;
-            for (const range of draftConfig.lastSelectedTrainingScriptureRanges) {
-              this.trainingBooksByProject.push({
-                source: `Source ${sourceCount++}`,
-                scriptureRange: this.i18n.formatAndLocalizeScriptureRange(range.scriptureRange)
-              });
-            }
+          let trainingSourceCount = 1;
+          for (const range of trainingSourceRangesWithTargetDetail(
+            draftConfig.lastSelectedTrainingScriptureRanges ?? [],
+            r => r.projectId,
+            projectDoc.id
+          )) {
+            this.trainingBooksByProject.push({
+              source: `Source ${trainingSourceCount++}`,
+              scriptureRange: formatScriptureRangeWithChapters(
+                new VerboseScriptureRange(range.scriptureRange),
+                this.i18n
+              )
+            });
           }
           this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
           this.translationBooksByProject = [];
@@ -245,7 +253,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
             for (const range of draftConfig.lastSelectedTranslationScriptureRanges) {
               this.translationBooksByProject.push({
                 source: `Source ${sourceCount++}`,
-                scriptureRange: this.i18n.formatAndLocalizeScriptureRange(range.scriptureRange)
+                scriptureRange: formatScriptureRangeWithChapters(
+                  new VerboseScriptureRange(range.scriptureRange),
+                  this.i18n
+                )
               });
             }
           }
