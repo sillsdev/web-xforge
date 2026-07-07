@@ -65,31 +65,31 @@ describe('formatTrainingBooksSummary', () => {
 
   it('breaks a partial book in the middle out of the range and shows its chapters', () => {
     expect(format([GEN, EXO, LEV], 'GEN1-50;EXO1-10;LEV1-27', 'GEN1-50;EXO1-40;LEV1-27')).toEqual(
-      'Genesis, Exodus (1-10), and Leviticus'
+      'Genesis, Exodus 1-10, and Leviticus'
     );
   });
 
   it('handles a partial book at the start', () => {
     expect(format([GEN, EXO, LEV], 'GEN1-10;EXO1-40;LEV1-27', 'GEN1-50;EXO1-40;LEV1-27')).toEqual(
-      'Genesis (1-10) and Exodus - Leviticus'
+      'Genesis 1-10, Exodus, and Leviticus'
     );
   });
 
   it('handles a partial book at the end', () => {
     expect(format([GEN, EXO, LEV], 'GEN1-50;EXO1-40;LEV1-10', 'GEN1-50;EXO1-40;LEV1-27')).toEqual(
-      'Genesis - Exodus and Leviticus (1-10)'
+      'Genesis, Exodus, and Leviticus 1-10'
     );
   });
 
   it('does not merge full books across a partial book', () => {
     expect(format([GEN, EXO, LEV, NUM], 'GEN1-50;EXO1-5;LEV1-27;NUM1-36', 'GEN1-50;EXO1-40;LEV1-27;NUM1-36')).toEqual(
-      'Genesis, Exodus (1-5), and Leviticus - Numbers'
+      'Genesis, Exodus 1-5, Leviticus, and Numbers'
     );
   });
 
   it('shows the training chapter range for a partially-drafted book whose remaining chapters are all selected', () => {
     // Draft the latter two-thirds (GEN18-50); the complete first third (GEN1-17) is available and fully selected.
-    expect(format([GEN], 'GEN1-17', 'GEN1-17', 'GEN18-50')).toEqual('Genesis (1-17)');
+    expect(format([GEN], 'GEN1-17', 'GEN1-17', 'GEN18-50')).toEqual('Genesis 1-17');
   });
 
   it('formats non-contiguous selected chapters with spaces after commas', () => {
@@ -98,6 +98,6 @@ describe('formatTrainingBooksSummary', () => {
 
   it('treats a book missing from the target training selection as full (defensive)', () => {
     // EXO has no entry in the selection; it should not crash and should render as a full book.
-    expect(format([GEN, EXO], 'GEN1-50', 'GEN1-50;EXO1-40')).toEqual('Genesis - Exodus');
+    expect(format([GEN, EXO], 'GEN1-50', 'GEN1-50;EXO1-40')).toEqual('Genesis and Exodus');
   });
 });

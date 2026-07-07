@@ -53,7 +53,8 @@ import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
-import { ChapterSet } from '../shared/scripture-range';
+import { ChapterSet, trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
+import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
 import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
@@ -591,7 +592,14 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         sfProjectId
       );
       const projectLink: string | undefined = ServalBuildsComponent.servalAdminProjectLinkFor(sfProjectId);
-      const trainingBooks: ProjectBooks[] = toProjectBooks(report.config.trainingScriptureRanges);
+      // The target project's entry among the training ranges is not a source; fold it in as chapter detail.
+      const trainingBooks: ProjectBooks[] = toProjectBooks(
+        trainingSourceRangesWithTargetDetail(
+          report.config.trainingScriptureRanges ?? [],
+          r => r.sfProjectId,
+          sfProjectId
+        )
+      );
       const translationBooks: ProjectBooks[] = toProjectBooks(report.config.translationScriptureRanges);
 
       return {
@@ -1025,21 +1033,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return result;
   }
 
-  /** Formats a BookAndChapters array into a display string, e.g. "GEN 10-11, 16-19; EXO". */
+  /**
+   * Formats a BookAndChapters array into a compact display string, e.g. "GEN-LEV; NUM 10-11, 16-19". Contiguous
+   * full books (including those whose chapters reach the canonical count) collapse into an ID range.
+   */
   static formatBookEntries(booksAndChapters: BookAndChapters[]): string {
-    return booksAndChapters
-      .map(entry => {
-        if (entry.chapters == null || entry.chapters.length === 0) {
-          return entry.bookId;
-        }
-        return `${entry.bookId} ${ServalBuildsComponent.compactRangeNotation(entry.chapters)}`;
-      })
-      .join('; ');
-  }
-
-  /** Formats numbers into compact range notation, e.g. [7, 1, 3, 2] → "1-3, 7" (sorted, de-duplicated). */
-  static compactRangeNotation(nums: number[]): string {
-    return new ChapterSet(nums).toStringForDisplay();
+    const tokens = booksAndChapters.map(entry =>
+      entry.chapters == null || entry.chapters.length === 0
+        ? entry.bookId
+        : `${entry.bookId}${new ChapterSet(entry.chapters).toString()}`
+    );
+    return formatScriptureRangeTokensCompact(tokens);
   }
 
   /** (The return type is string if the input is a type string (at compile time), or undefined

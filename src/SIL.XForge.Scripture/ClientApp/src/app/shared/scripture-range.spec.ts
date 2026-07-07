@@ -1,4 +1,9 @@
-import { ChapterSet, VerboseScriptureRange } from './scripture-range';
+import {
+  ChapterSet,
+  overlayChapterDetail,
+  trainingSourceRangesWithTargetDetail,
+  VerboseScriptureRange
+} from './scripture-range';
 
 describe('ScriptureRange', () => {
   describe('ChapterSet', () => {
@@ -183,6 +188,71 @@ describe('ScriptureRange', () => {
 
     it('combines an empty list into an empty range', () => {
       expect(VerboseScriptureRange.fromCombinedRanges([]).toString()).toBe('');
+    });
+
+    it('overlays chapter detail onto whole-book tokens only', () => {
+      // GEN and EXO are whole-book tokens (no chapters); LEV already names chapters and is left alone.
+      const range = new VerboseScriptureRange('GEN;EXO;LEV1-2');
+      const detail = new VerboseScriptureRange('GEN1-3;LEV5-10');
+      expect(overlayChapterDetail(range, detail).toString()).toBe('GEN1-3;EXO;LEV1-2');
+    });
+
+    it('leaves a whole-book token as-is when detail has nothing for it', () => {
+      const range = new VerboseScriptureRange('GEN');
+      expect(overlayChapterDetail(range, new VerboseScriptureRange('EXO1-3')).toString()).toBe('GEN');
+    });
+
+    it('does not mutate the original range', () => {
+      const range = new VerboseScriptureRange('GEN');
+      overlayChapterDetail(range, new VerboseScriptureRange('GEN1-3'));
+      expect(range.toString()).toBe('GEN');
+    });
+  });
+
+  describe('trainingSourceRangesWithTargetDetail', () => {
+    function sourceRanges(
+      ranges: { projectId?: string; scriptureRange?: string }[],
+      targetProjectId: string | undefined
+    ): { projectId?: string; scriptureRange?: string }[] {
+      return trainingSourceRangesWithTargetDetail(ranges, r => r.projectId, targetProjectId);
+    }
+
+    it('drops the target entry and overlays its chapter detail onto the source entries', () => {
+      expect(
+        sourceRanges(
+          [
+            { projectId: 'source01', scriptureRange: 'GEN;EXO' },
+            { projectId: 'target01', scriptureRange: 'GEN1-3;EXO1-40' }
+          ],
+          'target01'
+        )
+      ).toEqual([{ projectId: 'source01', scriptureRange: 'GEN1-3;EXO1-40' }]);
+    });
+
+    it('passes legacy ranges through unchanged when there is no target entry', () => {
+      const legacy = [
+        { projectId: 'source01', scriptureRange: 'GEN;EXO' },
+        { projectId: 'source02', scriptureRange: 'LEV' }
+      ];
+      expect(sourceRanges(legacy, 'target01')).toEqual(legacy);
+    });
+
+    it('drops entries with an empty range, such as the target entry of a build with no training books', () => {
+      expect(
+        sourceRanges(
+          [
+            { projectId: 'target01', scriptureRange: '' },
+            { projectId: 'source01', scriptureRange: '' }
+          ],
+          'target01'
+        )
+      ).toEqual([]);
+    });
+
+    it('does not treat an entry with an unknown project as the target when the target ID is unknown', () => {
+      expect(sourceRanges([{ projectId: undefined, scriptureRange: 'GEN' }], undefined)).toEqual([
+        { projectId: undefined, scriptureRange: 'GEN' }
+      ]);
     });
   });
 });

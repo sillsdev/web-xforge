@@ -7,6 +7,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { BehaviorSubject, Observable, of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { groupContiguousBookNumbers } from '../app/shared/scripture-range-display';
 import { booksFromScriptureRange } from '../app/shared/utils';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
@@ -240,6 +241,17 @@ export class I18nService {
     return `${this.localizeBook(book)} ${this.getDirectionMark()}${chapter}`;
   }
 
+  /**
+   * Localizes a book name followed by a chapter range, e.g. "Exodus 1-12". With `grouped: true` the chapters are
+   * wrapped in the locale's parentheses, e.g. "Exodus (1-3, 7)". This is intended for when the result sits in a list
+   * and a multi-part range would otherwise read as separate list items. For example "Genesis 1-3, 7, Exodus" reads
+   * poorly and benefits from parentheses around the the chapter list for Genesis.
+   */
+  localizeBookWithChapters(book: number | string, chapters: string, options: { grouped?: boolean } = {}): string {
+    const key: I18nKey = options.grouped === true ? 'canon.book_with_chapters_grouped' : 'canon.book_with_chapters';
+    return this.transloco.translate(key, { book: this.localizeBook(book), chapters });
+  }
+
   formatAndLocalizeScriptureRange(scriptureRange: string): string {
     const bookNumbers: number[] = booksFromScriptureRange(scriptureRange)
       .filter(i => i > 0)
@@ -248,33 +260,23 @@ export class I18nService {
   }
 
   formatAndLocalizeBookRange(bookNumbers: number[]): string {
-    if (bookNumbers.length === 0) return '';
+    return this.enumerateList(this.localizeBookRangeLabels(bookNumbers));
+  }
 
-    const ranges: string[] = [];
-    let start: number = bookNumbers[0];
-    let end: number = bookNumbers[0];
-
-    if (bookNumbers.length === 1) return this.localizeBook(start);
-
-    for (let i = 1; i < bookNumbers.length; i++) {
-      const current: number = bookNumbers[i];
-      if (current === end + 1) {
-        end = current;
-      } else {
-        const fromBook: string = this.localizeBook(start);
-        const toBook: string = this.localizeBook(end);
-        ranges.push(start === end ? fromBook : `${fromBook} - ${toBook}`);
-        start = current;
-        end = current;
-      }
-    }
-
-    // Handle the last book in the scripture range
-    const fromBook: string = this.localizeBook(start);
-    const toBook: string = this.localizeBook(end);
-    ranges.push(start === end ? fromBook : `${fromBook} - ${toBook}`);
-
-    return this.enumerateList(ranges);
+  /**
+   * Returns one localized label per contiguous group of book numbers (see {@link groupContiguousBookNumbers}), e.g.
+   * ["Genesis", "Exodus - Leviticus"]. The labels are not joined into a list string. Use this instead of
+   * {@link formatAndLocalizeBookRange} when the labels still need to be combined with other labels before a
+   * single, final {@link enumerateList} call. Calling {@link enumerateList} twice (once here, once on the outer
+   * list) nests one conjunction inside another: "Genesis 1-10 and Exodus and Leviticus" instead of the correct
+   * "Genesis 1-10, Exodus, and Leviticus".
+   */
+  localizeBookRangeLabels(bookNumbers: number[]): string[] {
+    return groupContiguousBookNumbers(bookNumbers).map(group =>
+      group.kind === 'single'
+        ? this.localizeBook(group.bookNumber)
+        : `${this.localizeBook(group.start)} - ${this.localizeBook(group.end)}`
+    );
   }
 
   localizeReference(verse: VerseRef): string {

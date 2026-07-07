@@ -85,7 +85,7 @@ describe('DraftPreviewBooks', () => {
       } as BuildDto
     });
 
-    expect(env.getBookButtonAtIndex(0).textContent).toContain('2-3');
+    expect(env.getBookButtonAtIndex(0).textContent!.trim()).toBe('Genesis 2-3');
 
     env.getBookButtonAtIndex(0).click();
     tick();
@@ -103,7 +103,7 @@ describe('DraftPreviewBooks', () => {
       } as BuildDto
     });
 
-    expect(env.getBookButtonAtIndex(0).textContent).not.toContain('(');
+    expect(env.getBookButtonAtIndex(0).textContent!.trim()).toBe('Genesis');
   }));
 });
 
