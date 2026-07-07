@@ -54,6 +54,8 @@
   }
   .chapter-input-wrapper {
     grid-column-start: 2;
+    display: flex;
+    flex-direction: column;
   }
 }
 

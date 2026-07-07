@@ -40,7 +40,7 @@
         <app-copyright-banner [notice]="msg.notice" [banner]="msg.banner"></app-copyright-banner>
       }
       <button mat-button class="configure-sources-link" (click)="goToConfigureSources()">
-        <mat-icon>edit</mat-icon>{{ t("change_source_configuration") }}
+        <mat-icon>settings</mat-icon>{{ t("change_source_configuration") }}
       </button>
     } @else if (page === "draft_books") {
       <h1>{{ t("draft_books.title") }}</h1>
@@ -205,7 +205,7 @@
           }
         </div>
       }
-    } @else if (page === "suffix") {
+    } @else if (page === "summary") {
       <h1>{{ t("summary.draft_title", { books: draftingBookNamesFormatted }) }}</h1>
 
       <mat-card class="summary-card">
@@ -342,7 +342,7 @@
         <button mat-stroked-button (click)="back()">
           <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> {{ t("navigation.back") }}
         </button>
-        @if (page === "suffix") {
+        @if (page === "summary") {
           <div class="save-container">
             <button
               mat-flat-button

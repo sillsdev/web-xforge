@@ -102,6 +102,8 @@ public class MachineApiService(
     );
     private static readonly IEqualityComparer<IList<ProjectScriptureRange>> _listProjectScriptureRangeComparer =
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
+    private static readonly IEqualityComparer<IList<string>?> _nullableListStringComparer =
+        new NullableSequenceEqualityComparer<string>();
 
     public async Task<DraftApplyResult> ApplyPreTranslationToProjectAsync(
         string curUserId,
@@ -2861,12 +2863,12 @@ public class MachineApiService(
             );
             // Only record the available files when the client reported them, so that a null value continues to mean
             // "no record" (i.e. a build made before this was tracked) rather than "zero files were available".
-            // No equality comparer here: the field starts null, and _listStringComparer cannot compare against null.
             if (buildConfig.AvailableTrainingDataFiles is not null)
             {
                 op.Set<IList<string>?>(
                     p => p.TranslateConfig.DraftConfig.LastAvailableTrainingDataFiles,
-                    [.. buildConfig.AvailableTrainingDataFiles]
+                    [.. buildConfig.AvailableTrainingDataFiles],
+                    _nullableListStringComparer
                 );
             }
             op.Set(
