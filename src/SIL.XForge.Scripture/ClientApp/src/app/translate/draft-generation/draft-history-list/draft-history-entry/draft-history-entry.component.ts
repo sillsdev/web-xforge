@@ -35,7 +35,8 @@ import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { NoticeComponent } from '../../../../shared/notice/notice.component';
-import { booksFromScriptureRange } from '../../../../shared/utils';
+import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../../../../shared/scripture-range';
+import { formatScriptureRangeWithChapters } from '../../../../shared/scripture-range-display';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
@@ -61,8 +62,9 @@ interface BuildFaultedRow {
 
 interface TrainingConfigurationRow {
   scriptureRange: string;
-  source: string;
-  target: string;
+  /** Project short name; undefined renders as the localized "Unknown". */
+  source?: string;
+  target?: string;
 }
 
 interface SourceInfo {
@@ -129,12 +131,17 @@ export class DraftHistoryEntryComponent {
     this._targetLanguage = undefined;
     this._trainingConfiguration = [];
 
-    // Get the books used in the training configuration
-    const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
+    // A build's engine ID is the ID of the project the draft is for (the DTO has no other field carrying it).
+    const targetProjectId: string | undefined = value?.engine?.id;
+    // One table row per training source, with the target project's entry folded in as chapter detail.
+    const trainingScriptureRanges = trainingSourceRangesWithTargetDetail(
+      this._entry?.additionalInfo?.trainingScriptureRanges ?? [],
+      r => r.projectId,
+      targetProjectId
+    );
     void Promise.all(
       trainingScriptureRanges.map(async r => {
-        // The engine ID is the target project ID
-        const { target, source } = await this.getProjectSourceInfo(value?.engine.id, r.projectId, 'training');
+        const { target, source } = await this.getProjectSourceInfo(targetProjectId, r.projectId, 'training');
 
         // Get the target language, if it is not already set
         this._targetLanguage ??= target?.data?.writingSystem?.tag;
@@ -145,8 +152,8 @@ export class DraftHistoryEntryComponent {
         // Return the data for this training range
         return {
           scriptureRange: r.scriptureRange,
-          source: source?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown'),
-          target: target?.data?.shortName ?? this.i18n.translateStatic('draft_history_entry.draft_unknown')
+          source: source?.shortName,
+          target: target?.data?.shortName
         } as TrainingConfigurationRow;
       })
     ).then(trainingConfiguration => {
@@ -365,7 +372,14 @@ export class DraftHistoryEntryComponent {
   }
 
   getScriptureRangeAsLocalizedBooks(scriptureRange: string): string {
-    return this.i18n.enumerateList(booksFromScriptureRange(scriptureRange).map(b => this.i18n.localizeBook(b)));
+    return formatScriptureRangeWithChapters(new VerboseScriptureRange(scriptureRange), this.i18n, {
+      collapseFullBookRuns: false
+    });
+  }
+
+  // Called from the template (rather than precomputed) so the text re-localizes when the user switches languages.
+  getTrainingRangeDisplay(scriptureRange: string): string {
+    return formatScriptureRangeWithChapters(new VerboseScriptureRange(scriptureRange), this.i18n);
   }
 
   openImportWizard(): void {

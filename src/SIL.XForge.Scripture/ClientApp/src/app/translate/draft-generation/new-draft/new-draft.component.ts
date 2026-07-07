@@ -26,6 +26,7 @@ import { hasStringProp } from '../../../../type-utils';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
+import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { Book } from '../../../shared/book-multi-select/book-multi-select';
 import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
@@ -134,6 +135,7 @@ export class NewDraftComponent {
     private readonly errorHandler: ErrorHandler,
     private readonly trainingDataService: TrainingDataService,
     private readonly projectService: SFProjectService,
+    private readonly permissions: PermissionsService,
     private readonly destroyRef: DestroyRef
   ) {
     this.logicHandler = new NewDraftLogicHandler(
@@ -852,10 +854,12 @@ export class NewDraftComponent {
 
   /** Selected drafting book names with chapter ranges (for partially-drafted books), as bulleted-list items. */
   get draftingBookListItems(): string[] {
-    return this.draftingItems.map(item => {
-      const bookName = this.i18n.localizeBook(item.bookId);
-      return item.chapterRange != null ? `${bookName} (${item.chapterRange})` : bookName;
-    });
+    // Each book is on its own line, so the chapter range never needs parentheses to set it apart.
+    return this.draftingItems.map(item =>
+      item.chapterRange != null
+        ? this.i18n.localizeBookWithChapters(item.bookId, item.chapterRange)
+        : this.i18n.localizeBook(item.bookId)
+    );
   }
 
   /** Selected drafting book names without chapter detail, as a locale-aware conjunction list (for the page title). */
@@ -941,6 +945,10 @@ export class NewDraftComponent {
   /** Whether an administrator has applied a custom Serval config to this project */
   get isCustomConfigSet(): boolean {
     return this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig?.servalConfig != null;
+  }
+
+  get canConfigureSources(): boolean {
+    return this.permissions.canConfigureSources(this.activatedProjectService.projectDoc);
   }
 
   goToConfigureSources(): void {

@@ -17,6 +17,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
+import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { VerboseScriptureRange } from '../../../shared/scripture-range';
 import { NllbLanguageService } from '../../nllb-language.service';
@@ -1031,6 +1032,7 @@ const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedErrorHandler = mock<ErrorHandler>(ErrorHandler);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedPermissionsService = mock(PermissionsService);
 
 interface TestState {
   draftingSourceBooksChapters: string;
@@ -1237,6 +1239,7 @@ class TestEnvironment {
 
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedUserService.getCurrentUser()).thenResolve(undefined as any);
+    when(mockedPermissionsService.canConfigureSources(anything())).thenReturn(true);
     when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(options.trainingOptional === true);
     // Set the online state before the component is constructed so init()'s online check sees it.
     this.onlineStatusService.setIsOnline(!options.offline);
@@ -1262,6 +1265,7 @@ class TestEnvironment {
       instance(mockedErrorHandler),
       instance(mockedTrainingDataService),
       instance(mockedSFProjectService),
+      instance(mockedPermissionsService),
       { onDestroy: () => () => {} } as unknown as DestroyRef
     );
   }

@@ -14,7 +14,6 @@ import { NgCircleProgressModule } from 'ng-circle-progress';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
@@ -34,6 +33,7 @@ import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SelectableProject } from '../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
@@ -161,6 +161,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly projectService: SFProjectService,
     private readonly featureFlags: FeatureFlagService,
+    private readonly permissions: PermissionsService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'DraftGenerationComponent');
@@ -210,15 +211,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get hasConfigureSourcePermission(): boolean {
-    return this.isProjectAdmin;
-  }
-
-  private get isProjectAdmin(): boolean {
-    const userId = this.authService.currentUserId;
-    if (userId != null) {
-      return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
-    }
-    return false;
+    return this.permissions.canConfigureSources(this.activatedProject.projectDoc);
   }
 
   ngOnInit(): void {
