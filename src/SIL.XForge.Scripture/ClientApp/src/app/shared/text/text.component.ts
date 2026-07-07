@@ -603,7 +603,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       )
       .subscribe(event => {
         // Set flag to use system cursor when any key is down that would move the cursor (avoids cursor lag issue)
-        if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key.length === 1) {
+        if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key?.length === 1) {
           this.pressedCursorMoveKeys.add(event.key);
 
           // Only set the flag when the user presses and holds (detect with a short timeout delay)
