@@ -1199,8 +1199,8 @@ public class MachineApiService(
         {
             ProjectId = id[0],
             BuildId = id[1],
-            BookConfidences = draftMetrics.BookConfidences,
-            ChapterConfidences = draftMetrics.ChapterConfidences,
+            BookConfidences = [.. draftMetrics.BookConfidences.OrderBy(c => c.BookNum)],
+            ChapterConfidences = [.. draftMetrics.ChapterConfidences.OrderBy(c => c.BookNum)],
             LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Usability).FirstOrDefault(),
         };
     }
