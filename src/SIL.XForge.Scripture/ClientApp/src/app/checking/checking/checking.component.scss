@@ -264,6 +264,12 @@ header {
         .mat-icon {
           color: var(--mat-button-text-label-text-color, var(--mat-sys-primary));
         }
+
+        &:disabled {
+          .mat-icon {
+            color: var(--mat-icon-button-disabled-icon-color);
+          }
+        }
       }
 
       // Switch to icon-only prev/next buttons on small screens
