@@ -93,8 +93,10 @@ export class NewDraftComponent {
 
   pendingProjects: { projectId: string; name: string }[] = [];
 
-  draftingChapterErrors = new Map<string, ChapterInputError>();
-  targetTrainingChapterErrors = new Map<string, ChapterInputError>();
+  // Chapter-input errors per book. Every applicable error is listed at once (one per reason), so a user whose input
+  // has several problems doesn't have to discover them one blur at a time.
+  draftingChapterErrors = new Map<string, ChapterInputError[]>();
+  targetTrainingChapterErrors = new Map<string, ChapterInputError[]>();
   stepError: I18nKeyForComponent<'new_draft'> | null = null;
 
   draftingExclusionsExpanded = false;
@@ -598,7 +600,7 @@ export class NewDraftComponent {
   }
 
   /** Drops chapter-input errors for books that are no longer offered for partial selection (so have no input). */
-  private pruneChapterErrors(errors: Map<string, ChapterInputError>, offeredBookIds: string[]): void {
+  private pruneChapterErrors(errors: Map<string, ChapterInputError[]>, offeredBookIds: string[]): void {
     for (const bookId of errors.keys()) {
       if (!offeredBookIds.includes(bookId)) errors.delete(bookId);
     }
@@ -619,20 +621,20 @@ export class NewDraftComponent {
   private parseChapterInput(
     bookId: string,
     value: string,
-    errors: Map<string, ChapterInputError>,
+    errors: Map<string, ChapterInputError[]>,
     emptyErrorKey: I18nKeyForComponent<'new_draft'>
   ): ChapterSet | null {
     let parsed: ChapterSet;
     try {
       parsed = ChapterSet.fromUserInput(value);
     } catch {
-      errors.set(bookId, { key: 'chapter_input.invalid_range' });
+      errors.set(bookId, [{ key: 'chapter_input.invalid_range' }]);
       return null;
     }
     // Checked after parsing: fromUserInput normalizes whitespace and separators away, so empty, whitespace-only, and
     // separator-only input all resolve to an empty set here.
     if (parsed.count() === 0) {
-      errors.set(bookId, { key: emptyErrorKey });
+      errors.set(bookId, [{ key: emptyErrorKey }]);
       return null;
     }
     return parsed;
@@ -645,13 +647,26 @@ export class NewDraftComponent {
     const available = this.logicHandler.availableDraftingScriptureRange.books.get(bookId);
     const badChapters = available != null ? parsed.difference(available) : parsed;
     if (badChapters.count() > 0) {
-      this.draftingChapterErrors.set(bookId, {
-        key: 'chapter_input.chapters_not_in_source',
-        params: {
-          chapters: badChapters.toString(),
-          sourceName: this.logicHandler.sources?.draftingSources[0]?.shortName ?? ''
-        }
-      });
+      // A chapter can be unavailable because the source doesn't contain it at all, or because it contains it blank
+      // (available chapters are content-based). One error per applicable reason, each naming only its own chapters.
+      const present = this.logicHandler.draftingSourcePresentChapters.books.get(bookId) ?? new ChapterSet([]);
+      const missing = badChapters.difference(present);
+      const blank = badChapters.intersection(present);
+      const sourceName = this.logicHandler.sources?.draftingSources[0]?.shortName ?? '';
+      const errors: ChapterInputError[] = [];
+      if (missing.count() > 0) {
+        errors.push({
+          key: 'chapter_input.chapters_not_in_source',
+          params: { chapters: missing.toString(), sourceName }
+        });
+      }
+      if (blank.count() > 0) {
+        errors.push({
+          key: 'chapter_input.chapters_empty_in_source',
+          params: { chapters: blank.toString(), sourceName }
+        });
+      }
+      this.draftingChapterErrors.set(bookId, errors);
       return;
     }
 
@@ -742,20 +757,36 @@ export class NewDraftComponent {
     const unavailable = available != null ? parsed.difference(available) : parsed;
 
     if (unavailable.count() > 0) {
+      // A chapter can be unavailable because it is selected for drafting, because the target doesn't contain it at
+      // all, or because the target contains it blank (available chapters are content-based). One error per applicable
+      // reason, each naming only its own chapters.
       const drafted = this.logicHandler.selectedDraftingScriptureRange.books.get(bookId);
       const draftedUnavailable = drafted != null ? unavailable.intersection(drafted) : new ChapterSet([]);
+      const notDrafted = unavailable.difference(draftedUnavailable);
+      const present = this.logicHandler.targetPresentChapters.books.get(bookId) ?? new ChapterSet([]);
+      const missing = notDrafted.difference(present);
+      const blank = notDrafted.intersection(present);
+      const targetName = this.activatedProjectService.projectDoc?.data?.shortName ?? '';
+      const errors: ChapterInputError[] = [];
       if (draftedUnavailable.count() > 0) {
-        this.targetTrainingChapterErrors.set(bookId, {
+        errors.push({
           key: 'chapter_input.chapters_will_be_translated',
           params: { chapters: draftedUnavailable.toString() }
         });
-      } else {
-        const targetName = this.activatedProjectService.projectDoc?.data?.shortName ?? '';
-        this.targetTrainingChapterErrors.set(bookId, {
+      }
+      if (missing.count() > 0) {
+        errors.push({
           key: 'chapter_input.chapters_not_in_target',
-          params: { chapters: unavailable.toString(), targetName }
+          params: { chapters: missing.toString(), targetName }
         });
       }
+      if (blank.count() > 0) {
+        errors.push({
+          key: 'chapter_input.chapters_empty_in_target',
+          params: { chapters: blank.toString(), targetName }
+        });
+      }
+      this.targetTrainingChapterErrors.set(bookId, errors);
       return;
     }
 
