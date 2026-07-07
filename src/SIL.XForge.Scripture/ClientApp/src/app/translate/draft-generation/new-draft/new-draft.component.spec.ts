@@ -50,7 +50,7 @@ describe('NewDraftComponent', () => {
 
       env.component.onDraftingChaptersBlurred('GEN', 'abc');
 
-      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.invalid_range');
+      expect(env.component.draftingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.invalid_range');
     });
 
     it('rejects empty or whitespace-only input without changing the drafting selection', async () => {
@@ -60,10 +60,10 @@ describe('NewDraftComponent', () => {
       const defaultRange = env.selectedDraftingScriptureRange;
 
       env.component.onDraftingChaptersBlurred('GEN', '');
-      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_draft');
+      expect(env.component.draftingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.empty_draft');
 
       env.component.onDraftingChaptersBlurred('GEN', '   ');
-      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_draft');
+      expect(env.component.draftingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.empty_draft');
 
       // The book keeps its prior (non-empty) range rather than being stored with zero chapters.
       expect(env.selectedDraftingScriptureRange).toBe(defaultRange);
@@ -79,11 +79,11 @@ describe('NewDraftComponent', () => {
       const defaultRange = env.selectedDraftingScriptureRange;
 
       env.component.onDraftingChaptersBlurred('GEN', ',');
-      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_draft');
+      expect(env.component.draftingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.empty_draft');
 
       // The Arabic comma is normalized to a list separator too, so it has the same empty result.
       env.component.onDraftingChaptersBlurred('GEN', '،');
-      expect(env.component.draftingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_draft');
+      expect(env.component.draftingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.empty_draft');
 
       // The book must keep its prior range rather than collapsing to a whole-book 'GEN' selection.
       expect(env.selectedDraftingScriptureRange).toBe(defaultRange);
@@ -98,9 +98,58 @@ describe('NewDraftComponent', () => {
       // GEN has only 50 chapters in the source
       env.component.onDraftingChaptersBlurred('GEN', '51-60');
 
-      const error = env.component.draftingChapterErrors.get('GEN');
-      expect(error?.key).toBe('chapter_input.chapters_not_in_source');
-      expect(error?.params).toEqual(jasmine.objectContaining({ chapters: '51-60', sourceName: SOURCE_SHORT_NAME }));
+      const errors = env.component.draftingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(1);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_not_in_source');
+      expect(errors?.[0]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '51-60', sourceName: SOURCE_SHORT_NAME })
+      );
+    });
+
+    it('sets a chapters_empty_in_source error when selected chapters are in the source project but blank', async () => {
+      // The source contains GEN1-50, but only GEN1-40 have content
+      const env = new TestEnvironment({
+        ...testState,
+        draftingSourceBooksChapters: 'GEN1-40;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
+        draftingSourcePresentChapters: 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21'
+      });
+      await env.waitForInit();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      // GEN41-45 exist in the source project but have no content
+      env.component.onDraftingChaptersBlurred('GEN', '41-45');
+
+      const errors = env.component.draftingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(1);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_empty_in_source');
+      expect(errors?.[0]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '41-45', sourceName: SOURCE_SHORT_NAME })
+      );
+    });
+
+    it('lists a separate error for missing and blank chapters when the selection includes both', async () => {
+      // The source contains GEN1-50, but only GEN1-40 have content; GEN51+ does not exist
+      const env = new TestEnvironment({
+        ...testState,
+        draftingSourceBooksChapters: 'GEN1-40;MAT1-28;MRK1-16;LUK1-24;JHN1-21',
+        draftingSourcePresentChapters: 'GEN1-50;MAT1-28;MRK1-16;LUK1-24;JHN1-21'
+      });
+      await env.waitForInit();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      // GEN41-50 are blank and GEN51-55 don't exist; each error must name only its own chapters
+      env.component.onDraftingChaptersBlurred('GEN', '41-55');
+
+      const errors = env.component.draftingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(2);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_not_in_source');
+      expect(errors?.[0]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '51-55', sourceName: SOURCE_SHORT_NAME })
+      );
+      expect(errors?.[1]?.key).toBe('chapter_input.chapters_empty_in_source');
+      expect(errors?.[1]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '41-50', sourceName: SOURCE_SHORT_NAME })
+      );
     });
 
     it('clears the error and updates state for valid input', async () => {
@@ -128,7 +177,7 @@ describe('NewDraftComponent', () => {
 
       env.component.onTargetTrainingChaptersBlurred('GEN', 'xyz');
 
-      expect(env.component.targetTrainingChapterErrors.get('GEN')?.key).toBe('chapter_input.invalid_range');
+      expect(env.component.targetTrainingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.invalid_range');
     });
 
     it('rejects empty or whitespace-only input without changing the target training selection', async () => {
@@ -138,10 +187,10 @@ describe('NewDraftComponent', () => {
       const defaultRange = env.selectedTargetTrainingScriptureRange;
 
       env.component.onTargetTrainingChaptersBlurred('GEN', '');
-      expect(env.component.targetTrainingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_training');
+      expect(env.component.targetTrainingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.empty_training');
 
       env.component.onTargetTrainingChaptersBlurred('GEN', '   ');
-      expect(env.component.targetTrainingChapterErrors.get('GEN')?.key).toBe('chapter_input.empty_training');
+      expect(env.component.targetTrainingChapterErrors.get('GEN')?.[0]?.key).toBe('chapter_input.empty_training');
 
       expect(env.selectedTargetTrainingScriptureRange).toBe(defaultRange);
       expect(env.selectedTargetTrainingScriptureRange).not.toBe('GEN');
@@ -156,9 +205,10 @@ describe('NewDraftComponent', () => {
       // Trying to include GEN6 (which is being drafted) in training
       env.component.onTargetTrainingChaptersBlurred('GEN', '1-10');
 
-      const error = env.component.targetTrainingChapterErrors.get('GEN');
-      expect(error?.key).toBe('chapter_input.chapters_will_be_translated');
-      expect(error?.params).toEqual(jasmine.objectContaining({ chapters: '6-10' }));
+      const errors = env.component.targetTrainingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(1);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_will_be_translated');
+      expect(errors?.[0]?.params).toEqual(jasmine.objectContaining({ chapters: '6-10' }));
     });
 
     it('sets a chapters_not_in_target error when selected chapters are absent from the target project', async () => {
@@ -173,9 +223,64 @@ describe('NewDraftComponent', () => {
       // GEN11-15 are not in the target project and not being drafted
       env.component.onTargetTrainingChaptersBlurred('GEN', '11-15');
 
-      const error = env.component.targetTrainingChapterErrors.get('GEN');
-      expect(error?.key).toBe('chapter_input.chapters_not_in_target');
-      expect(error?.params).toEqual(jasmine.objectContaining({ chapters: '11-15', targetName: TARGET_SHORT_NAME }));
+      const errors = env.component.targetTrainingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(1);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_not_in_target');
+      expect(errors?.[0]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '11-15', targetName: TARGET_SHORT_NAME })
+      );
+    });
+
+    it('sets a chapters_empty_in_target error when selected chapters are in the target project but blank', async () => {
+      // The target contains GEN1-10, but only GEN1-5 have content
+      const env = new TestEnvironment({
+        ...testState,
+        targetPresentChapters: 'GEN1-10;MAT1-28;MRK1-16;LUK1-24;JHN1-21'
+      });
+      await env.waitForInit();
+      // Narrow the drafted range to GEN11-50 so GEN6-10 are neither drafted nor available for training
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      env.component.logicHandler.selectDraftingChapters('GEN', '11-50');
+      env.component.logicHandler.setInputMode('training_books');
+      env.component.logicHandler.selectTargetTrainingBooks(['GEN']); // GEN1-5 available
+
+      // GEN6-10 exist in the target project but have no content
+      env.component.onTargetTrainingChaptersBlurred('GEN', '6-10');
+
+      const errors = env.component.targetTrainingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(1);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_empty_in_target');
+      expect(errors?.[0]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '6-10', targetName: TARGET_SHORT_NAME })
+      );
+    });
+
+    it('lists a separate error for missing and blank chapters when the selection includes both', async () => {
+      // The target contains GEN1-10, but only GEN1-5 have content; GEN11+ does not exist
+      const env = new TestEnvironment({
+        ...testState,
+        targetPresentChapters: 'GEN1-10;MAT1-28;MRK1-16;LUK1-24;JHN1-21'
+      });
+      await env.waitForInit();
+      // Draft GEN16-50 so that GEN6-15 are neither drafted nor available for training
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      env.component.logicHandler.selectDraftingChapters('GEN', '16-50');
+      env.component.logicHandler.setInputMode('training_books');
+      env.component.logicHandler.selectTargetTrainingBooks(['GEN']); // GEN1-5 available
+
+      // GEN6-10 are blank and GEN11-15 don't exist; each error must name only its own chapters
+      env.component.onTargetTrainingChaptersBlurred('GEN', '6-15');
+
+      const errors = env.component.targetTrainingChapterErrors.get('GEN');
+      expect(errors?.length).toBe(2);
+      expect(errors?.[0]?.key).toBe('chapter_input.chapters_not_in_target');
+      expect(errors?.[0]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '11-15', targetName: TARGET_SHORT_NAME })
+      );
+      expect(errors?.[1]?.key).toBe('chapter_input.chapters_empty_in_target');
+      expect(errors?.[1]?.params).toEqual(
+        jasmine.objectContaining({ chapters: '6-10', targetName: TARGET_SHORT_NAME })
+      );
     });
 
     it('clears the error and updates state for valid input', async () => {
@@ -720,7 +825,9 @@ describe('NewDraftComponent', () => {
       tick();
 
       // The reload re-fetches and forces fresh data (maxStalenessMs: 0) for the synced project.
-      verify(mockedProgressService.getProgressForProject('draft-source-1-id', deepEqual({ maxStalenessMs: 0 }))).once();
+      verify(
+        mockedProgressService.getChaptersWithContent('draft-source-1-id', deepEqual({ maxStalenessMs: 0 }))
+      ).once();
       expect(env.component.page).toEqual('preface');
     }));
 
@@ -732,7 +839,7 @@ describe('NewDraftComponent', () => {
       void env.component.onPendingUpdatesComplete([]);
       tick();
 
-      verify(mockedProgressService.getProgressForProject(anything(), anything())).never();
+      verify(mockedProgressService.getChaptersWithContent(anything(), anything())).never();
       expect(env.component.page).toEqual('preface');
     }));
 
@@ -740,7 +847,7 @@ describe('NewDraftComponent', () => {
       const env = new TestEnvironment(testState);
       tick();
       // Init has already succeeded; make the reload's progress fetch fail.
-      when(mockedProgressService.getProgressForProject('draft-source-1-id', anything())).thenReject(
+      when(mockedProgressService.getChaptersWithContent('draft-source-1-id', anything())).thenReject(
         new Error('reload failed')
       );
 
@@ -937,6 +1044,13 @@ interface TestState {
   lastAvailableTrainingDataFiles?: string[];
   /** Target books getCompleteBookIds should report as complete (auto-selectable on first draft). Defaults to none. */
   completeTargetBooks?: string[];
+  /**
+   * The chapters the target project contains, including blank ones (unlike targetProjectBooksChapters, which lists
+   * only chapters with content). Defaults to targetProjectBooksChapters, i.e. no blank chapters.
+   */
+  targetPresentChapters?: string;
+  /** Like targetPresentChapters, but for the drafting source. Defaults to draftingSourceBooksChapters. */
+  draftingSourcePresentChapters?: string;
 }
 
 function makeTrainingData(dataId: string, title: string = dataId): TrainingData {
@@ -1091,17 +1205,25 @@ class TestEnvironment {
     }
 
     if (options.progressError) {
-      when(mockedProgressService.getProgressForProject(projectId, anything())).thenReject(new Error('progress failed'));
+      when(mockedProgressService.getChaptersWithContent(projectId, anything())).thenReject(
+        new Error('progress failed')
+      );
     } else {
-      when(mockedProgressService.getProgressForProject(projectId, anything())).thenResolve(
+      when(mockedProgressService.getChaptersWithContent(projectId, anything())).thenResolve(
         new VerboseScriptureRange(state.targetProjectBooksChapters)
       );
     }
-    when(mockedProgressService.getProgressForProject('draft-source-1-id', anything())).thenResolve(
+    when(mockedProgressService.getPresentChapters(projectId, anything())).thenResolve(
+      new VerboseScriptureRange(state.targetPresentChapters ?? state.targetProjectBooksChapters)
+    );
+    when(mockedProgressService.getChaptersWithContent('draft-source-1-id', anything())).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
+    when(mockedProgressService.getPresentChapters('draft-source-1-id', anything())).thenResolve(
+      new VerboseScriptureRange(state.draftingSourcePresentChapters ?? state.draftingSourceBooksChapters)
+    );
     for (const [trainingSourceId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
-      when(mockedProgressService.getProgressForProject(trainingSourceId, anything())).thenResolve(
+      when(mockedProgressService.getChaptersWithContent(trainingSourceId, anything())).thenResolve(
         new VerboseScriptureRange(booksChapters)
       );
     }
