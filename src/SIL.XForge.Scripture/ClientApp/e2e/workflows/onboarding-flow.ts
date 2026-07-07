@@ -2,8 +2,6 @@ import { expect } from 'npm:@playwright/test';
 import { BrowserType, Page } from 'npm:playwright';
 import { preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
-  disableFeatureFlag,
-  enableFeatureFlag,
   freshlyConnectProject,
   getNewBrowserForSideWork,
   installMouseFollower,
@@ -39,9 +37,6 @@ export async function onboardingFlow(
   await switchLanguage(page, 'en');
   if (preset.showArrow) await installMouseFollower(page);
   const user = new UserEmulator(page);
-
-  await enableFeatureFlag(page, 'Show in-app onboarding form instead of external link');
-  await disableFeatureFlag(page, 'Show developer tools');
 
   // Ensure project exists and is connected for this user
   await freshlyConnectProject(page, SIGNUP_PROJECT_SHORT_NAME);
