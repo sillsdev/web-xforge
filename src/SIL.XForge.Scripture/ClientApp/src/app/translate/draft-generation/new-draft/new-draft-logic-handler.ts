@@ -60,9 +60,34 @@ export interface ExcludedDraftingBook {
 export class DraftProgressService {
   constructor(private readonly progressService: ProgressService) {}
 
-  async getProgressForProject(
+  /**
+   * Returns the chapters in a project that have content (see chapterHasContent). Books with no such chapters are
+   * omitted entirely; empty books shouldn't be offered for selection. Note that a chapter can exist in the project
+   * but be absent from this range because it is blank. getPresentChapters can be used to tell those apart.
+   */
+  async getChaptersWithContent(
     projectId: string,
     options: { maxStalenessMs?: number } = {}
+  ): Promise<VerboseScriptureRange> {
+    return await this.getChapters(projectId, options, chapterHasContent);
+  }
+
+  /**
+   * Returns the chapters a project contains, whether or not they have any content. Chapters absent from this range
+   * do not exist in the project at all. Reuses the progress data cached by getChaptersWithContent, so calling both
+   * for the same project (with the same staleness) costs no extra request.
+   */
+  async getPresentChapters(
+    projectId: string,
+    options: { maxStalenessMs?: number } = {}
+  ): Promise<VerboseScriptureRange> {
+    return await this.getChapters(projectId, options, () => true);
+  }
+
+  private async getChapters(
+    projectId: string,
+    options: { maxStalenessMs?: number },
+    includeChapter: (chapter: { verseSegments: number; blankVerseSegments: number }) => boolean
   ): Promise<VerboseScriptureRange> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
       maxStalenessMs: options.maxStalenessMs ?? DEFAULT_PROGRESS_STALENESS_MS
@@ -71,11 +96,10 @@ export class DraftProgressService {
     for (const bookProgress of progress.books) {
       const chapters = new ChapterSet([]);
       for (const chapterProgress of bookProgress.chapters) {
-        if (chapterHasContent(chapterProgress)) {
+        if (includeChapter(chapterProgress)) {
           chapters.chapters.add(chapterProgress.chapterNumber);
         }
       }
-      // Only include books with content; empty books shouldn't be offered for selection.
       if (chapters.count() > 0) {
         scriptureRange.books.set(bookProgress.bookId, chapters);
       }
@@ -85,9 +109,9 @@ export class DraftProgressService {
 
   /**
    * Returns the IDs of the books in a project that appear complete enough to be auto-selected as training data (see
-   * bookAppearsCompleteForTrainingAutoSelection). Derived from the segment-level progress counts that getProgressFor
-   * Project discards, which is why this is computed separately. Reuses the cached progress, so calling it alongside
-   * getProgressForProject for the same project (with the same staleness) costs no extra request.
+   * bookAppearsCompleteForTrainingAutoSelection). Derived from the segment-level progress counts that
+   * getChaptersWithContent discards, which is why this is computed separately. Reuses the cached progress, so calling
+   * it alongside getChaptersWithContent for the same project (with the same staleness) costs no extra request.
    */
   async getCompleteBookIds(projectId: string, options: { maxStalenessMs?: number } = {}): Promise<Set<string>> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
@@ -108,7 +132,7 @@ export type NewDraftAbortMode = 'config_changed' | 'project_syncing' | 'no_acces
 /**
  * Returns the book IDs in a ScriptureRange, dropping the chapter-level detail. Useful when only the set of books
  * matters, such as determining which books users can select. Books with no chapters are already pruned when ranges are
- * built (see getProgressForProject and VerboseScriptureRange.removeEmptyBooks), so every returned book is selectable.
+ * built (see getChaptersWithContent and VerboseScriptureRange.removeEmptyBooks), so every returned book is selectable.
  */
 export function scriptureRangeToBookListWithoutChapterDetail(range: VerboseScriptureRange): string[] {
   return Array.from(range.books.keys());
@@ -159,6 +183,11 @@ export class NewDraftLogicHandler {
   targetProjectScriptureRange = new VerboseScriptureRange();
   availableTargetTrainingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange();
   selectedTargetTrainingScriptureRange: VerboseScriptureRange = new VerboseScriptureRange();
+
+  // The chapters each project contains, including blank ones (the ranges above are content-based, so a chapter can be
+  // missing from them for either reason). Used to word chapter errors correctly: "blank" vs "not in the project".
+  targetPresentChapters: VerboseScriptureRange = new VerboseScriptureRange();
+  draftingSourcePresentChapters: VerboseScriptureRange = new VerboseScriptureRange();
 
   /**
    * Whether training books were automatically selected on this project's first draft (no previously saved training
@@ -275,7 +304,9 @@ export class NewDraftLogicHandler {
    */
   private async fetchProgressBundle(freshProjectIds: Set<string> = new Set()): Promise<{
     draftSourceProgress: VerboseScriptureRange;
+    draftSourcePresentChapters: VerboseScriptureRange;
     targetProjectProgress: VerboseScriptureRange;
+    targetPresentChapters: VerboseScriptureRange;
     trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
     completeTargetBookIds: Set<string>;
   }> {
@@ -299,7 +330,7 @@ export class NewDraftLogicHandler {
 
     const trainingSourcesProgressPromise = Promise.all(
       draftConfig.trainingSources.map(async trainingSource => {
-        const range = await this.progressService.getProgressForProject(
+        const range = await this.progressService.getChaptersWithContent(
           trainingSource.projectRef,
           staleness(trainingSource.projectRef)
         );
@@ -307,17 +338,33 @@ export class NewDraftLogicHandler {
       })
     );
 
-    // Order matters: the target's range (getProgressForProject) is invoked before its complete-book set
-    // (getCompleteBookIds) so the two reads of the same project coalesce onto a single in-flight request.
-    const [draftSourceProgress, targetProjectProgress, trainingSourcesProgress, completeTargetBookIds] =
-      await Promise.all([
-        this.progressService.getProgressForProject(draftingSource.projectRef, staleness(draftingSource.projectRef)),
-        this.progressService.getProgressForProject(projectId, staleness(projectId)),
-        trainingSourcesProgressPromise,
-        this.progressService.getCompleteBookIds(projectId, staleness(projectId))
-      ]);
+    // Order matters: each project's content range (getChaptersWithContent) is invoked before its other reads
+    // (getPresentChapters, getCompleteBookIds) so all reads of the same project coalesce onto a single in-flight
+    // request.
+    const [
+      draftSourceProgress,
+      draftSourcePresentChapters,
+      targetProjectProgress,
+      targetPresentChapters,
+      trainingSourcesProgress,
+      completeTargetBookIds
+    ] = await Promise.all([
+      this.progressService.getChaptersWithContent(draftingSource.projectRef, staleness(draftingSource.projectRef)),
+      this.progressService.getPresentChapters(draftingSource.projectRef, staleness(draftingSource.projectRef)),
+      this.progressService.getChaptersWithContent(projectId, staleness(projectId)),
+      this.progressService.getPresentChapters(projectId, staleness(projectId)),
+      trainingSourcesProgressPromise,
+      this.progressService.getCompleteBookIds(projectId, staleness(projectId))
+    ]);
 
-    return { draftSourceProgress, targetProjectProgress, trainingSourcesProgress, completeTargetBookIds };
+    return {
+      draftSourceProgress,
+      draftSourcePresentChapters,
+      targetProjectProgress,
+      targetPresentChapters,
+      trainingSourcesProgress,
+      completeTargetBookIds
+    };
   }
 
   /**
@@ -327,7 +374,9 @@ export class NewDraftLogicHandler {
    */
   private applyDerivedRanges(bundle: {
     draftSourceProgress: VerboseScriptureRange;
+    draftSourcePresentChapters: VerboseScriptureRange;
     targetProjectProgress: VerboseScriptureRange;
+    targetPresentChapters: VerboseScriptureRange;
     trainingSourcesProgress: { projectId: string; range: VerboseScriptureRange }[];
     completeTargetBookIds: Set<string>;
   }): void {
@@ -342,6 +391,8 @@ export class NewDraftLogicHandler {
     this.targetProjectScriptureRange = canonicalTargetProgress;
     this.availableDraftingScriptureRange = available;
     this.excludedDraftingBooks = excluded;
+    this.targetPresentChapters = bundle.targetPresentChapters;
+    this.draftingSourcePresentChapters = bundle.draftSourcePresentChapters;
     // Clone: this range is narrowed in limitAvailableTrainingRangeBasedOnSelectedDraftingRange, so it must not alias
     // targetProjectScriptureRange.
     this.availableTargetTrainingScriptureRange = canonicalTargetProgress.clone();

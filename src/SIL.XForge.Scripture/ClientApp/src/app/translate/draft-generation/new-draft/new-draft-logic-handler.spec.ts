@@ -775,10 +775,10 @@ describe('NewDraftLogicHandler', () => {
 
       // Target (synced) is re-fetched with no staleness tolerance...
       verify(
-        mockedDraftProgressService.getProgressForProject('testProjectId', deepEqual({ maxStalenessMs: 0 }))
+        mockedDraftProgressService.getChaptersWithContent('testProjectId', deepEqual({ maxStalenessMs: 0 }))
       ).once();
       // ...while the unsynced drafting source uses the default staleness (served from cache by the real service).
-      verify(mockedDraftProgressService.getProgressForProject('draft-source-1-id', deepEqual({}))).once();
+      verify(mockedDraftProgressService.getChaptersWithContent('draft-source-1-id', deepEqual({}))).once();
       expect().nothing();
     });
 
@@ -1029,19 +1029,25 @@ class TestEnvironment {
     // argument (staleness options) is matched with anything() since callers pass per-project staleness overrides.
     if (state.targetProjectBooksChaptersAfterReload != null) {
       // First load returns the pre-sync target; a subsequent fetch (after reload) returns the post-sync target.
-      when(mockedDraftProgressService.getProgressForProject(projectId, anything()))
+      when(mockedDraftProgressService.getChaptersWithContent(projectId, anything()))
         .thenResolve(new VerboseScriptureRange(state.targetProjectBooksChapters))
         .thenResolve(new VerboseScriptureRange(state.targetProjectBooksChaptersAfterReload));
     } else {
-      when(mockedDraftProgressService.getProgressForProject(projectId, anything())).thenResolve(
+      when(mockedDraftProgressService.getChaptersWithContent(projectId, anything())).thenResolve(
         new VerboseScriptureRange(state.targetProjectBooksChapters)
       );
     }
-    when(mockedDraftProgressService.getProgressForProject('draft-source-1-id', anything())).thenResolve(
+    when(mockedDraftProgressService.getPresentChapters(projectId, anything())).thenResolve(
+      new VerboseScriptureRange(state.targetProjectBooksChapters)
+    );
+    when(mockedDraftProgressService.getChaptersWithContent('draft-source-1-id', anything())).thenResolve(
+      new VerboseScriptureRange(state.draftingSourceBooksChapters)
+    );
+    when(mockedDraftProgressService.getPresentChapters('draft-source-1-id', anything())).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
     for (const [trainingSourceProjectId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
-      when(mockedDraftProgressService.getProgressForProject(trainingSourceProjectId, anything())).thenResolve(
+      when(mockedDraftProgressService.getChaptersWithContent(trainingSourceProjectId, anything())).thenResolve(
         new VerboseScriptureRange(booksChapters)
       );
     }
