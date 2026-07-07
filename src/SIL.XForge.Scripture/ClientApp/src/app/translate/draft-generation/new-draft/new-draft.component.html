@@ -99,7 +99,7 @@
                 />
                 <mat-hint>{{ t("chapter_input.available", { range: draftingChapterHint(bookId) }) }}</mat-hint>
               </mat-form-field>
-              @if (draftingChapterErrors.get(bookId); as error) {
+              @for (error of draftingChapterErrors.get(bookId) ?? []; track error.key) {
                 <span class="chapter-error">{{ t(error.key, error.params) }}</span>
               }
             </div>
@@ -170,7 +170,7 @@
                 />
                 <mat-hint>{{ t("chapter_input.available", { range: targetTrainingChapterHint(bookId) }) }}</mat-hint>
               </mat-form-field>
-              @if (targetTrainingChapterErrors.get(bookId); as error) {
+              @for (error of targetTrainingChapterErrors.get(bookId) ?? []; track error.key) {
                 <span class="chapter-error">{{ t(error.key, error.params) }}</span>
               }
             </div>
