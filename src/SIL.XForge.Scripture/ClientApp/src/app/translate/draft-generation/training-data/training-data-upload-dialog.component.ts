@@ -18,6 +18,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -66,8 +67,13 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
     private readonly dialogRef: MatDialogRef<TrainingDataUploadDialogComponent, TrainingData | undefined>,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
+    private readonly onlineStatus: OnlineStatusService,
     private readonly userService: UserService
   ) {}
+
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline;
+  }
 
   get hasBeenUploaded(): boolean {
     return this.trainingDataFile?.blob != null && this.trainingDataFile?.fileName != null;
@@ -113,7 +119,7 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
 
   async save(): Promise<void> {
     // We cannot save a file if it has not been uploaded, or if offline
-    if (!this.hasBeenUploaded) {
+    if (!this.hasBeenUploaded || !this.appOnline) {
       return;
     }
 

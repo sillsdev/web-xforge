@@ -1,14 +1,13 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ngfModule } from 'angular-file';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -16,6 +15,7 @@ import { TrainingDataFileUpload, TrainingDataUploadDialogComponent } from './tra
 import { TrainingDataService } from './training-data.service';
 
 const mockedFileService = mock(FileService);
+const mockOnlineStatusService = mock(OnlineStatusService);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedUserService = mock(UserService);
 
@@ -23,9 +23,8 @@ describe('TrainingDataUploadDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [ngfModule, getTestTranslocoModule()],
     providers: [
-      provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting(),
       { provide: FileService, useMock: mockedFileService },
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: UserService, useMock: mockedUserService }
     ]
@@ -38,6 +37,31 @@ describe('TrainingDataUploadDialogComponent', () => {
   afterEach(() => {
     // Prevents 'Error: Test did not clean up its overlay container content.'
     overlayContainer.ngOnDestroy();
+  });
+
+  it('cannot save if offline', async () => {
+    const env = new TestEnvironment();
+    when(mockOnlineStatusService.isOnline).thenReturn(false);
+    let result: TrainingData = { dataId: '' } as TrainingData;
+    env.dialogRef.afterClosed().subscribe((_result: TrainingData) => {
+      result = _result;
+    });
+    env.component.updateTrainingData(env.trainingDataFile);
+    await env.component.save();
+    await env.wait();
+
+    verify(
+      mockedFileService.onlineUploadFileOrFail(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).never();
+    expect(result.dataId).toEqual('');
   });
 
   it('should upload training data and return the object on save', async () => {
@@ -121,6 +145,7 @@ class TestEnvironment {
         true
       )
     ).thenResolve('training data file url');
+    when(mockOnlineStatusService.isOnline).thenReturn(true);
     when(mockedUserService.currentUserId).thenReturn('user01');
 
     const blob = new Blob(['source_1,target_2\nsource_2,target_2'], { type: 'text/csv' });
