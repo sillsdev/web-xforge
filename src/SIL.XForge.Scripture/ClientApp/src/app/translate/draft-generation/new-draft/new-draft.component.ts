@@ -61,7 +61,7 @@ const PAGES_BY_ORDER = [
   { page: 'preface' },
   { page: 'draft_books', inputState: 'draft_books' },
   { page: 'training_books', inputState: 'training_books' },
-  { page: 'suffix' }
+  { page: 'summary' }
 ] as const;
 
 @Component({
@@ -103,7 +103,7 @@ export class NewDraftComponent {
   sendEmailOnBuildFinished: boolean = false;
   fastTraining: boolean = false;
   useEcho: boolean = false;
-  isTrainingOptional: boolean = false;
+  private isTrainingOptional: boolean = false;
 
   /** All training data files currently available for the project. */
   trainingDataFiles: TrainingData[] = [];
@@ -111,7 +111,7 @@ export class NewDraftComponent {
   selectedTrainingDataFileIds = new Set<string>();
   private hasInitializedTrainingDataSelection = false;
 
-  // Data that is guarnateed to be loaded post init
+  // Data that is guaranteed to be loaded post init
   initData?: { projectId: string };
 
   private currentUserDoc?: UserDoc;
@@ -258,11 +258,6 @@ export class NewDraftComponent {
 
   isTrainingDataFileSelected(dataId: string): boolean {
     return this.selectedTrainingDataFileIds.has(dataId);
-  }
-
-  /** Titles of the training data files the user has selected, for the summary recap. */
-  get selectedTrainingDataFileTitles(): string[] {
-    return this.trainingDataFiles.filter(f => this.selectedTrainingDataFileIds.has(f.dataId)).map(f => f.title);
   }
 
   onTrainingDataFileToggled(dataId: string, selected: boolean): void {
@@ -806,6 +801,11 @@ export class NewDraftComponent {
   }
 
   // Section: Summary (Step 4)
+
+  /** Titles of the training data files the user has selected, for the summary recap. */
+  get selectedTrainingDataFileTitles(): string[] {
+    return this.trainingDataFiles.filter(f => this.selectedTrainingDataFileIds.has(f.dataId)).map(f => f.title);
+  }
 
   get draftingItems(): { bookId: string; chapterRange: string | null }[] {
     const selectedRange = this.logicHandler.selectedDraftingScriptureRange;

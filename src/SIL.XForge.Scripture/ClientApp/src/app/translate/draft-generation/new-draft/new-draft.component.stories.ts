@@ -470,7 +470,7 @@ export const Summary: Story = {
     await gotoDraftBooksWithGen(canvas);
     await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('Select books to train on');
-    await clickNext(canvas); // training_books -> suffix
+    await clickNext(canvas); // training_books -> summary
     await canvas.findByRole('button', { name: /generate draft/i });
     await canvas.findByText('Custom draft configurations have been applied by an administrator.');
   }
@@ -484,7 +484,7 @@ export const SummaryOfflineDevTools: Story = {
     await gotoDraftBooksWithGen(canvas);
     await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('Select books to train on');
-    await clickNext(canvas); // training_books -> suffix
+    await clickNext(canvas); // training_books -> summary
     await canvas.findByText('Developer options');
     const generate = await canvas.findByRole('button', { name: /generate draft/i });
     expect(generate).toBeDisabled();
