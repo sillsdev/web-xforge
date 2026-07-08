@@ -1,3 +1,5 @@
+/.angular/cache
 /coverage
 /dist
-/.angular/cache
+/e2e/test_output
+/storybook-static

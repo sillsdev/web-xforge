@@ -19,30 +19,35 @@ jobs:
       matrix:
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
+        pnpm_version: ["11.10.0"]
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Use Node.js ${{ matrix.node_version }}
+      - name: "Deps: pnpm"
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{matrix.pnpm_version}}
+      - name: Use Node.js ${{matrix.node_version}}
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
-          node-version: ${{ matrix.node_version }}
-          cache: "npm"
+          node-version: ${{matrix.node_version}}
+          cache: "pnpm"
           cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-            src/RealtimeServer/package-lock.json
+            src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml
+            src/RealtimeServer/pnpm-lock.yaml
       - name: Upgrade npm
         env:
-          NPM_VERSION: ${{ matrix.npm_version }}
+          NPM_VERSION: ${{matrix.npm_version}}
         run: |
           set -xueo pipefail
-          npm install -g npm@${NPM_VERSION}
+          npm install --global npm@${NPM_VERSION}
       - name: Realtime Server Lint check
-        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci)) && npm run lint
+        run: cd src/RealtimeServer && (pnpm ci || (sleep 3m && pnpm ci)) && pnpm run lint
       - name: Realtime Server Prettier format check
-        run: cd src/RealtimeServer && npm run prettier:ci
+        run: cd src/RealtimeServer && pnpm run prettier:ci
       - name: Angular Frontend Lint check
-        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci)) && npm run lint
+        run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci)) && pnpm run lint
       - name: Angular Frontend Prettier format check
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:ci
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run prettier:ci

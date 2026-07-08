@@ -67,8 +67,8 @@ You can run tests:
 
 ```bash
 cd /workspaces/web-xforge && dotnet test
-cd /workspaces/web-xforge/src/SIL.XForge.Scripture/ClientApp && npm run test:headless -- --no-watch
-cd /workspaces/web-xforge/src/RealtimeServer && npm run test
+cd /workspaces/web-xforge/src/SIL.XForge.Scripture/ClientApp && pnpm run test:headless --no-watch
+cd /workspaces/web-xforge/src/RealtimeServer && pnpm run test
 ```
 
 ## Ports

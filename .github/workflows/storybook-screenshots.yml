@@ -19,10 +19,139 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # Job 0 – check for pnpm lock files
+  # ---------------------------------------------------------------------------
+  check-lockfiles:
+    runs-on: ubuntu-24.04
+    outputs:
+      has-pnpm-lockfiles: ${{ steps.check.outputs.exists }}
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Resolve the base ref in priority order: PR base SHA → merge-group base SHA → manual
+          # input → default branch.
+          ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || inputs.base_ref || 'master' }}
+      - id: check
+        shell: bash
+        run: |
+          if [[ -f src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml || \
+                -f src/RealtimeServer/pnpm-lock.yaml ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+  # ---------------------------------------------------------------------------
   # Job 1 – screenshot the base/target-branch commit
   # ---------------------------------------------------------------------------
   screenshots-base:
     name: "Screenshots: Base"
+    needs: check-lockfiles
+    if: needs.check-lockfiles.outputs.has-pnpm-lockfiles == 'true'
+    strategy:
+      matrix:
+        os: ["ubuntu-24.04"]
+        node_version: ["22.13.0"]
+        npm_version: ["11.11.0"]
+        pnpm_version: ["11.10.0"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout base
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Resolve the base ref in priority order: PR base SHA → merge-group base SHA → manual
+          # input → default branch.
+          ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || inputs.base_ref || 'master' }}
+
+      - name: "Deps: pnpm"
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{matrix.pnpm_version}}
+      - name: "Deps: Node (pnpm)"
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: ${{matrix.node_version}}
+          cache: "pnpm"
+          cache-dependency-path: |
+            src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml
+            src/RealtimeServer/pnpm-lock.yaml
+      - name: "Deps: npm"
+        env:
+          NPM_VERSION: ${{matrix.npm_version}}
+        run: |
+          set -xueo pipefail
+          npm install --global npm@${NPM_VERSION}
+      - name: "Ensure desired tool versions"
+        env:
+          NODE_VERSION: ${{matrix.node_version}}
+          NPM_VERSION: ${{matrix.npm_version}}
+          PNPM_VERSION: ${{matrix.pnpm_version}}
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${NODE_VERSION} ]]
+          [[ $(npm --version) == ${NPM_VERSION} ]]
+          [[ $(pnpm --version) == ${PNPM_VERSION} ]]
+
+      - name: "Deps: RealtimeServer pnpm"
+        run: cd src/RealtimeServer && (pnpm ci || (sleep 3m && pnpm ci))
+      - name: "Deps: Frontend pnpm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci))
+
+      - name: "Build: RealtimeServer"
+        run: cd src/RealtimeServer && pnpm run build
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build
+      - name: "Build: Storybook"
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build-storybook
+
+      - name: "Set up Deno"
+        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        with:
+          deno-version: v2.x
+
+      - name: Playwright install browsers and package dependencies
+        run: |
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp
+          sudo npx playwright install-deps
+          npx playwright install
+
+      # The screenshot script may not exist on the base branch (or may be outdated). Always use the
+      # version from the PR branch so that any script improvements in the PR also apply to the base
+      # branch screenshots, and so the base branch screenshots can be taken even if the script
+      # didn't exist on the base branch at all.
+      - name: "Checkout screenshot script from PR branch"
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: pr-branch-scripts
+          sparse-checkout: scripts/storybook-screenshots/take-screenshots.mts
+          sparse-checkout-cone-mode: false
+      - name: "Use screenshot script from PR branch"
+        run: |
+          set -euo pipefail
+          mkdir -p scripts/storybook-screenshots
+          cp pr-branch-scripts/scripts/storybook-screenshots/take-screenshots.mts scripts/storybook-screenshots/take-screenshots.mts
+
+      - name: "Take screenshots"
+        run: mkdir screenshots && deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/storybook-screenshots/take-screenshots.mts src/SIL.XForge.Scripture/ClientApp/storybook-static screenshots
+
+      - name: "Upload screenshots"
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: screenshots-base-${{ github.run_id }}
+          path: screenshots
+
+  # ---------------------------------------------------------------------------
+  # Job 1 (pre-pnpm base commits) – screenshot the base/target-branch commit
+  # ---------------------------------------------------------------------------
+  screenshots-base-npm:
+    name: "Screenshots: Base"
+    needs: check-lockfiles
+    if: needs.check-lockfiles.outputs.has-pnpm-lockfiles != 'true'
     strategy:
       matrix:
         os: ["ubuntu-24.04"]
@@ -73,31 +202,17 @@ jobs:
       - name: "Build: Storybook"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook
 
-      - name: "Install Playwright browsers"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npx playwright install --with-deps chromium
-
       - name: "Set up Deno"
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
           deno-version: v2.x
 
-      # The screenshot script may not exist on the base branch (or may be outdated). Always use the
-      # version from the PR branch so that any script improvements in the PR also apply to the base
-      # branch screenshots, and so the base branch screenshots can be taken even if the script
-      # didn't exist on the base branch at all.
-      - name: "Checkout screenshot script from PR branch"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          path: pr-branch-scripts
-          sparse-checkout: scripts/storybook-screenshots/take-screenshots.mts
-          sparse-checkout-cone-mode: false
-      - name: "Use screenshot script from PR branch"
+      - name: Playwright install browsers and package dependencies
         run: |
-          set -euo pipefail
-          mkdir -p scripts/storybook-screenshots
-          cp pr-branch-scripts/scripts/storybook-screenshots/take-screenshots.mts scripts/storybook-screenshots/take-screenshots.mts
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp
+          sudo npx playwright install-deps
+          npx playwright install
 
       - name: "Take screenshots"
         run: mkdir screenshots && deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/storybook-screenshots/take-screenshots.mts src/SIL.XForge.Scripture/ClientApp/storybook-static screenshots
@@ -118,6 +233,7 @@ jobs:
         os: ["ubuntu-24.04"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
+        pnpm_version: ["11.10.0"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout branch
@@ -127,14 +243,18 @@ jobs:
           # For PR events use the PR head SHA; for all other events use the triggering commit.
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
+      - name: "Deps: pnpm"
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: ${{matrix.pnpm_version}}
       - name: "Deps: Node"
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node_version}}
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-            src/RealtimeServer/package-lock.json
+            src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml
+            src/RealtimeServer/pnpm-lock.yaml
       - name: "Deps: npm"
         env:
           NPM_VERSION: ${{matrix.npm_version}}
@@ -145,30 +265,36 @@ jobs:
         env:
           NODE_VERSION: ${{matrix.node_version}}
           NPM_VERSION: ${{matrix.npm_version}}
+          PNPM_VERSION: ${{matrix.pnpm_version}}
         run: |
           set -xueo pipefail
           [[ $(node --version) == v${NODE_VERSION} ]]
           [[ $(npm --version) == ${NPM_VERSION} ]]
+          [[ $(pnpm --version) == ${PNPM_VERSION} ]]
 
-      - name: "Deps: RealtimeServer npm"
-        run: cd src/RealtimeServer && (npm ci || (sleep 3m && npm ci))
-      - name: "Deps: Frontend npm"
-        run: cd src/SIL.XForge.Scripture/ClientApp && (npm ci || (sleep 3m && npm ci))
+      - name: "Deps: RealtimeServer pnpm"
+        run: cd src/RealtimeServer && (pnpm ci || (sleep 3m && pnpm ci))
+      - name: "Deps: Frontend pnpm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci))
 
       - name: "Build: RealtimeServer"
-        run: cd src/RealtimeServer && npm run build
+        run: cd src/RealtimeServer && pnpm run build
       - name: "Build: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build
       - name: "Build: Storybook"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook
-
-      - name: "Install Playwright browsers"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npx playwright install --with-deps chromium
+        run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build-storybook
 
       - name: "Set up Deno"
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
         with:
           deno-version: v2.x
+
+      - name: Playwright install browsers and package dependencies
+        run: |
+          set -xueo pipefail
+          cd src/SIL.XForge.Scripture/ClientApp
+          sudo npx playwright install-deps
+          npx playwright install
 
       - name: "Take screenshots"
         run: deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/storybook-screenshots/take-screenshots.mts src/SIL.XForge.Scripture/ClientApp/storybook-static src/SIL.XForge.Scripture/ClientApp/screenshots/
@@ -184,7 +310,12 @@ jobs:
   # ---------------------------------------------------------------------------
   compare:
     name: "Compare Screenshots"
-    needs: [screenshots-base, screenshots-branch]
+    needs: [check-lockfiles, screenshots-base, screenshots-base-npm, screenshots-branch]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.screenshots-branch.result == 'success' &&
+      (needs.screenshots-base.result == 'success' || needs.screenshots-base-npm.result == 'success')
     runs-on: ubuntu-24.04
     environment: screenshot_diff
     permissions:

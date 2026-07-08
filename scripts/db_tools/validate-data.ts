@@ -1,11 +1,11 @@
 #!/usr/bin/env -S bash -c '"$(dirname "$0")"/node_modules/.bin/ts-node "$(dirname "$0")/$(basename "$0")" "$@"'
-// The above causes the local ts-node to be used even if run from another directory. Setup: npm ci
+// The above causes the local ts-node to be used even if run from another directory. Setup: pnpm ci
 //
 // Validate Data
 //
 // Validates the data in MongoDB based on the validation schemas installed
 //
-// This script needs ts-node and must be run from the containing directory. Setup: npm ci
+// This script needs ts-node and must be run from the containing directory. Setup: pnpm ci
 // Usage info: ./validate-data.ts --help
 // Examples:
 //   Validate the local database: ./validate-data.ts
