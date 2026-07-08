@@ -65,7 +65,7 @@ describe('EditorResourceComponent', () => {
     component.projectId = projectId;
     component.bookNum = 1;
     component.chapter = 1;
-when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(projectDoc);
+    when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(projectDoc);
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
@@ -82,7 +82,7 @@ when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(project
       id: projectId,
       data: createTestProjectProfile({ isRightToLeft: true })
     } as SFProjectProfileDoc;
-when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(rtlProjectDoc);
+    when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(rtlProjectDoc);
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
@@ -98,7 +98,7 @@ when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(rtlProj
       id: projectId,
       data: createTestProjectProfile({ copyrightBanner: 'Test copyright', copyrightNotice: 'Test notice' })
     } as SFProjectProfileDoc;
-when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(projectNoticeDoc);
+    when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(projectNoticeDoc);
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();
@@ -112,7 +112,7 @@ when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(project
     component.projectId = projectId;
     component.bookNum = 1;
     component.chapter = 1;
-when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(projectDoc);
+    when(mockSFProjectService.getProfile(projectId, anything())).thenResolve(projectDoc);
     component['initProjectDetails']();
     component.resourceText.editorCreated.next();
     tick();

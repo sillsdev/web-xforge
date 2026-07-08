@@ -105,7 +105,10 @@ export class PermissionsService {
 
     const docSubscription = new DocSubscription('PermissionsService.canAccessTextAsync');
     try {
-      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(textDocId.projectId, docSubscription);
+      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(
+        textDocId.projectId,
+        docSubscription
+      );
       return this.canAccessText(textDocId, projectDoc.data);
     } finally {
       docSubscription.unsubscribe();
