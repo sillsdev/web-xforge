@@ -140,6 +140,25 @@ public class EventMetricServiceTests
     }
 
     [Test]
+    public async Task GetEventMetricsAsync_GetCountOnlyForProject()
+    {
+        var env = new TestEnvironment();
+        Assert.AreEqual(4, env.EventMetrics.Query().Count());
+
+        // SUT
+        QueryResults<EventMetric> actual = await env.Service.GetEventMetricsAsync(
+            Project01,
+            scopes: null,
+            eventTypes: null,
+            pageSize: 0
+        );
+
+        // Skip the one event metric without a project identifier
+        Assert.AreEqual(0, actual.Results.Count());
+        Assert.AreEqual(3, actual.UnpagedCount);
+    }
+
+    [Test]
     public async Task GetEventMetricsAsync_SupportsPagination()
     {
         var env = new TestEnvironment();

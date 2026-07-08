@@ -259,9 +259,32 @@ export class DraftGenerationService {
         }
 
         // Otherwise, start build and then poll
-        return this.startBuild(buildConfig).pipe(
-          // No errors means build successfully started, so start polling
-          switchMap(() => this.pollBuildProgress(buildConfig.projectId))
+        return this.httpClient.post<void>(`translation/pretranslations`, buildConfig).pipe(
+          map(() => true),
+          catchError(err => {
+            if (err.status === 401) {
+              // Expired Paratext credentials. Rethrow to be caught by DraftGenerationComponent.startBuild()
+              throw err;
+            }
+
+            if (err.status === 403 || err.status === 404) {
+              return of(false);
+            }
+
+            if (err.status === 429) {
+              this.noticeService.showError(this.i18n.translateStatic('draft_generation.quota_exceeded'));
+              return of(false);
+            }
+
+            this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
+            return of(false);
+          }),
+          switchMap(started => {
+            if (!started) return of(undefined);
+
+            // No error means build successfully started, so start polling
+            return this.pollBuildProgress(buildConfig.projectId);
+          })
         );
       })
     );
@@ -524,14 +547,5 @@ export class DraftGenerationService {
         });
       });
     });
-  }
-
-  /**
-   * Calls the machine api to start a pre-translation build job.
-   * This should only be called if no build is currently active.
-   * @param buildConfig The build configuration.
-   */
-  private startBuild(buildConfig: BuildConfig): Observable<void> {
-    return this.httpClient.post<void>(`translation/pretranslations`, buildConfig).pipe(map(res => res.data));
   }
 }

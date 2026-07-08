@@ -56,6 +56,7 @@ public class MachineApiService(
     ISFProjectRights projectRights,
     ISFProjectService projectService,
     IRealtimeService realtimeService,
+    IRepository<SiteConfig> siteConfigs,
     IOptions<SiteOptions> siteOptions,
     ISyncService syncService,
     ITranslationBuildsClient translationBuildsClient,
@@ -2792,6 +2793,62 @@ public class MachineApiService(
         if (!projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Drafts, Operation.Create))
         {
             throw new ForbiddenException();
+        }
+
+        // See if there is a build limit enforced
+        SiteConfig? siteConfig = await siteConfigs
+            .Query()
+            .FirstOrDefaultAsync(s => s.Name == siteOptions.Value.Id, cancellationToken);
+
+        // Check the build quota for the last day
+        if (siteConfig is not null && siteConfig.BuildQuotaPerDay > 0)
+        {
+            // Get all build events during the last day
+            QueryResults<EventMetric> eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                buildConfig.ProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)],
+                fromDate: DateTime.UtcNow.AddDays(-1),
+                pageSize: 0 // Use a zero page size as we only want the count not the results
+            );
+            if (eventMetrics.UnpagedCount >= siteConfig.BuildQuotaPerDay)
+            {
+                throw new LimitExceededException("Build quota exceeded.");
+            }
+        }
+
+        // Check the build quota for the last week
+        if (siteConfig is not null && siteConfig.BuildQuotaPerWeek > 0)
+        {
+            // Get all build events during the last week
+            QueryResults<EventMetric> eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                buildConfig.ProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)],
+                fromDate: DateTime.UtcNow.AddDays(-7),
+                pageSize: 0 // Use a zero page size as we only want the count not the results
+            );
+            if (eventMetrics.UnpagedCount >= siteConfig.BuildQuotaPerWeek)
+            {
+                throw new LimitExceededException("Build quota exceeded.");
+            }
+        }
+
+        // Check the build quota for the last month
+        if (siteConfig is not null && siteConfig.BuildQuotaPerMonth > 0)
+        {
+            // Get all build events during the last month
+            QueryResults<EventMetric> eventMetrics = await eventMetricService.GetEventMetricsAsync(
+                buildConfig.ProjectId,
+                scopes: [EventScope.Drafting],
+                eventTypes: [nameof(MachineProjectService.BuildProjectAsync)],
+                fromDate: DateTime.UtcNow.AddMonths(-1),
+                pageSize: 0 // Use a zero page size as we only want the count not the results
+            );
+            if (eventMetrics.UnpagedCount >= siteConfig.BuildQuotaPerMonth)
+            {
+                throw new LimitExceededException("Build quota exceeded.");
+            }
         }
 
         // Save the selected books

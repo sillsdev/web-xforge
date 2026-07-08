@@ -64,7 +64,7 @@ public static class DataAccessServiceCollectionExtensions
         );
         services.AddMongoRepository<SiteConfig>(
             "site_configs",
-            cm => cm.MapIdProperty(sm => sm.Id),
+            cm => cm.MapIdProperty(sc => sc.Id),
             im =>
                 im.CreateOne(new CreateIndexModel<SiteConfig>(Builders<SiteConfig>.IndexKeys.Ascending(sc => sc.Name)))
         );
