@@ -1,4 +1,4 @@
-name: Update NPM Dependencies
+name: Update PNPM Dependencies
 permissions:
   contents: write
   pull-requests: write
@@ -18,47 +18,52 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.10
+
       - name: Set up Node
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: "22.13.0"
-          cache: "npm"
+          cache: "pnpm"
           cache-dependency-path: |
-            src/SIL.XForge.Scripture/ClientApp/package-lock.json
-            src/RealtimeServer/package-lock.json
-            scripts/db_tools/package-lock.json
+            src/SIL.XForge.Scripture/ClientApp/pnpm-lock.yaml
+            src/RealtimeServer/pnpm-lock.yaml
+            scripts/db_tools/pnpm-lock.yaml
 
-      - name: Run npm audit fix on RealtimeServer
+      - name: Run pnpm audit --fix update on RealtimeServer
         run: |
           cd src/RealtimeServer
-          npm ci
-          npm audit fix
+          pnpm ci
+          pnpm audit --fix update
         continue-on-error: true
 
-      - name: Run npm audit fix on ClientApp
+      - name: Run pnpm audit --fix update on ClientApp
         run: |
           cd src/SIL.XForge.Scripture/ClientApp
-          npm ci
-          npm audit fix
+          pnpm ci
+          pnpm audit --fix update
         continue-on-error: true
 
-      - name: Run npm audit fix on db_tools
+      - name: Run pnpm audit --fix update on db_tools
         run: |
           cd scripts/db_tools
-          npm ci
-          npm audit fix
+          pnpm ci
+          pnpm audit --fix update
         continue-on-error: true
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
-          commit-message: Update NPM dependencies via npm audit fix
-          title: Update NPM dependencies via npm audit fix
+          commit-message: Update PNPM dependencies via pnpm audit --fix update
+          title: Update PNPM dependencies via pnpm audit --fix update
           body: |
-            Automated update of NPM dependencies by running `npm audit fix` on all package.json files.
+            Automated update of PNPM dependencies by running `pnpm audit --fix update` on all package.json files.
 
             This PR was automatically created by the GitHub action.
 
             Please review the changes carefully before merging.
-          branch: npm/update-dependencies
+          branch: pnpm/update-dependencies
           base: master

@@ -6,6 +6,7 @@ ARG UBUNTU_NAME=noble
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
 
 ARG NODE_MAJOR=22
+ARG PNPM_VERSION=11.10
 
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -32,7 +33,8 @@ RUN apt-get update \
       https://brave-browser-apt-release.s3.brave.com/brave-browser.sources \
     && apt-get update \
     && apt-get install --assume-yes brave-browser \
-    && apt-get distclean
+    && apt-get distclean \
+    && npm install --global pnpm@${PNPM_VERSION}
 
 # Set up Scripture Forge data directories
 RUN mkdir --parents /var/lib/scriptureforge/sync \

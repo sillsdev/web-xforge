@@ -5,6 +5,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { Snapshot } from 'xforge-common/models/snapshot';
@@ -26,6 +27,7 @@ import { HistoryChooserComponent, RevisionSelectEvent } from './history-chooser/
 describe('EditorHistoryComponent', () => {
   let component: EditorHistoryComponent;
   let fixture: ComponentFixture<EditorHistoryComponent>;
+  const mockAuthService = mock(AuthService);
   const mockSFProjectService = mock(SFProjectService);
   const mockI18nService = mock(I18nService);
   const mockHistoryChooserComponent = mock(HistoryChooserComponent);
@@ -40,6 +42,7 @@ describe('EditorHistoryComponent', () => {
     providers: [
       provideTestRealtime(new TypeRegistry([TextDoc], [FileType.Audio], [])),
       provideTestOnlineStatus(),
+      { provide: AuthService, useMock: mockAuthService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ProjectNotificationService, useMock: mockProjectNotificationService },
       { provide: SFProjectService, useMock: mockSFProjectService },

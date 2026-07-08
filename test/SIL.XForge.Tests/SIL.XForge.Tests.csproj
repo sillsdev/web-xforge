@@ -40,17 +40,25 @@
       <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
     </Exec>
     <Error Condition="'$(ErrorCode)' != '0'" Text="Node.js is required to build and run this project. To continue, please install Node.js from https://nodejs.org/, and then restart your command prompt or IDE." />
+    <Exec Command="pnpm --version" ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="ErrorCode" />
+    </Exec>
+    <Error Condition="'$(ErrorCode)' != '0'" Text="pnpm is required to build and run this project. To continue, please install pnpm, and then restart your command prompt or IDE." />
   </Target>
-  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths" Condition="'$(Configuration)' == 'Debug'">
+  <Target Name="BuildRealtimeServer" DependsOnTargets="EnsureNodeInstalled" BeforeTargets="AssignTargetPaths">
     <Message Importance="high" Text="Building real-time server..." />
-    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm install" Condition="!Exists('$(RealtimeServerRoot)node_modules') Or '$(NpmInstall)' == 'true'" />
-    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="npm run build" Condition="Exists('$(RealtimeServerRoot)node_modules') And '$(NpmInstall)' != 'true' " />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm install" Condition="!Exists('$(RealtimeServerRoot)node_modules') Or '$(NpmInstall)' == 'true'" />
+    <Exec WorkingDirectory="$(RealtimeServerRoot)" Command="pnpm run build" Condition="Exists('$(RealtimeServerRoot)node_modules') And '$(NpmInstall)' != 'true' " />
     <ItemGroup>
-      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" />
+      <RealtimeFiles Include="$(RealtimeServerRoot)**\*" Exclude="$(RealtimeServerRoot)node_modules\**" />
       <Content Include="@(RealtimeFiles)">
         <Link>RealtimeServer\%(RecursiveDir)%(Filename)%(Extension)</Link>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </Content>
     </ItemGroup>
+  </Target>
+  <Target Name="InstallRealtimeServerDependencies" AfterTargets="Build">
+    <!-- Fix the node_modules as MSBuild will not correctly copy the symlinks used by pnpm -->
+    <Exec WorkingDirectory="$(OutDir)RealtimeServer\" Command="pnpm install" Condition="!Exists('$(OutDir)RealtimeServer\node_modules') Or '$(NpmInstall)' == 'true'" />
   </Target>
 </Project>

@@ -1,7 +1,8 @@
 ARG ARCHITECTURE=amd64
 ARG DOTNET_VERSION=10.0
-ARG UBUNTU_NAME=noble # 24.04
 ARG NODE_VERSION=22.13.0
+ARG PNPM_VERSION=11.10
+ARG UBUNTU_NAME=noble # 24.04
 
 # Build Jering node web server to RealtimeServer
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-${ARCHITECTURE} AS jering-build
@@ -23,9 +24,11 @@ FROM node:${NODE_VERSION} AS base
 # Build RealtimeServer node application
 FROM base AS build
 WORKDIR /src
+ARG PNPM_VERSION
 COPY src/RealtimeServer .
-RUN npm ci
-RUN npm run build
+RUN npm install --global pnpm@$PNPM_VERSION
+RUN pnpm ci
+RUN pnpm run build
 
 # RealtimeServer access from local dotnet process
 EXPOSE 5002
