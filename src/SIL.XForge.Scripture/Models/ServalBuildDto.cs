@@ -20,4 +20,9 @@ public class ServalBuildDto : ServalResourceDto
     /// Execution data from the Serval build, including training/pretranslation counts and language tags.
     /// </summary>
     public ServalBuildExecutionData? ExecutionData { get; set; }
+
+    /// <summary>
+    /// The quality estimation confidences for this build, if quality estimation is configured for the project.
+    /// </summary>
+    public BuildConfidences? BuildConfidences { get; set; }
 }

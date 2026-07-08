@@ -19,6 +19,7 @@ import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
+import { BuildConfidences, UsabilityLabel } from '../../build-confidences/build-confidences';
 import { DraftGenerationService } from '../../draft-generation.service';
 import { DraftOptionsService, FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-options.service';
 import { TrainingDataService } from '../../training-data/training-data.service';
@@ -40,6 +41,14 @@ const dateAfterFormattingSupported = new Date(FORMATTING_OPTIONS_SUPPORTED_DATE.
 describe('DraftHistoryEntryComponent', () => {
   let component: DraftHistoryEntryComponent;
   let fixture: ComponentFixture<DraftHistoryEntryComponent>;
+
+  function qualityEstimationLink(): HTMLElement | null {
+    return fixture.nativeElement.querySelector('.quality-estimation-link');
+  }
+
+  function qualityEstimationConfidenceElements(): NodeListOf<Element> {
+    return fixture.nativeElement.querySelectorAll('app-display-confidence');
+  }
 
   configureTestingModule(() => ({
     imports: [getTestTranslocoModule()],
@@ -180,6 +189,76 @@ describe('DraftHistoryEntryComponent', () => {
 
       expect(fixture.nativeElement.querySelector('.no-training-configuration')).not.toBeNull();
       expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
+    }));
+
+    it('should show quality estimation when confidences are available', fakeAsync(() => {
+      const buildConfidences: BuildConfidences = {
+        projectId: 'project01',
+        buildId: 'build01',
+        bookConfidences: [
+          { bookNum: 1, confidence: 0.9, label: UsabilityLabel.Green, projectedChrF3: 0.5, usability: 0.9 }
+        ],
+        chapterConfidences: []
+      };
+      const entry = getStandardBuildDto({});
+      entry.additionalInfo!.buildId = 'build01';
+      entry.buildConfidences = buildConfidences;
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.hasBuildConfidences).toBe(true);
+      expect(qualityEstimationLink()).not.toBeNull();
+      expect(qualityEstimationConfidenceElements().length).toBe(0);
+
+      component.qualityEstimationOpen = true;
+      fixture.detectChanges();
+
+      expect(qualityEstimationConfidenceElements().length).toBe(1);
+    }));
+
+    it('should not show quality estimation when no confidences are available', fakeAsync(() => {
+      const entry = getStandardBuildDto({});
+      entry.additionalInfo!.buildId = 'build01';
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.hasBuildConfidences).toBe(false);
+      expect(component.buildConfidences).toBeUndefined();
+      expect(qualityEstimationLink()).toBeNull();
+    }));
+
+    it('should clear quality estimation confidences when the entry changes', fakeAsync(() => {
+      const buildConfidences: BuildConfidences = {
+        projectId: 'project01',
+        buildId: 'build01',
+        bookConfidences: [
+          { bookNum: 1, confidence: 0.9, label: UsabilityLabel.Green, projectedChrF3: 0.5, usability: 0.9 }
+        ],
+        chapterConfidences: []
+      };
+      const firstEntry = getStandardBuildDto({});
+      firstEntry.additionalInfo!.buildId = 'build01';
+      firstEntry.buildConfidences = buildConfidences;
+      component.entry = firstEntry;
+      tick();
+      fixture.detectChanges();
+      expect(component.hasBuildConfidences).toBe(true);
+
+      // SUT
+      const secondEntry = getStandardBuildDto({});
+      secondEntry.additionalInfo!.buildId = 'build02';
+      component.entry = secondEntry;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.hasBuildConfidences).toBe(false);
+      expect(component.buildConfidences).toBeUndefined();
     }));
 
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {

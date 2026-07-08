@@ -895,7 +895,12 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -907,7 +912,19 @@ public class MachineApiService(
                 minRevision,
                 cancellationToken
             );
-            return await MapDtoAsync(sfProjectId, translationBuild, preTranslate);
+
+            // Get the draft metrics for this build, if quality estimation is configured for the project
+            DraftMetrics? buildDraftMetrics = null;
+            if (project.TranslateConfig.DraftConfig.QualityEstimationConfig is not null)
+            {
+                Attempt<DraftMetrics> attempt = await draftMetrics.TryGetAsync(
+                    DraftMetrics.GetDocId(sfProjectId, translationBuild.Id),
+                    cancellationToken
+                );
+                buildDraftMetrics = attempt.Success ? attempt.Result : null;
+            }
+
+            return await MapDtoAsync(sfProjectId, translationBuild, preTranslate, buildDraftMetrics);
         }
         catch (ServalApiException e)
         {
@@ -970,7 +987,12 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         // Execute on Serval, if it is enabled
         string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
@@ -1005,11 +1027,37 @@ public class MachineApiService(
             );
         }
 
+        // Get the draft metrics for all of the builds in one query, if quality estimation is configured
+        Dictionary<string, DraftMetrics> draftMetricsByBuildId = [];
+        if (project.TranslateConfig.DraftConfig.QualityEstimationConfig is not null)
+        {
+            List<string> draftMetricIds =
+            [
+                .. translationBuilds.Select(translationBuild =>
+                    DraftMetrics.GetDocId(sfProjectId, translationBuild.Id)
+                ),
+            ];
+            if (draftMetricIds.Count > 0)
+            {
+                List<DraftMetrics> draftMetricsForBuilds = await draftMetrics
+                    .Query()
+                    .Where(dm => draftMetricIds.Contains(dm.Id))
+                    .ToListAsync(cancellationToken);
+                draftMetricsByBuildId = draftMetricsForBuilds.ToDictionary(dm => dm.Id);
+            }
+        }
+
         // Map the builds to DTOs
         List<ServalBuildDto> builds =
         [
             .. translationBuilds.Select(translationBuild =>
-                MapDto(sfProjectId, translationBuild, preTranslate, eventMetrics)
+                MapDto(
+                    sfProjectId,
+                    translationBuild,
+                    preTranslate,
+                    eventMetrics,
+                    draftMetricsByBuildId.GetValueOrDefault(DraftMetrics.GetDocId(sfProjectId, translationBuild.Id))
+                )
             ),
         ];
 
@@ -1149,43 +1197,6 @@ public class MachineApiService(
         reports.AddRange(eventsOnlyReports);
 
         return reports;
-    }
-
-    /// <summary>
-    /// Gets the confidence values for the specified project and build.
-    /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="buildId">The build identifier.</param>
-    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>
-    /// The confidence values for the books and chapters, and the quality estimation configuration used,
-    /// or <c>null</c> if the confidence data does not exist for the build.
-    /// </returns>
-    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
-    public async Task<BuildConfidences?> GetBuildConfidencesAsync(
-        string curUserId,
-        string sfProjectId,
-        string buildId,
-        bool isServalAdmin,
-        CancellationToken cancellationToken
-    )
-    {
-        // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
-
-        // Retrieve the draft metrics, if they exist, or throw an error if they do not
-        Attempt<DraftMetrics> attempt = await draftMetrics.TryGetAsync(
-            DraftMetrics.GetDocId(sfProjectId, buildId),
-            cancellationToken
-        );
-        if (attempt.Success)
-        {
-            return MapBuildConfidences(attempt.Result);
-        }
-
-        return null;
     }
 
     private static BuildConfidences? MapBuildConfidences(DraftMetrics? draftMetrics)
@@ -3463,12 +3474,14 @@ public class MachineApiService(
     /// <param name="translationBuild">The translation build from Serval.</param>
     /// <param name="preTranslate">If <c>true</c>, return NMT builds only; otherwise, return SMT builds.</param>
     /// <param name="eventMetrics">(Optional) The event metrics for the project's builds or this specific build.</param>
+    /// <param name="buildDraftMetrics">(Optional) The draft metrics for this build, used to populate build confidences.</param>
     /// <returns>The Serval build DTO.</returns>
     private static ServalBuildDto MapDto(
         string sfProjectId,
         TranslationBuild translationBuild,
         bool preTranslate,
-        QueryResults<EventMetric> eventMetrics
+        QueryResults<EventMetric> eventMetrics,
+        DraftMetrics? buildDraftMetrics = null
     )
     {
         // Create the initial DTO
@@ -3535,7 +3548,9 @@ public class MachineApiService(
             }
         }
 
-        return UpdateDto(buildDto, sfProjectId);
+        buildDto = UpdateDto(buildDto, sfProjectId);
+        buildDto.BuildConfidences = MapBuildConfidences(buildDraftMetrics);
+        return buildDto;
     }
 
     /// <summary>
@@ -3820,11 +3835,13 @@ public class MachineApiService(
     /// <param name="sfProjectId">The scripture forge project identifier.</param>
     /// <param name="translationBuild">The translation build from Serval.</param>
     /// <param name="preTranslate">If <c>true</c>, return NMT builds only; otherwise, return SMT builds.</param>
+    /// <param name="buildDraftMetrics">(Optional) The draft metrics for this build, used to populate build confidences.</param>
     /// <returns>The Serval build DTO.</returns>
     private async Task<ServalBuildDto> MapDtoAsync(
         string sfProjectId,
         TranslationBuild translationBuild,
-        bool preTranslate
+        bool preTranslate,
+        DraftMetrics? buildDraftMetrics = null
     )
     {
         // Get the event metrics for build configurations, if we are pre-translating
@@ -3843,6 +3860,6 @@ public class MachineApiService(
             );
         }
 
-        return MapDto(sfProjectId, translationBuild, preTranslate, eventMetrics);
+        return MapDto(sfProjectId, translationBuild, preTranslate, eventMetrics, buildDraftMetrics);
     }
 }

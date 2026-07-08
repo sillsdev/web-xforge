@@ -1,4 +1,5 @@
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { BuildConfidences } from '../translate/draft-generation/build-confidences/build-confidences';
 import { BuildStates } from './build-states';
 import { ResourceDto } from './resource-dto';
 
@@ -14,6 +15,8 @@ export interface BuildDto extends ResourceDto {
   deploymentVersion?: string;
   /** Execution data from the Serval build, including training/pretranslation counts and language tags. */
   executionData?: BuildExecutionData;
+  /** The quality estimation confidences for this build, if quality estimation is configured for the project. */
+  buildConfidences?: BuildConfidences;
 }
 
 /** Execution data from a Serval translation build. */

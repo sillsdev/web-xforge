@@ -2,13 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { Confidence, UsabilityLabel } from './build-confidences';
 import { DisplayConfidenceComponent } from './display-confidence.component';
 
 describe('DisplayConfidenceComponent', () => {
   configureTestingModule(() => ({
-    imports: [DisplayConfidenceComponent]
+    imports: [DisplayConfidenceComponent, getTestTranslocoModule()]
   }));
 
   it('good quality', () => {

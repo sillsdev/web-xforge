@@ -88,6 +88,31 @@
               {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
             </p>
           }
+          @if (hasBuildConfidences) {
+            <p>
+              <a
+                href="javascript:;"
+                (click)="qualityEstimationOpen = !qualityEstimationOpen"
+                class="quality-estimation-link"
+              >
+                <mat-icon>expand_{{ qualityEstimationOpen ? "less" : "more" }}</mat-icon>
+                {{ t(qualityEstimationOpen ? "hide_quality_estimation" : "show_quality_estimation") }}
+              </a>
+            </p>
+            @if (qualityEstimationOpen) {
+              <ul class="quality-estimation-list">
+                @for (bookConfidence of buildConfidences!.bookConfidences; track bookConfidence.bookNum) {
+                  <li>
+                    <span class="book-name">{{ i18n.localizeBook(bookConfidence.bookNum) }}</span>
+                    <app-display-confidence [confidence]="bookConfidence" />
+                  </li>
+                }
+              </ul>
+              <p class="quality-estimation-note">
+                <transloco key="draft_history_entry.quality_estimation_note"></transloco>
+              </p>
+            }
+          }
           @if (hasTrainingConfiguration || hasTrainingDataFiles) {
             @if (draftIsAvailable) {
               <p>

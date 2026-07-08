@@ -79,13 +79,6 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    Task<BuildConfidences?> GetBuildConfidencesAsync(
-        string curUserId,
-        string sfProjectId,
-        string buildId,
-        bool isServalAdmin,
-        CancellationToken cancellationToken
-    );
     Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task<TranslationEngine?> GetRawEngineAsync(
         string curUserId,

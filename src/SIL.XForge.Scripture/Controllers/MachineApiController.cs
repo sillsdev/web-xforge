@@ -313,55 +313,6 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
-    /// Gets the confidence scores for a build at book and chapter level.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="buildId">The build identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The build is returned.</response>
-    /// <response code="204">
-    /// Confidence data is not available for this build. Either quality estimation is not configured for the project,
-    /// or the build was created before quality estimation was configured for the project.
-    /// </response>
-    /// <response code="403">You do not have permission to retrieve build confidence data for this project.</response>
-    /// <response code="404">The project does not exist.</response>
-    [HttpGet(MachineApi.GetBuildConfidences)]
-    public async Task<ActionResult<BuildConfidences>> GetBuildConfidencesAsync(
-        string sfProjectId,
-        string buildId,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
-            BuildConfidences? buildConfidences = await _machineApiService.GetBuildConfidencesAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                buildId,
-                isServalAdmin,
-                cancellationToken
-            );
-
-            // No confidence data exists for the build
-            if (buildConfidences is null)
-            {
-                return NoContent();
-            }
-
-            return Ok(buildConfidences);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-    }
-
-    /// <summary>
     /// Gets a translation engine.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>

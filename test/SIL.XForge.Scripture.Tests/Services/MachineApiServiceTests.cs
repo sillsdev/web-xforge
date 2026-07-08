@@ -2132,109 +2132,83 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetBuildConfidencesAsync_NoPermission()
+    public async Task GetBuildAsync_IncludesBuildConfidences()
     {
         // Set up test environment
         var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetBuildConfidencesAsync(
-                User02,
-                Project01,
-                ServalBuildId01,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void GetBuildConfidencesAsync_NoProject()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetBuildConfidencesAsync(
-                User01,
-                "invalid_project_id",
-                ServalBuildId01,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public async Task GetBuildConfidencesAsync_NoContent()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
-            User01,
-            Project01,
-            ServalBuildId01,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
-
-        Assert.That(actual, Is.Null);
-    }
-
-    [Test]
-    public async Task GetBuildConfidencesAsync_ServalAdminDoesNotNeedPermission()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
+        env.SetupEventMetrics("GEN", "EXO", DateTime.UtcNow);
+        env.ConfigureTranslationBuild();
         await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
 
         // SUT
-        BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
-            User02,
-            Project01,
-            ServalBuildId01,
-            isServalAdmin: true,
-            CancellationToken.None
-        );
-
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(actual?.ProjectId, Is.EqualTo(Project01));
-            Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
-            Assert.That(actual?.BookConfidences, Is.Not.Empty);
-            Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
-            Assert.That(actual?.LowestConfidence, Is.Not.Null);
-        }
-    }
-
-    [Test]
-    public async Task GetBuildConfidencesAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
-
-        // SUT
-        BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             ServalBuildId01,
+            minRevision: null,
+            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
 
         using (Assert.EnterMultipleScope())
         {
-            Assert.That(actual?.ProjectId, Is.EqualTo(Project01));
-            Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
-            Assert.That(actual?.BookConfidences, Is.Not.Empty);
-            Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
-            Assert.That(actual?.LowestConfidence, Is.Not.Null);
+            Assert.That(actual?.BuildConfidences?.ProjectId, Is.EqualTo(Project01));
+            Assert.That(actual?.BuildConfidences?.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(actual?.BuildConfidences?.BookConfidences, Is.Not.Empty);
+            Assert.That(actual?.BuildConfidences?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.BuildConfidences?.LowestConfidence, Is.Not.Null);
         }
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_IncludesBuildConfidences()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupEventMetrics("GEN", "EXO", DateTime.UtcNow);
+        env.ConfigureTranslationBuild();
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+
+        // SUT
+        IReadOnlyList<ServalBuildDto> actual = await env.Service.GetBuildsAsync(
+            User01,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        ServalBuildDto? build = actual.SingleOrDefault(b => b.AdditionalInfo?.BuildId == ServalBuildId01);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(build?.BuildConfidences?.ProjectId, Is.EqualTo(Project01));
+            Assert.That(build?.BuildConfidences?.BuildId, Is.EqualTo(ServalBuildId01));
+            Assert.That(build?.BuildConfidences?.BookConfidences, Is.Not.Empty);
+            Assert.That(build?.BuildConfidences?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(build?.BuildConfidences?.LowestConfidence, Is.Not.Null);
+        }
+    }
+
+    [Test]
+    public async Task GetBuildsAsync_NoBuildConfidencesWhenQualityEstimationNotConfigured()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupEventMetrics("GEN", "EXO", DateTime.UtcNow);
+        env.ConfigureTranslationBuild();
+
+        // SUT
+        IReadOnlyList<ServalBuildDto> actual = await env.Service.GetBuildsAsync(
+            User01,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        ServalBuildDto? build = actual.SingleOrDefault(b => b.AdditionalInfo?.BuildId == ServalBuildId01);
+        Assert.That(build?.BuildConfidences, Is.Null);
     }
 
     [Test]

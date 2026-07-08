@@ -37,6 +37,8 @@ import { BuildStates } from '../../../../machine-api/build-states';
 import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { booksFromScriptureRange } from '../../../../shared/utils';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
+import { BuildConfidences } from '../../build-confidences/build-confidences';
+import { DisplayConfidenceComponent } from '../../build-confidences/display-confidence.component';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
@@ -75,6 +77,7 @@ interface SourceInfo {
   selector: 'app-draft-history-entry',
   imports: [
     NgClass,
+    DisplayConfidenceComponent,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,
@@ -255,10 +258,19 @@ export class DraftHistoryEntryComponent {
   get hasDetails(): boolean {
     return (
       this.hasTrainingConfiguration ||
+      this.hasBuildConfidences ||
       this.draftIsAvailable ||
       this.buildFaulted ||
       this.buildRequestedByUserName != null
     );
+  }
+
+  get buildConfidences(): BuildConfidences | undefined {
+    return this._entry?.buildConfidences;
+  }
+
+  get hasBuildConfidences(): boolean {
+    return (this.buildConfidences?.bookConfidences.length ?? 0) > 0;
   }
 
   get hasTrainingConfiguration(): boolean {
@@ -318,6 +330,7 @@ export class DraftHistoryEntryComponent {
 
   @Input() isLatestBuild: boolean = false;
   trainingConfigurationOpen = false;
+  qualityEstimationOpen = false;
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
