@@ -142,6 +142,12 @@
     "please_type_project_name": "Please type in the name of the project to confirm.",
     "project_name": "Project Name"
   },
+  "display_confidence": {
+    "likely_useful": "Likely to be useful",
+    "may_not_be_useful": "May not be useful",
+    "not_configured": "Not configured",
+    "probably_useful": "Probably useful"
+  },
   "draft_apply_dialog": {
     "add_to_project": "Add to project",
     "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
@@ -297,11 +303,14 @@
     "formatting_options": "Formatting options",
     "formatting": "Formatting",
     "hide_model_training_configuration": "Hide model training configuration",
+    "hide_quality_estimation": "Hide estimated quality",
     "per_chapter_remarks_notice": "[b]New![/b] A notice that the draft is AI-generated is now shown on every chapter instead of at the start of the book.",
+    "quality_estimation_note": "A draft is considered [em]useful[/em] if a translator would choose to edit and improve the draft, rather than creating their own translation.",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
     "select_formatting_options": "The draft has been created. Choose formatting options to continue.",
     "show_model_training_configuration": "Show model training configuration",
+    "show_quality_estimation": "Show estimated quality",
     "training_books": "Training books",
     "training_data_files_used": "The following data files were used to train the model.",
     "training_data_not_configured": "No training data was configured on this draft.",

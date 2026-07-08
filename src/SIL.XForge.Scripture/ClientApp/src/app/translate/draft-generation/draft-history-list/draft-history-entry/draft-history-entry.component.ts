@@ -37,7 +37,10 @@ import { BuildStates } from '../../../../machine-api/build-states';
 import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { booksFromScriptureRange } from '../../../../shared/utils';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
+import { BuildConfidences } from '../../build-confidences/build-confidences';
+import { DisplayConfidenceComponent } from '../../build-confidences/display-confidence.component';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
+import { DraftGenerationService } from '../../draft-generation.service';
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
@@ -75,6 +78,7 @@ interface SourceInfo {
   selector: 'app-draft-history-entry',
   imports: [
     NgClass,
+    DisplayConfidenceComponent,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,
@@ -128,6 +132,16 @@ export class DraftHistoryEntryComponent {
     this._sourceLanguage = undefined;
     this._targetLanguage = undefined;
     this._trainingConfiguration = [];
+
+    // Get the quality estimation confidences for this build, if available
+    this._buildConfidences = undefined;
+    const buildId = this._entry?.additionalInfo?.buildId;
+    if (this.activatedProjectService.projectId != null && buildId != null && buildId !== '') {
+      this.draftGenerationService
+        .getBuildConfidences(this.activatedProjectService.projectId, buildId)
+        .pipe(quietTakeUntilDestroyed(this.destroyRef), takeUntil(this.entryChanged))
+        .subscribe(confidences => (this._buildConfidences = confidences));
+    }
 
     // Get the books used in the training configuration
     const trainingScriptureRanges = this._entry?.additionalInfo?.trainingScriptureRanges ?? [];
@@ -255,10 +269,20 @@ export class DraftHistoryEntryComponent {
   get hasDetails(): boolean {
     return (
       this.hasTrainingConfiguration ||
+      this.hasBuildConfidences ||
       this.draftIsAvailable ||
       this.buildFaulted ||
       this.buildRequestedByUserName != null
     );
+  }
+
+  private _buildConfidences?: BuildConfidences;
+  get buildConfidences(): BuildConfidences | undefined {
+    return this._buildConfidences;
+  }
+
+  get hasBuildConfidences(): boolean {
+    return (this._buildConfidences?.bookConfidences.length ?? 0) > 0;
   }
 
   get hasTrainingConfiguration(): boolean {
@@ -318,6 +342,7 @@ export class DraftHistoryEntryComponent {
 
   @Input() isLatestBuild: boolean = false;
   trainingConfigurationOpen = false;
+  qualityEstimationOpen = false;
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
@@ -331,6 +356,7 @@ export class DraftHistoryEntryComponent {
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly trainingDataService: TrainingDataService,
+    private readonly draftGenerationService: DraftGenerationService,
     private readonly activatedProjectService: ActivatedProjectService,
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly permissionsService: PermissionsService,

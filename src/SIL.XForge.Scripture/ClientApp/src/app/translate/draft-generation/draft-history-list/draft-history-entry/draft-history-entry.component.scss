@@ -54,7 +54,8 @@ mat-panel-description {
   flex-shrink: 0;
 }
 
-.training-configuration-link {
+.training-configuration-link,
+.quality-estimation-link {
   display: flex;
   align-items: center;
 }
@@ -88,4 +89,28 @@ strong {
 
 .mat-column-details {
   word-break: break-word;
+}
+
+.quality-estimation-list {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: 16px;
+  row-gap: 4px;
+  align-items: center;
+  list-style: none;
+  width: fit-content;
+  margin: 0 0 1em;
+  padding: 0;
+
+  li {
+    display: contents;
+  }
+
+  .book-name {
+    font-weight: 500;
+  }
+}
+
+.quality-estimation-note {
+  font-size: 0.9em;
 }
