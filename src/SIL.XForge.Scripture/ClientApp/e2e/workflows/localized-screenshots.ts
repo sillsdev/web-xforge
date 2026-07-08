@@ -486,17 +486,19 @@ export async function localizedScreenshots(
   await navLocator(page, 'generate_draft').click();
   await expect(page.getByText('The draft is ready')).toBeVisible();
 
+  const addToProject = page.locator('.draft-options').getByRole('button').first();
+
   await forEachLocale(async locale => {
-    await user.hover(page.getByRole('button', { name: 'Add to a project' }), defaultArrowLocation);
+    await user.hover(addToProject, defaultArrowLocation);
     await screenshot(page, { ...context, pageName: 'import_book', locale });
   });
 
   await forEachLocale(async locale => {
-    await user.click(page.getByRole('button', { name: 'Add to a project' }));
+    await user.click(addToProject);
 
     await page.getByRole('combobox').fill('seedsp2');
     await page.getByRole('option', { name: 'seedsp2 - ' }).click();
-    await user.hover(page.getByRole('button', { name: 'next' }), defaultArrowLocation);
+    await user.hover(page.locator('.button-strip').getByRole('button').last(), defaultArrowLocation);
     await screenshotElements(
       page,
       [page.locator('mat-dialog-container')],
