@@ -6,7 +6,7 @@ import { filter } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
-import { DocSubscription } from '../../../xforge-common/models/realtime-doc';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { PermissionsService } from '../../core/permissions.service';
@@ -371,7 +371,9 @@ class TestEnvironment {
         const sourceTextDocId = new TextDocId('sourceId', bookNum, chapterNumber);
 
         when(mockPermissionsService.canAccessTextAsync(deepEqual(textDocId))).thenResolve(userHasTextPermission);
-        when(mockPermissionsService.canAccessTextAsync(deepEqual(sourceTextDocId))).thenResolve(userHasSourceTextPermission);
+        when(mockPermissionsService.canAccessTextAsync(deepEqual(sourceTextDocId))).thenResolve(
+          userHasSourceTextPermission
+        );
       }
       texts.push({
         bookNum: bookNum,

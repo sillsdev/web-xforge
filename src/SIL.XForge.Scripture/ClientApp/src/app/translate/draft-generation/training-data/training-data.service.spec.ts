@@ -9,7 +9,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TypeRegistry } from 'xforge-common/type-registry';
 import { PROJECTS_URL } from 'xforge-common/url-constants';
-import { DocSubscription } from '../../../../xforge-common/models/realtime-doc';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataService } from './training-data.service';
 

@@ -1,12 +1,9 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { BehaviorSubject, filter, take } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
-import {
-  ActivatedProjectService,
-  ActiveProjectIdService
-} from '../../../../../xforge-common/activated-project.service';
-import { DocSubscription } from '../../../../../xforge-common/models/realtime-doc';
-import { configureTestingModule } from '../../../../../xforge-common/test-utils';
+import { ActivatedProjectService, ActiveProjectIdService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../../../core/models/text-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
