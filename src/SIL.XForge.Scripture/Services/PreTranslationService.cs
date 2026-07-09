@@ -61,14 +61,20 @@ public class PreTranslationService(
                 continue;
             }
 
-            // If there is a forward slash, in the reference, the first half is the verse reference
+            // If there is a forward slash in the reference, do not use this confidence score, as it is a heading
             if (reference.Contains('/', StringComparison.OrdinalIgnoreCase))
             {
-                reference = reference.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                continue;
             }
 
             // Ensure we have a valid verse reference and it is for this chapter
             if (!VerseRef.TryParse(reference, out VerseRef verseRef))
+            {
+                continue;
+            }
+
+            // Skip verse 0. This is usually the headings and introduction above chapter 1
+            if (verseRef.VerseNum == 0)
             {
                 continue;
             }

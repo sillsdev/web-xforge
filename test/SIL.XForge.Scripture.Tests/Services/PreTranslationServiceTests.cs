@@ -370,10 +370,9 @@ public class PreTranslationServiceTests
         [
             .. await env.Service.GetVerseConfidencesAsync(Project01, CancellationToken.None),
         ];
-        Assert.That(actual, Has.Count.EqualTo(3));
+        Assert.That(actual, Has.Count.EqualTo(2));
         Assert.That(actual[0], Is.EqualTo(new VerseConfidence(40, 1, "1", 0.2)).UsingPropertiesComparer());
-        Assert.That(actual[1], Is.EqualTo(new VerseConfidence(40, 1, "2", 0.4)).UsingPropertiesComparer());
-        Assert.That(actual[2], Is.EqualTo(new VerseConfidence(40, 1, "3", 0.7)).UsingPropertiesComparer());
+        Assert.That(actual[1], Is.EqualTo(new VerseConfidence(40, 1, "3", 0.7)).UsingPropertiesComparer());
     }
 
     private class TestEnvironmentOptions
@@ -464,6 +463,13 @@ public class PreTranslationServiceTests
                             SourceRefs = ["MAT 1:3"],
                             TargetRefs = ["MAT 1:3"],
                             Confidence = 0.7,
+                        },
+                        new PretranslationConfidence
+                        {
+                            // A pre-translation confidence value for verse zero
+                            SourceRefs = ["MAT 1:0"],
+                            TargetRefs = ["MAT 1:0"],
+                            Confidence = 0.8,
                         },
                     ])
                 );
