@@ -370,10 +370,9 @@ public class PreTranslationServiceTests
         [
             .. await env.Service.GetVerseConfidencesAsync(Project01, CancellationToken.None),
         ];
-        Assert.That(actual, Has.Count.EqualTo(3));
+        Assert.That(actual, Has.Count.EqualTo(2));
         Assert.That(actual[0], Is.EqualTo(new VerseConfidence(40, 1, "1", 0.2)).UsingPropertiesComparer());
-        Assert.That(actual[1], Is.EqualTo(new VerseConfidence(40, 1, "2", 0.4)).UsingPropertiesComparer());
-        Assert.That(actual[2], Is.EqualTo(new VerseConfidence(40, 1, "3", 0.7)).UsingPropertiesComparer());
+        Assert.That(actual[1], Is.EqualTo(new VerseConfidence(40, 1, "3", 0.6)).UsingPropertiesComparer());
     }
 
     private class TestEnvironmentOptions
@@ -418,7 +417,7 @@ public class PreTranslationServiceTests
                     Task.FromResult<IList<PretranslationConfidence>>([
                         new PretranslationConfidence
                         {
-                            // A pre-translation confidence value with no references
+                            // A pre-translation confidence value with no references (ignored)
                             SourceRefs = [],
                             TargetRefs = [],
                             Confidence = 0.1,
@@ -432,37 +431,37 @@ public class PreTranslationServiceTests
                         },
                         new PretranslationConfidence
                         {
-                            // A pre-translation confidence value with an invalid references
+                            // A pre-translation confidence value with an invalid references (ignored)
                             SourceRefs = ["invalid_reference"],
                             TargetRefs = ["invalid_reference"],
                             Confidence = 0.3,
                         },
                         new PretranslationConfidence
                         {
-                            // A pre-translation confidence value from a segment
+                            // A pre-translation confidence value from verse that only has a segment (ignored)
                             SourceRefs = ["MAT 1:2/1:p"],
                             TargetRefs = ["MAT 1:2/1:p"],
                             Confidence = 0.4,
                         },
                         new PretranslationConfidence
                         {
-                            // A pre-translation confidence value from a segment that will be overridden by the verse
+                            // A pre-translation confidence value from a segment (ignored)
                             SourceRefs = ["MAT 1:3/2:p"],
                             TargetRefs = ["MAT 1:3/2:p"],
                             Confidence = 0.5,
                         },
                         new PretranslationConfidence
                         {
-                            // A pre-translation confidence value from another  segment that will be overridden by the verse
-                            SourceRefs = ["MAT 1:3/3:p"],
-                            TargetRefs = ["MAT 1:3/3:p"],
+                            // A pre-translation confidence value for a verse
+                            SourceRefs = ["MAT 1:3"],
+                            TargetRefs = ["MAT 1:3"],
                             Confidence = 0.6,
                         },
                         new PretranslationConfidence
                         {
-                            // A pre-translation confidence value for a verse
-                            SourceRefs = ["MAT 1:3"],
-                            TargetRefs = ["MAT 1:3"],
+                            // A pre-translation confidence value for verse zero (ignored)
+                            SourceRefs = ["MAT 1:0"],
+                            TargetRefs = ["MAT 1:0"],
                             Confidence = 0.7,
                         },
                     ])

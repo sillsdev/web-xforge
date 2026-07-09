@@ -61,10 +61,10 @@ public class PreTranslationService(
                 continue;
             }
 
-            // If there is a forward slash, in the reference, the first half is the verse reference
+            // If there is a forward slash in the reference, do not use this confidence score, as it is a heading
             if (reference.Contains('/', StringComparison.OrdinalIgnoreCase))
             {
-                reference = reference.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+                continue;
             }
 
             // Ensure we have a valid verse reference and it is for this chapter
@@ -73,9 +73,14 @@ public class PreTranslationService(
                 continue;
             }
 
-            // Add the confidence value. However, if the confidence value already exists, see if this pre-translation
-            // is for the verse content, and if so, set the confidence value.
-            if (!confidences.TryAdd(verseRef, pretranslationConfidence.Confidence) && !references.First().Contains('/'))
+            // Skip verse 0. This is usually the headings and introduction above chapter 1
+            if (verseRef.VerseNum == 0)
+            {
+                continue;
+            }
+
+            // Add the confidence value, if there is no confidence value already specified
+            if (!confidences.TryAdd(verseRef, pretranslationConfidence.Confidence))
             {
                 confidences[verseRef] = pretranslationConfidence.Confidence;
             }
