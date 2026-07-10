@@ -221,6 +221,7 @@
     "preview_last_draft_button": "Vista previa del último borrador",
     "preview_last_draft_detail": "La última construcción del borrador no se completó, pero aún puede ver el borrador exitoso más reciente.",
     "preview_last_draft_header": "Vista previa del último borrador",
+    "quota_exceeded": "La función de creación de borradores no está disponible temporalmente para este proyecto, ya que se ha superado su cuota",
     "report_problem": "Reportar problema",
     "signup_already_submitted": "{{ name }} envió una solicitud para inscribirse en la redacción en {{ date }}. Un miembro del equipo se pondrá en contacto con usted en un plazo de entre {{ min }} y {{ max }} para hablar de su proyecto y de los pasos a seguir.",
     "sign_up_for_drafting": "Inscríbase para redactar",
@@ -448,6 +449,7 @@
   "editor": {
     "add_comment": "Añadir comentario",
     "anonymous": "Anónimo",
+    "blank_tab_notice": "Haga clic en el botón Añadir arriba y seleccione Recurso para abrir un Proyecto o Recurso de Paratext junto a su proyecto actual.",
     "browser_warning_banner": "El editor no es compatible con el navegador actual para el idioma del proyecto. Recomendamos editar este proyecto en {{ firefoxLink }} o {{ safari }}.",
     "cancel": "Cancelar",
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
@@ -492,6 +494,7 @@
     "project_resource_menu_item": "Recurso..."
   },
   "editor_tab_factory": {
+    "blank_tab_header": "Nueva pestaña",
     "default_biblical_terms_tab_header": "Vocablos bíblicos",
     "default_history_tab_header": "Historial",
     "default_project_tab_header": "Proyecto",

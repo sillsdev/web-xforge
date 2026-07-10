@@ -221,6 +221,7 @@
     "preview_last_draft_button": "Pratinjau konsep terakhir",
     "preview_last_draft_detail": "Pembuatan konsep terakhir tidak selesai, tetapi Anda masih dapat melihat konsep terbaru yang berhasil.",
     "preview_last_draft_header": "Pratinjau konsep terakhir",
+    "quota_exceeded": "Generating drafts is temporarily unavailable for this project as its quota has been exceeded",
     "report_problem": "Laporkan masalah",
     "signup_already_submitted": "{{ name }} submitted a request to sign up for drafting on {{ date }}. A team member will contact you within {{ min }} to {{ max }} business days to discuss your project and next steps.",
     "sign_up_for_drafting": "Mendaftar untuk pembuatan konsep",
@@ -448,6 +449,7 @@
   "editor": {
     "add_comment": "Tambah Komentar",
     "anonymous": "Anonim",
+    "blank_tab_notice": "Click the Add button above and select Resource to open a Paratext Project or Resource beside your current project.",
     "browser_warning_banner": "Editor ini tidak kompatibel dengan peramban saat ini untuk bahasa proyek. Kami menyarankan untuk menyunting proyek ini di {{ firefoxLink }} atau {{ safari }}.",
     "cancel": "Batal",
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
@@ -492,6 +494,7 @@
     "project_resource_menu_item": "Sumber..."
   },
   "editor_tab_factory": {
+    "blank_tab_header": "New Tab",
     "default_biblical_terms_tab_header": "Istilah Alkitab",
     "default_history_tab_header": "Riwayat",
     "default_project_tab_header": "Proyek",

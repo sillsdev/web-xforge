@@ -221,6 +221,7 @@
     "preview_last_draft_button": "Preview last draft",
     "preview_last_draft_detail": "The last draft build did not complete, but you can still view the most recent successful draft.",
     "preview_last_draft_header": "Preview last draft",
+    "quota_exceeded": "Generating drafts is temporarily unavailable for this project as its quota has been exceeded",
     "report_problem": "Report problem",
     "signup_already_submitted": "{{ name }} submitted a request to sign up for drafting on {{ date }}. A team member will contact you within {{ min }} to {{ max }} business days to discuss your project and next steps.",
     "sign_up_for_drafting": "Sign up for drafting",
@@ -448,6 +449,7 @@
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "blank_tab_notice": "Click the Add button above and select Resource to open a Paratext Project or Resource beside your current project.",
     "browser_warning_banner": "The editor is not compatible with the current browser for the project language. We recommend editing this project in {{ firefoxLink }} or {{ safari }}.",
     "cancel": "取消",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
@@ -492,6 +494,7 @@
     "project_resource_menu_item": "资源..."
   },
   "editor_tab_factory": {
+    "blank_tab_header": "New Tab",
     "default_biblical_terms_tab_header": "圣经词语",
     "default_history_tab_header": "历史",
     "default_project_tab_header": "项目",

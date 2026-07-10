@@ -221,6 +221,7 @@
     "preview_last_draft_button": "Prévisualiser la dernière ébauche",
     "preview_last_draft_detail": "La dernière ébauche n'a pas été finalisé, mais vous pouvez toujours consulter l'ébauche la plus récente qui a réussi.",
     "preview_last_draft_header": "Prévisualiser la dernière ébauche",
+    "quota_exceeded": "La génération d'ébauches est temporairement indisponible pour ce projet car son quota a été dépassé",
     "report_problem": "Signaler un problème",
     "signup_already_submitted": "{{ name }} a soumis une demande d'inscription à la rédaction sur {{ date }}. Un membre de l'équipe vous contactera dans les jours ouvrables {{ min }} à {{ max }} pour discuter de votre projet et des prochaines étapes.",
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
@@ -448,6 +449,7 @@
   "editor": {
     "add_comment": "Ajouter un commentaire",
     "anonymous": "Anonyme",
+    "blank_tab_notice": "Cliquez sur le bouton Ajouter ci-dessus et sélectionnez Ressource pour ouvrir un projet ou une ressource Paratext à côté de votre projet actuel.",
     "browser_warning_banner": "L'éditeur n'est pas compatible avec le navigateur actuel pour la langue du projet. Nous vous recommandons de modifier ce projet en {{ firefoxLink }} ou {{ safari }}.",
     "cancel": "Annuler",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
@@ -492,6 +494,7 @@
     "project_resource_menu_item": "Ressource..."
   },
   "editor_tab_factory": {
+    "blank_tab_header": "Nouvel onglet",
     "default_biblical_terms_tab_header": "Termes bibliques",
     "default_history_tab_header": "Historique",
     "default_project_tab_header": "Projet",
@@ -684,7 +687,7 @@
     "range_label": "{{ startIndex }} - {{ endIndex }} sur {{ length }}"
   },
   "paratext_account_notice": {
-    "not_connected": "Your account isn't connected to Paratext. To continue, log out and sign in with your Paratext account."
+    "not_connected": "Votre compte n'est pas connecté à Paratext. Pour continuer, déconnectez-vous et connectez-vous avec votre compte Paratext."
   },
   "project_select": {
     "please_select_valid_project_or_resource": "Veuillez sélectionner un projet ou une ressource valide",
@@ -908,7 +911,7 @@
     "training_unavailable": "La formation est temporairement indisponible",
     "translate_overview": "Vue d'ensemble de la traduction",
     "translated_segments": "{{ translatedSegments }} segments sur {{ total }}",
-    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translation_suggestions_will_be_removed": "Votre projet semble utiliser la fonctionnalité des suggestions de traduction. Les suggestions de traduction seront bientôt retirées. Veuillez contacter {{ email }} pour discuter des méthodes alternatives de traduction à l'aide de Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Commentaires supplémentaires",
