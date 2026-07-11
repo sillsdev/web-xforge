@@ -176,6 +176,13 @@ app-copyright-banner {
 
 .books-hidden-message {
   cursor: pointer;
+  // A <button> (for keyboard accessibility) styled to read as the surrounding notice text.
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: start;
 
   ::ng-deep u {
     &:hover {

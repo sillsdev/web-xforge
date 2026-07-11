@@ -1,6 +1,7 @@
 import { fakeAsync, flushMicrotasks } from '@angular/core/testing';
-import { instance, mock, reset, verify, when } from 'ts-mockito';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   BookProgress,
@@ -144,6 +145,126 @@ describe('ProgressService', () => {
     verify(mockedProjectService.getProjectProgress(projectId)).twice();
   }));
 
+  it('refetches despite a warm cache when the project has synced since the data was fetched', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const preSyncBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const postSyncBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
+    when(mockedProjectService.getProjectProgress(projectId)).thenResolve(preSyncBooks).thenResolve(postSyncBooks);
+
+    let result1: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result1 = r));
+    flushMicrotasks();
+
+    // A sync completes; the cached data is well within the staleness window but must not be served anymore.
+    env.setSyncToken(projectId, 'post-sync');
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(preSyncBooks);
+    expect(result2?.books).toEqual(postSyncBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
+  it('coalesces sibling reads issued after a sync while ignoring a request from before it', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const preSyncBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const postSyncBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
+    let resolvePreSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    let resolvePostSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    const preSyncPromise: Promise<BookProgressWithChapterProgress[]> = new Promise(
+      resolve => (resolvePreSync = resolve)
+    );
+    const postSyncPromise: Promise<BookProgressWithChapterProgress[]> = new Promise(
+      resolve => (resolvePostSync = resolve)
+    );
+    when(mockedProjectService.getProjectProgress(projectId)).thenReturn(preSyncPromise).thenReturn(postSyncPromise);
+
+    // A request from before the sync is in flight...
+    let result1: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result1 = r));
+    flushMicrotasks();
+
+    // ...then the sync completes and two sibling reads arrive.
+    env.setSyncToken(projectId, 'post-sync');
+    let result2: ProjectProgress | undefined;
+    let result3: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result2 = r));
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result3 = r));
+    flushMicrotasks();
+
+    resolvePreSync!(preSyncBooks);
+    resolvePostSync!(postSyncBooks);
+    flushMicrotasks();
+
+    // The pre-sync request was not reused, but the two sibling reads shared a single new request.
+    expect(result1?.books).toEqual(preSyncBooks);
+    expect(result2?.books).toEqual(postSyncBooks);
+    expect(result3?.books).toEqual(postSyncBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
+  it('does not let a slower request from before a sync overwrite fresher post-sync data', fakeAsync(() => {
+    const env = new TestEnvironment();
+    const projectId = 'project1';
+    const preSyncBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 20, chapters: [] }
+    ];
+    const postSyncBooks: BookProgressWithChapterProgress[] = [
+      { bookId: 'GEN', verseSegments: 120, blankVerseSegments: 15, chapters: [] }
+    ];
+    let resolvePreSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    let resolvePostSync: ((value: BookProgressWithChapterProgress[]) => void) | undefined;
+    const preSyncPromise: Promise<BookProgressWithChapterProgress[]> = new Promise(
+      resolve => (resolvePreSync = resolve)
+    );
+    const postSyncPromise: Promise<BookProgressWithChapterProgress[]> = new Promise(
+      resolve => (resolvePostSync = resolve)
+    );
+    when(mockedProjectService.getProjectProgress(projectId)).thenReturn(preSyncPromise).thenReturn(postSyncPromise);
+
+    // Control the clock so the two requests demonstrably start at different times.
+    let now = 1000;
+    spyOn(Date, 'now').and.callFake(() => now);
+
+    let result1: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result1 = r));
+    flushMicrotasks();
+
+    now = 2000;
+    env.setSyncToken(projectId, 'post-sync');
+    let result2: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result2 = r));
+    flushMicrotasks();
+
+    // The post-sync request resolves first; the pre-sync one afterward.
+    resolvePostSync!(postSyncBooks);
+    flushMicrotasks();
+    resolvePreSync!(preSyncBooks);
+    flushMicrotasks();
+
+    // A later read within the staleness window must see the post-sync data, not the pre-sync straggler's.
+    now = 3000;
+    let result3: ProjectProgress | undefined;
+    env.service.getProgress(projectId, { maxStalenessMs: 60_000 }).then(r => (result3 = r));
+    flushMicrotasks();
+
+    expect(result1?.books).toEqual(preSyncBooks);
+    expect(result2?.books).toEqual(postSyncBooks);
+    expect(result3?.books).toEqual(postSyncBooks);
+    verify(mockedProjectService.getProjectProgress(projectId)).twice();
+  }));
+
   it('should deduplicate concurrent requests for the same project', fakeAsync(() => {
     const env = new TestEnvironment();
     const projectId = 'project1';
@@ -222,9 +343,20 @@ describe('ProgressService', () => {
 
 class TestEnvironment {
   readonly service: ProgressService;
+  /** Sync token (sync.dateLastSuccessfulSync) per project; change a project's token to simulate a completed sync. */
+  private readonly syncTokens = new Map<string, string>();
 
   constructor() {
+    when(mockedProjectService.getProfile(anything())).thenCall((projectId: string) =>
+      Promise.resolve({
+        data: { sync: { dateLastSuccessfulSync: this.syncTokens.get(projectId) ?? 'initial-sync' } }
+      } as unknown as SFProjectProfileDoc)
+    );
     this.service = new ProgressService(instance(mockedNoticeService), instance(mockedProjectService));
+  }
+
+  setSyncToken(projectId: string, token: string): void {
+    this.syncTokens.set(projectId, token);
   }
 }
 

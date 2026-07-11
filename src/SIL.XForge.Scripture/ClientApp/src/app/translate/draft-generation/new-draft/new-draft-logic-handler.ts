@@ -45,8 +45,9 @@ function chapterHasContent(chapter: { verseSegments: number; blankVerseSegments:
 export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content';
 
 /**
- * Default freshness window for progress lookups. Progress data older than this is re-fetched. Callers that must have
- * up-to-the-moment data (e.g. just after an in-place sync) pass `maxStalenessMs: 0` to force a fresh fetch.
+ * Default freshness window for progress lookups. Progress data older than this is re-fetched. A completed sync
+ * additionally invalidates a project's progress regardless of age; ProgressService detects that itself via the
+ * project's sync token, so callers here don't have to signal it.
  */
 const DEFAULT_PROGRESS_STALENESS_MS = 1000 * 60;
 
@@ -65,32 +66,25 @@ export class DraftProgressService {
    * omitted entirely; empty books shouldn't be offered for selection. Note that a chapter can exist in the project
    * but be absent from this range because it is blank. getPresentChapters can be used to tell those apart.
    */
-  async getChaptersWithContent(
-    projectId: string,
-    options: { maxStalenessMs?: number } = {}
-  ): Promise<VerboseScriptureRange> {
-    return await this.getChapters(projectId, options, chapterHasContent);
+  async getChaptersWithContent(projectId: string): Promise<VerboseScriptureRange> {
+    return await this.getChapters(projectId, chapterHasContent);
   }
 
   /**
    * Returns the chapters a project contains, whether or not they have any content. Chapters absent from this range
    * do not exist in the project at all. Reuses the progress data cached by getChaptersWithContent, so calling both
-   * for the same project (with the same staleness) costs no extra request.
+   * for the same project costs no extra request.
    */
-  async getPresentChapters(
-    projectId: string,
-    options: { maxStalenessMs?: number } = {}
-  ): Promise<VerboseScriptureRange> {
-    return await this.getChapters(projectId, options, () => true);
+  async getPresentChapters(projectId: string): Promise<VerboseScriptureRange> {
+    return await this.getChapters(projectId, () => true);
   }
 
   private async getChapters(
     projectId: string,
-    options: { maxStalenessMs?: number },
     includeChapter: (chapter: { verseSegments: number; blankVerseSegments: number }) => boolean
   ): Promise<VerboseScriptureRange> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
-      maxStalenessMs: options.maxStalenessMs ?? DEFAULT_PROGRESS_STALENESS_MS
+      maxStalenessMs: DEFAULT_PROGRESS_STALENESS_MS
     });
     const scriptureRange = new VerboseScriptureRange();
     for (const bookProgress of progress.books) {
@@ -111,11 +105,11 @@ export class DraftProgressService {
    * Returns the IDs of the books in a project that appear complete enough to be auto-selected as training data (see
    * bookAppearsCompleteForTrainingAutoSelection). Derived from the segment-level progress counts that
    * getChaptersWithContent discards, which is why this is computed separately. Reuses the cached progress, so calling
-   * it alongside getChaptersWithContent for the same project (with the same staleness) costs no extra request.
+   * it alongside getChaptersWithContent for the same project costs no extra request.
    */
-  async getCompleteBookIds(projectId: string, options: { maxStalenessMs?: number } = {}): Promise<Set<string>> {
+  async getCompleteBookIds(projectId: string): Promise<Set<string>> {
     const progress = await this.progressService.getProgressWithChapterProgress(projectId, {
-      maxStalenessMs: options.maxStalenessMs ?? DEFAULT_PROGRESS_STALENESS_MS
+      maxStalenessMs: DEFAULT_PROGRESS_STALENESS_MS
     });
     const completeBookIds = new Set<string>();
     for (const bookProgress of progress.books) {
@@ -299,10 +293,10 @@ export class NewDraftLogicHandler {
   /**
    * Loads the progress data needed to derive book/chapter availability: the drafting source's content, the target's
    * content, each training source's content, and the set of target books that appear complete (for auto-selection).
-   * Projects in `freshProjectIds` are fetched with no staleness tolerance (forcing a fresh fetch — used after an
-   * in-place sync); all others use the default freshness window, so unchanged projects are served from cache.
+   * Recently fetched projects are served from cache, except that ProgressService refetches any project that has
+   * synced since its cache entry was fetched (so a reload after an in-place sync gets post-sync data automatically).
    */
-  private async fetchProgressBundle(freshProjectIds: Set<string> = new Set()): Promise<{
+  private async fetchProgressBundle(): Promise<{
     draftSourceProgress: VerboseScriptureRange;
     draftSourcePresentChapters: VerboseScriptureRange;
     targetProjectProgress: VerboseScriptureRange;
@@ -325,15 +319,9 @@ export class NewDraftLogicHandler {
     }
     const draftingSource = draftConfig.draftingSources[0];
 
-    const staleness = (id: string): { maxStalenessMs?: number } =>
-      freshProjectIds.has(id) ? { maxStalenessMs: 0 } : {};
-
     const trainingSourcesProgressPromise = Promise.all(
       draftConfig.trainingSources.map(async trainingSource => {
-        const range = await this.progressService.getChaptersWithContent(
-          trainingSource.projectRef,
-          staleness(trainingSource.projectRef)
-        );
+        const range = await this.progressService.getChaptersWithContent(trainingSource.projectRef);
         return { projectId: trainingSource.projectRef, range };
       })
     );
@@ -349,12 +337,12 @@ export class NewDraftLogicHandler {
       trainingSourcesProgress,
       completeTargetBookIds
     ] = await Promise.all([
-      this.progressService.getChaptersWithContent(draftingSource.projectRef, staleness(draftingSource.projectRef)),
-      this.progressService.getPresentChapters(draftingSource.projectRef, staleness(draftingSource.projectRef)),
-      this.progressService.getChaptersWithContent(projectId, staleness(projectId)),
-      this.progressService.getPresentChapters(projectId, staleness(projectId)),
+      this.progressService.getChaptersWithContent(draftingSource.projectRef),
+      this.progressService.getPresentChapters(draftingSource.projectRef),
+      this.progressService.getChaptersWithContent(projectId),
+      this.progressService.getPresentChapters(projectId),
       trainingSourcesProgressPromise,
-      this.progressService.getCompleteBookIds(projectId, staleness(projectId))
+      this.progressService.getCompleteBookIds(projectId)
     ]);
 
     return {
@@ -406,12 +394,13 @@ export class NewDraftLogicHandler {
 
   /**
    * Re-derives book/chapter availability after the user syncs stale projects in place via the pending-updates
-   * pre-step. Only the projects in `syncedProjectIds` are re-fetched fresh; unchanged projects are served from cache.
-   * Valid only before the user has made any selection (the pre-step precedes Step 1), so it returns the selection
-   * state to its post-init baseline rather than trying to preserve stale selections.
+   * pre-step. ProgressService notices which projects have synced since their cache entries were fetched and refetches
+   * exactly those; unchanged projects are served from cache. Valid only before the user has made any selection (the
+   * pre-step precedes Step 1), so it returns the selection state to its post-init baseline rather than trying to
+   * preserve stale selections.
    */
-  async reload(syncedProjectIds: string[]): Promise<void> {
-    const bundle = await this.fetchProgressBundle(new Set(syncedProjectIds));
+  async reload(): Promise<void> {
+    const bundle = await this.fetchProgressBundle();
     this.applyDerivedRanges(bundle);
     this.resetSelectionState();
   }
