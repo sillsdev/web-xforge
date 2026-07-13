@@ -49,7 +49,7 @@ export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content';
  * additionally invalidates a project's progress regardless of age; ProgressService detects that itself via the
  * project's sync token, so callers here don't have to signal it.
  */
-const DEFAULT_PROGRESS_STALENESS_MS = 1000 * 60;
+const DEFAULT_PROGRESS_STALENESS_MS = 1000;
 
 export interface ExcludedDraftingBook {
   bookId: string;
