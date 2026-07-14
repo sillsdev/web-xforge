@@ -68,8 +68,9 @@
       @if (draftingExclusionNotices.length > 0) {
         <app-notice icon="info" mode="basic" type="light" class="books-hidden">
           <div class="books-hidden-container">
-            <span
-              class="books-hidden-message"
+            <button
+              type="button"
+              class="text-button books-hidden-message"
               (click)="draftingExclusionsExpanded = !draftingExclusionsExpanded"
               [innerHTML]="
                 i18n.translateAndInsertTags(
@@ -77,7 +78,7 @@
                   { numBooks: draftingHiddenBookCount }
                 )
               "
-            ></span>
+            ></button>
             @if (draftingExclusionsExpanded) {
               @for (notice of draftingExclusionNotices; track notice.key) {
                 <p class="books-hidden-explanation">{{ t(notice.key, notice.params) }}</p>
@@ -139,8 +140,9 @@
       @if (hasTargetTrainingBooksWithoutSource) {
         <app-notice icon="info" mode="basic" type="light" class="books-hidden">
           <div class="books-hidden-container">
-            <span
-              class="books-hidden-message"
+            <button
+              type="button"
+              class="text-button books-hidden-message"
               (click)="trainingExclusionsExpanded = !trainingExclusionsExpanded"
               [innerHTML]="
                 i18n.translateAndInsertTags(
@@ -148,7 +150,7 @@
                   { numBooks: targetTrainingHiddenBookCount }
                 )
               "
-            ></span>
+            ></button>
             @if (trainingExclusionsExpanded) {
               <p class="books-hidden-explanation">
                 {{ t("training_books.excluded_not_in_any_source", { books: targetTrainingBooksWithoutSourceNames }) }}
@@ -298,16 +300,16 @@
         </mat-card-content>
       </mat-card>
 
-      <mat-card class="summary-card">
-        <mat-card-content>
-          <h1>{{ t("summary.settings") }}</h1>
-          @if (currentUserEmail != null) {
+      @if (currentUserEmail != null) {
+        <mat-card class="summary-card">
+          <mat-card-content>
+            <h1>{{ t("summary.settings") }}</h1>
             <mat-checkbox [(ngModel)]="sendEmailOnBuildFinished">
               {{ t("summary.email_me", { email: currentUserEmail }) }}
             </mat-checkbox>
-          }
-        </mat-card-content>
-      </mat-card>
+          </mat-card-content>
+        </mat-card>
+      }
 
       @if (isCustomConfigSet) {
         <app-notice icon="info" mode="basic" type="light">{{ t("summary.custom_configurations_apply") }}</app-notice>

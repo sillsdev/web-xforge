@@ -319,7 +319,7 @@ export class NewDraftComponent {
     }
     this.page = 'loading';
     try {
-      await this.logicHandler.reload(syncedProjectIds);
+      await this.logicHandler.reload();
       this.page = 'preface';
       this.armSyncWatcher();
     } catch (error) {
@@ -476,16 +476,15 @@ export class NewDraftComponent {
 
   submitting = false;
   /**
-   * Latched once the user commits to generating, never reset (unlike `submitting`, which the `finally` resets so the
-   * button re-enables on failure). Suppresses the sync watcher so the backend sync that starting a build triggers
-   * doesn't self-abort with 'project_syncing'.
+   * Latched when the build request is sent, suppressing the sync watcher so the backend sync that starting a build
+   * triggers doesn't self-abort with 'project_syncing'. Reset if the request fails, so a retry is guarded against
+   * stale data the same way the first attempt was (unlike `submitting`, which only drives the button/spinner state).
    */
   private building = false;
   async generateDraftClicked(): Promise<void> {
     if (!this.onlineStatusService.isOnline || this.initData == null) return;
 
     this.submitting = true;
-    this.building = true;
 
     await Promise.resolve();
 
@@ -530,7 +529,14 @@ export class NewDraftComponent {
         sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
       };
 
-      await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
+      this.building = true;
+      try {
+        await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
+      } catch (error) {
+        // The build didn't start, so re-arm the sync-abort guard before the error propagates.
+        this.building = false;
+        throw error;
+      }
 
       void this.router.navigate(['/projects', projectId, 'draft-generation']);
     } finally {
