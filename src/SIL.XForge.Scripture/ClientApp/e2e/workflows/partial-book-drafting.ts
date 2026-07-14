@@ -202,7 +202,7 @@ async function selectTrainingData(page: Page, user: UserEmulator, context: Scree
 
 /** The summary should reflect the partial book selection; set the engine and launch. */
 async function reviewSummaryAndGenerate(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
-  await expect(page.locator('.draft-books-list')).toContainText(`${PARTIAL_BOOK_NAME} (${DRAFT_CHAPTERS})`);
+  await expect(page.locator('.draft-books-list')).toContainText(`${PARTIAL_BOOK_NAME} ${DRAFT_CHAPTERS}`);
 
   if (ENGINE_MODE === 'echo') {
     await user.check(page.getByRole('checkbox', { name: 'Echo Translation Engine' }));
@@ -268,9 +268,7 @@ async function importDraft(page: Page, user: UserEmulator, context: ScreenshotCo
   await user.click(page.getByRole('button', { name: 'Formatting options' }));
   await user.click(page.getByRole('button', { name: 'Save' }));
 
-  await expect(
-    page.getByRole('button', { name: new RegExp(`${PARTIAL_BOOK_NAME}\\s*\\(${DRAFT_CHAPTERS}\\)`) })
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: `${PARTIAL_BOOK_NAME} ${DRAFT_CHAPTERS}`, exact: true })).toBeVisible();
 
   await user.click(page.getByRole('button', { name: 'Add to a project' }));
   await user.click(page.getByRole('combobox', { name: 'Choose a project' }));
