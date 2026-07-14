@@ -183,8 +183,10 @@ describe('DraftHistoryEntryComponent', () => {
     }));
 
     it('should not treat an empty target project training entry as training configuration', fakeAsync(() => {
-      // A build with no training books still stores an empty entry for the target project (the target side of the
-      // training pairs). It is not training configuration.
+      // The target project's entry is the target side of the training configuration: it records which of the target's
+      // books/chapters the training pairs draw from. A build with no training books still stores this entry, just with
+      // an empty range, and an empty target selection with no source entries means no training data was configured, so
+      // the entry alone must not make the training section render.
       const entry = getStandardBuildDto({ trainingBooks: [], trainingDataFiles: [] });
       entry.additionalInfo!.trainingScriptureRanges = [{ projectId: 'project01', scriptureRange: '' }];
 
