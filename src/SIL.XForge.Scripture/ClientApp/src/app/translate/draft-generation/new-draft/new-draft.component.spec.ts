@@ -817,7 +817,7 @@ describe('NewDraftComponent', () => {
       reset(mockedErrorHandler);
     });
 
-    it('re-derives progress fresh for the synced projects, then shows the preface', fakeAsync(() => {
+    it('re-derives progress after an in-place sync, then shows the preface', fakeAsync(() => {
       const env = new TestEnvironment(testState);
       tick();
       resetCalls(mockedProgressService); // ignore the calls made during init
@@ -825,10 +825,8 @@ describe('NewDraftComponent', () => {
       void env.component.onPendingUpdatesComplete(['draft-source-1-id']);
       tick();
 
-      // The reload re-fetches and forces fresh data (maxStalenessMs: 0) for the synced project.
-      verify(
-        mockedProgressService.getChaptersWithContent('draft-source-1-id', deepEqual({ maxStalenessMs: 0 }))
-      ).once();
+      // The reload re-reads progress; ProgressService itself refetches projects that have synced since.
+      verify(mockedProgressService.getChaptersWithContent('draft-source-1-id')).once();
       expect(env.component.page).toEqual('preface');
     }));
 
@@ -840,7 +838,7 @@ describe('NewDraftComponent', () => {
       void env.component.onPendingUpdatesComplete([]);
       tick();
 
-      verify(mockedProgressService.getChaptersWithContent(anything(), anything())).never();
+      verify(mockedProgressService.getChaptersWithContent(anything())).never();
       expect(env.component.page).toEqual('preface');
     }));
 
@@ -848,9 +846,7 @@ describe('NewDraftComponent', () => {
       const env = new TestEnvironment(testState);
       tick();
       // Init has already succeeded; make the reload's progress fetch fail.
-      when(mockedProgressService.getChaptersWithContent('draft-source-1-id', anything())).thenReject(
-        new Error('reload failed')
-      );
+      when(mockedProgressService.getChaptersWithContent('draft-source-1-id')).thenReject(new Error('reload failed'));
 
       void env.component.onPendingUpdatesComplete(['draft-source-1-id']);
       tick();
@@ -948,13 +944,32 @@ describe('NewDraftComponent', () => {
       expect(env.component.page).toEqual('preface');
       expect(env.component.abortMode).toBeNull();
 
-      // Suppression persists past build completion (the latch is never reset, unlike `submitting`).
+      // Suppression persists past build completion (the latch stays set once the build request succeeds).
       build$.next(undefined);
       build$.complete();
       tick();
       env.startSyncFor('draft-source-1-id');
       tick();
       expect(env.component.abortMode).toBeNull();
+    }));
+
+    it('re-arms the sync abort guard when the build request fails', fakeAsync(() => {
+      const build$ = new Subject<undefined>();
+      when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(build$);
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked().catch(() => {}); // the failure propagates to the caller; swallow it here
+      tick();
+      build$.error(new Error('failed to start build'));
+      tick();
+
+      // The build never started, so a sync that begins later must again abort the (now possibly stale) wizard.
+      env.startSyncFor('testProjectId');
+      tick();
+      expect(env.component.page).toEqual('abort');
+      expect(env.component.abortMode).toEqual('project_syncing');
     }));
   });
 
@@ -1207,31 +1222,27 @@ class TestEnvironment {
     }
 
     if (options.progressError) {
-      when(mockedProgressService.getChaptersWithContent(projectId, anything())).thenReject(
-        new Error('progress failed')
-      );
+      when(mockedProgressService.getChaptersWithContent(projectId)).thenReject(new Error('progress failed'));
     } else {
-      when(mockedProgressService.getChaptersWithContent(projectId, anything())).thenResolve(
+      when(mockedProgressService.getChaptersWithContent(projectId)).thenResolve(
         new VerboseScriptureRange(state.targetProjectBooksChapters)
       );
     }
-    when(mockedProgressService.getPresentChapters(projectId, anything())).thenResolve(
+    when(mockedProgressService.getPresentChapters(projectId)).thenResolve(
       new VerboseScriptureRange(state.targetPresentChapters ?? state.targetProjectBooksChapters)
     );
-    when(mockedProgressService.getChaptersWithContent('draft-source-1-id', anything())).thenResolve(
+    when(mockedProgressService.getChaptersWithContent('draft-source-1-id')).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
-    when(mockedProgressService.getPresentChapters('draft-source-1-id', anything())).thenResolve(
+    when(mockedProgressService.getPresentChapters('draft-source-1-id')).thenResolve(
       new VerboseScriptureRange(state.draftingSourcePresentChapters ?? state.draftingSourceBooksChapters)
     );
     for (const [trainingSourceId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
-      when(mockedProgressService.getChaptersWithContent(trainingSourceId, anything())).thenResolve(
+      when(mockedProgressService.getChaptersWithContent(trainingSourceId)).thenResolve(
         new VerboseScriptureRange(booksChapters)
       );
     }
-    when(mockedProgressService.getCompleteBookIds(projectId, anything())).thenResolve(
-      new Set(state.completeTargetBooks ?? [])
-    );
+    when(mockedProgressService.getCompleteBookIds(projectId)).thenResolve(new Set(state.completeTargetBooks ?? []));
 
     when(mockedTrainingDataService.getTrainingData(anything(), anything())).thenReturn(
       options.trainingData$ ?? of(state.trainingDataFiles ?? [])

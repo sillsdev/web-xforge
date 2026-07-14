@@ -130,7 +130,6 @@ describe('DraftGenerationComponent', () => {
         { draftHistoryCutOffDate: new Date('2025-04-03') }
       );
       TestEnvironment.initProject('user01');
-      mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
 
       mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.startedOrActiveBuild$);
       mockDraftGenerationService.getBuildHistory.and.returnValue(of([buildDto]));
@@ -195,6 +194,7 @@ describe('DraftGenerationComponent', () => {
         currentUserId,
         currentUserRoles: [SystemRole.User]
       });
+      mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser'], { currentUserId });
       mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
         projectId: projectId,
         projectId$: of(projectId),
