@@ -377,7 +377,6 @@ export class DraftHistoryEntryComponent {
     });
   }
 
-  // Called from the template (rather than precomputed) so the text re-localizes when the user switches languages.
   getTrainingRangeDisplay(scriptureRange: string): string {
     return formatScriptureRangeWithChapters(new VerboseScriptureRange(scriptureRange), this.i18n);
   }

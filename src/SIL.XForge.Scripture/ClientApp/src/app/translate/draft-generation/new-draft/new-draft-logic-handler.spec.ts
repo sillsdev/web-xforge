@@ -3,7 +3,7 @@ import { Canon } from '@sillsdev/scripture';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, filter, firstValueFrom, of } from 'rxjs';
-import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -741,7 +741,7 @@ describe('NewDraftLogicHandler', () => {
       await env.waitForInit();
       expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-5');
 
-      await env.logicHandler.reload(['testProjectId']);
+      await env.logicHandler.reload();
 
       // The post-sync target content is now reflected in what's available.
       expect(env.availableTargetTrainingScriptureRange).toBe('GEN1-10');
@@ -758,7 +758,7 @@ describe('NewDraftLogicHandler', () => {
       });
       await env.waitForInit();
 
-      await env.logicHandler.reload(['testProjectId']);
+      await env.logicHandler.reload();
 
       // Default = source - target. Pre-sync this would have been GEN6-50; with the synced chapters it must be GEN11-50,
       // so the chapters the user just translated aren't defaulted back into the draft.
@@ -766,19 +766,17 @@ describe('NewDraftLogicHandler', () => {
       expect(env.selectedDraftingScriptureRange).toBe('GEN11-50');
     });
 
-    it('forces a fresh fetch only for the synced projects', async () => {
+    it('re-reads progress for every involved project', async () => {
+      // Which projects get an actual network refetch is ProgressService's concern: it refetches exactly the
+      // projects that have synced since their cache entries were fetched (see its sync-token tests).
       const env = new TestEnvironment(teamStartingToTranslateGenesis);
       await env.waitForInit();
       resetCalls(mockedDraftProgressService);
 
-      await env.logicHandler.reload(['testProjectId']); // only the target synced
+      await env.logicHandler.reload();
 
-      // Target (synced) is re-fetched with no staleness tolerance...
-      verify(
-        mockedDraftProgressService.getChaptersWithContent('testProjectId', deepEqual({ maxStalenessMs: 0 }))
-      ).once();
-      // ...while the unsynced drafting source uses the default staleness (served from cache by the real service).
-      verify(mockedDraftProgressService.getChaptersWithContent('draft-source-1-id', deepEqual({}))).once();
+      verify(mockedDraftProgressService.getChaptersWithContent('testProjectId')).once();
+      verify(mockedDraftProgressService.getChaptersWithContent('draft-source-1-id')).once();
       expect().nothing();
     });
 
@@ -788,7 +786,7 @@ describe('NewDraftLogicHandler', () => {
       env.logicHandler.selectDraftingBooks(['GEN']);
       expect(env.selectedDraftingScriptureRange).not.toBe('');
 
-      await env.logicHandler.reload(['testProjectId']);
+      await env.logicHandler.reload();
 
       expect(env.selectedDraftingScriptureRange).toBe('');
       expect(env.logicHandler.inputMode).toBe('draft_books');
@@ -1025,33 +1023,32 @@ class TestEnvironment {
         })
     );
 
-    // Set up the progress service to return the specified scripture ranges for the project and sources. The second
-    // argument (staleness options) is matched with anything() since callers pass per-project staleness overrides.
+    // Set up the progress service to return the specified scripture ranges for the project and sources.
     if (state.targetProjectBooksChaptersAfterReload != null) {
       // First load returns the pre-sync target; a subsequent fetch (after reload) returns the post-sync target.
-      when(mockedDraftProgressService.getChaptersWithContent(projectId, anything()))
+      when(mockedDraftProgressService.getChaptersWithContent(projectId))
         .thenResolve(new VerboseScriptureRange(state.targetProjectBooksChapters))
         .thenResolve(new VerboseScriptureRange(state.targetProjectBooksChaptersAfterReload));
     } else {
-      when(mockedDraftProgressService.getChaptersWithContent(projectId, anything())).thenResolve(
+      when(mockedDraftProgressService.getChaptersWithContent(projectId)).thenResolve(
         new VerboseScriptureRange(state.targetProjectBooksChapters)
       );
     }
-    when(mockedDraftProgressService.getPresentChapters(projectId, anything())).thenResolve(
+    when(mockedDraftProgressService.getPresentChapters(projectId)).thenResolve(
       new VerboseScriptureRange(state.targetProjectBooksChapters)
     );
-    when(mockedDraftProgressService.getChaptersWithContent('draft-source-1-id', anything())).thenResolve(
+    when(mockedDraftProgressService.getChaptersWithContent('draft-source-1-id')).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
-    when(mockedDraftProgressService.getPresentChapters('draft-source-1-id', anything())).thenResolve(
+    when(mockedDraftProgressService.getPresentChapters('draft-source-1-id')).thenResolve(
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
     for (const [trainingSourceProjectId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
-      when(mockedDraftProgressService.getChaptersWithContent(trainingSourceProjectId, anything())).thenResolve(
+      when(mockedDraftProgressService.getChaptersWithContent(trainingSourceProjectId)).thenResolve(
         new VerboseScriptureRange(booksChapters)
       );
     }
-    when(mockedDraftProgressService.getCompleteBookIds(projectId, anything())).thenResolve(
+    when(mockedDraftProgressService.getCompleteBookIds(projectId)).thenResolve(
       new Set(state.completeTargetBooks ?? [])
     );
 

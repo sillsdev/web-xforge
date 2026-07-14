@@ -175,12 +175,8 @@ app-copyright-banner {
 }
 
 .books-hidden-message {
-  cursor: pointer;
-
-  ::ng-deep u {
-    &:hover {
-      color: variables.$theme-secondary;
-    }
+  ::ng-deep u:hover {
+    color: variables.$theme-secondary;
   }
 }
 

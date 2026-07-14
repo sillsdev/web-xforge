@@ -26,6 +26,10 @@ public class BookProgress
     public ChapterProgress[] Chapters { get; set; } = [];
 }
 
+/// <summary>
+/// A single chapter's translation-progress counts within a <see cref="BookProgress"/>, so clients can make
+/// chapter-level decisions (e.g. which chapters to offer for partial drafting).
+/// </summary>
 public class ChapterProgress
 {
     public int ChapterNumber { get; set; }
