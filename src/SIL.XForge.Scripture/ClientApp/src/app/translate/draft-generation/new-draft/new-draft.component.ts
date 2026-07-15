@@ -15,6 +15,7 @@ import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/trai
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { filter, firstValueFrom, take } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
@@ -37,7 +38,7 @@ import { projectLabel } from '../../../shared/utils';
 import { isSFProjectSyncing } from '../../../sync/sync.component';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { ConfirmSourcesComponent } from '../confirm-sources/confirm-sources.component';
-import { BuildConfig } from '../draft-generation';
+import { BuildConfig, StartBuildResult } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { CopyrightMessage, DraftSource, getCopyrightMessages } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
@@ -128,6 +129,7 @@ export class NewDraftComponent {
     readonly featureFlags: FeatureFlagService,
     protected readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService,
+    private readonly dialogService: DialogService,
     private readonly router: Router,
     private readonly nllbLanguageService: NllbLanguageService,
     private readonly paratextService: ParatextService,
@@ -530,12 +532,19 @@ export class NewDraftComponent {
       };
 
       this.building = true;
+      let result: StartBuildResult | undefined;
       try {
-        await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
+        result = await firstValueFrom(this.draftGenerationService.startBuildOrGetActiveBuild(buildConfig));
       } catch (error) {
         // The build didn't start, so re-arm the sync-abort guard before the error propagates.
         this.building = false;
         throw error;
+      }
+
+      // If a build was already active (started by another user, or by this user elsewhere), the submitted
+      // configuration was not used, so tell the user
+      if (result?.joinedExistingBuild === true) {
+        void this.dialogService.message('draft_generation.draft_already_running');
       }
 
       void this.router.navigate(['/projects', projectId, 'draft-generation']);

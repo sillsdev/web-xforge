@@ -97,6 +97,12 @@ public class MachineApiService(
     /// </remarks>
     internal const string BuildStateCompleted = "COMPLETED";
 
+    /// <summary>
+    /// How long a build may remain queued before it is presumed to have failed to reach Serval.
+    /// Shared by the queued-state report and the start-build claim so the two cannot disagree on staleness.
+    /// </summary>
+    internal static readonly TimeSpan QueuedBuildStaleThreshold = TimeSpan.FromHours(6);
+
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
         EqualityComparer<string>.Default
     );
@@ -2155,9 +2161,9 @@ public class MachineApiService(
                     // If we do not have build queued, do not return a build dto
                     return null;
                 }
-                else if (queuedAt <= DateTime.UtcNow.AddHours(-6))
+                else if (queuedAt <= DateTime.UtcNow - QueuedBuildStaleThreshold)
                 {
-                    // If the build was queued 6 hours or more ago, it will have failed to upload
+                    // If the build was queued longer ago than the stale threshold, it will have failed to upload
                     buildDto = new ServalBuildDto
                     {
                         State = BuildStateFaulted,
@@ -2853,6 +2859,116 @@ public class MachineApiService(
             }
         }
 
+        // Atomically claim the queued-build slot for this project. Exactly one of any set of concurrent
+        // requests will match the filter; the others must not proceed, or they would clobber the winner's
+        // draft configuration and job id and enqueue a duplicate job chain that Serval would reject long
+        // after this request has returned. The queued timestamp is the claim: a missing timestamp means no
+        // build is queued, and one older than the stale threshold is treated as abandoned, matching how
+        // GetQueuedStateAsync reports such a build as faulted. The job id must not be part of the filter,
+        // because it can outlive its job chain (e.g. a continuation Hangfire deletes because a parent sync
+        // job failed) and would then block drafting forever.
+        DateTime staleCutoff = DateTime.UtcNow - QueuedBuildStaleThreshold;
+
+        // Capture the job id of an abandoned queued build, if any, so that its Hangfire job chain can be
+        // deleted once this request wins the claim; otherwise the abandoned chain could still be alive and
+        // start a duplicate build after the new one is enqueued.
+        string? abandonedJobId = null;
+        if (
+            (await projectSecrets.TryGetAsync(buildConfig.ProjectId, cancellationToken)).TryResult(
+                out SFProjectSecret existingProjectSecret
+            )
+            && existingProjectSecret.ServalData?.PreTranslationJobId is not null
+            && (
+                existingProjectSecret.ServalData.PreTranslationQueuedAt is null
+                || existingProjectSecret.ServalData.PreTranslationQueuedAt < staleCutoff
+            )
+        )
+        {
+            abandonedJobId = existingProjectSecret.ServalData.PreTranslationJobId;
+        }
+
+        SFProjectSecret? projectSecret =
+            await projectSecrets.UpdateAsync(
+                p =>
+                    p.Id == buildConfig.ProjectId
+                    && (
+                        p.ServalData == null
+                        || p.ServalData.PreTranslationQueuedAt == null
+                        || p.ServalData.PreTranslationQueuedAt < staleCutoff
+                    ),
+                u =>
+                {
+                    u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow);
+                    u.Unset(p => p.ServalData.PreTranslationJobId);
+                },
+                cancellationToken: cancellationToken
+            ) ?? throw new BuildAlreadyRunningException("A draft build is already queued for this project.");
+        try
+        {
+            if (abandonedJobId is not null)
+            {
+                backgroundJobClient.Delete(abandonedJobId);
+            }
+
+            // A build past the queued phase is tracked by Serval rather than the project secret, so also check
+            // Serval while holding the claim. The queued fields are only cleared after Serval knows about a
+            // build, so no build can be invisible to both checks.
+            string? translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
+            if (!string.IsNullOrWhiteSpace(translationEngineId))
+            {
+                TranslationBuild? activeBuild = null;
+                try
+                {
+                    activeBuild = await translationEnginesClient.GetCurrentBuildAsync(
+                        translationEngineId,
+                        minRevision: null,
+                        cancellationToken
+                    );
+                }
+                catch (ServalApiException)
+                {
+                    // A 204 means no build is running. Any other Serval error is not this request's concern;
+                    // the background job has its own handling for Serval failures.
+                }
+
+                if (activeBuild is not null)
+                {
+                    throw new BuildAlreadyRunningException("A draft build is already running for this project.");
+                }
+            }
+
+            await StartClaimedPreTranslationBuildAsync(
+                curUserId,
+                buildConfig,
+                projectDoc,
+                draftGenerationRequestId,
+                cancellationToken
+            );
+        }
+        catch
+        {
+            // Release the claim so the failed request does not block subsequent build requests
+            await projectSecrets.UpdateAsync(
+                buildConfig.ProjectId,
+                u => u.Unset(p => p.ServalData.PreTranslationQueuedAt),
+                cancellationToken: CancellationToken.None
+            );
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Configures and enqueues the pre-translation build. Only call this while holding the queued-build claim
+    /// taken in <see cref="StartPreTranslationBuildAsync"/>.
+    /// </summary>
+    private async Task StartClaimedPreTranslationBuildAsync(
+        string curUserId,
+        BuildConfig buildConfig,
+        IDocument<SFProject> projectDoc,
+        string draftGenerationRequestId,
+        CancellationToken cancellationToken
+    )
+    {
         // Save the selected books
         await projectDoc.SubmitJson0OpAsync(op =>
         {
@@ -2937,13 +3053,12 @@ public class MachineApiService(
                 )
         );
 
-        // Set the pre-translation queued date and time, and hang fire job id
+        // Set the hangfire job id; the queued date and time was set when the claim was taken
         await projectSecrets.UpdateAsync(
             buildConfig.ProjectId,
             u =>
             {
                 u.Set(p => p.ServalData.PreTranslationJobId, jobId);
-                u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow);
                 u.Unset(p => p.ServalData.PreTranslationErrorMessage);
             },
             cancellationToken: cancellationToken

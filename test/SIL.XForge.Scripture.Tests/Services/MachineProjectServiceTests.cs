@@ -205,7 +205,10 @@ public class MachineProjectServiceTests
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
-        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationQueuedAt = DateTime.UtcNow });
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
@@ -217,6 +220,7 @@ public class MachineProjectServiceTests
         );
 
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
     }
@@ -239,7 +243,10 @@ public class MachineProjectServiceTests
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
-        await env.SetupProjectSecretAsync(Project01, new ServalData { TranslationQueuedAt = DateTime.UtcNow });
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { TranslationJobId = Job01, TranslationQueuedAt = DateTime.UtcNow }
+        );
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
@@ -251,6 +258,7 @@ public class MachineProjectServiceTests
         );
 
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationErrorMessage);
     }

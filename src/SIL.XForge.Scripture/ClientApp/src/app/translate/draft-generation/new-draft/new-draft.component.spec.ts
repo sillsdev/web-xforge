@@ -10,6 +10,7 @@ import { anything, capture, deepEqual, instance, mock, reset, resetCalls, verify
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -514,8 +515,42 @@ describe('NewDraftComponent', () => {
     beforeEach(() => {
       reset(mockedDraftGenerationService);
       reset(mockedRouter);
+      reset(mockedDialogService);
       when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(of(undefined));
     });
+
+    it('informs the user when an already-active build was joined instead of started', fakeAsync(() => {
+      when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(
+        of({ joinedExistingBuild: true, job: undefined })
+      );
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      // The submitted settings were not used; the user is told, and still lands on the progress page
+      verify(mockedDialogService.message('draft_generation.draft_already_running')).once();
+      verify(mockedRouter.navigate(anything())).once();
+      expect().nothing();
+    }));
+
+    it('does not show a dialog when a new build was started', fakeAsync(() => {
+      when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(
+        of({ joinedExistingBuild: false, job: undefined })
+      );
+      const env = new TestEnvironment(testState);
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      verify(mockedDialogService.message(anything())).never();
+      verify(mockedRouter.navigate(anything())).once();
+      expect().nothing();
+    }));
 
     it('sends chapter-level translation range for a partially drafted book', fakeAsync(() => {
       const env = new TestEnvironment(testState);
@@ -1040,6 +1075,7 @@ const mockedProgressService = mock(DraftProgressService);
 const mockedI18nService = mock(I18nService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedUserService = mock(UserService);
+const mockedDialogService = mock(DialogService);
 const mockedRouter = mock(Router);
 const mockedNllbLanguageService = mock(NllbLanguageService);
 const mockedParatextService = mock(ParatextService);
@@ -1269,6 +1305,7 @@ class TestEnvironment {
       instance(mockedFeatureFlagService),
       this.onlineStatusService,
       instance(mockedUserService),
+      instance(mockedDialogService),
       instance(mockedRouter),
       instance(mockedNllbLanguageService),
       instance(mockedParatextService),
