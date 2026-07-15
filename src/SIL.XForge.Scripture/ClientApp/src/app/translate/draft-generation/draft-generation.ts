@@ -1,5 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 
 /**
@@ -19,6 +20,17 @@ export interface BuildConfig {
   fastTraining: boolean;
   useEcho: boolean;
   sendEmailOnBuildFinished: boolean;
+}
+
+/** The outcome of a request to start a draft build. */
+export interface StartBuildResult {
+  /**
+   * Whether a build that was already active was joined, rather than a new build started. When true, the
+   * configuration submitted with the request was not used.
+   */
+  joinedExistingBuild: boolean;
+  /** The state and progress of the build, as with DraftGenerationService.pollBuildProgress(). */
+  job?: BuildDto;
 }
 
 /**

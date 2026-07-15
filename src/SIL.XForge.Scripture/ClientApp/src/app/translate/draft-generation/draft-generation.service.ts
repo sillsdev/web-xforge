@@ -24,7 +24,8 @@ import {
   BuildConfig,
   DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
-  DraftZipProgress
+  DraftZipProgress,
+  StartBuildResult
 } from './draft-generation';
 
 @Injectable({
@@ -246,48 +247,64 @@ export class DraftGenerationService {
   }
 
   /**
-   * Starts a pre-translation build job if one is not already active.
+   * Starts a pre-translation build job, or joins the build that is already active for the project.
    * @param buildConfig The build configuration.
-   * @returns An observable BuildDto describing the state and progress of a currently active or newly started build job.
+   * @returns An observable of the build state and progress, with a flag indicating whether an already-active
+   * build was joined rather than a new build started (in which case the given configuration was not used).
+   * Emits undefined if the build could not be started.
    */
-  startBuildOrGetActiveBuild(buildConfig: BuildConfig): Observable<BuildDto | undefined> {
+  startBuildOrGetActiveBuild(buildConfig: BuildConfig): Observable<StartBuildResult | undefined> {
     return this.getBuildProgress(buildConfig.projectId).pipe(
       switchMap((job: BuildDto | undefined) => {
         // If existing build is currently active, return polling observable
         if (job != null && activeBuildStates.includes(job.state)) {
-          return this.pollBuildProgress(buildConfig.projectId);
+          return this.joinActiveBuild(buildConfig.projectId);
         }
 
         // Otherwise, start build and then poll
         return this.httpClient.post<void>(`translation/pretranslations`, buildConfig).pipe(
-          map(() => true),
+          map(() => 'started' as const),
           catchError(err => {
             if (err.status === 401) {
               // Expired Paratext credentials. Rethrow to be caught by DraftGenerationComponent.startBuild()
               throw err;
             }
 
+            if (err.status === 409) {
+              // Another request (another user, or this user in another tab) started a build between this
+              // client's last check and this request landing on the server
+              return of('conflict' as const);
+            }
+
             if (err.status === 403 || err.status === 404) {
-              return of(false);
+              return of('failed' as const);
             }
 
             if (err.status === 429) {
               this.noticeService.showError(this.i18n.translateStatic('draft_generation.quota_exceeded'));
-              return of(false);
+              return of('failed' as const);
             }
 
             this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
-            return of(false);
+            return of('failed' as const);
           }),
-          switchMap(started => {
-            if (!started) return of(undefined);
+          switchMap(outcome => {
+            if (outcome === 'failed') return of(undefined);
+            if (outcome === 'conflict') return this.joinActiveBuild(buildConfig.projectId);
 
             // No error means build successfully started, so start polling
-            return this.pollBuildProgress(buildConfig.projectId);
+            return this.pollBuildProgress(buildConfig.projectId).pipe(
+              map(job => ({ joinedExistingBuild: false, job }))
+            );
           })
         );
       })
     );
+  }
+
+  /** Polls the build that is already active for the project, flagging that no new build was started. */
+  private joinActiveBuild(projectId: string): Observable<StartBuildResult> {
+    return this.pollBuildProgress(projectId).pipe(map(job => ({ joinedExistingBuild: true, job })));
   }
 
   /**

@@ -41,7 +41,7 @@ import { ServalProjectComponent } from '../../serval-administration/serval-proje
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { booksFromScriptureRange, projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig } from './draft-generation';
+import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -449,23 +449,20 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   startBuild(buildConfig: BuildConfig): void {
-    this.draftGenerationService
-      .getBuildProgress(buildConfig.projectId)
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(job => {
-        if (this.isDraftInProgress(job)) {
-          this.draftJob = job;
-          this.currentPage = 'initial';
-          void this.dialogService.message('draft_generation.draft_already_running');
-          return;
-        }
-      });
-
+    let userNotified = false;
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.draftGenerationService
       .startBuildOrGetActiveBuild(buildConfig)
       .pipe(
-        tap((job?: BuildDto) => {
+        tap((result?: StartBuildResult) => {
+          // If a build was already active (started by another user, or by this user elsewhere), the submitted
+          // configuration was not used, so tell the user
+          if (result?.joinedExistingBuild === true && !userNotified) {
+            userNotified = true;
+            void this.dialogService.message('draft_generation.draft_already_running');
+          }
+
+          const job: BuildDto | undefined = result?.job;
           this.currentPage = 'initial';
           // Handle automatic closing of dialog if job finishes while cancel dialog is open
           if (!this.canCancel(job)) {
@@ -488,7 +485,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((job?: BuildDto) => (this.draftJob = job));
+      .subscribe((result?: StartBuildResult) => (this.draftJob = result?.job));
   }
 
   projectLabel(project?: SelectableProject): string {
