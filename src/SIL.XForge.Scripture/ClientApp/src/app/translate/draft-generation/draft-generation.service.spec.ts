@@ -577,7 +577,7 @@ describe('DraftGenerationService', () => {
   });
 
   describe('startBuildOrGetActiveBuild', () => {
-    it('should start a pre-translation build job and return an observable of BuildDto', fakeAsync(() => {
+    it('should start a pre-translation build job and return an observable of the build progress', fakeAsync(() => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
 
@@ -586,7 +586,7 @@ describe('DraftGenerationService', () => {
         .startBuildOrGetActiveBuild(buildConfig)
         .pipe(first())
         .subscribe(result => {
-          expect(result).toEqual(buildDto);
+          expect(result).toEqual({ joinedExistingBuild: false, job: buildDto });
           expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
           expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
         });
@@ -691,13 +691,13 @@ describe('DraftGenerationService', () => {
       tick();
     }));
 
-    it('should return already active build job', fakeAsync(() => {
+    it('should join an already active build job and flag that no new build was started', fakeAsync(() => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
 
       // SUT
       service.startBuildOrGetActiveBuild(buildConfig).subscribe(result => {
-        expect(result).toEqual(buildDto);
+        expect(result).toEqual({ joinedExistingBuild: true, job: buildDto });
         expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
         expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
       });
@@ -706,6 +706,30 @@ describe('DraftGenerationService', () => {
       // Verify the absence of an HTTP request
       httpTestingController.expectNone(`${MACHINE_API_BASE_URL}translation/pretranslations`);
       tick();
+    }));
+
+    it('should join the existing build when the build request conflicts', fakeAsync(() => {
+      const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
+      const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
+
+      // SUT
+      service
+        .startBuildOrGetActiveBuild(buildConfig)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toEqual({ joinedExistingBuild: true, job: buildDto });
+          expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+          expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
+        });
+      tick();
+
+      // Setup the HTTP request
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/pretranslations`);
+      expect(req.request.method).toEqual('POST');
+      req.flush(null, { status: HttpStatusCode.Conflict, statusText: 'Conflict' });
+      tick();
+
+      verify(mockNoticeService.showError(anything())).never();
     }));
   });
 
