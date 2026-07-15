@@ -4751,6 +4751,236 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_BuildAlreadyQueued()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTime queuedAt = DateTime.UtcNow;
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: queuedAt);
+        const string existingRange = "GEN";
+        await env.Projects.UpdateAsync(
+            Project01,
+            u =>
+                u.Set(
+                    p => p.TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges,
+                    [new ProjectScriptureRange { ProjectId = Project01, ScriptureRange = existingRange }]
+                )
+        );
+
+        // SUT
+        Assert.ThrowsAsync<BuildAlreadyRunningException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig
+                {
+                    ProjectId = Project01,
+                    TranslationScriptureRanges = [new ProjectScriptureRange { ScriptureRange = "EXO" }],
+                },
+                CancellationToken.None
+            )
+        );
+
+        // The losing request must not clobber the active build's configuration or queued state
+        Assert.AreEqual(
+            existingRange,
+            env.Projects.Get(Project01)
+                .TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges.Single()
+                .ScriptureRange
+        );
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.AreEqual(queuedAt, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+        await env.ProjectService.DidNotReceiveWithAnyArgs().SyncAsync(User01, Project01);
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_BuildAlreadyQueuedWithoutJobId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTime queuedAt = DateTime.UtcNow;
+        await env.ProjectSecrets.UpdateAsync(
+            Project01,
+            u =>
+            {
+                u.Unset(p => p.ServalData!.PreTranslationJobId);
+                u.Set(p => p.ServalData!.PreTranslationQueuedAt, queuedAt);
+            }
+        );
+
+        // SUT
+        Assert.ThrowsAsync<BuildAlreadyRunningException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                CancellationToken.None
+            )
+        );
+
+        // The winning request's claim must not be released by the losing request
+        Assert.AreEqual(queuedAt, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+        await env.ProjectService.DidNotReceiveWithAnyArgs().SyncAsync(User01, Project01);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_StaleQueuedClaimIsReclaimed()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        DateTime staleQueuedAt = DateTime.UtcNow - MachineApiService.QueuedBuildStaleThreshold - TimeSpan.FromHours(1);
+        await env.ProjectSecrets.UpdateAsync(
+            Project01,
+            u =>
+            {
+                u.Unset(p => p.ServalData!.PreTranslationJobId);
+                u.Set(p => p.ServalData!.PreTranslationQueuedAt, staleQueuedAt);
+            }
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.That(
+            env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt,
+            Is.GreaterThan(staleQueuedAt)
+        );
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_StaleQueuedClaimWithJobIdIsReclaimedAndJobDeleted()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // A stale claim whose Hangfire job never ran (e.g. a continuation deleted after a failed sync)
+        // leaves both the job id and the queued timestamp behind
+        DateTime staleQueuedAt = DateTime.UtcNow - MachineApiService.QueuedBuildStaleThreshold - TimeSpan.FromHours(1);
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: staleQueuedAt);
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        // The abandoned job chain must be deleted so it cannot start a duplicate build later
+        env.BackgroundJobClient.Received(1).ChangeState(HangfireJobId, Arg.Any<DeletedState>(), null); // Same as Delete()
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.That(
+            env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt,
+            Is.GreaterThan(staleQueuedAt)
+        );
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_OrphanedJobIdWithoutQueuedAtIsReclaimedAndJobDeleted()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // A job id with no queued timestamp is an orphan; it means no build is queued and must not block drafting
+        await env.ProjectSecrets.UpdateAsync(
+            Project01,
+            u =>
+            {
+                u.Set(p => p.ServalData!.PreTranslationJobId, HangfireJobId);
+                u.Unset(p => p.ServalData!.PreTranslationQueuedAt);
+            }
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        env.BackgroundJobClient.Received(1).ChangeState(HangfireJobId, Arg.Any<DeletedState>(), null); // Same as Delete()
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_BuildAlreadyRunningOnServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationBuild
+                    {
+                        Url = "https://example.com",
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01, Url = "https://example.com" },
+                    }
+                )
+            );
+
+        // SUT
+        Assert.ThrowsAsync<BuildAlreadyRunningException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                CancellationToken.None
+            )
+        );
+
+        // The claim taken by this request must be released so future requests are not blocked
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+        await env.ProjectService.DidNotReceiveWithAnyArgs().SyncAsync(User01, Project01);
+        env.BackgroundJobClient.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_NoBuildRunningOnServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
+            .Throws(ServalApiExceptions.NoContent);
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_ReleasesClaimWhenEnqueueFails()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.SyncAsync(User01, Project01).Throws(new UnauthorizedAccessException());
+
+        // SUT
+        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01 },
+                CancellationToken.None
+            )
+        );
+
+        // The claim must be released so the failed request does not block future requests
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_SuccessNoTrainingOrTranslationScriptureRanges()
     {
         // Set up test environment
@@ -5490,6 +5720,17 @@ public class MachineApiServiceTests
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             DraftMetrics = new MemoryRepository<DraftMetrics>();
             EventMetricService = Substitute.For<IEventMetricService>();
+            EventMetricService
+                .GetEventMetricsAsync(
+                    Arg.Any<string?>(),
+                    Arg.Any<EventScope[]?>(),
+                    Arg.Any<string[]?>(),
+                    Arg.Any<DateTime?>(),
+                    Arg.Any<DateTime?>(),
+                    Arg.Any<int>(),
+                    Arg.Any<int>()
+                )
+                .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             var draftHubContext = Substitute.For<IHubContext<DraftNotificationHub, IDraftNotifier>>();
