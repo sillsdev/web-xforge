@@ -582,7 +582,10 @@ export class NewDraftComponent {
   }
 
   /** Drafting-exclusion reasons shown to the user, in display order. Non-canonical exclusions are never surfaced. */
-  private readonly surfacedDraftingExclusionReasons: DraftingBookExclusionReason[] = ['no_source_content'];
+  private readonly surfacedDraftingExclusionReasons: DraftingBookExclusionReason[] = [
+    'not_in_source',
+    'no_source_content'
+  ];
 
   /** How many books are hidden from the drafting list for a surfaced reason (used by the "N books are hidden" toggle). */
   get draftingHiddenBookCount(): number {

@@ -39,10 +39,12 @@ function chapterHasContent(chapter: { verseSegments: number; blankVerseSegments:
 
 /**
  * Why a book that a user might expect to see was left out of the list offered for drafting. Every excluded book is
- * recorded with its reason so the UI can explain the omission. Not every reason is surfaced to the user: 'non_canonical'
- * books (front/back matter, glossaries, etc.) are excluded silently, since users don't expect them to be draftable.
+ * recorded with its reason so the UI can explain the omission. 'not_in_source' means the drafting source doesn't
+ * contain the book at all, while 'no_source_content' means it contains the book but every chapter is blank. Not every
+ * reason is surfaced to the user: 'non_canonical' books (front/back matter, glossaries, etc.) are excluded silently,
+ * since users don't expect them to be draftable.
  */
-export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content';
+export type DraftingBookExclusionReason = 'non_canonical' | 'no_source_content' | 'not_in_source';
 
 /**
  * Default freshness window for progress lookups. Progress data older than this is re-fetched. A completed sync
@@ -370,7 +372,11 @@ export class NewDraftLogicHandler {
   }): void {
     const texts = this.activatedProjectService.projectDoc?.data?.texts ?? [];
     const targetTextBookIds = new Set(texts.map(text => Canon.bookNumberToId(text.bookNum)));
-    const { available, excluded } = this.computeOfferedDraftingBooks(bundle.draftSourceProgress, targetTextBookIds);
+    const { available, excluded } = this.computeOfferedDraftingBooks(
+      bundle.draftSourceProgress,
+      bundle.draftSourcePresentChapters,
+      targetTextBookIds
+    );
 
     // Extra-material books are never offered for training (drafting handles them separately).
     const canonicalTargetProgress = withoutExtraMaterialBooks(bundle.targetProjectProgress);
@@ -501,11 +507,13 @@ export class NewDraftLogicHandler {
    * expect to see was left out. A book is offered only if it is canonical and has content in the drafting source.
    *
    * The books considered are those with content in the drafting source plus those present in the target project. This
-   * lets the UI explain books the target contains but the source has no text for ('no_source_content'). Books that are
-   * excluded purely for being non-canonical are recorded as 'non_canonical' but are not surfaced to the user.
+   * lets the UI explain books the target contains but the source can't draft, distinguishing books the source doesn't
+   * contain at all ('not_in_source') from books it contains only blank ('no_source_content'). Books that are excluded
+   * purely for being non-canonical are recorded as 'non_canonical' but are not surfaced to the user.
    */
   private computeOfferedDraftingBooks(
     draftSourceProgress: VerboseScriptureRange,
+    draftSourcePresentChapters: VerboseScriptureRange,
     targetTextBookIds: Set<string>
   ): { available: VerboseScriptureRange; excluded: ExcludedDraftingBook[] } {
     const available = new VerboseScriptureRange();
@@ -519,7 +527,8 @@ export class NewDraftLogicHandler {
       if (Canon.isExtraMaterial(bookId)) {
         excluded.push({ bookId, reason: 'non_canonical' });
       } else if (!draftSourceProgress.books.has(bookId)) {
-        excluded.push({ bookId, reason: 'no_source_content' });
+        const reason = draftSourcePresentChapters.books.has(bookId) ? 'no_source_content' : 'not_in_source';
+        excluded.push({ bookId, reason });
       } else {
         available.books.set(bookId, draftSourceProgress.books.get(bookId)!.clone());
       }

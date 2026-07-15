@@ -162,7 +162,7 @@ describe('NewDraftLogicHandler', () => {
       expect(env.availableDraftingScriptureRange).toBe('GEN1-50;EXO1-40;MAT1-28');
     });
 
-    it('reports target books the drafting source has no content for', async () => {
+    it('reports target books the drafting source does not contain', async () => {
       const env = new TestEnvironment({
         ...teamStartingToTranslateGenesis,
         draftingSourceBooksChapters: 'GEN1-50',
@@ -170,7 +170,21 @@ describe('NewDraftLogicHandler', () => {
       });
       await env.waitForInit();
 
-      // EXO is in the target but the drafting source has no text for it.
+      // EXO is in the target but the drafting source does not contain it at all.
+      expect(env.availableDraftingScriptureRange).toBe('GEN1-50');
+      expect(env.excludedDraftingBooks).toContain({ bookId: 'EXO', reason: 'not_in_source' });
+    });
+
+    it('reports target books the drafting source contains only blank', async () => {
+      const env = new TestEnvironment({
+        ...teamStartingToTranslateGenesis,
+        draftingSourceBooksChapters: 'GEN1-50',
+        draftingSourcePresentBooksChapters: 'GEN1-50;EXO1-40',
+        targetTextBooks: ['GEN', 'EXO']
+      });
+      await env.waitForInit();
+
+      // EXO exists in the drafting source, but every chapter of it is blank.
       expect(env.availableDraftingScriptureRange).toBe('GEN1-50');
       expect(env.excludedDraftingBooks).toContain({ bookId: 'EXO', reason: 'no_source_content' });
     });
@@ -937,8 +951,13 @@ interface TestState {
   lastSelectedTranslationScriptureRanges: ProjectScriptureRange[] | undefined;
   previouslySelectedTrainingScriptureRanges: ProjectScriptureRange[] | undefined;
 
-  /** A scripture range specifying what books and chapters exist in the drafting source */
+  /** A scripture range specifying what books and chapters have content in the drafting source */
   draftingSourceBooksChapters: string;
+  /**
+   * A scripture range specifying what books and chapters exist in the drafting source, whether or not they have
+   * content. Defaults to draftingSourceBooksChapters (i.e. nothing present-but-blank).
+   */
+  draftingSourcePresentBooksChapters?: string;
   /** A scripture range specifying what books and chapters exist in the target project */
   targetProjectBooksChapters: string;
   /**
@@ -1041,7 +1060,7 @@ class TestEnvironment {
       new VerboseScriptureRange(state.draftingSourceBooksChapters)
     );
     when(mockedDraftProgressService.getPresentChapters('draft-source-1-id')).thenResolve(
-      new VerboseScriptureRange(state.draftingSourceBooksChapters)
+      new VerboseScriptureRange(state.draftingSourcePresentBooksChapters ?? state.draftingSourceBooksChapters)
     );
     for (const [trainingSourceProjectId, booksChapters] of Object.entries(state.trainingSourcesBooksChapters)) {
       when(mockedDraftProgressService.getChaptersWithContent(trainingSourceProjectId)).thenResolve(

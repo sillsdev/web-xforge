@@ -1042,11 +1042,16 @@ describe('NewDraftComponent', () => {
       tick();
       env.component.logicHandler.excludedDraftingBooks = [
         { bookId: 'GEN', reason: 'no_source_content' },
+        { bookId: 'EXO', reason: 'not_in_source' },
         { bookId: 'FRT', reason: 'non_canonical' } // tracked but never surfaced
       ];
 
-      expect(env.component.draftingHiddenBookCount).toBe(1);
-      expect(env.component.draftingExclusionNotices.length).toBe(1);
+      expect(env.component.draftingHiddenBookCount).toBe(2);
+      // One notice per surfaced reason: books not in the source, then books blank in the source.
+      expect(env.component.draftingExclusionNotices.map(notice => notice.key)).toEqual([
+        'draft_books.excluded_not_in_source',
+        'draft_books.excluded_no_source_content'
+      ]);
     }));
 
     it('counts target training books hidden for lacking a matching source', fakeAsync(() => {
