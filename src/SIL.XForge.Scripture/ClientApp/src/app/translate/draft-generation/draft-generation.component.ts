@@ -39,7 +39,9 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { booksFromScriptureRange, projectLabel } from '../../shared/utils';
+import { VerboseScriptureRange } from '../../shared/scripture-range';
+import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
+import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
 import {
@@ -397,10 +399,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   getTranslationScriptureRange(job?: BuildDto): string {
     if (job?.additionalInfo?.translationScriptureRanges == null) return '';
-    return this.i18n.enumerateList(
-      booksFromScriptureRange(
+    return formatScriptureRangeWithChapters(
+      new VerboseScriptureRange(
         job.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
-      ).map(b => this.i18n.localizeBook(b))
+      ),
+      this.i18n,
+      { collapseFullBookRuns: false }
     );
   }
 
