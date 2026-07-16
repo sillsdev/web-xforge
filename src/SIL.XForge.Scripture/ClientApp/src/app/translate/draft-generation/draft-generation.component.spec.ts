@@ -1167,6 +1167,30 @@ describe('DraftGenerationComponent', () => {
     }));
   });
 
+  describe('getTranslationScriptureRange', () => {
+    it('should include chapter numbers for partially drafted books', () => {
+      const env = new TestEnvironment();
+      const job: BuildDto = {
+        ...buildDto,
+        additionalInfo: {
+          buildId: 'testBuildId',
+          step: 0,
+          trainingScriptureRanges: [],
+          translationEngineId: 'testEngineId',
+          translationScriptureRanges: [{ projectId: 'testSourceProjectId', scriptureRange: 'GEN1-3;EXO1-40' }],
+          trainingDataFileIds: [],
+          canDenormalizeQuotes: false
+        }
+      };
+      expect(env.component.getTranslationScriptureRange(job)).toBe('Genesis 1-3 and Exodus');
+    });
+
+    it('should return empty string when no translation ranges are present', () => {
+      const env = new TestEnvironment();
+      expect(env.component.getTranslationScriptureRange(buildDto)).toBe('');
+    });
+  });
+
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
       const env = new TestEnvironment(() => {
