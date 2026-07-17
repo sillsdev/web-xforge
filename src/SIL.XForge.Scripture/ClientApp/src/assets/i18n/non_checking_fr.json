@@ -911,7 +911,7 @@
     "training_unavailable": "La formation est temporairement indisponible",
     "translate_overview": "Vue d'ensemble de la traduction",
     "translated_segments": "{{ translatedSegments }} segments sur {{ total }}",
-    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translation_suggestions_will_be_removed": "Votre projet semble utiliser la fonctionnalité des suggestions de traduction. Les suggestions de traduction seront bientôt retirées{{ date }}. Veuillez contacter {{ email }} pour discuter des méthodes alternatives de traduction à l'aide de Scripture Forge."
   },
   "draft_signup": {
     "additional_comments_label": "Commentaires supplémentaires",
