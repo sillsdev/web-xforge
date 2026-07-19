@@ -95,7 +95,7 @@ export class FileService {
     filename: string,
     alwaysKeepFileOffline: boolean
   ): Promise<string | undefined> {
-    const onlineUrl: string | undefined = await this.onlineUploadFileOrFail(
+    const onlineUrl: string | undefined = await this.tryOnlineUploadFileOrFail(
       fileType,
       projectId,
       dataCollection,
@@ -119,10 +119,6 @@ export class FileService {
     }
   }
 
-  /**
-   * Specifically upload a file only when online and cache the file if specified.
-   * @returns The audio url if the upload was successful, or undefined if otherwise.
-   */
   async onlineUploadFileOrFail(
     fileType: FileType,
     projectId: string,
@@ -133,16 +129,38 @@ export class FileService {
     alwaysKeepFileOffline: boolean
   ): Promise<string | undefined> {
     if (this.onlineStatusService.isOnline) {
-      // Try and upload it online
-      try {
-        const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
-        if (alwaysKeepFileOffline) {
-          await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
-        }
-        return onlineUrl;
-      } catch {}
+      // Upload if online, and throw any errors
+      const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
+      if (alwaysKeepFileOffline) {
+        await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
+      }
+      return onlineUrl;
     }
     return undefined;
+  }
+
+  async tryOnlineUploadFileOrFail(
+    fileType: FileType,
+    projectId: string,
+    dataCollection: string,
+    dataId: string,
+    blob: Blob,
+    filename: string,
+    alwaysKeepFileOffline: boolean
+  ): Promise<string | undefined> {
+    try {
+      return await this.onlineUploadFileOrFail(
+        fileType,
+        projectId,
+        dataCollection,
+        dataId,
+        blob,
+        filename,
+        alwaysKeepFileOffline
+      );
+    } catch {
+      return undefined;
+    }
   }
 
   /**
