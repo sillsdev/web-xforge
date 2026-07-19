@@ -87,9 +87,9 @@
       },
       "ParatextData": {
         "type": "Direct",
-        "requested": "[9.6.0.1-beta, )",
-        "resolved": "9.6.0.1-beta",
-        "contentHash": "1MRDNTuL0RHk0L5og5ZzgCX1gsi7pzfeywReOLsLxmjmsKY+06NWPTPyiEA/Zgj1xsLFas0dSKhxl9NQN9AN0w==",
+        "requested": "[9.6.0.2-beta, )",
+        "resolved": "9.6.0.2-beta",
+        "contentHash": "aEqzs0YisGAiNwHa6dANRG/zDwx4EIPEn5DuLQsWNKzxSj6WAPCqpXGuOA+B2GrgPAlgzhOuGzTGKCzdBV7v9g==",
         "dependencies": {
           "Icu4c.Win.Min": "59.1.7",
           "JetBrains.Annotations": "2025.2.2",
