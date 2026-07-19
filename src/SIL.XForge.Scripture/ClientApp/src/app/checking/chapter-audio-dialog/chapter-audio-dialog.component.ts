@@ -341,7 +341,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
     if (!this.onlineStatusService.isOnline) return;
 
     this._loadingAudio = true;
-    const audioUrl: string | undefined = await this.fileService.onlineUploadFileOrFail(
+    const audioUrl: string | undefined = await this.fileService.tryOnlineUploadFileOrFail(
       FileType.Audio,
       this.data.projectId,
       TextAudioDoc.COLLECTION,
