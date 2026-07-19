@@ -2095,7 +2095,7 @@ class TestEnvironment {
     when(mockExportService.exportCsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportRsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
     when(mockExportService.exportTsv(anything(), anything(), anything(), anything(), anything())).thenReturn(undefined);
-    when(mockUserService.get(anything())).thenCall((requesterSFUserId: string) => {
+    when(mockUserService.get(anything(), anything())).thenCall((requesterSFUserId: string) => {
       const userData: RequesterInfo | undefined = this.requesterDataById.get(requesterSFUserId);
       const changes$: Subject<void> | undefined = this.requesterChangesById.get(requesterSFUserId);
       const userDoc = {

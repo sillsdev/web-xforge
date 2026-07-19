@@ -171,13 +171,17 @@ class TestEnvironment {
             const filters: QueryFilter = {
               [obj<User>().pathStr(u => u.name)]: { $regex: `.*${escapeRegExp(term)}.*`, $options: 'i' }
             };
-            return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
+            return from(
+              this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, 'spec', merge(filters, queryParameters))
+            );
           })
         )
     );
-    when(mockedProjectService.onlineGetMany(anything())).thenCall(async () => {
-      const query = await this.realtimeService.onlineQuery<TestProjectDoc>(TestProjectDoc.COLLECTION, {});
-      return query.docs;
+    when(mockedProjectService.onlineGetMany(anything(), anything())).thenCall(async () => {
+      const query = await this.realtimeService.onlineQuery<TestProjectDoc>(TestProjectDoc.COLLECTION, 'spec', {});
+      const docs: TestProjectDoc[] = query.docs as TestProjectDoc[];
+      query.dispose();
+      return docs;
     });
     when(mockedUserService.currentUserId).thenReturn('user01');
     this.fixture = TestBed.createComponent(SaUsersComponent);

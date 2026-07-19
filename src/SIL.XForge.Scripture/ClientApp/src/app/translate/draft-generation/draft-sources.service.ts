@@ -4,6 +4,7 @@ import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/t
 import { asyncScheduler, combineLatest, defer, from, Observable } from 'rxjs';
 import { switchMap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../../environments/environment';
@@ -17,8 +18,9 @@ import { projectToDraftSources } from './draft-utils';
   providedIn: 'root'
 })
 export class DraftSourcesService {
-  private readonly currentUser$: Observable<UserDoc> = defer(() => from(this.userService.getCurrentUser()));
-  /** Duration to throttle large amounts of incoming project changes. 100 is a guess for what may be useful. */
+  private readonly currentUser$: Observable<UserDoc> = defer(() =>
+    from(this.userService.getCurrentUser())
+  ); /** Duration to throttle large amounts of incoming project changes. 100 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 100;
 
   constructor(
@@ -81,7 +83,12 @@ export class DraftSourcesService {
     let project: SFProjectProfile | undefined;
     if (source === currentProjectDoc?.data) project = currentProjectDoc.data;
     else if (currentUser.data?.sites[environment.siteId].projects?.includes(projectId)) {
-      project = (await this.projectService.getProfile(projectId)).data;
+      const docSubscription = new DocSubscription('DraftSourcesService.mapDraftSourceToFullSource');
+      try {
+        project = (await this.projectService.getProfile(projectId, docSubscription)).data;
+      } finally {
+        docSubscription.unsubscribe();
+      }
     }
 
     if (project != null) {

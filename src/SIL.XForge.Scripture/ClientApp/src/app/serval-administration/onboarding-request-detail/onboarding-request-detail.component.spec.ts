@@ -290,13 +290,15 @@ describe('OnboardingRequestDetailComponent', () => {
         'user02',
         'user03'
       ]);
-      when(mockedServalAdministrationService.getByParatextId(anything())).thenResolve(undefined);
+      when(mockedServalAdministrationService.getByParatextId(anything(), anything())).thenResolve(undefined);
       // Specific paratextId overrides must be registered after the anything() stub so they take priority
       for (const [paratextId, doc] of options.projectDocsByParatextId ?? []) {
-        when(mockedServalAdministrationService.getByParatextId(paratextId)).thenResolve(doc);
+        when(mockedServalAdministrationService.getByParatextId(paratextId, anything())).thenResolve(doc);
       }
       if (options.mainProjectDoc != null) {
-        when(mockedServalAdministrationService.get(request.submission.projectId)).thenResolve(options.mainProjectDoc);
+        when(mockedServalAdministrationService.subscribe(request.submission.projectId, anything())).thenResolve(
+          options.mainProjectDoc
+        );
       }
       if ('approveDialogResult' in options) {
         when(this.approveDialogRef.afterClosed()).thenReturn(of(options.approveDialogResult));

@@ -13,6 +13,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -111,7 +112,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.closeDialog();
   }));
 
-  it('should save changes to the biblical term', fakeAsync(() => {
+  it('should save changes to the biblical term', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
     env.wait();
@@ -121,12 +122,12 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.description, 'updatedDescription');
     env.click(env.submitButton);
     env.wait();
-    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = await env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual(['updatedRendering', 'secondRendering', 'thirdRendering']);
     expect(biblicalTerm.data?.description).toBe('updatedDescription');
   }));
 
-  it('should remove empty lines from renderings', fakeAsync(() => {
+  it('should remove empty lines from renderings', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
     env.wait();
@@ -136,12 +137,12 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.description, '');
     env.click(env.submitButton);
     env.wait();
-    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = await env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual([]);
     expect(biblicalTerm.data?.description).toBe('');
   }));
 
-  it('should not save renderings with unbalanced parentheses', fakeAsync(() => {
+  it('should not save renderings with unbalanced parentheses', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
     env.wait();
@@ -150,12 +151,12 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.renderings, '(');
     env.click(env.submitButton);
     env.wait();
-    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = await env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual(['rendering01']);
     env.closeDialog();
   }));
 
-  it('should save renderings with balanced parentheses', fakeAsync(() => {
+  it('should save renderings with balanced parentheses', fakeAsync(async () => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
     env.wait();
@@ -164,7 +165,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.setTextFieldValue(env.renderings, '()');
     env.click(env.submitButton);
     env.wait();
-    const biblicalTerm = env.getBiblicalTermDoc('id01');
+    const biblicalTerm = await env.getBiblicalTermDoc('id01');
     expect(biblicalTerm.data?.renderings).toEqual(['()']);
   }));
 
@@ -228,23 +229,28 @@ class TestEnvironment {
     tick(matDialogCloseDelay);
   }
 
-  getBiblicalTermDoc(id: string): BiblicalTermDoc {
-    return this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id);
+  async getBiblicalTermDoc(id: string): Promise<BiblicalTermDoc> {
+    return await this.realtimeService.get<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id, new DocSubscription('spec'));
   }
 
-  getProjectDoc(id: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id);
+  async getProjectDoc(id: string): Promise<SFProjectProfileDoc> {
+    return await this.realtimeService.get<SFProjectProfileDoc>(
+      SFProjectProfileDoc.COLLECTION,
+      id,
+      new DocSubscription('spec')
+    );
   }
 
   openDialog(biblicalTermId: string, userId: string = 'user01'): void {
     this.realtimeService
       .subscribe<SFProjectUserConfigDoc>(
         SF_PROJECT_USER_CONFIGS_COLLECTION,
-        getSFProjectUserConfigDocId('project01', userId)
+        getSFProjectUserConfigDocId('project01', userId),
+        new DocSubscription('spec')
       )
-      .then(projectUserConfigDoc => {
-        const biblicalTermDoc = this.getBiblicalTermDoc(biblicalTermId);
-        const projectDoc = this.getProjectDoc('project01');
+      .then(async projectUserConfigDoc => {
+        const biblicalTermDoc = await this.getBiblicalTermDoc(biblicalTermId);
+        const projectDoc = await this.getProjectDoc('project01');
         const viewContainerRef = this.fixture.componentInstance.childViewContainer;
         const config: MatDialogConfig<BiblicalTermDialogData> = {
           data: { biblicalTermDoc, projectDoc, projectUserConfigDoc },

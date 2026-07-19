@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { escapeRegExp, merge } from 'lodash-es';
@@ -12,6 +12,7 @@ import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog/edit-name-dialog.component';
 import { LocalSettingsService } from './local-settings.service';
+import { DocSubscription } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
@@ -31,6 +32,7 @@ export const CURRENT_PROJECT_ID_SETTING = 'current_project_id';
 export class UserService {
   // TODO: if/when we enable another xForge site, remove this and get the component to provide the site info
   private siteId: string = environment.siteId;
+  private userDocSubscription = new DocSubscription('UserService', this.destroyRef);
 
   constructor(
     private readonly realtimeService: RealtimeService,
@@ -38,7 +40,8 @@ export class UserService {
     private readonly commandService: CommandService,
     private readonly localSettings: LocalSettingsService,
     private readonly dialogService: DialogService,
-    private readonly noticeService: NoticeService
+    private readonly noticeService: NoticeService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   get currentUserId(): string {
@@ -65,15 +68,15 @@ export class UserService {
 
   /** Get currently-logged in user. */
   getCurrentUser(): Promise<UserDoc> {
-    return this.get(this.currentUserId);
+    return this.get(this.currentUserId, this.userDocSubscription);
   }
 
-  get(id: string): Promise<UserDoc> {
-    return this.realtimeService.subscribe(UserDoc.COLLECTION, id);
+  get(id: string, subscriber: DocSubscription): Promise<UserDoc> {
+    return this.realtimeService.subscribe(UserDoc.COLLECTION, id, subscriber);
   }
 
-  getProfile(id: string): Promise<UserProfileDoc> {
-    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id);
+  getProfile(id: string, subscriber: DocSubscription): Promise<UserProfileDoc> {
+    return this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id, subscriber);
   }
 
   async onlineDelete(id: string): Promise<void> {
@@ -100,7 +103,9 @@ export class UserService {
             ]
           };
         }
-        return from(this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, merge(filters, queryParameters)));
+        return from(
+          this.realtimeService.onlineQuery<UserDoc>(UserDoc.COLLECTION, 'query_users', merge(filters, queryParameters))
+        );
       })
     );
   }

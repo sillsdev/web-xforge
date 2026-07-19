@@ -12,6 +12,7 @@ import { DialogService } from './dialog.service';
 import { FileService, formatFileSource } from './file.service';
 import { createDeletionFileData, createStorageFileData, FileOfflineData, FileType } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
+import { DocSubscription } from './models/realtime-doc';
 import { OnlineStatusService } from './online-status.service';
 import { provideTestOnlineStatus } from './test-online-status-providers';
 import { TestOnlineStatusService } from './test-online-status.service';
@@ -351,7 +352,9 @@ class TestEnvironment {
       id: this.dataId,
       data: { dataId: this.dataId, projectRef: this.projectId, ownerRef: this.userId }
     });
-    this.realtimeService.subscribe<TestDataDoc>(TestDataDoc.COLLECTION, this.dataId).then(d => (this.doc = d));
+    this.realtimeService
+      .subscribe<TestDataDoc>(TestDataDoc.COLLECTION, this.dataId, new DocSubscription('spec'))
+      .then(d => (this.doc = d));
     tick();
   }
 

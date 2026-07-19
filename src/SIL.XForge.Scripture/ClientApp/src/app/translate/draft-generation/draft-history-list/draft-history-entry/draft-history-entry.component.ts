@@ -27,6 +27,7 @@ import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Subject, takeUntil } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
@@ -101,6 +102,11 @@ interface SourceInfo {
   templateUrl: './draft-history-entry.component.html',
   styleUrl: './draft-history-entry.component.scss'
 })
+/**
+ * Displays a single draft generation build entry within the draft history list. Shows information about
+ * the build and provides actions like downloading or importing the draft.
+ * Used as a repeated item inside DraftHistoryListComponent on the draft generation page.
+ */
 export class DraftHistoryEntryComponent {
   private _entry?: BuildDto;
   private entryChanged: Subject<void> = new Subject<void>();
@@ -117,11 +123,16 @@ export class DraftHistoryEntryComponent {
     // Get the user who requested the build
     this._buildRequestedByUserName = undefined;
     if (this._entry?.additionalInfo?.requestedByUserId != null) {
-      void this.userService.getProfile(this._entry.additionalInfo.requestedByUserId).then(user => {
-        if (user.data != null) {
-          this._buildRequestedByUserName = user.data.displayName;
-        }
-      });
+      void this.userService
+        .getProfile(
+          this._entry.additionalInfo.requestedByUserId,
+          new DocSubscription('DraftHistoryEntry', this.destroyRef)
+        )
+        .then(user => {
+          if (user.data != null) {
+            this._buildRequestedByUserName = user.data.displayName;
+          }
+        });
     }
 
     // Clear the data for the table
@@ -388,14 +399,20 @@ export class DraftHistoryEntryComponent {
     let target: SFProjectProfileDoc | undefined = undefined;
     let draftSources: DraftSourcesAsTranslateSourceArrays | undefined;
     if (targetId != null) {
-      target = await this.projectService.getProfile(targetId);
+      target = await this.projectService.getProfile(
+        targetId,
+        new DocSubscription('DraftHistoryEntry', this.destroyRef)
+      );
       if (target?.data != null) {
         draftSources = projectToDraftSources(target.data);
       }
     }
     let source: SourceInfo | undefined;
     if (await this.permissionsService.isUserOnProject(sourceId)) {
-      const translationSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(sourceId);
+      const translationSource: SFProjectProfileDoc | undefined = await this.projectService.getProfile(
+        sourceId,
+        new DocSubscription('DraftHistoryEntry', this.destroyRef)
+      );
       source = {
         projectRef: sourceId,
         shortName: translationSource?.data?.shortName,

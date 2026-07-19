@@ -79,6 +79,7 @@ public class Startup
         "join",
         "serval-administration",
         "system-administration",
+        "blank-page",
         // Asset and build files
         "assets",
         "polyfills",

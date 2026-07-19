@@ -45,6 +45,7 @@ import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -521,7 +522,9 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     if (cached$ != null) return cached$;
 
     // Cache the lookups so multiple rows don't need to request the same thing.
-    const identity$: Observable<RequesterInfo> = from(this.userService.get(requesterSFUserId)).pipe(
+    const identity$: Observable<RequesterInfo> = from(
+      this.userService.get(requesterSFUserId, new DocSubscription('ServalBuildsComponent', this.destroyRef))
+    ).pipe(
       // This switchMap to changes$ lets us cache Observables with information that stays up-to-date.
       switchMap((userDoc: UserDoc) =>
         userDoc.changes$.pipe(

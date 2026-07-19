@@ -3,6 +3,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { getTrainingDataId, TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { finalize, from, map, merge, Observable, switchMap } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -15,12 +16,18 @@ import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 export class TrainingDataService {
   constructor(
     private readonly realtimeService: RealtimeService,
-    private readonly commandService: CommandService
+    private readonly commandService: CommandService,
+    private readonly destroyRef: DestroyRef
   ) {}
 
   async createTrainingDataAsync(trainingData: TrainingData): Promise<void> {
     const docId: string = getTrainingDataId(trainingData.projectRef, trainingData.dataId);
-    await this.realtimeService.create<TrainingDataDoc>(TrainingDataDoc.COLLECTION, docId, trainingData);
+    await this.realtimeService.create<TrainingDataDoc>(
+      TrainingDataDoc.COLLECTION,
+      docId,
+      trainingData,
+      new DocSubscription('TrainingDataService', this.destroyRef)
+    );
   }
 
   async deleteTrainingDataAsync(trainingData: TrainingData): Promise<void> {
@@ -62,6 +69,11 @@ export class TrainingDataService {
     if (options?.includeDeleted !== true) {
       queryParams[obj<TrainingData>().pathStr(t => t.deleted)] = false;
     }
-    return this.realtimeService.subscribeQuery(TrainingDataDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      TrainingDataDoc.COLLECTION,
+      'query_training_data',
+      queryParams,
+      destroyRef
+    );
   }
 }

@@ -36,6 +36,7 @@ import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { TextSnapshot } from 'xforge-common/models/textsnapshot';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -127,7 +128,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   private projectDoc: SFProjectProfileDoc | undefined;
 
   constructor(
-    destroyRef: DestroyRef,
+    private readonly destroyRef: DestroyRef,
     private readonly dialogService: DialogService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
@@ -196,7 +197,10 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     if (this.projectId != null && this.bookNum != null && this.chapter != null) {
       this.loading$.next(true);
       try {
-        this.projectDoc = await this.projectService.getProfile(this.projectId);
+        this.projectDoc = await this.projectService.getProfile(
+          this.projectId,
+          new DocSubscription('HistoryChooserComponent', this.destroyRef)
+        );
         if (this.historyRevisions.length === 0) {
           this.historyRevisions =
             (await this.paratextService.getRevisions(this.projectId, this.bookId, this.chapter)) ?? [];

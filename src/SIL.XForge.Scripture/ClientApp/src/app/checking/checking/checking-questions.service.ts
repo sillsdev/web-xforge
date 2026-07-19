@@ -6,6 +6,7 @@ import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { Subject } from 'rxjs';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription, QuerySubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ComparisonOperator, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -52,7 +53,7 @@ export class CheckingQuestionsService {
   queryQuestions(
     projectId: string,
     options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {},
-    destroyRef: DestroyRef
+    lifetimeIndicator: DestroyRef | QuerySubscription
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId
@@ -74,7 +75,12 @@ export class CheckingQuestionsService {
       queryParams.$sort = this.getQuestionSortParams('ascending');
     }
 
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      'query_questions ' + JSON.stringify(options),
+      queryParams,
+      lifetimeIndicator
+    );
   }
 
   /**
@@ -82,13 +88,13 @@ export class CheckingQuestionsService {
    * @param projectId The ID of the project to query
    * @param relativeTo The question or verse to use as a reference point
    * @param prevOrNext Whether to query the question before or after the reference point
-   * @param destroyRef The reference to destroy the query when the component gets destroyed.
+   * @param lifetimeIndicator The an indication regarding lifecycle for the query subscription.
    */
   queryAdjacentQuestions(
     projectId: string,
     relativeTo: Question | VerseRefData,
     prevOrNext: 'prev' | 'next',
-    destroyRef: DestroyRef
+    lifetimeIndicator: DestroyRef | QuerySubscription
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const verseRef: VerseRefData = this.isVerseRefData(relativeTo) ? relativeTo : relativeTo.verseRef;
     const currentQuestion: Question | undefined = this.isVerseRefData(relativeTo) ? undefined : relativeTo;
@@ -144,13 +150,18 @@ export class CheckingQuestionsService {
       $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending')
     };
 
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      'query_adjacent_questions',
+      queryParams,
+      lifetimeIndicator
+    );
   }
 
   async queryFirstUnansweredQuestion(
     projectId: string,
     userId: string,
-    destroyRef: DestroyRef
+    lifetimeIndicator: DestroyRef | QuerySubscription
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId,
@@ -166,12 +177,18 @@ export class CheckingQuestionsService {
       $sort: this.getQuestionSortParams('ascending'),
       $limit: 1
     };
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      'query_first_unanswered_question',
+      queryParams,
+      lifetimeIndicator
+    );
   }
 
   async createQuestion(
     id: string,
     question: Question,
+    subscriber: DocSubscription,
     audioFileName?: string,
     audioBlob?: Blob
   ): Promise<QuestionDoc | undefined> {
@@ -202,7 +219,7 @@ export class CheckingQuestionsService {
     });
 
     return this.realtimeService
-      .create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question)
+      .create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question, subscriber)
       .then((questionDoc: QuestionDoc) => {
         this.afterQuestionCreated$.next(questionDoc);
         return questionDoc;

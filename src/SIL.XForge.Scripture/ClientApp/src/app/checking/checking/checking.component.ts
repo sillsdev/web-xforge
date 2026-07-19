@@ -34,11 +34,13 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { asyncScheduler, BehaviorSubject, combineLatest, merge, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, take, throttleTime } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { DocSubscription, QuerySubscription } from 'xforge-common/models/realtime-doc';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -208,6 +210,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
+    private readonly activatedProjectService: ActivatedProjectService,
     private readonly userService: UserService,
     readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
@@ -552,7 +555,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
           // Do once unless project changes
           if (routeProjectId !== prevProjectId) {
-            this.projectDoc = await this.projectService.getProfile(routeProjectId);
+            this.projectDoc = await this.projectService.getProfile(
+              routeProjectId,
+              new DocSubscription('CheckingComponent', this.destroyRef)
+            );
 
             if (!this.projectDoc?.isLoaded) {
               return;
@@ -571,7 +577,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             this.projectUserConfigDoc = await this.projectService.getUserConfig(
               routeProjectId,
-              this.userService.currentUserId
+              this.userService.currentUserId,
+              new DocSubscription('CheckingComponent', this.destroyRef)
             );
 
             // Subscribe to the projectDoc now that it is defined
@@ -628,7 +635,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 verseNum: 0
               },
               'next',
-              this.destroyRef
+              new QuerySubscription('checking/default-question', this.activatedProjectService.switched$)
             );
             this.defaultQuestionsQuerySub = this.defaultQuestionsQuery.ready$
               .pipe(ready => ready, quietTakeUntilDestroyed(this.destroyRef))
@@ -669,7 +676,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 sort: true,
                 activeOnly: true
               },
-              this.destroyRef
+              new QuerySubscription('checking/main-questions', this.activatedProjectService.switched$)
             );
             if (this.projectDoc != null) {
               this.textAudioSub = merge(this.questionsQuery.ready$, this.projectDoc.remoteChanges$)
@@ -1777,11 +1784,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.questionsSub?.unsubscribe();
     this.audioChangedSub?.unsubscribe();
     this.questionsRemoteChangesSub?.unsubscribe();
-    this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
     this.hideTextSub?.unsubscribe();
     this.textAudioSub?.unsubscribe();
-    this.defaultQuestionsQuery?.dispose();
     this.defaultQuestionsQuerySub?.unsubscribe();
     this.prevQuestionOutOfScope?.dispose();
     this.nextQuestionOutOfScope?.dispose();

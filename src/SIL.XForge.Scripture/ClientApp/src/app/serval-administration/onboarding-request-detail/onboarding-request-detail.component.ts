@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
@@ -22,6 +22,7 @@ import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/trans
 import { catchError, lastValueFrom, of, throwError } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
@@ -112,7 +113,8 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     private readonly dialogService: DialogService,
     protected readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    protected readonly noticeService: NoticeService
+    protected readonly noticeService: NoticeService,
+    private readonly destroyRef: DestroyRef
   ) {
     super(noticeService, 'OnboardingRequestDetailComponent');
   }
@@ -158,7 +160,10 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     }
 
     // Load the main project (submission.projectId is an SF project ID)
-    this.mainProjectDoc = await this.servalAdministrationService.get(this.request.submission.projectId);
+    this.mainProjectDoc = await this.servalAdministrationService.subscribe(
+      this.request.submission.projectId,
+      new DocSubscription('OnboardingRequestDetailComponent', this.destroyRef)
+    );
     if (this.mainProjectDoc?.data != null) {
       this.projectDocs.set(this.request.submission.projectId, this.mainProjectDoc);
       this.projectNames.set(this.request.submission.projectId, projectLabel(this.mainProjectDoc.data));
@@ -181,7 +186,10 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
 
     // Load each form data project's name and ID by querying by paratextId
     for (const paratextId of paratextIds) {
-      const projectDoc = await this.servalAdministrationService.getByParatextId(paratextId);
+      const projectDoc = await this.servalAdministrationService.getByParatextId(
+        paratextId,
+        new DocSubscription('OnboardingRequestDetailComponent', this.destroyRef)
+      );
       if (projectDoc?.data != null) {
         this.projectDocs.set(paratextId, projectDoc);
         this.projectNames.set(paratextId, projectLabel(projectDoc.data));
@@ -218,8 +226,15 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     this.loadingStarted();
 
     // Get the project to retrieve its shortName
-    const projectDoc = await this.servalAdministrationService.get(id);
-    if (projectDoc?.data?.shortName == null) {
+    const projectDocSubscription = new DocSubscription('OnboardingRequestDetailComponent.downloadProject');
+    let shortName: string | undefined;
+    try {
+      const projectDoc = await this.servalAdministrationService.subscribe(id, projectDocSubscription);
+      shortName = projectDoc?.data?.shortName;
+    } finally {
+      projectDocSubscription.unsubscribe();
+    }
+    if (shortName == null) {
       this.noticeService.showError('Unable to retrieve project information.');
       this.loadingFinished();
       return;
@@ -247,7 +262,7 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
     }
 
     // Use the FileSaver API to download the file with the project's shortName
-    saveAs(blob, projectDoc.data.shortName + '.zip');
+    saveAs(blob, shortName + '.zip');
 
     this.loadingFinished();
   }

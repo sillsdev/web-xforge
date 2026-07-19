@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import Papa from 'papaparse';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString } from '../../../type-utils';
 import { parseDate } from '../../shared/utils';
@@ -91,8 +92,14 @@ export class OnboardingRequestsExportService {
     assigneeNames: Map<string, string>
   ): Promise<OnboardingRequestSpreadsheetRow> {
     const sfProjectId = request.submission.projectId;
-    const projectDoc = await this.servalAdministrationService.get(sfProjectId);
-    const projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
+    const projectDocSubscription = new DocSubscription('OnboardingRequestsExportService.createSpreadsheetRow');
+    let projectShortName: string;
+    try {
+      const projectDoc = await this.servalAdministrationService.subscribe(sfProjectId, projectDocSubscription);
+      projectShortName = projectDoc?.data?.shortName ?? sfProjectId;
+    } finally {
+      projectDocSubscription.unsubscribe();
+    }
 
     return {
       request_date_utc: this.formatRequestDateUtc(request.submission.timestamp) ?? '',
@@ -112,8 +119,15 @@ export class OnboardingRequestsExportService {
     const assigneeIds = [...new Set(requests.map(request => request.assigneeId).filter(isPopulatedString))];
     const entries = await Promise.all(
       assigneeIds.map(async assigneeId => {
-        const userDoc = await this.userService.get(assigneeId);
-        return [assigneeId, userDoc?.data?.displayName ?? ''] as const;
+        const docSubscription = new DocSubscription('OnboardingRequestsExportService.lookupAssigneeNames');
+        let displayName: string;
+        try {
+          const userDoc = await this.userService.get(assigneeId, docSubscription);
+          displayName = userDoc?.data?.displayName ?? '';
+        } finally {
+          docSubscription.unsubscribe();
+        }
+        return [assigneeId, displayName] as const;
       })
     );
     return new Map(entries);

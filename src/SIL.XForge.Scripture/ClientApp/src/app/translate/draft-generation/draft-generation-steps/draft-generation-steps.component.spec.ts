@@ -1512,7 +1512,7 @@ describe('DraftGenerationStepsComponent', () => {
       })
     } as SFProjectProfileDoc;
 
-    when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
+    when(mockProjectService.getProfile(projectId, anything())).thenResolve(profileDoc);
     const books: BookProgress[] = texts.map(b => ({
       bookId: Canon.bookNumberToId(b),
       verseSegments: 100,

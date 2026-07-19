@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { DestroyRef, Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanDeactivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
@@ -6,9 +6,10 @@ import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-pro
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { from, Observable, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
+import { DocSubscription } from 'xforge-common/models/realtime-doc';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
@@ -17,7 +18,8 @@ import { SFProjectService } from '../core/sf-project.service';
 export abstract class RouterGuard {
   constructor(
     protected readonly authGuard: AuthGuard,
-    protected readonly projectService: SFProjectService
+    protected readonly projectService: SFProjectService,
+    protected readonly destroyRef: DestroyRef
   ) {}
 
   canActivate(next: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean> {
@@ -28,12 +30,23 @@ export abstract class RouterGuard {
   allowTransition(projectId: string): Observable<boolean> {
     return this.authGuard.allowTransition().pipe(
       switchMap(isLoggedIn => {
-        if (isLoggedIn) {
-          return from(this.projectService.getProfile(projectId)).pipe(map(projectDoc => this.check(projectDoc)));
+        if (!isLoggedIn) {
+          return of(false);
         }
-        return of(false);
+
+        return from(this.canAccessProject(projectId));
       })
     );
+  }
+
+  private async canAccessProject(projectId: string): Promise<boolean> {
+    const docSubscription = new DocSubscription('ProjectRouterGuard');
+    try {
+      const projectDoc: SFProjectProfileDoc = await this.projectService.getProfile(projectId, docSubscription);
+      return this.check(projectDoc);
+    } finally {
+      docSubscription.unsubscribe();
+    }
   }
 
   abstract check(project: SFProjectProfileDoc): boolean;
@@ -46,9 +59,10 @@ export class SettingsAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService
+    private userService: UserService,
+    destroyRef: DestroyRef
   ) {
-    super(authGuard, projectService);
+    super(authGuard, projectService, destroyRef);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
@@ -66,9 +80,10 @@ export class UsersAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService
+    private userService: UserService,
+    destroyRef: DestroyRef
   ) {
-    super(authGuard, projectService);
+    super(authGuard, projectService, destroyRef);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
@@ -87,9 +102,10 @@ export class SyncAuthGuard extends RouterGuard {
     authGuard: AuthGuard,
     projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    destroyRef: DestroyRef
   ) {
-    super(authGuard, projectService);
+    super(authGuard, projectService, destroyRef);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
@@ -120,9 +136,10 @@ export class NmtDraftAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService
+    private userService: UserService,
+    destroyRef: DestroyRef
   ) {
-    super(authGuard, projectService);
+    super(authGuard, projectService, destroyRef);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
@@ -147,9 +164,10 @@ export class CheckingAuthGuard extends RouterGuard {
     authGuard: AuthGuard,
     projectService: SFProjectService,
     private router: Router,
-    private readonly permissions: PermissionsService
+    private readonly permissions: PermissionsService,
+    destroyRef: DestroyRef
   ) {
-    super(authGuard, projectService);
+    super(authGuard, projectService, destroyRef);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
@@ -169,9 +187,10 @@ export class TranslateAuthGuard extends RouterGuard {
     authGuard: AuthGuard,
     projectService: SFProjectService,
     private router: Router,
-    private readonly permissions: PermissionsService
+    private readonly permissions: PermissionsService,
+    destroyRef: DestroyRef
   ) {
-    super(authGuard, projectService);
+    super(authGuard, projectService, destroyRef);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
@@ -191,8 +210,8 @@ export interface ConfirmOnLeave {
   providedIn: 'root'
 })
 export class DraftNavigationAuthGuard extends RouterGuard implements CanDeactivate<ConfirmOnLeave> {
-  constructor(authGuard: AuthGuard, projectService: SFProjectService) {
-    super(authGuard, projectService);
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, destroyRef: DestroyRef) {
+    super(authGuard, projectService, destroyRef);
   }
 
   async canDeactivate(component: ConfirmOnLeave): Promise<boolean> {

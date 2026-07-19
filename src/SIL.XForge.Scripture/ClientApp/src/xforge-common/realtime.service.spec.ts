@@ -3,13 +3,15 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { SF_TYPE_REGISTRY } from '../app/core/models/sf-type-registry';
-import { RealtimeDoc } from './models/realtime-doc';
+import { QuerySubscription, RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { RealtimeService } from './realtime.service';
 import { provideTestRealtime } from './test-realtime-providers';
 import { configureTestingModule } from './test-utils';
 
 describe('RealtimeService', () => {
+  const QUERY_DISPOSE_TIMEOUT_MS = 5000;
+
   configureTestingModule(() => ({
     providers: [provideTestRealtime(SF_TYPE_REGISTRY)]
   }));
@@ -46,7 +48,7 @@ describe('RealtimeService', () => {
       service['manageQuery'](queryPromise, destroyRef);
 
       onDestroyCallback();
-      tick(5000);
+      tick(QUERY_DISPOSE_TIMEOUT_MS);
 
       verify(mockQuery.dispose()).once();
     }));
@@ -82,9 +84,47 @@ describe('RealtimeService', () => {
       service['manageQuery'](queryPromise, destroyRef);
       onDestroyCallback();
 
-      tick(5000);
+      tick(QUERY_DISPOSE_TIMEOUT_MS);
 
       verify(mockQuery.dispose()).once();
+    }));
+
+    it('should dispose query when QuerySubscription is unsubscribed and query is ready', fakeAsync(() => {
+      const queryPromise = Promise.resolve(queryInstance);
+      const querySubscription = new QuerySubscription('realtime.service.spec');
+
+      service['manageQuery'](queryPromise, querySubscription);
+
+      querySubscription.unsubscribe();
+      ready$.next(true);
+      tick();
+
+      verify(mockQuery.dispose()).once();
+    }));
+
+    it('should dispose query after timeout when QuerySubscription is unsubscribed and query is not ready', fakeAsync(() => {
+      const queryPromise = Promise.resolve(queryInstance);
+      const querySubscription = new QuerySubscription('realtime.service.spec');
+
+      service['manageQuery'](queryPromise, querySubscription);
+      querySubscription.unsubscribe();
+
+      tick(QUERY_DISPOSE_TIMEOUT_MS - 1);
+      verify(mockQuery.dispose()).never();
+
+      tick(1);
+
+      verify(mockQuery.dispose()).once();
+    }));
+
+    it('should not dispose query before QuerySubscription is unsubscribed', fakeAsync(() => {
+      const queryPromise = Promise.resolve(queryInstance);
+      const querySubscription = new QuerySubscription('realtime.service.spec');
+
+      service['manageQuery'](queryPromise, querySubscription);
+      tick(QUERY_DISPOSE_TIMEOUT_MS);
+
+      verify(mockQuery.dispose()).never();
     }));
   });
 });
