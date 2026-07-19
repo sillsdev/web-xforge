@@ -8,6 +8,24 @@ allowBuilds:
   msgpackr-extract: true
   unrs-resolver: true
 minimumReleaseAge: 10080 # 7 days
+minimumReleaseAgeExclude:
+  - ajv@8.18.0
+  - picomatch@4.0.4
+  - webpack-dev-server@5.2.4
+  - uuid@11.1.1
+  - esbuild@0.28.1
+  - vite@7.3.5
+  - launch-editor@2.14.1
+  - webpack-dev-server@5.2.5
+  - http-proxy-middleware@3.0.7
+  - piscina@5.1.5
+  - undici@7.28.0
+  - undici@6.27.0
+  - http-proxy-middleware@2.0.10
+  - http-proxy-middleware@3.0.6
+  - js-yaml@3.15.0
+  - ws@8.21.0
+  - '@babel/core@7.29.1'
 overrides:
   "webpack": "5.105.0" # Fix for @storybook/builder-webpack5. Remove if updating Angular
 patchedDependencies:
