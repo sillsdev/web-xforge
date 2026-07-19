@@ -51,7 +51,8 @@ export abstract class ProjectDataDoc<T extends ProjectData = ProjectData> extend
       dataId,
       blob,
       filename,
-      this.alwaysKeepFileOffline(fileType, dataId)
+      this.alwaysKeepFileOffline(fileType, dataId),
+      true
     );
   }
 

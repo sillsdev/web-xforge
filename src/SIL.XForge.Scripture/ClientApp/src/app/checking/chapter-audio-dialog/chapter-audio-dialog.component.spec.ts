@@ -676,6 +676,7 @@ class TestEnvironment {
         anything(),
         anything(),
         anything(),
+        true,
         true
       )
     ).thenResolve('audio url');

@@ -1,4 +1,5 @@
 import { NgClass } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -18,7 +19,6 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -67,13 +67,8 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
     private readonly dialogRef: MatDialogRef<TrainingDataUploadDialogComponent, TrainingData | undefined>,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
-    private readonly onlineStatus: OnlineStatusService,
     private readonly userService: UserService
   ) {}
-
-  get appOnline(): boolean {
-    return this.onlineStatus.isOnline;
-  }
 
   get hasBeenUploaded(): boolean {
     return this.trainingDataFile?.blob != null && this.trainingDataFile?.fileName != null;
@@ -118,26 +113,38 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
   }
 
   async save(): Promise<void> {
-    // We cannot save a file if it has not been uploaded, or if offline
-    if (!this.hasBeenUploaded || !this.appOnline) {
+    // We cannot save a file if it has not been uploaded
+    if (!this.hasBeenUploaded) {
       return;
     }
 
     this._isUploading = true;
     const dataId: string = objectId();
-    const fileUrl: string | undefined = await this.fileService.onlineUploadFileOrFail(
-      FileType.TrainingData,
-      this.data.projectId,
-      TrainingDataDoc.COLLECTION,
-      dataId,
-      this.trainingDataFile!.blob!,
-      this.trainingDataFile!.fileName!,
-      true
-    );
-    this._isUploading = false;
-    if (fileUrl == null) {
-      void this.dialogService.message('training_data_upload_dialog.upload_failed');
+    let fileUrl: string | undefined;
+    try {
+      fileUrl = await this.fileService.onlineUploadFileOrFail(
+        FileType.TrainingData,
+        this.data.projectId,
+        TrainingDataDoc.COLLECTION,
+        dataId,
+        this.trainingDataFile!.blob!,
+        this.trainingDataFile!.fileName!,
+        true,
+        false
+      );
+      if (fileUrl === undefined) {
+        void this.dialogService.message('training_data_upload_dialog.no_upload_offline');
+        return;
+      }
+    } catch (e) {
+      if (e instanceof HttpErrorResponse && e.status === 400) {
+        void this.dialogService.message('training_data_upload_dialog.invalid_format');
+      } else {
+        void this.dialogService.message('training_data_upload_dialog.upload_failed');
+      }
       return;
+    } finally {
+      this._isUploading = false;
     }
 
     // Create the training_data record

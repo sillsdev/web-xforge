@@ -348,6 +348,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit, OnDestroy {
       objectId(),
       this.audio!.blob!,
       this.audio!.fileName!,
+      true,
       true
     );
 

@@ -1,21 +1,23 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ngfModule } from 'angular-file';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { TrainingDataFileUpload, TrainingDataUploadDialogComponent } from './training-data-upload-dialog.component';
 import { TrainingDataService } from './training-data.service';
 
+const mockedDialogService = mock(DialogService);
 const mockedFileService = mock(FileService);
-const mockOnlineStatusService = mock(OnlineStatusService);
 const mockedTrainingDataService = mock(TrainingDataService);
 const mockedUserService = mock(UserService);
 
@@ -23,8 +25,9 @@ describe('TrainingDataUploadDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [ngfModule, getTestTranslocoModule()],
     providers: [
+      provideTestOnlineStatus(),
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: TrainingDataService, useMock: mockedTrainingDataService },
       { provide: UserService, useMock: mockedUserService }
     ]
@@ -41,7 +44,18 @@ describe('TrainingDataUploadDialogComponent', () => {
 
   it('cannot save if offline', async () => {
     const env = new TestEnvironment();
-    when(mockOnlineStatusService.isOnline).thenReturn(false);
+    when(
+      mockedFileService.onlineUploadFileOrFail(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenResolve(undefined);
     let result: TrainingData = { dataId: '' } as TrainingData;
     env.dialogRef.afterClosed().subscribe((_result: TrainingData) => {
       result = _result;
@@ -58,9 +72,86 @@ describe('TrainingDataUploadDialogComponent', () => {
         anything(),
         anything(),
         anything(),
+        anything(),
         anything()
       )
-    ).never();
+    ).once();
+    expect(result.dataId).toEqual('');
+  });
+
+  it('should show an error message if the file is invalid', async () => {
+    const env = new TestEnvironment();
+    when(
+      mockedFileService.onlineUploadFileOrFail(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenThrow(new HttpErrorResponse({ status: HttpStatusCode.BadRequest }));
+    let result: TrainingData = { dataId: '' } as TrainingData;
+    env.dialogRef.afterClosed().subscribe((_result: TrainingData) => {
+      result = _result;
+    });
+    env.component.updateTrainingData(env.trainingDataFile);
+    await env.component.save();
+    await env.wait();
+
+    verify(
+      mockedFileService.onlineUploadFileOrFail(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).once();
+    verify(mockedDialogService.message(anything())).once();
+    expect(result.dataId).toEqual('');
+  });
+
+  it('should show an error message if the file for all other errors', async () => {
+    const env = new TestEnvironment();
+    when(
+      mockedFileService.onlineUploadFileOrFail(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).thenThrow(new HttpErrorResponse({ status: HttpStatusCode.NotFound }));
+    let result: TrainingData = { dataId: '' } as TrainingData;
+    env.dialogRef.afterClosed().subscribe((_result: TrainingData) => {
+      result = _result;
+    });
+    env.component.updateTrainingData(env.trainingDataFile);
+    await env.component.save();
+    await env.wait();
+
+    verify(
+      mockedFileService.onlineUploadFileOrFail(
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything(),
+        anything()
+      )
+    ).once();
+    verify(mockedDialogService.message(anything())).once();
     expect(result.dataId).toEqual('');
   });
 
@@ -142,10 +233,10 @@ class TestEnvironment {
         anything(),
         anything(),
         anything(),
-        true
+        true,
+        false
       )
     ).thenResolve('training data file url');
-    when(mockOnlineStatusService.isOnline).thenReturn(true);
     when(mockedUserService.currentUserId).thenReturn('user01');
 
     const blob = new Blob(['source_1,target_2\nsource_2,target_2'], { type: 'text/csv' });

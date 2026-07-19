@@ -102,7 +102,8 @@ export class FileService {
       dataId,
       blob,
       filename,
-      alwaysKeepFileOffline
+      alwaysKeepFileOffline,
+      true
     );
     if (onlineUrl != null) return onlineUrl;
 
@@ -122,6 +123,8 @@ export class FileService {
   /**
    * Specifically upload a file only when online and cache the file if specified.
    * @returns The audio url if the upload was successful, or undefined if otherwise.
+   *
+   * @param returnUndefinedForErrors If true, errors will be rethrown and undefined will only be returned if offline.
    */
   async onlineUploadFileOrFail(
     fileType: FileType,
@@ -130,7 +133,8 @@ export class FileService {
     dataId: string,
     blob: Blob,
     filename: string,
-    alwaysKeepFileOffline: boolean
+    alwaysKeepFileOffline: boolean,
+    returnUndefinedForErrors: boolean
   ): Promise<string | undefined> {
     if (this.onlineStatusService.isOnline) {
       // Try and upload it online
@@ -140,7 +144,9 @@ export class FileService {
           await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
         }
         return onlineUrl;
-      } catch {}
+      } catch (e) {
+        if (!returnUndefinedForErrors) throw e;
+      }
     }
     return undefined;
   }
