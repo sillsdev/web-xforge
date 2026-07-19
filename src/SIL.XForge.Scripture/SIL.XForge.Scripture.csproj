@@ -41,7 +41,7 @@
     <PackageReference Include="NPOI" Version="[2.7.6]" />
     <!-- When using a new major or minor version of ParatextData, update where dependencies.yml copies the
          InternetSettings.xml file. Also update server config scriptureforge.org_v2.yml. -->
-    <PackageReference Include="ParatextData" Version="9.6.0.1-beta" />
+    <PackageReference Include="ParatextData" Version="9.6.0.2-beta" />
     <PackageReference Include="Polly" Version="8.7.0" />
     <!-- When updating Serval.Client consider that API changes must be released to Serval Prod
         prior to testing on SF QA -->
