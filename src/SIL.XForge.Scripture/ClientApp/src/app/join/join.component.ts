@@ -37,8 +37,9 @@ export const KNOWN_ERROR_CODES: ObjectPaths<typeof en.join>[] = [
   'key_already_used',
   'key_expired',
   'max_users_reached',
+  'project_link_is_invalid',
   'role_not_found',
-  'project_link_is_invalid'
+  'user_missing'
 ];
 
 @Component({

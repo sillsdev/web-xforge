@@ -902,6 +902,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+        if (!userDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("user_missing");
+        }
+
         // Attempt to get the role for the user from the Paratext registry
         Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
         if (attempt.TryResult(out string projectRole))

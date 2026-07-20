@@ -311,8 +311,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       });
     }
 
+    // If the user is logged in, but they do not have user profile, pull it from Auth0
+    const isLoggedIn = await this.authService.isLoggedIn;
+    if (isLoggedIn && this.currentUserDoc.data == null) {
+      await this.authService.pullAuthUserProfile();
+      await this.currentUserDoc.onlineFetch();
+    }
+
     // Set the locale to the Auth0 user profile on first login
-    const languageTag: string | undefined = this.currentUserDoc.data!.interfaceLanguage;
+    const languageTag: string | undefined = this.currentUserDoc.data?.interfaceLanguage;
     if (
       isNewlyLoggedIn &&
       languageTag != null &&

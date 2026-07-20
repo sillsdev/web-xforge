@@ -283,6 +283,10 @@ export class AuthService {
     }
   }
 
+  pullAuthUserProfile(): Promise<void> {
+    return this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
+  }
+
   requestParatextCredentialUpdate(cancelCallback?: () => void): void {
     void this.dialogService
       .confirm('warnings.paratext_credentials_expired', 'warnings.logout')
@@ -323,7 +327,7 @@ export class AuthService {
     this.localSettings.set(cacheKey.toKey(), cacheEntry);
     await this.localLogIn(authResponse.access_token, authResponse.id_token, authResponse.expires_in);
     await this.remoteStore.init(() => this.getAccessToken());
-    await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
+    await this.pullAuthUserProfile();
     this._loggedInState$.next({ loggedIn: true, newlyLoggedIn: true, anonymousUser: true });
     return true;
   }
@@ -483,7 +487,7 @@ export class AuthService {
     await this.localLogIn(authDetails.token.access_token, authDetails.token.id_token, authDetails.token.expires_in);
     await this.remoteStore.init(() => this.getAccessToken());
     try {
-      await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
+      await this.pullAuthUserProfile();
     } catch (err) {
       // Display error dialog to pause login loop.
       // Error details will be sent to Bugsnag and logged to the console.
