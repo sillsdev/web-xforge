@@ -258,8 +258,11 @@ export class TabStateService<TGroupId extends string, T extends TabInfo<string>>
 
       consolidatedTabs.push(...group.tabs);
 
+      // Order the tabs with the immovable tabs first
+      const orderedTabs = [...consolidatedTabs].sort((a, b) => Number(a.movable) - Number(b.movable));
+
       // Clear tabs from all groups except 'into' group
-      group.setTabs(group.groupId === into ? consolidatedTabs : []);
+      group.setTabs(group.groupId === into ? orderedTabs : []);
     });
 
     // Remove tab from restore list if tab is removed from consolidated group
