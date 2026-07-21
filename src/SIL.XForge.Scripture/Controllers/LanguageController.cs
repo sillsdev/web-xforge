@@ -24,9 +24,9 @@ public class LanguageController : ControllerBase
     public IActionResult SetLanguage([FromForm] string culture, [FromForm] string returnUrl)
     {
         if (string.IsNullOrEmpty(culture))
-            throw new ArgumentException("culture cannot be empty", culture);
+            throw new ArgumentException("culture cannot be empty", nameof(culture));
         if (string.IsNullOrEmpty(returnUrl))
-            throw new ArgumentException("return url must be specified", returnUrl);
+            throw new ArgumentException("return url must be specified", nameof(returnUrl));
 
         var cookieName = CookieRequestCultureProvider.DefaultCookieName;
         var cookieValue = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture));
