@@ -24,9 +24,19 @@ public class UsersRpcController(
     /// </summary>
     public async Task<IRpcMethodResult> PullAuthUserProfile()
     {
-        string userProfile = await authService.GetUserAsync(AuthId);
-        await userService.UpdateUserFromProfileAsync(UserId, userProfile);
-        return Ok();
+        try
+        {
+            string userProfile = await authService.GetUserAsync(AuthId);
+            await userService.UpdateUserFromProfileAsync(UserId, userProfile);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "PullAuthUserProfile" } }
+            );
+            throw;
+        }
     }
 
     public async Task<IRpcMethodResult> UpdateAvatarFromDisplayName()
