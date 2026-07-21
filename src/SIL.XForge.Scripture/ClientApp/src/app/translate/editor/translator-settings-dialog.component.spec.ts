@@ -155,6 +155,35 @@ describe('TranslatorSettingsDialogComponent', () => {
     env.closeDialog();
   }));
 
+  it('the show editor tabs in single pane should update when toggled', fakeAsync(async () => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      userConfig: {
+        showEditorTabsInSinglePane: undefined
+      }
+    });
+    env.openDialog();
+
+    const editorTabsSinglePaneToggle = await env.getEditorTabsSinglePaneToggle();
+    expect(editorTabsSinglePaneToggle).not.toBeNull();
+    expect(env.component!.showEditorTabsInSinglePaneSwitch.value).toBe(false);
+    expect(await env.isToggleChecked(editorTabsSinglePaneToggle!)).toBe(false);
+
+    await env.toggleSlideToggle(editorTabsSinglePaneToggle!);
+    expect(env.component!.showEditorTabsInSinglePaneSwitch.value).toBe(true);
+    expect(await env.isToggleChecked(editorTabsSinglePaneToggle!)).toBe(true);
+
+    const userConfigDoc = env.getProjectUserConfigDoc();
+    expect(userConfigDoc.data!.showEditorTabsInSinglePane).toBe(true);
+
+    await env.toggleSlideToggle(editorTabsSinglePaneToggle!);
+    expect(env.component!.showEditorTabsInSinglePaneSwitch.value).toBe(false);
+    expect(await env.isToggleChecked(editorTabsSinglePaneToggle!)).toBe(false);
+
+    expect(userConfigDoc.data!.showEditorTabsInSinglePane).toBe(false);
+    env.closeDialog();
+  }));
+
   describe('Lynx Settings', () => {
     it('should show Lynx settings when both project features are enabled', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -368,6 +397,10 @@ class TestEnvironment {
     return suggestionsCard as HTMLElement | null;
   }
 
+  get editorTabsSinglePaneSwitch(): HTMLElement | null {
+    return this.overlayContainerElement.querySelector('#editor-tabs-single-pane-switch') as HTMLElement | null;
+  }
+
   get lynxSettingsSection(): HTMLElement | null {
     // Look for the card containing the lynx master switch
     const lynxCard = this.overlayContainerElement.querySelector('#lynx-master-switch')?.closest('mat-card');
@@ -515,6 +548,13 @@ class TestEnvironment {
     if (!this.loader) return null;
     return await this.loader.getHarnessOrNull(
       MatSlideToggleHarness.with({ selector: '#translation-suggestions-master-switch' })
+    );
+  }
+
+  async getEditorTabsSinglePaneToggle(): Promise<MatSlideToggleHarness | null> {
+    if (!this.loader) return null;
+    return await this.loader.getHarnessOrNull(
+      MatSlideToggleHarness.with({ selector: '#editor-tabs-single-pane-switch' })
     );
   }
 
