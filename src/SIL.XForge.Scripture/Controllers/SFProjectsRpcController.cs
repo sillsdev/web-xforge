@@ -352,7 +352,7 @@ public class SFProjectsRpcController(
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "UpdateUser" }, { "projectId", projectId } }
+                new Dictionary<string, string> { { "method", "SyncUserRole" }, { "projectId", projectId } }
             );
             throw;
         }
