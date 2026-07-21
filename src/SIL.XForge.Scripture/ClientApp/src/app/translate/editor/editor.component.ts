@@ -77,6 +77,7 @@ import {
 } from 'rxjs';
 import {
   debounceTime,
+  distinctUntilChanged,
   filter,
   first,
   map,
@@ -349,6 +350,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private scrollSubscription?: Subscription;
   private tabStateInitialized$ = new BehaviorSubject<boolean>(false);
   private visibleTabGroups: EditorTabGroupType[] = editorTabGroupTypes.slice();
+  private showEditorTabsInSinglePaneSub?: Subscription;
+  private showEditorTabsInSinglePane$ = new BehaviorSubject<boolean>(false);
   private readonly fabDiameter = 40;
   readonly fabVerticalCushion = 5;
 
@@ -442,14 +445,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  get translatorSettingsEnabled(): boolean {
-    return (
-      ((this.hasSource && this.hasSourceViewRight && this.translationSuggestionsProjectEnabled) ||
-        this.lynxProjectEnabled) &&
-      this.userHasGeneralEditRight
-    );
-  }
-
   get numSuggestions(): number {
     return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
       ? 1
@@ -493,11 +488,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return SF_DEFAULT_TRANSLATE_SHARE_ROLE;
   }
 
+  get canShowSourceTab(): boolean {
+    return (this.hasSource && this.hasSourceViewRight) || this.isParatextUserRole;
+  }
+
   get showSourceTab(): boolean {
     return (
-      (this.hasSource && this.hasSourceViewRight) ||
-      this.isParatextUserRole ||
-      (this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false)
+      (this.canShowSourceTab || (this.tabState.getTabGroup('source')?.tabs.some(tab => tab.persist) ?? false)) &&
+      this.projectUserConfigDoc?.data?.showEditorTabsInSinglePane !== true
     );
   }
 
@@ -528,11 +526,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   get hasSourceViewRight(): boolean {
     const sourceProject = this.sourceProjectDoc?.data;
     const sourceId = this.source?.id;
-    if (sourceProject == null || sourceId == null || this.isParatextUserRole) {
-      return this.isParatextUserRole;
+    if (sourceProject != null && sourceId != null) {
+      return this.permissionsService.canAccessText(sourceId, sourceProject);
+    } else {
+      return false;
     }
-
-    return this.permissionsService.canAccessText(sourceId, sourceProject);
   }
 
   get canInsertNote(): boolean {
@@ -813,6 +811,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               }
             }
           });
+
+          // Show/hide the source tab based on the user project configuration
+          const showEditorTabsInSinglePane: boolean =
+            this.projectUserConfigDoc.data?.showEditorTabsInSinglePane ?? false;
+          this.showEditorTabsInSinglePane$.next(showEditorTabsInSinglePane);
+          this.visibleTabGroups = showEditorTabsInSinglePane ? ['target'] : editorTabGroupTypes.slice();
+          this.showEditorTabsInSinglePaneSub?.unsubscribe();
+          this.showEditorTabsInSinglePaneSub = this.projectUserConfigDoc.changes$.subscribe(async () => {
+            if (this.projectUserConfigDoc?.data != null) {
+              this.showEditorTabsInSinglePane$.next(this.projectUserConfigDoc.data.showEditorTabsInSinglePane ?? false);
+            }
+          });
         }
 
         if (this.projectDoc?.data == null) {
@@ -919,15 +929,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.syncScroll();
       });
 
-    // Consolidate tab groups for small screen widths
+    // Consolidate tab groups for small screen widths, or if the setting is enabled
     combineLatest([
       this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.SM)),
       this.tabStateInitialized$.pipe(filter(initialized => initialized)),
-      this.targetEditorLoaded$.pipe(take(1))
+      this.targetEditorLoaded$.pipe(take(1)),
+      this.showEditorTabsInSinglePane$.pipe(distinctUntilChanged())
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([breakpointState]) => {
-        if (breakpointState.matches) {
+      .subscribe(([breakpointState, _initialized, _loaded, showEditorTabsInSinglePane]) => {
+        if (breakpointState.matches || showEditorTabsInSinglePane) {
           this.visibleTabGroups = ['target'];
           this.tabState.consolidateTabGroups('target');
         } else {
@@ -944,6 +955,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.trainingSub?.unsubscribe();
     this.projectDataChangesSub?.unsubscribe();
     this.initializeLynxStateSub?.unsubscribe();
+    this.showEditorTabsInSinglePaneSub?.unsubscribe();
     this.metricsSession?.dispose();
     this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();

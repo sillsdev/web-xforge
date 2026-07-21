@@ -12,8 +12,8 @@
           [(chapter)]="chapter"
           [chapters]="chapters"
         ></app-book-chapter-chooser>
-        @if (showSourceTab || translatorSettingsEnabled) {
-          <div class="toolbar-separator" [ngClass]="{ 'hide-lt-sm': !translatorSettingsEnabled }">&nbsp;</div>
+        @if (canShowSourceTab) {
+          <div class="toolbar-separator">&nbsp;</div>
           @if (showSourceTab) {
             <button
               mat-icon-button
@@ -26,18 +26,16 @@
               <mat-icon>swap_horiz</mat-icon>
             </button>
           }
-          @if (translatorSettingsEnabled) {
-            <button
-              mat-icon-button
-              appBlurOnClick
-              type="button"
-              id="settings-btn"
-              (click)="openTranslatorSettings()"
-              [matTooltip]="t('configure_translator_settings')"
-            >
-              <mat-icon>settings</mat-icon>
-            </button>
-          }
+          <button
+            mat-icon-button
+            appBlurOnClick
+            type="button"
+            id="settings-btn"
+            (click)="openTranslatorSettings()"
+            [matTooltip]="t('configure_translator_settings')"
+          >
+            <mat-icon>settings</mat-icon>
+          </button>
         }
         @if (canShare) {
           <div class="toolbar-separator">&nbsp;</div>

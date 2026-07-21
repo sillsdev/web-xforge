@@ -59,6 +59,10 @@ export interface TranslatorSettingsDialogData {
   ]
 })
 export class TranslatorSettingsDialogComponent implements OnInit {
+  readonly showEditorTabsInSinglePaneSwitch = new FormControl<boolean>({
+    value: false,
+    disabled: !this.onlineStatusService.isOnline
+  });
   readonly suggestionsEnabledSwitch = new FormControl<boolean>({
     value: false,
     disabled: !this.onlineStatusService.isOnline
@@ -117,6 +121,12 @@ export class TranslatorSettingsDialogComponent implements OnInit {
     this.confidenceThreshold$.next(value);
   }
 
+  setShowEditorTabsInSinglePaneEnabled(value: boolean): void {
+    void this.projectUserConfigDoc.submitJson0Op(op =>
+      op.set<boolean | undefined>(puc => puc.showEditorTabsInSinglePane, value)
+    );
+  }
+
   setNumSuggestions(value: string): void {
     this.numSuggestions = value;
     void this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.numSuggestions, parseInt(value, 10)));
@@ -142,6 +152,11 @@ export class TranslatorSettingsDialogComponent implements OnInit {
       autoCorrectionsEnabled: value
     });
   }
+
+  private get showEditorTabsInSinglePaneUserEnabled(): boolean {
+    return this.projectUserConfigDoc.data?.showEditorTabsInSinglePane ?? false;
+  }
+
   private get translationSuggestionsUserEnabled(): boolean {
     return this.projectUserConfigDoc.data?.translationSuggestionsEnabled ?? true;
   }
@@ -163,9 +178,11 @@ export class TranslatorSettingsDialogComponent implements OnInit {
 
   private onOnlineStatusChange(): void {
     if (this.onlineStatusService.isOnline) {
+      this.showEditorTabsInSinglePaneSwitch.enable();
       this.suggestionsEnabledSwitch.enable();
       this.translationSuggestionsDisabled = !this.translationSuggestionsUserEnabled;
     } else {
+      this.showEditorTabsInSinglePaneSwitch.disable();
       this.suggestionsEnabledSwitch.disable();
       this.translationSuggestionsDisabled = true;
     }
@@ -185,6 +202,7 @@ export class TranslatorSettingsDialogComponent implements OnInit {
     }
 
     // Update form control state
+    this.showEditorTabsInSinglePaneSwitch.setValue(this.showEditorTabsInSinglePaneUserEnabled, { emitEvent: false });
     this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled, { emitEvent: false });
     this.lynxAssessmentsEnabled.setValue(this.lynxAssessmentsUserEnabled, { emitEvent: false });
     this.lynxAutoCorrectEnabled.setValue(this.lynxAutoCorrectUserEnabled, { emitEvent: false });

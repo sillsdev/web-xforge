@@ -31,4 +31,5 @@ export interface SFProjectUserConfig extends ProjectData {
   editorTabsOpen: EditorTabPersistData[];
   lynxInsightState: LynxInsightUserData;
   selectedDraftTargetParatextId?: string;
+  showEditorTabsInSinglePane?: boolean;
 }
