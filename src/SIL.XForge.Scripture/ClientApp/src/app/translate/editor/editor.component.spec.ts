@@ -382,6 +382,44 @@ describe('EditorComponent', () => {
     expect(env.component.chapters.length).toEqual(50);
   }));
 
+  describe('Show editor tabs in single pane setting', () => {
+    it('shows the source tab if showEditorTabsInSinglePane is undefined', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+      const env = new TestEnvironment();
+      env.setCurrentUser('user01');
+      env.setupProject();
+      env.setProjectUserConfig({ showEditorTabsInSinglePane: undefined });
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.component.showSourceTab).toBeTrue();
+      env.dispose();
+    }));
+
+    it('shows the source tab if showEditorTabsInSinglePane is false', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+      const env = new TestEnvironment();
+      env.setCurrentUser('user01');
+      env.setupProject();
+      env.setProjectUserConfig({ showEditorTabsInSinglePane: false });
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.component.showSourceTab).toBeTrue();
+      env.dispose();
+    }));
+
+    it('does not show the source tab if showEditorTabsInSinglePane is true', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+      const env = new TestEnvironment();
+      env.setCurrentUser('user01');
+      env.setupProject();
+      env.setProjectUserConfig({ showEditorTabsInSinglePane: true });
+      env.routeWithParams(navigationParams);
+      env.wait();
+      expect(env.component.showSourceTab).toBeFalse();
+      env.dispose();
+    }));
+  });
+
   describe('Translation Suggestions enabled', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -3585,136 +3623,46 @@ describe('EditorComponent', () => {
   });
 
   describe('Translator settings enabled/disabled', () => {
-    it('shows translator settings when translation suggestions are enabled but lynx features are disabled', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true },
-        lynxConfig: {
-          autoCorrectionsEnabled: false,
-          assessmentsEnabled: false
-        }
-      };
+    it('shows translator settings when the user has a paratext role', fakeAsync(() => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
-      env.setupProject(projectConfig);
+      env.setCurrentUser('user06'); // Paratext Observer
+      env.setupProject();
       env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
+      expect(env.component.showSourceTab).toBeTrue();
       expect(env.translatorSettingsButton).toBeTruthy();
       env.dispose();
     }));
 
-    it('hides translator settings when suggestions are enabled for the project but user cant edit', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true }
-      };
+    it('shows translator settings when the user does not have a paratext role but the project has a source', fakeAsync(() => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
-      env.setCurrentUser('user06'); //has read but not edit
-      env.setupProject(projectConfig);
+      env.setCurrentUser('user05'); // SF Commenter
+      env.setupProject();
       env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
-      expect(env.translatorSettingsButton).toBeFalsy();
-      env.dispose();
-    }));
-
-    it('hides translator settings when both translation suggestions and lynx features are disabled', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        lynxConfig: {
-          autoCorrectionsEnabled: false,
-          assessmentsEnabled: false
-        }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.translatorSettingsButton).toBeFalsy();
-      env.dispose();
-    }));
-
-    it('hides translator settings when lynx features are enabled but user cant edit', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        lynxConfig: {
-          autoCorrectionsEnabled: true,
-          assessmentsEnabled: true
-        }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setCurrentUser('user06'); //has read but not edit
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.translatorSettingsButton).toBeFalsy();
-      env.dispose();
-    }));
-
-    it('shows translator settings when suggestions are disabled but lynx features are enabled', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        lynxConfig: {
-          autoCorrectionsEnabled: true,
-          assessmentsEnabled: false
-        }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
+      expect(env.component.showSourceTab).toBeTrue();
       expect(env.translatorSettingsButton).toBeTruthy();
       env.dispose();
     }));
 
-    it('shows translator settings when both suggestions and lynx features are enabled', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true },
-        lynxConfig: {
-          autoCorrectionsEnabled: true,
-          assessmentsEnabled: true
-        }
-      };
+    it('hides translator settings when the user does not have a paratext role and there is no source', fakeAsync(() => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
-      env.setupProject(projectConfig);
-      env.setProjectUserConfig();
-      env.routeWithParams(navigationParams);
-      env.wait();
-      expect(env.translatorSettingsButton).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('shows translator settings when lynx features are enabled but no source access', fakeAsync(() => {
-      const projectConfig = {
-        translateConfig: { translationSuggestionsEnabled: false },
-        lynxConfig: {
-          autoCorrectionsEnabled: true,
-          assessmentsEnabled: false
-        }
-      };
-      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
-
-      const env = new TestEnvironment();
-      // Remove source from project to simulate no source access
       delete env.testProjectProfile.translateConfig.source;
-      env.setupProject(projectConfig);
+      env.setCurrentUser('user05'); // SF Commenter
+      env.setupProject();
       env.setProjectUserConfig();
       env.routeWithParams(navigationParams);
       env.wait();
-      expect(env.translatorSettingsButton).toBeTruthy();
+      expect(env.component.showSourceTab).toBeFalse();
+      expect(env.translatorSettingsButton).toBeFalsy();
       env.dispose();
     }));
 
