@@ -39,7 +39,6 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
-import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
@@ -55,6 +54,8 @@ export interface BookForImport {
   bookId: string;
   bookName: string;
   selected: boolean;
+  /** The chapters drafted for this book, or undefined when the whole book was drafted. */
+  chapters?: number[];
 }
 
 /**
@@ -120,7 +121,6 @@ export enum DraftApplyStatus {
     TranslocoMarkupComponent,
     NoticeComponent,
     ProjectSelectComponent,
-    BookMultiSelectComponent,
     SyncProgressComponent
   ],
   templateUrl: './draft-import-wizard.component.html',
@@ -444,6 +444,7 @@ export class DraftImportWizardComponent implements OnInit {
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
       bookName: this.i18n.localizeBook(bookNum),
+      chapters: this.draftedChaptersForBook(bookNum) ?? undefined,
       selected: true // Pre-select all books by default
     }));
 
@@ -546,12 +547,16 @@ export class DraftImportWizardComponent implements OnInit {
     this.canEditProject = true;
   }
 
-  onBookSelect(selectedBooks: number[]): void {
-    for (const book of this.availableBooksForImport) {
-      book.selected = selectedBooks.includes(book.bookNum);
-    }
+  onBookCheckboxChange(book: BookForImport, checked: boolean): void {
+    book.selected = checked;
     this.resetImportState();
     void this.analyzeBooksForOverwriteConfirmation();
+  }
+
+  /** The label for a book's checkbox: the book name, or "Book 1-3, 7" when only some chapters were drafted. */
+  bookLabel(book: BookForImport): string {
+    if (book.chapters == null || book.chapters.length === 0) return book.bookName;
+    return this.i18n.localizeBookWithChapters(book.bookId, new ChapterSet(book.chapters).toStringForDisplay());
   }
 
   async advanceFromProjectSelection(): Promise<void> {
