@@ -415,7 +415,7 @@ class TestEnvironment {
   }
 
   clickOverwriteCheckbox(): void {
-    const overwriteCheckbox: DebugElement = this.fixture.debugElement.query(By.css('mat-checkbox input'));
+    const overwriteCheckbox: DebugElement = this.fixture.debugElement.query(By.css('form mat-checkbox input'));
 
     // Verify the overwrite checkbox is present
     expect(overwriteCheckbox).not.toBeNull();
