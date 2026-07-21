@@ -122,7 +122,7 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
     const dataId: string = objectId();
     let fileUrl: string | undefined;
     try {
-      fileUrl = await this.fileService.onlineUploadFileOrFail(
+      fileUrl = await this.fileService.onlineUploadFile(
         FileType.TrainingData,
         this.data.projectId,
         TrainingDataDoc.COLLECTION,

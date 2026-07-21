@@ -45,7 +45,7 @@ describe('TrainingDataUploadDialogComponent', () => {
   it('cannot save if offline', async () => {
     const env = new TestEnvironment();
     when(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         anything(),
         anything(),
         anything(),
@@ -54,7 +54,7 @@ describe('TrainingDataUploadDialogComponent', () => {
         anything(),
         anything()
       )
-    ).thenResolve(undefined);
+    ).thenThrow(new HttpErrorResponse({ status: 0 }));
     let result: TrainingData = { dataId: '' } as TrainingData;
     env.dialogRef.afterClosed().subscribe((_result: TrainingData) => {
       result = _result;
@@ -64,7 +64,7 @@ describe('TrainingDataUploadDialogComponent', () => {
     await env.wait();
 
     verify(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         anything(),
         anything(),
         anything(),
@@ -80,7 +80,7 @@ describe('TrainingDataUploadDialogComponent', () => {
   it('should show an error message if the file is invalid', async () => {
     const env = new TestEnvironment();
     when(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         anything(),
         anything(),
         anything(),
@@ -99,7 +99,7 @@ describe('TrainingDataUploadDialogComponent', () => {
     await env.wait();
 
     verify(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         anything(),
         anything(),
         anything(),
@@ -116,7 +116,7 @@ describe('TrainingDataUploadDialogComponent', () => {
   it('should show an error message if the file for all other errors', async () => {
     const env = new TestEnvironment();
     when(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         anything(),
         anything(),
         anything(),
@@ -135,7 +135,7 @@ describe('TrainingDataUploadDialogComponent', () => {
     await env.wait();
 
     verify(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         anything(),
         anything(),
         anything(),
@@ -220,7 +220,7 @@ class TestEnvironment {
 
   constructor(availableTrainingData: TrainingData[] = []) {
     when(
-      mockedFileService.onlineUploadFileOrFail(
+      mockedFileService.onlineUploadFile(
         FileType.TrainingData,
         anything(),
         TrainingDataDoc.COLLECTION,

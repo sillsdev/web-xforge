@@ -95,7 +95,7 @@ export class FileService {
     filename: string,
     alwaysKeepFileOffline: boolean
   ): Promise<string | undefined> {
-    const onlineUrl: string | undefined = await this.tryOnlineUploadFileOrFail(
+    const onlineUrl: string | undefined = await this.tryOnlineUploadFile(
       fileType,
       projectId,
       dataCollection,
@@ -119,7 +119,7 @@ export class FileService {
     }
   }
 
-  async onlineUploadFileOrFail(
+  async onlineUploadFile(
     fileType: FileType,
     projectId: string,
     dataCollection: string,
@@ -127,19 +127,25 @@ export class FileService {
     blob: Blob,
     filename: string,
     alwaysKeepFileOffline: boolean
-  ): Promise<string | undefined> {
-    if (this.onlineStatusService.isOnline) {
-      // Upload if online, and throw any errors
-      const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
-      if (alwaysKeepFileOffline) {
-        await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
-      }
-      return onlineUrl;
+  ): Promise<string> {
+    const formData = new FormData();
+    formData.append('projectId', projectId);
+    formData.append('dataId', dataId);
+    formData.append('file', new File([blob], filename));
+    const response = await lastValueFrom(
+      this.http.post<HttpResponse<string>>(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/${fileType}`, formData, {
+        headers: { Accept: 'application/json' },
+        observe: 'response'
+      })
+    );
+    const onlineUrl = response.headers.get('Location')!.replace(`${environment.assets}${fileType}/`, '/');
+    if (alwaysKeepFileOffline) {
+      await this.findOrUpdateCache(fileType, dataCollection, dataId, onlineUrl);
     }
-    return undefined;
+    return onlineUrl;
   }
 
-  async tryOnlineUploadFileOrFail(
+  async tryOnlineUploadFile(
     fileType: FileType,
     projectId: string,
     dataCollection: string,
@@ -149,7 +155,8 @@ export class FileService {
     alwaysKeepFileOffline: boolean
   ): Promise<string | undefined> {
     try {
-      return await this.onlineUploadFileOrFail(
+      if (!this.onlineStatusService.isOnline) return undefined;
+      return await this.onlineUploadFile(
         fileType,
         projectId,
         dataCollection,
@@ -264,21 +271,6 @@ export class FileService {
   private onlineDeleteFile(fileType: FileType, projectId: string, dataId: string, ownerId: string): Promise<void> {
     const method = `delete${this.convertToPascalCase(fileType)}`;
     return this.commandService.onlineInvoke(PROJECTS_URL, method, { projectId, ownerId, dataId });
-  }
-
-  private async onlineUploadFile(fileType: FileType, projectId: string, dataId: string, file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append('projectId', projectId);
-    formData.append('dataId', dataId);
-    formData.append('file', file);
-    const response = await lastValueFrom(
-      this.http.post<HttpResponse<string>>(`${COMMAND_API_NAMESPACE}/${PROJECTS_URL}/${fileType}`, formData, {
-        headers: { Accept: 'application/json' },
-        observe: 'response'
-      })
-    );
-    const path = response.headers.get('Location')!;
-    return path.replace(`${environment.assets}${fileType}/`, '/');
   }
 
   private async onlineCacheFile(

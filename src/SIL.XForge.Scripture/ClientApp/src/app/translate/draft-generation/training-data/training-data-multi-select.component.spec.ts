@@ -142,19 +142,6 @@ describe('TrainingDataMultiSelectComponent', () => {
     expect(result).not.toContain(mockTrainingData[0]);
   }));
 
-  it('cannot show the upload dialog if offline', fakeAsync(() => {
-    let result: TrainingData[] = [];
-    component.trainingDataSelect.subscribe((_result: TrainingData[]) => {
-      result = _result;
-    });
-    when(mockOnlineStatusService.isOnline).thenReturn(false);
-    component.openUploadDialog();
-    tick();
-
-    verify(mockDialogService.openMatDialog(TrainingDataUploadDialogComponent, anything())).never();
-    expect(result).toEqual([]);
-  }));
-
   it('should show the upload dialog', fakeAsync(() => {
     let result: TrainingData[] = [];
     component.trainingDataSelect.subscribe((_result: TrainingData[]) => {

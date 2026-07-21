@@ -67,7 +67,6 @@ export class TrainingDataMultiSelectComponent {
 
   openUploadDialog(): void {
     if (this.activatedProjectService.projectId == null) return;
-    if (!this.appOnline) return;
     const dialogConfig: MatDialogConfig<TrainingDataUploadDialogData> = {
       data: { projectId: this.activatedProjectService.projectId, availableTrainingData: this.availableTrainingData },
       width: '320px'
