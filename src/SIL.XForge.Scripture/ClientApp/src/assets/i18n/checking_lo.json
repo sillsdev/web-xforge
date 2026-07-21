@@ -336,21 +336,5 @@
         "save": "ວັກທີ່ມີຄຳຖາມ",
         "select_scripture": "Select scripture to attach to your answer",
         "select_text_error_message": "Select verses to attach to your answer."
-    },
-    "confirm_dialog": {
-        "cancel": "",
-        "confirm": ""
-    },
-    "passage_detail_guided_phrase_record": {
-        "clear_recording": "",
-        "confirm_clear_cancel": "",
-        "confirm_clear_confirm": "",
-        "confirm_clear_message": "",
-        "confirm_clear_title": "",
-        "next": "",
-        "phrase_counter": "",
-        "previous": "",
-        "record": "",
-        "stop_recording": ""
     }
 }

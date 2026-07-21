@@ -336,21 +336,5 @@
         "save": "Yadda saxlamaq",
         "select_scripture": "Cavabınıza əlavə etmək üçün Müqəddəs Yazını seçin",
         "select_text_error_message": "Cavabınıza bənd etmək üçün ayələr seçin."
-    },
-    "confirm_dialog": {
-        "cancel": "",
-        "confirm": ""
-    },
-    "passage_detail_guided_phrase_record": {
-        "clear_recording": "",
-        "confirm_clear_cancel": "",
-        "confirm_clear_confirm": "",
-        "confirm_clear_message": "",
-        "confirm_clear_title": "",
-        "next": "",
-        "phrase_counter": "",
-        "previous": "",
-        "record": "",
-        "stop_recording": ""
     }
 }

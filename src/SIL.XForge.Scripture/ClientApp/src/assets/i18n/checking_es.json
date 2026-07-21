@@ -336,21 +336,5 @@
         "save": "Guardar",
         "select_scripture": "Seleccione la escritura para adjuntar a su respuesta",
         "select_text_error_message": "Seleccione los versículos para adjuntar a su respuesta."
-    },
-    "confirm_dialog": {
-        "cancel": "",
-        "confirm": ""
-    },
-    "passage_detail_guided_phrase_record": {
-        "clear_recording": "",
-        "confirm_clear_cancel": "",
-        "confirm_clear_confirm": "",
-        "confirm_clear_message": "",
-        "confirm_clear_title": "",
-        "next": "",
-        "phrase_counter": "",
-        "previous": "",
-        "record": "",
-        "stop_recording": ""
     }
 }
