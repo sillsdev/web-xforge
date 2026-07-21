@@ -1,0 +1,42 @@
+<ng-container *transloco="let t; read: 'passage_detail_guided_phrase_record'">
+  <div class="passage-detail-guided-phrase-record">
+    <div class="phrase-navigation" *ngIf="phrases.length > 0">
+      <span class="phrase-counter">{{ t('phrase_counter', { current: currentPhraseIndex + 1, total: phrases.length }) }}</span>
+      <div class="phrase-text">{{ currentPhrase }}</div>
+      <div class="navigation-buttons">
+        <button mdc-button type="button" [disabled]="currentPhraseIndex === 0" (click)="previousPhrase()">
+          {{ t('previous') }}
+        </button>
+        <button mdc-button type="button" [disabled]="isLastPhrase" (click)="nextPhrase()">
+          {{ t('next') }}
+        </button>
+      </div>
+    </div>
+    <div class="recording-controls">
+      <ng-container *ngIf="!hasAudioAttachment">
+        <button
+          *ngIf="!isRecording"
+          mdc-button
+          [unelevated]="true"
+          type="button"
+          (click)="startRecording()"
+          class="record"
+        >
+          <mdc-icon>mic</mdc-icon>
+          {{ t('record') }}
+        </button>
+        <button *ngIf="isRecording" mdc-button type="button" (click)="stopRecording()" class="stop-recording">
+          <mdc-icon>stop</mdc-icon>
+          {{ t('stop_recording') }}
+        </button>
+      </ng-container>
+      <div *ngIf="hasAudioAttachment" class="has-attachment">
+        <app-checking-audio-player *ngIf="!!audioUrl" [source]="audioUrl"></app-checking-audio-player>
+        <button mdc-button type="button" (click)="onClearRecording()" class="clear-recording">
+          <mdc-icon>delete</mdc-icon>
+          {{ t('clear_recording') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</ng-container>

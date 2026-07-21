@@ -25,6 +25,7 @@ import { CheckingComponent } from './checking/checking.component';
 import { FontSizeComponent } from './checking/font-size/font-size.component';
 import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
 import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
+import { PassageDetailGuidedPhraseRecordComponent } from './checking/passage-detail-guided-phrase-record/passage-detail-guided-phrase-record.component';
 import { QuestionAnsweredDialogComponent } from './question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
 
@@ -46,6 +47,7 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAudioPlayerComponent,
     AudioTimePipe,
     CheckingAudioCombinedComponent,
+    PassageDetailGuidedPhraseRecordComponent,
     QuestionAnsweredDialogComponent,
     TextChooserDialogComponent
   ],
