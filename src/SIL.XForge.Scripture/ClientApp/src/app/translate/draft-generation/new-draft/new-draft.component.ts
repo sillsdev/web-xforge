@@ -944,6 +944,11 @@ export class NewDraftComponent {
     return projectData != null ? projectLabel(projectData) : '';
   }
 
+  get sourceProjectDisplayName(): string {
+    const draftingSource = this.logicHandler.sources?.draftingSources[0];
+    return draftingSource == null ? '' : projectLabel(draftingSource);
+  }
+
   get targetShortName(): string {
     return this.activatedProjectService.projectDoc?.data?.shortName ?? '';
   }
