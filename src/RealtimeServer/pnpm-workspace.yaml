@@ -6,3 +6,5 @@ minimumReleaseAgeExclude:
   - brace-expansion@1.1.16
   - js-yaml@4.3.0
   - body-parser@1.20.6
+  - fast-uri@3.1.4
+  - fast-uri@3.1.3
