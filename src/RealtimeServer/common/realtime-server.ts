@@ -398,7 +398,10 @@ export class RealtimeServer extends ShareDB {
 
     if (!this.dataValidationDisabled) {
       ResourceMonitor.instance.setPubSub((this as any).pubsub);
-      ResourceMonitor.instance.startMonitoringConnection(this.defaultConnection);
+      ResourceMonitor.instance.startMonitoringConnection(this.defaultConnection, {
+        kind: 'default',
+        owner: 'RealtimeServer.defaultConnection'
+      });
     }
   }
 
