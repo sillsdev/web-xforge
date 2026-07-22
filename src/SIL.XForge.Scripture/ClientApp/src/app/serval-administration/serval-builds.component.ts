@@ -52,7 +52,6 @@ import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
-import { NoticeComponent } from '../shared/notice/notice.component';
 import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
@@ -178,7 +177,6 @@ export interface BuildInputItem {
     DateRangePickerComponent,
     OwnerComponent,
     InfoComponent,
-    NoticeComponent,
     MatCard,
     MatCardTitle,
     MatCardHeader,

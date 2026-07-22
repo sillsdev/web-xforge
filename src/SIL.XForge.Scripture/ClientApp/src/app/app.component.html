@@ -25,13 +25,20 @@
             <mat-icon><img src="/assets/images/sf.svg" height="38" /></mat-icon>
           </a>
         }
-        @if (isProjectSelected) {
+        @let project = selectedProjectDoc?.data;
+        @if (isProjectSelected && project != null) {
           <span class="project-name-wrapper" [routerLink]="appIconLink">
             @if (isScreenTiny) {
-              <span class="project-name">{{ selectedProjectDoc?.data?.shortName }}</span>
+              <span class="project-name">{{ project.shortName }}</span>
             } @else {
-              <span class="project-name">{{ selectedProjectDoc?.data?.name }}</span>
-              <span class="project-short-name">{{ selectedProjectDoc?.data?.shortName }}</span>
+              <span class="project-name">{{ project.name }}</span>
+              <span class="project-short-name-and-lang-code">
+                {{ project.shortName }}
+                <!-- Show code to PT users, but omit for guest roles incase it's sensitive, such as if a dialect hasn't been assigned a code and has to use the majority language code -->
+                @if (userIsMemberOfPTProject && project.writingSystem.tag != null) {
+                  - {{ project.writingSystem.tag }}
+                }
+              </span>
             }
           </span>
         }
