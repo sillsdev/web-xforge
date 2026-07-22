@@ -39,7 +39,7 @@ function getKeyActivityType(event: KeyboardEvent): ActivityType {
       break;
 
     default:
-      if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
+      if (event.key?.length === 1 && !event.ctrlKey && !event.metaKey) {
         type = ActivityType.Char;
       }
       break;
