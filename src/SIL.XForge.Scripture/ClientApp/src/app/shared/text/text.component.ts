@@ -717,6 +717,14 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     return false;
   }
 
+  getNextSegmentRef(ref: string): string | undefined {
+    return this.viewModel.getNextSegmentRef(ref);
+  }
+
+  getPrevSegmentRef(ref: string): string | undefined {
+    return this.viewModel.getPrevSegmentRef(ref);
+  }
+
   getSegmentRange(ref: string): Range | undefined {
     return this.viewModel.getSegmentRange(ref);
   }
@@ -1512,7 +1520,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (this._segment == null) {
       return;
     }
-    const nextRef = this.viewModel.getNextSegmentRef(this._segment.ref);
+    const nextRef = this.getNextSegmentRef(this._segment.ref);
     if (nextRef != null) {
       this.setSegment(nextRef, undefined, true, end);
     }
@@ -1522,7 +1530,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (this._segment == null) {
       return;
     }
-    const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
+    const prevRef = this.getPrevSegmentRef(this._segment.ref);
     if (prevRef != null) {
       this.setSegment(prevRef, undefined, true, end);
     }
