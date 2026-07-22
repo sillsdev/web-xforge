@@ -643,6 +643,32 @@ describe('NewDraftLogicHandler', () => {
       expect(env.selectedTrainingSourceBooks['training-source-1-id']).toContain('MAT');
       expect(env.selectedTrainingSourceBooks['training-source-2-id']).not.toContain('MAT');
     });
+
+    it('fully excludes a whole-book draft from training, even chapters the source cannot draft', async () => {
+      // The drafting source has only a couple of chapters of Mark (below the partial-drafting threshold), so Mark
+      // can only be drafted whole. The target has more chapters of Mark translated than the source contains.
+      const env = new TestEnvironment({
+        lastSelectedTranslationScriptureRanges: undefined,
+        previouslySelectedTrainingScriptureRanges: undefined,
+        draftingSourceBooksChapters: 'MRK1-2',
+        targetProjectBooksChapters: 'MRK1-7;LUK1-24',
+        trainingSourcesBooksChapters: {
+          'training-source-1-id': 'MRK1-16;LUK1-24'
+        }
+      });
+      await env.waitForInit();
+
+      // Mark's source has only 2 chapters of content (< 12), so Mark is not eligible for partial drafting. It is
+      // drafted whole, with no chapter selector offered.
+      env.logicHandler.selectDraftingBooks(['MRK']);
+      expect(env.booksOfferedForPartialDrafting).not.toContain('MRK');
+
+      env.logicHandler.setInputMode('training_books');
+
+      // Mark is being drafted as a whole book, so it must not be available for training at all. That includes the
+      // target chapters beyond the source's 2 (MRK3-7), which is what previously leaked through.
+      expect(env.logicHandler.availableTargetTrainingScriptureRange.books.has('MRK')).toBe(false);
+    });
   });
 
   describe('auto-selecting training books on first visit', () => {

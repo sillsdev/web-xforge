@@ -699,12 +699,42 @@ export class NewDraftLogicHandler {
     }
   }
 
+  /**
+   * The scripture range to withhold from the training options, so that training data never overlaps what is being
+   * drafted. It is not simply selectedDraftingScriptureRange, which holds only the chapters the source can draft and
+   * is submitted verbatim as the draft request. What counts as "being drafted" for this purpose depends on how the
+   * book was selected:
+   *
+   * - Partial-eligible book: the user was shown a chapter selector, so only the chapters they chose count. Those are
+   *   withheld, and the book's remaining chapters stay available for training (the "draft some, train on the rest" case).
+   * - Whole-book draft: no chapter selector was offered, so the whole book counts as being drafted, including the
+   *   chapters the source cannot draft. The entire book is withheld, so those chapters are not silently offered as
+   *   training data.
+   */
+  private draftingRangeExcludedFromTraining(): VerboseScriptureRange {
+    const excluded = new VerboseScriptureRange();
+    for (const [bookId, draftedChapters] of this.selectedDraftingScriptureRange.books) {
+      if (this.isBookEligibleForPartialDrafting(bookId)) {
+        excluded.books.set(bookId, draftedChapters.clone());
+      } else {
+        // Withhold the whole book. Use its chapters in the target, since the training options are derived from the
+        // target's content; a book with no target content has nothing to withhold.
+        const targetChapters = this.targetProjectScriptureRange.books.get(bookId);
+        if (targetChapters != null) {
+          excluded.books.set(bookId, targetChapters.clone());
+        }
+      }
+    }
+    return excluded;
+  }
+
   private limitAvailableTrainingRangeBasedOnSelectedDraftingRange(): void {
     // Available target training books are the target's content minus what's being drafted, further limited to books
     // that exist in at least one training source: a target book can only be used as training data if a source
     // provides the matching book to pair it with. Books with no such source are recorded
     // (targetTrainingBooksWithoutSource) so the UI can explain why they aren't offered.
-    const targetTrainingRange = this.targetProjectScriptureRange.difference(this.selectedDraftingScriptureRange);
+    const excludedFromTraining = this.draftingRangeExcludedFromTraining();
+    const targetTrainingRange = this.targetProjectScriptureRange.difference(excludedFromTraining);
     const booksInAnyTrainingSource = new Set(Object.values(this.trainingSourceBooks).flat());
 
     const availableTargetTrainingRange = new VerboseScriptureRange();
@@ -718,9 +748,8 @@ export class NewDraftLogicHandler {
     }
     this.availableTargetTrainingScriptureRange = availableTargetTrainingRange;
     this.targetTrainingBooksWithoutSource = booksWithoutSource;
-    this.selectedTargetTrainingScriptureRange = this.selectedTargetTrainingScriptureRange.difference(
-      this.selectedDraftingScriptureRange
-    );
+    this.selectedTargetTrainingScriptureRange =
+      this.selectedTargetTrainingScriptureRange.difference(excludedFromTraining);
 
     // Limit available and selected training source books to not exceed available target training scripture range
     const availableTargetRange = this.availableTargetTrainingScriptureRange;
