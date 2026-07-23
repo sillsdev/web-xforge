@@ -20,6 +20,14 @@ RUN apt-get update \
         procps \
         sudo \
         wget \
+    && echo "Installing development utilities" \
+    && apt-get install --yes \
+        ripgrep \
+        less \
+        jq \
+        vim \
+        time \
+        unzip \
     && curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - \
     && apt-get install --yes --no-install-recommends \
         build-essential \
