@@ -29,7 +29,7 @@ import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { DraftProgressService } from './new-draft-logic-handler';
+import { DraftProgressService } from './draft-progress.service';
 import { NewDraftComponent } from './new-draft.component';
 import { VerboseScriptureRange } from '../../../shared/scripture-range';
 

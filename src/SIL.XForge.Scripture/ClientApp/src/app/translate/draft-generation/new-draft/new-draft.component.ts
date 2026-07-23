@@ -44,9 +44,9 @@ import { CopyrightMessage, DraftSource, getCopyrightMessages } from '../draft-so
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftPendingUpdatesComponent } from './draft-pending-updates/draft-pending-updates.component';
+import { DraftProgressService } from './draft-progress.service';
 import {
   DraftingBookExclusionReason,
-  DraftProgressService,
   NewDraftAbortMode,
   NewDraftLogicHandler,
   scriptureRangeToBookListWithoutChapterDetail
