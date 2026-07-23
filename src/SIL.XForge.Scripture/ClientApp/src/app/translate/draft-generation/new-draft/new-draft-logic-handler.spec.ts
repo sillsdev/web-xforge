@@ -11,7 +11,8 @@ import { chapterCounts } from '../../../shared/progress-service/progress.service
 import { VerboseScriptureRange } from '../../../shared/scripture-range';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
-import { DraftProgressService, ExcludedDraftingBook, NewDraftLogicHandler } from './new-draft-logic-handler';
+import { DraftProgressService } from './draft-progress.service';
+import { ExcludedDraftingBook, NewDraftLogicHandler } from './new-draft-logic-handler';
 
 const mockDestroyRef = { onDestroy: () => () => {}, destroyed: false } as unknown as DestroyRef;
 

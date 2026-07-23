@@ -26,7 +26,7 @@ import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
-import { DraftProgressService } from './new-draft-logic-handler';
+import { DraftProgressService } from './draft-progress.service';
 import { NewDraftComponent } from './new-draft.component';
 
 const SOURCE_SHORT_NAME = 'DS1';
