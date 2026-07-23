@@ -127,11 +127,13 @@ async function configureSources(page: Page, user: UserEmulator, context: Screens
 /** The pre-step (pending updates) may or may not appear; then the read-only source-confirmation preface. */
 async function stepThroughPreface(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
   const continueAnyway = page.getByRole('button', { name: 'Continue anyway' });
-  if (await continueAnyway.isVisible().catch(() => false)) {
+  const confirmSources = page.locator('app-confirm-sources');
+  await expect(confirmSources.or(continueAnyway).first()).toBeVisible();
+  if (await continueAnyway.isVisible()) {
     await user.click(continueAnyway);
   }
 
-  await expect(page.locator('app-confirm-sources')).toBeVisible();
+  await expect(confirmSources).toBeVisible();
   await expect(page.locator('app-confirm-sources')).toContainText(DRAFTING_SOURCE.shortName.toUpperCase());
   await screenshot(page, { pageName: 'partial_draft_preface', ...context });
   await user.click(page.getByRole('button', { name: 'Next' }));
