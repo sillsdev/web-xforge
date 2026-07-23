@@ -1,3 +1,6 @@
 minimumReleaseAge: 10080 # 7 days
 minimumReleaseAgeExclude:
   - ws@8.21.0
+  - axios@1.18.0
+  - fast-uri@3.1.4
+  - fast-uri@3.1.3

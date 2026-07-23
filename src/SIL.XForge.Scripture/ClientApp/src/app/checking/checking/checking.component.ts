@@ -1078,9 +1078,28 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     // Get the segment to set the scripture reference
     let verseRef: VerseRef | undefined = undefined;
-    const segmentRef: string | undefined = this.scripturePanel?.textComponent.segmentRef;
-    if (segmentRef != null && this.book != null) {
-      verseRef = getVerseRefFromSegmentRef(this.book, segmentRef);
+    if (this.scripturePanel != null) {
+      let segmentRef: string | undefined = this.scripturePanel.textComponent.segmentRef;
+      if (segmentRef != null && this.book != null) {
+        verseRef = getVerseRefFromSegmentRef(this.book, segmentRef);
+
+        // If this segment is not a verse segment, keep looking down the chapter until we get a verse segment
+        while (verseRef == null) {
+          segmentRef = this.scripturePanel.textComponent.getNextSegmentRef(segmentRef);
+          if (segmentRef == null) break;
+          verseRef = getVerseRefFromSegmentRef(this.book, segmentRef);
+        }
+
+        // And then if we still do not have a verse segment, look back up the chapter until we get a verse segment
+        if (segmentRef == null) {
+          segmentRef = this.scripturePanel.textComponent.segmentRef;
+          while (verseRef == null) {
+            segmentRef = this.scripturePanel.textComponent.getPrevSegmentRef(segmentRef);
+            if (segmentRef == null) break;
+            verseRef = getVerseRefFromSegmentRef(this.book, segmentRef);
+          }
+        }
+      }
     }
 
     verseRef ??= new VerseRef(this.book ?? 0, this.chapter ?? 1, 1);

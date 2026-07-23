@@ -38,7 +38,18 @@ import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scripturefor
 import * as RichText from 'rich-text';
 import { BehaviorSubject, firstValueFrom, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
+import {
+  anyString,
+  anything,
+  instance,
+  mock,
+  objectContaining,
+  reset,
+  resetCalls,
+  spy,
+  verify,
+  when
+} from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
@@ -342,6 +353,63 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: ADMIN_USER });
       env.clickButton(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      expect().nothing();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('should specify the current verse when opening question dialog', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER });
+      env.component.scripturePanel!.textComponent.segmentRef = 'verse_1_3';
+      env.fixture.detectChanges();
+      tick();
+
+      env.clickButton(env.addQuestionButton);
+      verify(
+        mockedQuestionDialogService.questionDialog(
+          objectContaining({
+            defaultVerse: new VerseRef(43, 1, 3)
+          })
+        )
+      ).once();
+      expect().nothing();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('should specify the nearest verse below a heading when opening question dialog', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER });
+      env.component.scripturePanel!.textComponent.segmentRef = 's1_1';
+      env.fixture.detectChanges();
+      tick();
+
+      env.clickButton(env.addQuestionButton);
+      verify(
+        mockedQuestionDialogService.questionDialog(
+          objectContaining({
+            defaultVerse: new VerseRef(43, 1, 5)
+          })
+        )
+      ).once();
+      expect().nothing();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('should specify the nearest verse above a heading at the bottom when opening question dialog', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER });
+      env.component.scripturePanel!.textComponent.segmentRef = 's1_2';
+      env.fixture.detectChanges();
+      tick();
+
+      env.clickButton(env.addQuestionButton);
+      verify(
+        mockedQuestionDialogService.questionDialog(
+          objectContaining({
+            defaultVerse: new VerseRef(43, 1, 6)
+          })
+        )
+      ).once();
       expect().nothing();
       flush();
       discardPeriodicTasks();
@@ -3883,6 +3951,8 @@ class TestEnvironment {
     delta.insert({ verse: { number: '4', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, verse 4.`, { segment: `verse_${chapter}_4` });
     delta.insert('\n', { para: { style: 'p' } });
+    delta.insert('Verse 2 heading', { segment: 's1_1' });
+    delta.insert('\n', { para: { style: 's1' } });
     delta.insert({ blank: true }, { segment: `verse_${chapter}_4/p_1` });
     delta.insert({ verse: { number: '5', style: 'v' } });
     delta.insert(`target: chapter ${chapter}, `, { segment: `verse_${chapter}_5` });
@@ -3890,6 +3960,8 @@ class TestEnvironment {
     delta.insert({ verse: { number: '6', style: 'v' } });
     delta.insert(`ישע`, { segment: `verse_${chapter}_6` });
     delta.insert('\n', { para: { style: 'p' } });
+    delta.insert('End of chapter heading', { segment: 's1_2' });
+    delta.insert('\n', { para: { style: 's1' } });
     return delta;
   }
 

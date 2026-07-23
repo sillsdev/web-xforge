@@ -267,7 +267,7 @@ export class SuggestionsComponent {
       case 'Escape':
         return true;
       default:
-        if (event.key.length !== 1) {
+        if (event.key?.length !== 1) {
           return false;
         }
         const keyCode = event.key.charCodeAt(0);

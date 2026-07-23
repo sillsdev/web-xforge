@@ -602,8 +602,20 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         tap(event => (this.isShiftDown = event.shiftKey))
       )
       .subscribe(event => {
+        // Do not allow characters to overwrite outside of the current range
+        const range = this.editor?.getSelection();
+        if (
+          !this.readOnlyEnabled &&
+          !this.nonPrintableCursorMoveKeys.has(event.key) &&
+          range != null &&
+          !this.isValidSelectionForCurrentSegment(range)
+        ) {
+          event.preventDefault();
+          return;
+        }
+
         // Set flag to use system cursor when any key is down that would move the cursor (avoids cursor lag issue)
-        if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key.length === 1) {
+        if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key?.length === 1) {
           this.pressedCursorMoveKeys.add(event.key);
 
           // Only set the flag when the user presses and holds (detect with a short timeout delay)
@@ -715,6 +727,14 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       return true;
     }
     return false;
+  }
+
+  getNextSegmentRef(ref: string): string | undefined {
+    return this.viewModel.getNextSegmentRef(ref);
+  }
+
+  getPrevSegmentRef(ref: string): string | undefined {
+    return this.viewModel.getPrevSegmentRef(ref);
   }
 
   getSegmentRange(ref: string): Range | undefined {
@@ -1512,7 +1532,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (this._segment == null) {
       return;
     }
-    const nextRef = this.viewModel.getNextSegmentRef(this._segment.ref);
+    const nextRef = this.getNextSegmentRef(this._segment.ref);
     if (nextRef != null) {
       this.setSegment(nextRef, undefined, true, end);
     }
@@ -1522,7 +1542,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (this._segment == null) {
       return;
     }
-    const prevRef = this.viewModel.getPrevSegmentRef(this._segment.ref);
+    const prevRef = this.getPrevSegmentRef(this._segment.ref);
     if (prevRef != null) {
       this.setSegment(prevRef, undefined, true, end);
     }
