@@ -149,6 +149,11 @@
           <button mat-menu-item appRouterLink="/projects" id="project-home-link">
             <mat-icon>home</mat-icon> {{ "my_projects.my_projects" | transloco }}
           </button>
+          @if (experimentalFeatures.showExperimentalFeaturesInMenu) {
+            <button mat-menu-item (click)="openExperimentalFeaturesDialog()">
+              <mat-icon>science</mat-icon> {{ t("experimental_features") }}
+            </button>
+          }
           @if (featureFlags.showDeveloperTools.enabled) {
             <button mat-menu-item [matMenuTriggerFor]="appearanceMenu">
               <mat-icon>palette</mat-icon>

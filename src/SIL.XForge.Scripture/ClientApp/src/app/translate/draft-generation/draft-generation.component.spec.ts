@@ -29,6 +29,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ProgressService } from '../../shared/progress-service/progress.service';
 import { NllbLanguageService } from '../nllb-language.service';
+import { StartBuildResult } from './draft-generation';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
@@ -67,7 +68,7 @@ describe('DraftGenerationComponent', () => {
 
   class TestEnvironment {
     readonly testOnlineStatusService: TestOnlineStatusService;
-    readonly startedOrActiveBuild$ = new Subject<BuildDto>();
+    readonly startedOrActiveBuild$ = new Subject<StartBuildResult>();
     component!: DraftGenerationComponent;
     fixture!: ComponentFixture<DraftGenerationComponent>;
 
@@ -130,7 +131,6 @@ describe('DraftGenerationComponent', () => {
         { draftHistoryCutOffDate: new Date('2025-04-03') }
       );
       TestEnvironment.initProject('user01');
-      mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser']);
 
       mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(this.startedOrActiveBuild$);
       mockDraftGenerationService.getBuildHistory.and.returnValue(of([buildDto]));
@@ -195,6 +195,7 @@ describe('DraftGenerationComponent', () => {
         currentUserId,
         currentUserRoles: [SystemRole.User]
       });
+      mockUserService = jasmine.createSpyObj<UserService>(['getCurrentUser'], { currentUserId });
       mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
         projectId: projectId,
         projectId$: of(projectId),
@@ -923,15 +924,14 @@ describe('DraftGenerationComponent', () => {
         useEcho: false,
         sendEmailOnBuildFinished: false
       });
-      env.startedOrActiveBuild$.next(buildDto);
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: buildDto });
       env.fixture.detectChanges();
       expect(env.component.currentPage).toBe('initial');
     });
 
-    it('should not start a build if one is already running', () => {
+    it('should inform the user when an already-running build was joined', () => {
       const env = new TestEnvironment();
       env.component['draftJob'] = undefined; //clear the known draft job
-      expect(mockDraftGenerationService.getBuildProgress(projectId)).not.toBeNull();
 
       env.component.currentPage = 'steps';
       env.component.startBuild({
@@ -944,12 +944,37 @@ describe('DraftGenerationComponent', () => {
         sendEmailOnBuildFinished: false
       });
       env.fixture.detectChanges();
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledTimes(1);
 
+      // The service reports that an active build was joined instead of a new build started
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: true, job: buildDto });
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: true, job: buildDto });
+      env.fixture.detectChanges();
+
+      // The user is told exactly once, and the joined build becomes the displayed job
+      expect(mockDialogService.message).toHaveBeenCalledOnceWith('draft_generation.draft_already_running');
       expect(env.component.currentPage).toBe('initial');
       expect(env.component['draftJob']).not.toBeNull();
-      // FIXME This assertion does nothing because it's misusing anything()
-      // expect(mockDraftGenerationService.startBuildOrGetActiveBuild).not.toHaveBeenCalledWith(anything());
-      expect(mockDialogService.message).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not show a dialog when a new build was started', () => {
+      const env = new TestEnvironment();
+
+      env.component.startBuild({
+        trainingDataFiles: [],
+        trainingScriptureRanges: [],
+        translationScriptureRanges: [],
+        fastTraining: false,
+        useEcho: false,
+        projectId: projectId,
+        sendEmailOnBuildFinished: false
+      });
+      env.fixture.detectChanges();
+
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: buildDto });
+      env.fixture.detectChanges();
+
+      expect(mockDialogService.message).not.toHaveBeenCalled();
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
@@ -967,7 +992,7 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         sendEmailOnBuildFinished: false
       });
-      env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Queued });
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Queued } });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingDataFiles: [],
@@ -996,7 +1021,7 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         sendEmailOnBuildFinished: false
       });
-      env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Pending });
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Pending } });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingDataFiles: [],
@@ -1025,7 +1050,7 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         sendEmailOnBuildFinished: false
       });
-      env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Active });
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Active } });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingDataFiles: [],
@@ -1055,7 +1080,7 @@ describe('DraftGenerationComponent', () => {
         projectId: projectId,
         sendEmailOnBuildFinished: false
       });
-      env.startedOrActiveBuild$.next({ ...buildDto, state: BuildStates.Canceled });
+      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Canceled } });
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: projectId,
         trainingDataFiles: [],
@@ -1140,6 +1165,30 @@ describe('DraftGenerationComponent', () => {
       });
       expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
     }));
+  });
+
+  describe('getTranslationScriptureRange', () => {
+    it('should include chapter numbers for partially drafted books', () => {
+      const env = new TestEnvironment();
+      const job: BuildDto = {
+        ...buildDto,
+        additionalInfo: {
+          buildId: 'testBuildId',
+          step: 0,
+          trainingScriptureRanges: [],
+          translationEngineId: 'testEngineId',
+          translationScriptureRanges: [{ projectId: 'testSourceProjectId', scriptureRange: 'GEN1-3;EXO1-40' }],
+          trainingDataFileIds: [],
+          canDenormalizeQuotes: false
+        }
+      };
+      expect(env.component.getTranslationScriptureRange(job)).toBe('Genesis 1-3 and Exodus');
+    });
+
+    it('should return empty string when no translation ranges are present', () => {
+      const env = new TestEnvironment();
+      expect(env.component.getTranslationScriptureRange(buildDto)).toBe('');
+    });
   });
 
   describe('cancel', () => {

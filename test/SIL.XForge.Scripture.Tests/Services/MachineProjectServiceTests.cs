@@ -205,7 +205,10 @@ public class MachineProjectServiceTests
             .ThrowsAsync(ex);
 
         // A pre-translation job has been queued
-        await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationQueuedAt = DateTime.UtcNow });
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { PreTranslationJobId = Job01, PreTranslationQueuedAt = DateTime.UtcNow }
+        );
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
@@ -217,6 +220,7 @@ public class MachineProjectServiceTests
         );
 
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
     }
@@ -239,7 +243,10 @@ public class MachineProjectServiceTests
             .ThrowsAsync(ex);
 
         // An SMT translation job has been queued
-        await env.SetupProjectSecretAsync(Project01, new ServalData { TranslationQueuedAt = DateTime.UtcNow });
+        await env.SetupProjectSecretAsync(
+            Project01,
+            new ServalData { TranslationJobId = Job01, TranslationQueuedAt = DateTime.UtcNow }
+        );
 
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
@@ -251,6 +258,7 @@ public class MachineProjectServiceTests
         );
 
         env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.TranslationErrorMessage);
     }
@@ -2271,6 +2279,69 @@ public class MachineProjectServiceTests
             actual
                 .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
                 .TargetFilters!.Single(f => f.CorpusId == Corpus04)
+                .ScriptureRange
+        );
+    }
+
+    [Test]
+    public void GetTranslationBuildConfig_UsesExplicitTargetTrainingScriptureRange()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var servalData = new ServalData
+        {
+            ParallelCorpusIdForPreTranslate = ParallelCorpus01,
+            ParallelCorpusIdForTrainOn = ParallelCorpus02,
+        };
+        const string project03ScriptureRange = "LUK;JHN";
+        const string project04ScriptureRange = "ACT;ROM";
+        const string targetScriptureRange = "GEN;EXO";
+        var buildConfig = new BuildConfig
+        {
+            TrainingScriptureRanges =
+            [
+                new ProjectScriptureRange { ProjectId = Project03, ScriptureRange = project03ScriptureRange },
+                new ProjectScriptureRange { ProjectId = Project04, ScriptureRange = project04ScriptureRange },
+                new ProjectScriptureRange { ProjectId = Project02, ScriptureRange = targetScriptureRange },
+            ],
+        };
+        List<ServalCorpusSyncInfo> corporaSyncInfo =
+        [
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus03,
+                IsSource = true,
+                ParallelCorpusId = ParallelCorpus02,
+                ProjectId = Project03,
+            },
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus04,
+                IsSource = true,
+                ParallelCorpusId = ParallelCorpus02,
+                ProjectId = Project04,
+            },
+            new ServalCorpusSyncInfo
+            {
+                CorpusId = Corpus05,
+                IsSource = false,
+                ParallelCorpusId = ParallelCorpus02,
+                ProjectId = Project02,
+            },
+        ];
+
+        // SUT
+        TranslationBuildConfig actual = env.Service.GetTranslationBuildConfig(
+            servalData,
+            servalConfig: null,
+            buildConfig,
+            corporaSyncInfo
+        );
+        Assert.AreEqual(
+            targetScriptureRange,
+            actual
+                .TrainOn!.Single(c => c.ParallelCorpusId == ParallelCorpus02)
+                .TargetFilters!.Single(f => f.CorpusId == Corpus05)
                 .ScriptureRange
         );
     }

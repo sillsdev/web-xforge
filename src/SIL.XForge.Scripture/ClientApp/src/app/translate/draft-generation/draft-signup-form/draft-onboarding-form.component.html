@@ -99,7 +99,8 @@
                 [availableBooks]="projectBooks"
                 [selectedBooks]="selectedCompletedBooks"
                 (bookSelect)="onCompletedBooksSelect($event)"
-                [basicMode]="false"
+                [showProgress]="true"
+                [bulkBookSelection]="true"
                 [projectName]="currentProjectDisplayName"
                 [projectId]="currentProjectId"
               ></app-book-multi-select>
@@ -168,8 +169,6 @@
                 [availableBooks]="allCanonicalBooks"
                 [selectedBooks]="selectedSubmittedBooks"
                 (bookSelect)="onSubmittedBooksSelect($event)"
-                [basicMode]="true"
-                [projectName]="currentProjectDisplayName"
               ></app-book-multi-select>
               @if (showPlannedBooksRequiredError) {
                 <mat-error>{{ t("planned_books_required") }}</mat-error>

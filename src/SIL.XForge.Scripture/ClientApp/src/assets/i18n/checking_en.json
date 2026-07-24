@@ -172,7 +172,9 @@
       "REP": "Reproof (Proverbs 25-31)",
       "4BA": "4 Baruch (Rest of Baruch)",
       "LAO": "Laodiceans"
-    }
+    },
+    "book_with_chapters": "{{ book }} {{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",

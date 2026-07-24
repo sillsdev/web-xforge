@@ -182,6 +182,62 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.requested-label')).not.toBeNull();
     }));
 
+    it('should not treat an empty target project training entry as training configuration', fakeAsync(() => {
+      // The target project's entry is the target side of the training configuration: it records which of the target's
+      // books/chapters the training pairs draw from. A build with no training books still stores this entry, just with
+      // an empty range, and an empty target selection with no source entries means no training data was configured, so
+      // the entry alone must not make the training section render.
+      const entry = getStandardBuildDto({ trainingBooks: [], trainingDataFiles: [] });
+      entry.additionalInfo!.trainingScriptureRanges = [{ projectId: 'project01', scriptureRange: '' }];
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.hasTrainingConfiguration).toBe(false);
+      expect(fixture.nativeElement.querySelector('.no-training-configuration')).not.toBeNull();
+    }));
+
+    it('should show the target training entry as chapter detail on source rows, not as its own row', fakeAsync(() => {
+      const entry = getStandardBuildDto({ trainingBooks: ['GEN', 'EXO'], trainingDataFiles: [] });
+      entry.additionalInfo!.trainingScriptureRanges = [
+        { projectId: 'project02', scriptureRange: 'GEN;EXO' },
+        // The target project entry carries the chapter-level selection: part of Genesis, all of Exodus
+        { projectId: 'project01', scriptureRange: 'GEN1-3;EXO1-40' }
+      ];
+      // Leave the draft unavailable so the training configuration auto-expands
+      entry.additionalInfo!.dateGenerated = undefined;
+      component.draftIsAvailable = false;
+
+      // SUT
+      component.entry = entry;
+      component.isLatestBuild = true;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.trainingConfiguration).toEqual([
+        {
+          scriptureRange: 'GEN1-3;EXO1-40',
+          source: 'src',
+          target: 'tar'
+        }
+      ]);
+      expect(fixture.nativeElement.querySelector('.scriptureRange').innerText).toBe('Genesis 1-3 and Exodus');
+    }));
+
+    it('should show chapter detail in the title for a partial-book draft', fakeAsync(() => {
+      const entry = getStandardBuildDto({ translateBooks: ['GEN3-5', 'EXO'] });
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(component.scriptureRange).toEqual('GEN3-5;EXO');
+      expect(fixture.nativeElement.querySelector('.title').innerText).toBe('Genesis 3-5 and Exodus');
+    }));
+
     it('should show the USFM format option when the project is the latest draft', fakeAsync(() => {
       when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
       when(mockedDraftOptionsService.areFormattingOptionsSupportedForBuild(anything())).thenReturn(true);
@@ -239,12 +295,15 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.trainingConfiguration).toEqual([
         {
           scriptureRange: 'EXO',
-          source: 'Unknown',
-          target: 'Unknown'
+          source: undefined,
+          target: undefined
         }
       ]);
       expect(component.trainingConfigurationOpen).toBe(true);
       expect(fixture.nativeElement.querySelector('.scriptureRange').innerText).toBe('Exodus');
+      // An unknown source or target renders as a localized "Unknown"
+      expect(fixture.nativeElement.querySelector('td.mat-column-source').innerText).toBe('Unknown');
+      expect(fixture.nativeElement.querySelector('td.mat-column-target').innerText).toBe('Unknown');
     }));
 
     it('should handle builds with additional info referencing a deleted user', fakeAsync(() => {
