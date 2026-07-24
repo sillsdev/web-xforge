@@ -1038,6 +1038,7 @@ public class MachineApiController : ControllerBase
     /// <response code="401">Your Paratext tokens have expired, and you must log in again.</response>
     /// <response code="403">You do not have permission to build this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="409">A draft build is already queued or running for this project.</response>
     /// <response code="429">The project's build quota has been exceeded.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     /// <remarks>
@@ -1063,6 +1064,10 @@ public class MachineApiController : ControllerBase
         {
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (BuildAlreadyRunningException)
+        {
+            return Conflict();
         }
         catch (DataNotFoundException)
         {

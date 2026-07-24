@@ -1,43 +1,45 @@
 <ng-container *transloco="let t; read: 'book_select'">
-  @if (availableBooks.length > 0 && !readonly && !basicMode) {
+  @if (!readonly && (projectName != null || (bulkBookSelection && availableBooks.length > 0))) {
     <div class="scope-selection-wrapper">
       @if (projectName != null) {
         <span class="project-name">{{ projectName }}</span>
       }
-      <div class="scope-selection">
-        <mat-checkbox
-          class="ot-checkbox"
-          value="OT"
-          [disabled]="!isOldTestamentAvailable()"
-          [checked]="selectedAllOT"
-          [indeterminate]="partialOT"
-          (change)="select('OT', $event.checked)"
-        >
-          {{ t("old_testament") }}
-        </mat-checkbox>
-        <mat-checkbox
-          class="nt-checkbox"
-          value="NT"
-          [disabled]="!isNewTestamentAvailable()"
-          [checked]="selectedAllNT"
-          [indeterminate]="partialNT"
-          (change)="select('NT', $event.checked)"
-        >
-          {{ t("new_testament") }}
-        </mat-checkbox>
-
-        @if (isDeuterocanonAvailable()) {
+      @if (bulkBookSelection && availableBooks.length > 0) {
+        <div class="scope-selection">
           <mat-checkbox
-            class="dc-checkbox"
-            value="DC"
-            [checked]="selectedAllDC"
-            [indeterminate]="partialDC"
-            (change)="select('DC', $event.checked)"
+            class="ot-checkbox"
+            value="OT"
+            [disabled]="!isOldTestamentAvailable()"
+            [checked]="selectedAllOT"
+            [indeterminate]="partialOT"
+            (change)="select('OT', $event.checked)"
           >
-            {{ t("deuterocanon") }}
+            {{ t("old_testament") }}
           </mat-checkbox>
-        }
-      </div>
+          <mat-checkbox
+            class="nt-checkbox"
+            value="NT"
+            [disabled]="!isNewTestamentAvailable()"
+            [checked]="selectedAllNT"
+            [indeterminate]="partialNT"
+            (change)="select('NT', $event.checked)"
+          >
+            {{ t("new_testament") }}
+          </mat-checkbox>
+
+          @if (isDeuterocanonAvailable()) {
+            <mat-checkbox
+              class="dc-checkbox"
+              value="DC"
+              [checked]="selectedAllDC"
+              [indeterminate]="partialDC"
+              (change)="select('DC', $event.checked)"
+            >
+              {{ t("deuterocanon") }}
+            </mat-checkbox>
+          }
+        </div>
+      }
     </div>
   }
   <div class="flex-row">
@@ -49,7 +51,7 @@
         [disabled]="readonly"
         (change)="onChipListChange(book)"
       >
-        @if (book.progress != null && basicMode === false) {
+        @if (book.progress != null && showProgress) {
           <mat-chip-option
             [value]="book"
             [selected]="book.selected"
@@ -66,10 +68,4 @@
       </mat-chip-listbox>
     }
   </div>
-  @if (!loaded) {
-    <div class="loading-message">
-      <mat-spinner [diameter]="15"></mat-spinner>
-      {{ t("loading_message") }}
-    </div>
-  }
 </ng-container>

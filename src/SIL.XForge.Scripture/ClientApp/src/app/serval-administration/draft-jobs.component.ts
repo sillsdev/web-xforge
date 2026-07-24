@@ -34,6 +34,8 @@ import { SFProjectService } from '../core/sf-project.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
+import { trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
+import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
 import { projectLabel } from '../shared/utils';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
@@ -94,6 +96,8 @@ export interface DraftJobsProjectBooks {
   /** Short name of the project if available. */
   shortName?: string;
   books: string[];
+  /** Compact display of `books`, e.g. "GEN-LEV; NUM 1-3" (full books collapse into ranges). */
+  booksDisplay: string;
 }
 
 /** Names of events that are relevant for pre-translation draft generation requests and processing. */
@@ -829,20 +833,22 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
       if (event.payload != null) {
         const buildConfig = event.payload.buildConfig;
         if (buildConfig != null) {
-          // Extract training books
+          // Extract training books. The entry for the event's own project (the draft target) is not a training
+          // source; it is folded into the source ranges as chapter detail.
           if (Array.isArray(buildConfig.TrainingScriptureRanges)) {
-            for (const range of buildConfig.TrainingScriptureRanges) {
-              if (range.ScriptureRange != null) {
-                // Use the project ID from the range if available, otherwise use the event's project ID
-                const projectId = range.ProjectId || event.projectId;
-                if (projectId) {
-                  // Split semicolon-separated books and add them to the project's books
-                  const books = range.ScriptureRange.split(';').filter((book: string) => book.trim().length > 0);
-                  if (!trainingProjects.has(projectId)) {
-                    trainingProjects.set(projectId, []);
-                  }
-                  trainingProjects.get(projectId)!.push(...books);
+            const ranges: { projectId?: string; scriptureRange?: string }[] = buildConfig.TrainingScriptureRanges.map(
+              (range: any) => ({ projectId: range.ProjectId, scriptureRange: range.ScriptureRange ?? undefined })
+            );
+            for (const range of trainingSourceRangesWithTargetDetail(ranges, r => r.projectId, event.projectId)) {
+              // Use the project ID from the range if available, otherwise use the event's project ID
+              const projectId = range.projectId || event.projectId;
+              if (projectId) {
+                // Split semicolon-separated books and add them to the project's books
+                const books = range.scriptureRange!.split(';').filter((book: string) => book.trim().length > 0);
+                if (!trainingProjects.has(projectId)) {
+                  trainingProjects.set(projectId, []);
                 }
+                trainingProjects.get(projectId)!.push(...books);
               }
             }
           }
@@ -874,14 +880,16 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     const trainingBooks: DraftJobsProjectBooks[] = Array.from(trainingProjects.entries()).map(([projectId, books]) => ({
       sfProjectId: projectId,
       projectDisplayName: '',
-      books: books
+      books: books,
+      booksDisplay: formatScriptureRangeTokensCompact(books)
     }));
 
     const translationBooks: DraftJobsProjectBooks[] = Array.from(translationProjects.entries()).map(
       ([projectId, books]) => ({
         sfProjectId: projectId,
         projectDisplayName: '',
-        books: books
+        books: books,
+        booksDisplay: formatScriptureRangeTokensCompact(books)
       })
     );
 

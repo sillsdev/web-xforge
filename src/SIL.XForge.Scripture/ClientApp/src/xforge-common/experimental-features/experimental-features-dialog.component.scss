@@ -1,0 +1,40 @@
+.mat-mdc-dialog-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title-left {
+  display: flex;
+  align-items: center;
+  column-gap: 0.5em;
+}
+
+.mat-mdc-dialog-content {
+  width: 40em;
+  max-width: 100%;
+}
+
+.feature-checkbox {
+  padding-block: 0.75em;
+  width: 100%;
+  white-space: normal;
+
+  ::ng-deep .mdc-form-field {
+    align-items: flex-start;
+  }
+
+  ::ng-deep .mdc-label {
+    display: block;
+    padding-top: 10px;
+  }
+}
+
+.feature-name {
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.feature-description {
+  margin-top: 0.25em;
+}

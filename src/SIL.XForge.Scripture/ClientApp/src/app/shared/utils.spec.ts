@@ -118,14 +118,17 @@ describe('shared utils', () => {
       expect(expandNumbers('1')).toEqual([1]);
       expect(expandNumbers('1,2,3')).toEqual([1, 2, 3]);
       expect(expandNumbers('1-3')).toEqual([1, 2, 3]);
-      expect(expandNumbers('4,1-3,5,invalid,6,0,7-9')).toEqual([4, 1, 2, 3, 5, 6, 0, 7, 8, 9]);
     });
-    it('should return an empty array for invalid number ranges', () => {
+    it('should return an empty array for an empty range', () => {
       expect(expandNumbers('')).toEqual([]);
-      expect(expandNumbers('3-1')).toEqual([]);
-      expect(expandNumbers('invalid-1')).toEqual([]);
-      expect(expandNumbers('1-invalid')).toEqual([]);
-      expect(expandNumbers('invalid-invalid')).toEqual([]);
+    });
+    it('should return null for invalid number ranges', () => {
+      expect(expandNumbers('3-1')).toBeNull();
+      expect(expandNumbers('invalid-1')).toBeNull();
+      expect(expandNumbers('1-invalid')).toBeNull();
+      expect(expandNumbers('invalid-invalid')).toBeNull();
+      // A single invalid token rejects the whole range rather than salvaging the valid ones around it.
+      expect(expandNumbers('4,1-3,5,invalid,6,0,7-9')).toBeNull();
     });
   });
 

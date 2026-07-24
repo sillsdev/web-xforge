@@ -94,6 +94,20 @@ as-split > .as-split-gutter .as-split-gutter-icon {
   color: var(--sf-error-color);
 }
 
+// A <button> styled to be indistinguishable from surrounding text, for cases where a click target needs to be
+// inline with body text (e.g. an expand/collapse toggle within a sentence) but must remain a real <button> for
+// keyboard/screen-reader accessibility.
+.text-button {
+  background: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
 .locale-fonts mat-option {
   font-family: var(--sf-language-font-family);
 }

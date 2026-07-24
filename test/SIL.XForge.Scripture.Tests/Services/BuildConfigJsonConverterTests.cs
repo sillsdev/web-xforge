@@ -81,6 +81,37 @@ public class BuildConfigJsonConverterTests
     }
 
     [Test]
+    public void WriteJson_Serializes_BuildConfig_AvailableTrainingDataFiles()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig { AvailableTrainingDataFiles = [Data01, Data02] };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.Received().WriteStartObject();
+        writer.Received().WritePropertyName(nameof(buildConfig.AvailableTrainingDataFiles));
+        serializer.Received().Serialize(writer, buildConfig.AvailableTrainingDataFiles);
+        writer.Received().WriteEndObject();
+    }
+
+    [Test]
+    public void WriteJson_OmitsAvailableTrainingDataFiles_WhenNull()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.AvailableTrainingDataFiles));
+    }
+
+    [Test]
     public void WriteJson_Serializes_BuildConfig_TrainingScriptureRanges()
     {
         var converter = new BuildConfigJsonConverter();
@@ -228,6 +259,49 @@ public class BuildConfigJsonConverterTests
         Assert.IsFalse(buildConfig.UseEcho);
         CollectionAssert.AreEqual(new List<string> { Data01, Data02 }, buildConfig.TrainingDataFiles);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    public void ReadJson_Deserializes_JSON_Object_AvailableTrainingDataFiles()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.AvailableTrainingDataFiles)}}":["{{Data01}}","{{Data02}}"]
+            }
+            """;
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsNotNull(buildConfig!.AvailableTrainingDataFiles);
+        CollectionAssert.AreEqual(new List<string> { Data01, Data02 }, buildConfig.AvailableTrainingDataFiles!);
+        Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    public void ReadJson_LeavesAvailableTrainingDataFilesNull_WhenAbsent()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}"
+            }
+            """;
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsNull(buildConfig!.AvailableTrainingDataFiles);
     }
 
     [Test]

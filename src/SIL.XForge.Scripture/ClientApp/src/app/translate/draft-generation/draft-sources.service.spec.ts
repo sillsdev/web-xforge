@@ -34,21 +34,24 @@ describe('DraftSourcesService', () => {
   });
 
   describe('getDraftProjectSources', () => {
-    it('should pass undefined properties if no projects loaded', done => {
-      when(mockActivatedProjectService.projectId).thenReturn(undefined);
-      when(mockActivatedProjectService.changes$).thenReturn(
-        new BehaviorSubject<SFProjectProfileDoc>({ data: undefined } as SFProjectProfileDoc)
-      );
+    it('skips emissions while the doc data is not loaded, then emits the real sources once it is', done => {
+      // Doc present but its data hasn't loaded yet. The service must not emit the all-empty fallback for this;
+      // otherwise a firstValueFrom consumer would latch it instead of the real sources.
+      const changes$ = new BehaviorSubject<SFProjectProfileDoc>({ data: undefined } as SFProjectProfileDoc);
+      when(mockActivatedProjectService.changes$).thenReturn(changes$);
 
-      // SUT
+      const targetProject = createTestProjectProfile({
+        translateConfig: { draftConfig: { draftingSources: [], trainingSources: [] } }
+      });
+
       service.getDraftProjectSources().subscribe(result => {
-        expect(result).toEqual({
-          trainingSources: [],
-          trainingTargets: [],
-          draftingSources: []
-        } as DraftSourcesAsArrays);
+        // The first (and only) emission is the loaded one, never the empty fallback (trainingTargets would be []).
+        expect(result.trainingTargets).toEqual([{ ...targetProject, projectRef: 'project01' }]);
         done();
       });
+
+      // Provide the data after the initial (filtered) emission has had a chance to fire.
+      setTimeout(() => changes$.next({ id: 'project01', data: targetProject } as SFProjectProfileDoc), 0);
     });
 
     it('should pass the values from the target project if no access', done => {

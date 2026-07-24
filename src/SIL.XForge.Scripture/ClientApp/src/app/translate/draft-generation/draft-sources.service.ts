@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, defer, from, Observable } from 'rxjs';
-import { switchMap, throttleTime } from 'rxjs/operators';
+import { filter, switchMap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
@@ -41,6 +41,9 @@ export class DraftSourcesService {
    */
   getDraftProjectSources(): Observable<DraftSourcesAsArrays> {
     return combineLatest([this.activatedProject.changes$, this.currentUser$]).pipe(
+      // Ignore emissions where the doc's data hasn't loaded yet; otherwise getDraftSourcesAsArrays returns all-empty
+      // arrays and a firstValueFrom consumer latches that instead of the real sources.
+      filter(([targetDoc]) => targetDoc?.data != null),
       throttleTime(this.projectChangeThrottlingMs, asyncScheduler, { leading: true, trailing: true }),
       switchMap(([targetDoc, _currentUser]) => this.getDraftSourcesAsArrays(targetDoc))
     );

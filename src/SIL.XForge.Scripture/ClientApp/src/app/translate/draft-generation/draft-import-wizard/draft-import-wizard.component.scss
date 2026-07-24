@@ -63,9 +63,9 @@ h1 {
   margin-bottom: 1rem;
 }
 
-mat-checkbox {
-  margin-top: 1rem;
-  display: block;
+.book-selection-list {
+  display: flex;
+  flex-direction: column;
 }
 
 ul {

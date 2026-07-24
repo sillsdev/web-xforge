@@ -12,6 +12,7 @@ import { SelectableProject } from '../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { DraftSource } from '../translate/draft-generation/draft-source';
+import { ChapterSet } from './scripture-range';
 
 /**
  * Factory function for APP_INITIALIZER to preload English translations.
@@ -171,23 +172,20 @@ export function booksFromScriptureRange(scriptureRange: string | undefined): num
 }
 
 /**
- * Expands a number range separated by hyphens and commas into a list of numbers.
+ * Expands a number range separated by hyphens and commas into a list of numbers, delegating parsing and validation to
+ * {@link ChapterSet}.
  *
  * @param numberRange The number range, e.g. 1,2,5-8,10
- * @returns The number range as a list of numbers, e.g. [1,2,5,6,7,8,10]
+ * @returns The numbers the range covers (e.g. [1,2,5,6,7,8,10]); an empty array for an empty range; or null if the
+ * input is not a valid range (non-numeric, reversed, or otherwise malformed). Callers decide how to treat invalid
+ * input.
  */
-export function expandNumbers(numberRange: string): number[] {
-  return numberRange
-    .split(',')
-    .filter(Boolean) // Remove empty strings
-    .flatMap(part => {
-      if (part.includes('-')) {
-        const [start, end] = part.split('-').map(Number);
-        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-      }
-      return [Number(part)];
-    })
-    .filter(n => !Number.isNaN(n));
+export function expandNumbers(numberRange: string): number[] | null {
+  try {
+    return [...new ChapterSet(numberRange).chapters];
+  } catch {
+    return null;
+  }
 }
 
 export class XmlUtils {

@@ -14,7 +14,6 @@ import { NgCircleProgressModule } from 'ng-circle-progress';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
@@ -23,6 +22,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
@@ -33,14 +33,17 @@ import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SelectableProject } from '../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { booksFromScriptureRange, projectLabel } from '../../shared/utils';
+import { VerboseScriptureRange } from '../../shared/scripture-range';
+import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
+import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig } from './draft-generation';
+import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
 import {
   DraftGenerationStepsComponent,
   DraftGenerationStepsResult
@@ -159,6 +162,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly urlService: ExternalUrlService,
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly projectService: SFProjectService,
+    private readonly featureFlags: FeatureFlagService,
+    private readonly permissions: PermissionsService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'DraftGenerationComponent');
@@ -208,15 +213,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get hasConfigureSourcePermission(): boolean {
-    return this.isProjectAdmin;
-  }
-
-  private get isProjectAdmin(): boolean {
-    const userId = this.authService.currentUserId;
-    if (userId != null) {
-      return this.activatedProject.projectDoc?.data?.userRoles[userId] === SFProjectRole.ParatextAdministrator;
-    }
-    return false;
+    return this.permissions.canConfigureSources(this.activatedProject.projectDoc);
   }
 
   ngOnInit(): void {
@@ -341,8 +338,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    // Display pre-generation steps
-    this.currentPage = 'steps';
+    if (this.featureFlags.partialBookDrafting.enabled) {
+      const projectId = this.activatedProject.projectId;
+      if (projectId != null) {
+        await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
+      }
+    } else {
+      this.currentPage = 'steps';
+    }
   }
 
   async cancel(): Promise<void> {
@@ -396,10 +399,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   getTranslationScriptureRange(job?: BuildDto): string {
     if (job?.additionalInfo?.translationScriptureRanges == null) return '';
-    return this.i18n.enumerateList(
-      booksFromScriptureRange(
+    return formatScriptureRangeWithChapters(
+      new VerboseScriptureRange(
         job.additionalInfo.translationScriptureRanges.map(item => item.scriptureRange).join(';')
-      ).map(b => this.i18n.localizeBook(b))
+      ),
+      this.i18n,
+      { collapseFullBookRuns: false }
     );
   }
 
@@ -448,23 +453,20 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   startBuild(buildConfig: BuildConfig): void {
-    this.draftGenerationService
-      .getBuildProgress(buildConfig.projectId)
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(job => {
-        if (this.isDraftInProgress(job)) {
-          this.draftJob = job;
-          this.currentPage = 'initial';
-          void this.dialogService.message('draft_generation.draft_already_running');
-          return;
-        }
-      });
-
+    let userNotified = false;
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.draftGenerationService
       .startBuildOrGetActiveBuild(buildConfig)
       .pipe(
-        tap((job?: BuildDto) => {
+        tap((result?: StartBuildResult) => {
+          // If a build was already active (started by another user, or by this user elsewhere), the submitted
+          // configuration was not used, so tell the user
+          if (result?.joinedExistingBuild === true && !userNotified) {
+            userNotified = true;
+            void this.dialogService.message('draft_generation.draft_already_running');
+          }
+
+          const job: BuildDto | undefined = result?.job;
           this.currentPage = 'initial';
           // Handle automatic closing of dialog if job finishes while cancel dialog is open
           if (!this.canCancel(job)) {
@@ -487,7 +489,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
         }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((job?: BuildDto) => (this.draftJob = job));
+      .subscribe((result?: StartBuildResult) => (this.draftJob = result?.job));
   }
 
   projectLabel(project?: SelectableProject): string {

@@ -191,13 +191,13 @@
 
         <h1>{{ t("confirm_books_to_import") }}</h1>
         <p>{{ t("confirm_books_to_import_description") }}</p>
-        <app-book-multi-select
-          [availableBooks]="availableBooksForImport"
-          [selectedBooks]="selectedBooks"
-          [basicMode]="true"
-          [readonly]="isImporting"
-          (bookSelect)="onBookSelect($event)"
-        ></app-book-multi-select>
+        <div class="book-selection-list">
+          @for (book of availableBooksForImport; track book.bookId) {
+            <mat-checkbox [checked]="book.selected" (change)="onBookCheckboxChange(book, $event.checked)">
+              {{ bookLabel(book) }}
+            </mat-checkbox>
+          }
+        </div>
 
         <div class="button-strip">
           <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">

@@ -1,0 +1,47 @@
+<div *transloco="let t; read: 'new_draft.pending_updates'">
+  @if (loading) {
+    <mat-spinner diameter="32" class="loading-indicator"></mat-spinner>
+  } @else {
+    <h1>{{ t("heading") }}</h1>
+    <p>{{ t("body") }}</p>
+
+    <div class="pending-project-rows">
+      @for (row of rows; track row.projectId) {
+        <div class="pending-project-row">
+          <span class="project-name">{{ row.name }}</span>
+          <span class="row-status">
+            @if (row.canSync) {
+              @if (row.syncState === "pending") {
+                <button mat-stroked-button (click)="syncProject(row)"><mat-icon>sync</mat-icon>{{ t("sync") }}</button>
+              } @else if (row.syncState === "syncing") {
+                <app-sync-progress [projectDoc]="row.projectDoc" [showSyncStatus]="false"></app-sync-progress>
+              } @else if (row.syncState === "synced") {
+                <span class="sync-done"><mat-icon>check_circle</mat-icon>{{ t("synced") }}</span>
+              } @else if (row.syncState === "failed") {
+                <span class="sync-failed"> <mat-icon>warning</mat-icon>{{ t("sync_failed") }} </span>
+                <button mat-stroked-button (click)="retrySyncProject(row)">{{ t("retry") }}</button>
+              }
+            } @else {
+              <span class="cant-sync"><mat-icon>warning</mat-icon>{{ t("cant_sync") }}</span>
+            }
+          </span>
+        </div>
+      }
+    </div>
+
+    <div class="pending-actions">
+      <!-- "Sync all" only makes sense with more than one syncable project; a single one uses its own row's Sync button. -->
+      @if (syncableRows.length > 1) {
+        <button mat-flat-button color="primary" (click)="syncAll()">
+          <mat-icon>sync</mat-icon>{{ t("sync_all") }}
+        </button>
+      }
+      <button mat-stroked-button [disabled]="userSyncInProgress" (click)="continueAnyway()">
+        {{ t("continue_anyway") }}
+      </button>
+    </div>
+    @if (userSyncInProgress) {
+      <p class="wait-for-sync">{{ t("wait_for_sync") }}</p>
+    }
+  }
+</div>

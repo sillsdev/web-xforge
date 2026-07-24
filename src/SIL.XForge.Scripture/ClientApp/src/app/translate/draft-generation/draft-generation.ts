@@ -1,5 +1,6 @@
 import { InjectionToken } from '@angular/core';
 import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 
 /**
@@ -8,11 +9,28 @@ import { BuildStates } from '../../machine-api/build-states';
 export interface BuildConfig {
   projectId: string;
   trainingDataFiles: string[];
+  /**
+   * The DataIds of all training data files offered to the user for this build, of which `trainingDataFiles` is the
+   * selected subset. Persisted so a later build can tell newly added files from deliberately deselected ones. Omit
+   * if the available set is not being reported.
+   */
+  availableTrainingDataFiles?: string[];
   trainingScriptureRanges: ProjectScriptureRange[];
   translationScriptureRanges: ProjectScriptureRange[];
   fastTraining: boolean;
   useEcho: boolean;
   sendEmailOnBuildFinished: boolean;
+}
+
+/** The outcome of a request to start a draft build. */
+export interface StartBuildResult {
+  /**
+   * Whether a build that was already active was joined, rather than a new build started. When true, the
+   * configuration submitted with the request was not used.
+   */
+  joinedExistingBuild: boolean;
+  /** The state and progress of the build, as with DraftGenerationService.pollBuildProgress(). */
+  job?: BuildDto;
 }
 
 /**

@@ -214,8 +214,9 @@ function parseBooksAndChapters(scriptureRange: string): BookAndChapters[] {
       if (chapterPart === '') {
         return { bookId };
       }
-      const chapters: number[] = expandNumbers(chapterPart);
-      return chapters.length > 0 ? { bookId, chapters } : { bookId };
+      // Invalid chapter notation falls back to the whole book (no chapter detail), same as an empty chapter part.
+      const chapters: number[] | null = expandNumbers(chapterPart);
+      return chapters != null && chapters.length > 0 ? { bookId, chapters } : { bookId };
     })
     .filter(notNull);
 }

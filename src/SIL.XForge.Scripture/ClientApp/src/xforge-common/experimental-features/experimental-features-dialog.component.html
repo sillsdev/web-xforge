@@ -1,0 +1,24 @@
+<ng-container *transloco="let t; read: 'experimental_features_dialog'">
+  <h2 mat-dialog-title class="dialog-icon-title">
+    <span class="title-left"><mat-icon>science</mat-icon> {{ t("title") }}</span>
+    <button mat-icon-button mat-dialog-close><mat-icon>close</mat-icon></button>
+  </h2>
+  <mat-dialog-content class="mat-typography">
+    <p>{{ t("description") }}</p>
+
+    @for (feature of availableExperimentalFeatures; track feature.name; let isLast = $last) {
+      <mat-checkbox
+        class="feature-checkbox"
+        [(ngModel)]="feature.featureFlag.enabled"
+        [disabled]="feature.featureFlag.readonly"
+      >
+        <div class="feature-name">{{ feature.name }}</div>
+        @if (feature.description != null && feature.description !== "") {
+          <div class="feature-description">{{ feature.description }}</div>
+        }
+      </mat-checkbox>
+    } @empty {
+      <p>No experimental features are currently available.</p>
+    }
+  </mat-dialog-content>
+</ng-container>

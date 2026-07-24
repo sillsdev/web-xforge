@@ -31,6 +31,12 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.TrainingDataFiles);
         }
 
+        if (value.AvailableTrainingDataFiles is not null)
+        {
+            writer.WritePropertyName(nameof(value.AvailableTrainingDataFiles));
+            serializer.Serialize(writer, value.AvailableTrainingDataFiles);
+        }
+
         if (value.TrainingScriptureRanges.Count > 0)
         {
             writer.WritePropertyName(nameof(value.TrainingScriptureRanges));

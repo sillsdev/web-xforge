@@ -87,6 +87,7 @@ describe('DraftGenerationStepsComponent', () => {
       ])
     );
     when(mockOnlineStatusService.isOnline).thenReturn(true);
+    when(mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
   }));
 
   describe('ngOnInit', () => {
@@ -396,8 +397,7 @@ describe('DraftGenerationStepsComponent', () => {
       expect(component.trainingBooksExcludingTranslatedWithoutEnoughData).toEqual([5]);
     }));
 
-    it('should set "unusableTranslateTargetBooks" and "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
-      expect(component.unusableTranslateTargetBooks).toEqual([7]);
+    it('should set "unusableTrainingTargetBooks" correctly', fakeAsync(() => {
       expect(component.unusableTrainingTargetBooks).toEqual([7]);
     }));
 
@@ -1369,8 +1369,8 @@ describe('DraftGenerationStepsComponent', () => {
     it('should localize, group, and collapse the books to use in training', () => {
       const trainingGroups = component.selectedTrainingBooksCollapsed();
       expect(trainingGroups.length).toEqual(2);
-      expect(trainingGroups[0].ranges).toEqual('Genesis - Exodus');
-      expect(trainingGroups[1].ranges).toEqual('Genesis - Exodus and Numbers');
+      expect(trainingGroups[0].ranges).toEqual('Genesis and Exodus');
+      expect(trainingGroups[1].ranges).toEqual('Genesis, Exodus, and Numbers');
     });
 
     it('should show that the training books was empty', () => {

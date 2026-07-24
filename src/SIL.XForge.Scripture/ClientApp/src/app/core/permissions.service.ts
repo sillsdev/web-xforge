@@ -120,6 +120,13 @@ export class PermissionsService {
     return role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
   }
 
+  /** Whether the user is allowed to configure drafting sources for the project. */
+  canConfigureSources(projectDoc?: SFProjectProfileDoc, userId?: string): boolean {
+    if (projectDoc?.data == null) return false;
+    const role = projectDoc.data.userRoles[userId ?? this.userService.currentUserId];
+    return role === SFProjectRole.ParatextAdministrator;
+  }
+
   canAccessBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled !== true) return false;
     return SF_PROJECT_RIGHTS.hasRight(

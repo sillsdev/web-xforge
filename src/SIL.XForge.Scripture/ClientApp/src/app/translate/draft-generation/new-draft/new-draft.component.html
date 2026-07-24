@@ -1,0 +1,371 @@
+<div class="wrapper" *transloco="let t; read: 'new_draft'">
+  @if (page === "abort") {
+    <div class="abort-screen">
+      <mat-icon class="abort-icon" color="primary">info</mat-icon>
+      @if (abortMode === "config_changed") {
+        <p>{{ t("abort.config_changed") }}</p>
+      } @else if (abortMode === "project_syncing") {
+        <p>{{ t("abort.project_syncing") }}</p>
+      } @else if (inaccessibleProjectNames.length > 0) {
+        <p>{{ t("abort.no_access_list_heading") }}</p>
+        <ul class="inaccessible-projects">
+          @for (project of inaccessibleProjectNames; track project) {
+            <li>{{ project }}</li>
+          }
+        </ul>
+        <p>{{ t("abort.no_access_instruction") }}</p>
+      } @else {
+        <p>{{ t("abort.no_access") }}</p>
+      }
+      <button mat-flat-button color="primary" (click)="goBack()">
+        <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
+        >{{ t("abort.go_back") }}
+      </button>
+    </div>
+  } @else if (initData == null || page === "loading") {
+    <mat-spinner class="loading-indicator"></mat-spinner>
+    <p class="loading-text">{{ t("loading") }}</p>
+  } @else {
+    @if (stepNumber != null) {
+      <p class="step-indicator">{{ t("step_indicator", { step: stepNumber, total: totalStepCount }) }}</p>
+    }
+    @if (page === "pending_updates") {
+      <app-draft-pending-updates
+        [pendingProjects]="pendingProjects"
+        (continue)="onPendingUpdatesComplete($event)"
+      ></app-draft-pending-updates>
+    } @else if (page === "preface") {
+      <app-confirm-sources></app-confirm-sources>
+      @for (msg of copyrightMessages; track msg.banner) {
+        <app-copyright-banner [notice]="msg.notice" [banner]="msg.banner"></app-copyright-banner>
+      }
+      @if (canConfigureSources) {
+        <button mat-button class="configure-sources-link" (click)="goToConfigureSources()">
+          <mat-icon>settings</mat-icon>{{ t("change_source_configuration") }}
+        </button>
+      }
+    } @else if (page === "draft_books") {
+      <h1>{{ t("draft_books.title") }}</h1>
+      <h2
+        [innerHTML]="
+          i18n.translateAndInsertTags('new_draft.draft_books.subtitle', {
+            project: sourceProjectDisplayName,
+            sourceLanguage: sourceLanguageDisplay,
+            targetLanguage: targetLanguageDisplay
+          })
+        "
+        class="semi-bold"
+      ></h2>
+      @if (availableDraftingBooks.length === 0) {
+        <app-notice icon="info" mode="basic" type="light">{{ t("draft_books.no_available_books") }}</app-notice>
+      } @else {
+        <app-book-multi-select
+          [availableBooks]="availableDraftingBooks"
+          [selectedBooks]="selectedDraftingBooks"
+          (bookSelect)="onDraftingBookSelect($event)"
+        ></app-book-multi-select>
+      }
+      @if (draftingExclusionNotices.length > 0) {
+        <app-notice icon="info" mode="basic" type="light" class="books-hidden">
+          <div class="books-hidden-container">
+            <button
+              type="button"
+              class="text-button books-hidden-message"
+              (click)="draftingExclusionsExpanded = !draftingExclusionsExpanded"
+              [innerHTML]="
+                i18n.translateAndInsertTags(
+                  draftingExclusionsExpanded ? 'new_draft.books_hidden.hide' : 'new_draft.books_hidden.show_why',
+                  { numBooks: draftingHiddenBookCount }
+                )
+              "
+            ></button>
+            @if (draftingExclusionsExpanded) {
+              @for (notice of draftingExclusionNotices; track notice.key) {
+                <p class="books-hidden-explanation">{{ t(notice.key, notice.params) }}</p>
+              }
+            }
+          </div>
+        </app-notice>
+      }
+      @if (booksOfferedForPartialDrafting.length > 0) {
+        <h3>{{ t("draft_books.which_chapters") }}</h3>
+        <p>{{ t("draft_books.partial_explanation") }}</p>
+        <div class="partial-book-drafting-table">
+          @for (bookId of booksOfferedForPartialDrafting; track bookId) {
+            <span class="book-name">{{ i18n.localizeBook(bookId) }}</span>
+            <div class="chapter-input-wrapper">
+              <mat-form-field subscriptSizing="dynamic" class="chapter-input">
+                <input
+                  [value]="draftingRangeForBook(bookId)"
+                  matInput
+                  (blur)="onDraftingChaptersBlurred(bookId, $any($event.target).value)"
+                />
+                <mat-hint>{{ t("chapter_input.available", { range: draftingChapterHint(bookId) }) }}</mat-hint>
+              </mat-form-field>
+              @for (error of draftingChapterErrors.get(bookId) ?? []; track error.key) {
+                <span class="chapter-error">{{ t(error.key, error.params) }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    } @else if (page === "training_books") {
+      <h1>{{ t("training_books.title") }}</h1>
+      <h2
+        [innerHTML]="
+          i18n.translateAndInsertTags('new_draft.training_books.subtitle', {
+            project: targetProjectDisplayName,
+            sourceLanguage: sourceLanguageDisplay,
+            targetLanguage: targetLanguageDisplay
+          })
+        "
+        class="semi-bold"
+      ></h2>
+      @if (availableTargetTrainingBooks.length === 0) {
+        <app-notice icon="info" mode="basic" type="light">{{ t("training_books.no_target_books") }}</app-notice>
+      } @else {
+        <app-book-multi-select
+          [availableBooks]="availableTargetTrainingBooks"
+          [selectedBooks]="selectedTargetTrainingBooks"
+          [projectId]="initData.projectId"
+          [projectName]="targetProjectDisplayName"
+          [showProgress]="true"
+          [bulkBookSelection]="true"
+          (bookSelect)="onTargetTrainingBookSelect($event)"
+        ></app-book-multi-select>
+      }
+      @if (trainingBooksWereAutoSelected) {
+        <app-notice icon="info" mode="basic" type="light">{{ t("training_books.auto_selected") }}</app-notice>
+      }
+      @if (hasTargetTrainingBooksWithoutSource) {
+        <app-notice icon="info" mode="basic" type="light" class="books-hidden">
+          <div class="books-hidden-container">
+            <button
+              type="button"
+              class="text-button books-hidden-message"
+              (click)="trainingExclusionsExpanded = !trainingExclusionsExpanded"
+              [innerHTML]="
+                i18n.translateAndInsertTags(
+                  trainingExclusionsExpanded ? 'new_draft.books_hidden.hide' : 'new_draft.books_hidden.show_why',
+                  { numBooks: targetTrainingHiddenBookCount }
+                )
+              "
+            ></button>
+            @if (trainingExclusionsExpanded) {
+              <p class="books-hidden-explanation">
+                {{ t("training_books.excluded_not_in_any_source", { books: targetTrainingBooksWithoutSourceNames }) }}
+              </p>
+            }
+          </div>
+        </app-notice>
+      }
+      @if (booksOfferedForPartialTargetTraining.length > 0) {
+        <h3>{{ t("training_books.which_chapters") }}</h3>
+        <p>{{ t("training_books.partial_explanation") }}</p>
+        <div class="partial-book-drafting-table">
+          @for (bookId of booksOfferedForPartialTargetTraining; track bookId) {
+            <span class="book-name">{{ i18n.localizeBook(bookId) }}</span>
+            <div class="chapter-input-wrapper">
+              <mat-form-field subscriptSizing="dynamic" class="chapter-input">
+                <input
+                  [value]="targetTrainingRangeForBook(bookId)"
+                  matInput
+                  (blur)="onTargetTrainingChaptersBlurred(bookId, $any($event.target).value)"
+                />
+                <mat-hint>{{ t("chapter_input.available", { range: targetTrainingChapterHint(bookId) }) }}</mat-hint>
+              </mat-form-field>
+              @for (error of targetTrainingChapterErrors.get(bookId) ?? []; track error.key) {
+                <span class="chapter-error">{{ t(error.key, error.params) }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+      @if (trainingSources.length > 0) {
+        <h2>{{ t("reference_books") }}</h2>
+        @for (source of trainingSources; track source.projectRef) {
+          @let availableSourceBooks = availableTrainingSourceBooksForProject(source.projectRef);
+          <app-book-multi-select
+            [projectName]="source.shortName"
+            [availableBooks]="availableSourceBooks"
+            [selectedBooks]="selectedTrainingSourceBooksForProject(source.projectRef)"
+            (bookSelect)="onTrainingSourceBookSelect($event, source.projectRef)"
+          ></app-book-multi-select>
+          @if (availableSourceBooks.length === 0) {
+            <p class="empty-state">{{ t("training_books.reference_books_will_appear") }}</p>
+          }
+        }
+      }
+      @if (trainingDataFiles.length > 0) {
+        <h2>{{ t("training_files") }}</h2>
+        <div class="training-data-files">
+          @for (file of trainingDataFiles; track file.dataId) {
+            <mat-checkbox
+              [checked]="isTrainingDataFileSelected(file.dataId)"
+              (change)="onTrainingDataFileToggled(file.dataId, $event.checked)"
+            >
+              {{ file.title }}
+            </mat-checkbox>
+          }
+        </div>
+      }
+    } @else if (page === "summary") {
+      <h1>{{ t("summary.draft_title", { books: draftingBookNamesFormatted }) }}</h1>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="card-header">
+            <div class="card-header-text">
+              <h1>{{ t("summary.draft_books") }}</h1>
+              <p
+                class="summary-subtitle semi-bold"
+                [innerHTML]="
+                  i18n.translateAndInsertTags('new_draft.summary.draft_books_subtitle', {
+                    source: draftingSourceLabel,
+                    sourceLanguage: sourceLanguageDisplay,
+                    targetLanguage: targetLanguageDisplay
+                  })
+                "
+              ></p>
+            </div>
+            <button mat-button color="primary" class="card-header-action" (click)="goToPage('draft_books')">
+              <mat-icon>edit</mat-icon>{{ t("summary.choose_different_books") }}
+            </button>
+          </div>
+          <ul class="draft-books-list">
+            @for (item of draftingBookListItems; track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <div class="card-header">
+            <div class="card-header-text">
+              <h1>{{ t("summary.example_translations") }}</h1>
+              <p
+                class="summary-subtitle semi-bold"
+                [innerHTML]="
+                  i18n.translateAndInsertTags('new_draft.summary.example_translations_subtitle', {
+                    sourceLanguage: sourceLanguageDisplay,
+                    targetLanguage: targetLanguageDisplay
+                  })
+                "
+              ></p>
+            </div>
+            <button mat-button color="primary" class="card-header-action" (click)="goToPage('training_books')">
+              <mat-icon>edit</mat-icon>{{ t("summary.choose_different_training_data") }}
+            </button>
+          </div>
+          @if (sourceTrainingSections.length === 0) {
+            <p class="summary-empty">{{ t("summary.no_training_books") }}</p>
+          } @else {
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>{{ t("summary.training_books") }}</th>
+                  <th>{{ sourceTrainingLanguageName }}</th>
+                  <th>{{ targetLanguageName }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (source of sourceTrainingSections; track source.projectRef) {
+                  <tr>
+                    <td>{{ formatTrainingBooks(source.bookNumbers) }}</td>
+                    <td>{{ source.shortName }}</td>
+                    <td>{{ targetShortName }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+          @if (selectedTrainingDataFileTitles.length > 0) {
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>{{ t("training_files") }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (title of selectedTrainingDataFileTitles; track title) {
+                  <tr>
+                    <td>{{ title }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      @if (currentUserEmail != null) {
+        <mat-card class="summary-card">
+          <mat-card-content>
+            <h1>{{ t("summary.settings") }}</h1>
+            <mat-checkbox [(ngModel)]="sendEmailOnBuildFinished">
+              {{ t("summary.email_me", { email: currentUserEmail }) }}
+            </mat-checkbox>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      @if (isCustomConfigSet) {
+        <app-notice icon="info" mode="basic" type="light">{{ t("summary.custom_configurations_apply") }}</app-notice>
+      }
+
+      @if (featureFlags.showDeveloperTools.enabled) {
+        <mat-card class="summary-card">
+          <mat-card-content>
+            <h1>Developer options</h1>
+            <div>
+              <mat-checkbox [(ngModel)]="fastTraining">
+                <strong class="semi-bold">Fast Training</strong> - saves time but greatly reduces accuracy
+              </mat-checkbox>
+            </div>
+            <div>
+              <mat-checkbox [(ngModel)]="useEcho">
+                <strong class="semi-bold">Echo Translation Engine</strong> - echoes source text instead of translating
+              </mat-checkbox>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+
+      @if (!onlineStatusService.isOnline) {
+        <span class="offline-text">{{ t("offline_message") }}</span>
+      }
+    }
+
+    @if (page !== "pending_updates") {
+      @if (stepError) {
+        <p class="step-error">{{ t(stepError) }}</p>
+      }
+      <div class="step-buttons">
+        <button mat-stroked-button (click)="back()">
+          <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon> {{ t("navigation.back") }}
+        </button>
+        @if (page === "summary") {
+          <div class="save-container">
+            <button
+              mat-flat-button
+              color="primary"
+              [disabled]="submitting || !onlineStatusService.isOnline"
+              (click)="generateDraftClicked()"
+            >
+              <mat-icon>auto_awesome</mat-icon> {{ t("navigation.generate_draft") }}
+            </button>
+            @if (submitting) {
+              <div class="progress"><mat-spinner diameter="24"></mat-spinner></div>
+            }
+          </div>
+        } @else {
+          <button mat-flat-button color="primary" (click)="next()">
+            {{ t("navigation.next") }} <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

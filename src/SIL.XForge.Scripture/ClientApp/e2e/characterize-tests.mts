@@ -6,7 +6,7 @@ import { numberOfTimesToAttemptTest } from './pass-probability.ts';
 import { ScreenshotContext } from './presets.ts';
 import { tests } from './test-definitions.ts';
 
-const retriesToStopAt = 3; // Stop characterization after a test is reliable enough to only need this many retries
+const retriesToStopAt = 4; // Stop characterization after a test is reliable enough to only need this many retries
 const resultFilePath = 'test_characterization.json';
 const testNames = Object.keys(tests) as (keyof typeof tests)[];
 let mostRecentResultData = JSON.parse(await Deno.readTextFile(resultFilePath));

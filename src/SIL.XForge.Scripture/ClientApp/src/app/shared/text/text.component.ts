@@ -602,6 +602,18 @@ export class TextComponent implements AfterViewInit, OnDestroy {
         tap(event => (this.isShiftDown = event.shiftKey))
       )
       .subscribe(event => {
+        // Do not allow characters to overwrite outside of the current range
+        const range = this.editor?.getSelection();
+        if (
+          !this.readOnlyEnabled &&
+          !this.nonPrintableCursorMoveKeys.has(event.key) &&
+          range != null &&
+          !this.isValidSelectionForCurrentSegment(range)
+        ) {
+          event.preventDefault();
+          return;
+        }
+
         // Set flag to use system cursor when any key is down that would move the cursor (avoids cursor lag issue)
         if (this.nonPrintableCursorMoveKeys.has(event.key) || event.key?.length === 1) {
           this.pressedCursorMoveKeys.add(event.key);
