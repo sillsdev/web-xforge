@@ -73,5 +73,20 @@ export const presets = {
     showArrow: true,
     outputDir: 'test_output/ci_e2e_test_results',
     maxTries: 5
+  },
+  // Runs against local mock services (src/MockServices) instead of real Auth0/Paratext servers;
+  // the app must be started with SF_MOCK_SERVICES=true. Log in via MockServices.logInAsMockUser.
+  mock: {
+    rootUrl: 'http://localhost:5000',
+    locales: ['en'],
+    browsers: ['chromium'],
+    skipScreenshots: true,
+    trace: true,
+    pauseOnFailure: false,
+    headless: true,
+    defaultUserDelay: 0,
+    showArrow: true,
+    outputDir: 'test_output/mock_e2e_test_results',
+    maxTries: 2
   }
 } as const satisfies { [key: string]: TestPreset };

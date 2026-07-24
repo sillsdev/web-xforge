@@ -1,5 +1,6 @@
 #nullable disable warnings
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -53,6 +54,40 @@ public static class Program
                         config.AddJsonFile("appsettings.user.json", optional: true, reloadOnChange: true);
                     else
                         config.AddJsonFile("secrets.json", optional: true, reloadOnChange: true);
+
+                    // Point external service URLs (Auth0, Paratext registry/archives, DBL) at
+                    // local mock services. Layered last so it overrides personal settings.
+                    if (Environment.GetEnvironmentVariable("SF_MOCK_SERVICES") == "true")
+                    {
+                        config.AddJsonFile("appsettings.Mock.json", optional: false, reloadOnChange: true);
+
+                        // Keep the mock world's file storage inside the repo (gitignored), and
+                        // ensure the directories the app serves from exist so it doesn't throw at
+                        // startup. Resolved to absolute paths from the content root and added last
+                        // so they win over any appsettings.user.json.
+                        string dataRoot = Path.GetFullPath(
+                            Path.Combine(env.ContentRootPath, "..", "..", ".sf-local-data")
+                        );
+                        string siteDir = Path.Combine(dataRoot, "scriptureforge");
+                        string sharedDir = Path.Combine(dataRoot, "xforge");
+                        foreach (
+                            string dir in new[]
+                            {
+                                Path.Combine(siteDir, "audio"),
+                                Path.Combine(siteDir, "training-data"),
+                                Path.Combine(siteDir, "sync"),
+                                Path.Combine(sharedDir, "avatars"),
+                            }
+                        )
+                            Directory.CreateDirectory(dir);
+                        config.AddInMemoryCollection(
+                            new Dictionary<string, string>
+                            {
+                                ["Site:SiteDir"] = siteDir,
+                                ["Site:SharedDir"] = sharedDir,
+                            }
+                        );
+                    }
 
                     // Manually read in secrets for development-related environments that aren't specifically "Development".
                     if (env.IsEnvironment("Testing"))

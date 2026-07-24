@@ -41,3 +41,5 @@ appsettings.user.json
 
 # Storybook screenshots
 /src/SIL.XForge.Scripture/ClientApp/screenshots/
+# Local mock-services data (SF_MOCK_SERVICES=true) — site/shared dirs
+.sf-local-data/

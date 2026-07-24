@@ -386,7 +386,9 @@ public class Startup
                     {
                         case SpaDevServerStartup.Start:
                             spa.Options.DevServerPort = port;
-                            string npmScript = "start";
+                            // Overridable so appsettings.Mock.json can select the mock frontend
+                            // environment (script start:mock).
+                            string npmScript = Configuration.GetValue("NgServeScript", "start");
                             Console.WriteLine($"Info: SF is serving angular using script {npmScript}.");
                             spa.UseAngularCliServer(npmScript);
                             // Note that dotnet will need to see and parse a line like

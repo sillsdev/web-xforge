@@ -634,7 +634,10 @@ public class SFInstallableDblResource : InstallableResource
     /// </returns>
     private static string BuildDblResourceListUrl(string baseUri, string entryUid = null)
     {
-        var uriBuilder = new UriBuilder(baseUri) { Path = DblResourceEntriesApiCall };
+        var uriBuilder = new UriBuilder(baseUri);
+        // Append rather than replace the path, so a base URI with a path prefix (e.g. a local
+        // mock server) is honored. For a prefix-less base URI this resolves as before.
+        uriBuilder.Path = uriBuilder.Path.TrimEnd('/') + "/" + DblResourceEntriesApiCall;
         if (!string.IsNullOrWhiteSpace(entryUid))
         {
             uriBuilder.Query = "id=" + entryUid;
@@ -652,7 +655,8 @@ public class SFInstallableDblResource : InstallableResource
     /// </returns>
     private static string BuildDblResourceEntryUrl(string baseUri, string entryUid)
     {
-        var uriBuilder = new UriBuilder(baseUri) { Path = DblResourceEntriesApiCall + "/" + entryUid };
+        var uriBuilder = new UriBuilder(baseUri);
+        uriBuilder.Path = uriBuilder.Path.TrimEnd('/') + "/" + DblResourceEntriesApiCall + "/" + entryUid;
         return uriBuilder.Uri.AbsoluteUri;
     }
 

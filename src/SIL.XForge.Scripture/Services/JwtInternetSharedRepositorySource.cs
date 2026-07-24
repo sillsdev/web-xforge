@@ -22,6 +22,7 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
     private readonly IHgWrapper _hgWrapper;
     private readonly ILogger _logger;
     private readonly int _maxJsonLogChars = 200;
+    private readonly bool _mockServicesEnabled;
 
     public JwtInternetSharedRepositorySource(
         string accessToken,
@@ -29,13 +30,15 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         IHgWrapper hgWrapper,
         ParatextUser authenticationPtUser,
         string srServerUri,
-        ILogger logger
+        ILogger logger,
+        bool mockServicesEnabled = false
     )
         : base(authenticationPtUser, srServerUri)
     {
         _registryClient = registryClient;
         _hgWrapper = hgWrapper;
         _logger = logger;
+        _mockServicesEnabled = mockServicesEnabled;
         SetToken(accessToken);
     }
 
@@ -302,7 +305,10 @@ public class JwtInternetSharedRepositorySource : InternetSharedRepositorySource,
         foreach (JObject license in licenses.Cast<JObject>())
         {
             var projLicense = new ProjectLicense(license);
-            if (projLicense.IsInvalid || projLicense.IsExpired)
+            // Mock license responses can't carry a valid Paratext RSA signature, so they always
+            // report IsInvalid. Keep them anyway when running against mock services so the repo
+            // list isn't silently emptied; the license's ProjectId is still populated.
+            if (!_mockServicesEnabled && (projLicense.IsInvalid || projLicense.IsExpired))
                 continue;
             result.Add(projLicense);
         }

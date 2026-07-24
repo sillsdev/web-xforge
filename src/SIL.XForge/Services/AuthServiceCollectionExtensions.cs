@@ -18,7 +18,9 @@ public static class AuthServiceCollectionExtensions
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
-                options.Authority = $"https://{authOptions.Domain}/";
+                options.Authority = authOptions.Authority;
+                // Allow http:// authorities (local mock auth server)
+                options.RequireHttpsMetadata = authOptions.Authority.StartsWith("https://");
                 options.Audience = authOptions.Audience;
                 options.Events = new JwtBearerEvents
                 {

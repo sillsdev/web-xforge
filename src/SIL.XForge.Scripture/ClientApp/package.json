@@ -6,6 +6,7 @@
   "scripts": {
     "ng": "ng",
     "start": "echo \"open your browser on http://localhost:4200/ \" && ng serve",
+    "start:mock": "ng serve --configuration=mock",
     "start:no-reload": "ng serve --liveReload=false",
     "build": "ng build",
     "test": "ng test --source-map",

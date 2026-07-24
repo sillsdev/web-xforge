@@ -12,11 +12,10 @@ public class OpenIdConnectSigningKeyResolver(string authority)
 {
     private readonly OpenIdConnectConfiguration _openIdConfig = new ConfigurationManager<OpenIdConnectConfiguration>(
         $"{authority.TrimEnd('/')}/.well-known/openid-configuration",
-        new OpenIdConnectConfigurationRetriever()
-    )
-        .GetConfigurationAsync()
-        .GetAwaiter()
-        .GetResult();
+        new OpenIdConnectConfigurationRetriever(),
+        // Allow http:// authorities (local mock auth server)
+        new HttpDocumentRetriever { RequireHttps = authority.StartsWith("https://") }
+    ).GetConfigurationAsync().GetAwaiter().GetResult();
 
     public SecurityKey[] GetSigningKey(string kid) =>
         [_openIdConfig.JsonWebKeySet.GetSigningKeys().FirstOrDefault(t => t.KeyId == kid)];

@@ -80,7 +80,10 @@ export class Auth0Service {
   }
 
   private post(endPoint: string, body?: any): Promise<string> {
-    const url: string = `https://${environment.authDomain}/${endPoint}`;
+    const base = /^https?:\/\//.test(environment.authDomain)
+      ? environment.authDomain
+      : `https://${environment.authDomain}`;
+    const url: string = `${base}/${endPoint}`;
     return lastValueFrom(
       this.http.post(url, body, { headers: { 'Content-Type': 'application/json' }, responseType: 'text' })
     );

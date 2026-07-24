@@ -17,18 +17,21 @@ public class InternetSharedRepositorySourceProvider : IInternetSharedRepositoryS
     private readonly IOptions<SiteOptions> _siteOptions;
     private readonly IHgWrapper _hgWrapper;
     private readonly ILogger<InternetSharedRepositorySourceProvider> _logger;
+    private readonly bool _mockServicesEnabled;
 
     public InternetSharedRepositorySourceProvider(
         IJwtTokenHelper jwtTokenHelper,
         IOptions<SiteOptions> siteOptions,
         IHgWrapper hgWrapper,
-        ILogger<InternetSharedRepositorySourceProvider> logger
+        ILogger<InternetSharedRepositorySourceProvider> logger,
+        IOptions<ParatextOptions> paratextOptions
     )
     {
         _jwtTokenHelper = jwtTokenHelper;
         _siteOptions = siteOptions;
         _hgWrapper = hgWrapper;
         _logger = logger;
+        _mockServicesEnabled = paratextOptions.Value.MockServicesEnabled;
     }
 
     public IInternetSharedRepositorySource GetSource(
@@ -55,7 +58,8 @@ public class InternetSharedRepositorySourceProvider : IInternetSharedRepositoryS
             _hgWrapper,
             ptUser,
             sendReceiveServerUri,
-            _logger
+            _logger,
+            _mockServicesEnabled
         );
         source.RefreshToken(userSecret.ParatextTokens.AccessToken);
         return source;
