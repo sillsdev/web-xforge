@@ -449,6 +449,24 @@ describe('NewDraftComponent', () => {
     });
   });
 
+  describe('step error display', () => {
+    it('clears as soon as the offending chapter input is fixed, without clicking next', async () => {
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+      env.component.page = 'draft_books';
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      env.component.onDraftingChaptersBlurred('GEN', 'abc');
+
+      env.component.next();
+      expect(env.component.stepError).toBe('fix_chapter_errors');
+      expect(env.component.page).toBe('draft_books');
+
+      env.component.onDraftingChaptersBlurred('GEN', '1-5');
+
+      expect(env.component.stepError).toBeNull();
+    });
+  });
+
   describe('onDraftingBookSelect', () => {
     it('removes stale errors for books no longer offered for partial drafting', async () => {
       const env = new TestEnvironment(testState);

@@ -99,7 +99,8 @@ export class NewDraftComponent {
   // has several problems doesn't have to discover them one blur at a time.
   draftingChapterErrors = new Map<string, ChapterInputError[]>();
   targetTrainingChapterErrors = new Map<string, ChapterInputError[]>();
-  stepError: I18nKeyForComponent<'new_draft'> | null = null;
+  // Whether a failed attempt to advance should surface the current forward error (see the stepError getter).
+  private showStepError = false;
 
   draftingExclusionsExpanded = false;
   trainingExclusionsExpanded = false;
@@ -449,19 +450,20 @@ export class NewDraftComponent {
     return Object.values(selected).some(books => books.length > 0);
   }
 
-  private clearStepErrorIfResolved(): void {
-    if (this.stepError != null && this.getForwardError() !== this.stepError) this.stepError = null;
+  /**
+   * The validation error blocking forward navigation, shown only after a failed attempt to advance. Derived rather
+   * than latched so it clears (or updates) the moment the user fixes the offending state, whatever handler fixed it.
+   */
+  get stepError(): I18nKeyForComponent<'new_draft'> | null {
+    return this.showStepError ? this.getForwardError() : null;
   }
 
   private step(count: 1 | -1): void {
-    if (count === 1) {
-      const error = this.getForwardError();
-      if (error != null) {
-        this.stepError = error;
-        return;
-      }
+    if (count === 1 && this.getForwardError() != null) {
+      this.showStepError = true;
+      return;
     }
-    this.stepError = null;
+    this.showStepError = false;
     const newIndex = this.currentPageIndex + count;
     if (newIndex < 0) {
       void this.router.navigate(['/projects', this.initData?.projectId, 'draft-generation']);
@@ -630,7 +632,6 @@ export class NewDraftComponent {
     const selectedBookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectDraftingBooks(selectedBookIds);
     this.pruneChapterErrors(this.draftingChapterErrors, this.logicHandler.booksOfferedForPartialDrafting);
-    this.clearStepErrorIfResolved();
   }
 
   /**
@@ -761,7 +762,6 @@ export class NewDraftComponent {
       this.logicHandler.selectTrainingSourceBooks(source.projectRef, [...new Set([...stillValid, ...autoAdded])]);
     }
     this.logicHandler.dismissAutoSelectNoticeIfSelectionEmpty();
-    this.clearStepErrorIfResolved();
   }
 
   onTargetTrainingChaptersBlurred(bookId: string, value: string): void {
@@ -832,7 +832,6 @@ export class NewDraftComponent {
   onTrainingSourceBookSelect(books: number[], projectId: string): void {
     const bookIds = books.map(b => Canon.bookNumberToId(b));
     this.logicHandler.selectTrainingSourceBooks(projectId, bookIds);
-    this.clearStepErrorIfResolved();
   }
 
   availableTrainingSourceBooksForProject(projectId: string): Book[] {
@@ -982,7 +981,7 @@ export class NewDraftComponent {
   }
 
   goToPage(page: 'draft_books' | 'training_books'): void {
-    this.stepError = null;
+    this.showStepError = false;
     if (page === 'draft_books') {
       this.logicHandler.setInputMode('draft_books');
     }
