@@ -172,7 +172,9 @@
       "REP": "Reproof (Proverbs 25-31)",
       "4BA": "4 Baruch (Rest of Baruch)",
       "LAO": "Laodiceans"
-    }
+    },
+    "book_with_chapters": "{{ book }} {{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤋꤛꤢꤩ꤭",
@@ -334,6 +336,8 @@
     "error_occurred_login": "An error occurred during login.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
+    "login": "Log in",
+    "login_expired": "Your log in has expired. Please log in again.",
     "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
     "go_to_retrain": "Go to Overview",
     "try_again": "ꤗꤟꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤦ꤬ "
@@ -380,6 +384,7 @@
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
     "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "user_missing": "Your user account could not be found. Please log out and join using the link again.",
     "your_name": "ꤔꤟꤢꤧ꤬ꤗꤝꤟꤤ꤬"
   },
   "dialog": {

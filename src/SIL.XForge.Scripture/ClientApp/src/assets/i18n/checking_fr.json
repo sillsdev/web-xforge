@@ -172,7 +172,9 @@
       "REP": "Reproches (Proverbes 25-31)",
       "4BA": "4 Baruch (reste de Baruch)",
       "LAO": "Laodiceans"
-    }
+    },
+    "book_with_chapters": "{{ book }}{{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "Chapitre précédent",
@@ -334,6 +336,8 @@
     "error_occurred_login": "Une erreur s'est produite lors de la connexion.",
     "failed_to_retrieve_suggestions": "Impossible d'obtenir des suggestions de traduction.",
     "failed_to_update_avatar": "L'image de votre avatar n'a pas pu être mise à jour.",
+    "login": "Se connecter",
+    "login_expired": "Votre connexion a expiré, Veuillez vous reconnecter à nouveau.",
     "suggestion_engine_requires_retrain": "Il n'a pas été possible d'obtenir des suggestions de traduction. Veuillez reformuler les suggestions sur la page d'aperçu.",
     "go_to_retrain": "Aller à l'aperçu",
     "try_again": "Essayez à nouveau"
@@ -380,6 +384,7 @@
     "please_connect_to_use_link": "Veuillez vous connecter à Internet pour rejoindre un projet en utilisant un lien.",
     "project_link_is_invalid": "Le lien du projet n'est pas valide. Veuillez contacter la personne qui vous a envoyé le lien et demander un nouveau lien.",
     "role_not_found": "Le rôle qui vous a été attribué pour ce projet n'est plus disponible. Veuillez contacter la personne qui vous a envoyé le lien et en demander un nouveau.",
+    "user_missing": "Votre compte utilisateur est introuvable. Veuillez vous déconnecter, puis accéder à nouveau à l'aide du lien.",
     "your_name": "Votre nom"
   },
   "dialog": {
