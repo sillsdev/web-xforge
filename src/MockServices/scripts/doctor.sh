@@ -68,18 +68,70 @@ else
 fi
 
 echo "== SF backend (http://localhost:5000) =="
+# The backend can run as the apphost binary ("…/SIL.XForge.Scripture --start-ng-serve"), which
+# name-based pkill patterns ('dotnet', '.dll') MISS — a survivor then serves stale code while
+# new backends crash on the port conflict. So this section reasons about the process that
+# actually owns the port, and every fix goes through scripts/restart-backend.sh (kills by port).
+listening_pid() { # $1 = port; ss when available, /proc/net/tcp{,6} inode scan otherwise
+  local pids port_hex inodes dir pid fd target ino
+  pids="$(ss -tlnpH "sport = :$1" 2>/dev/null | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u)"
+  if [ -n "$pids" ]; then
+    echo "$pids" | head -1
+    return
+  fi
+  port_hex="$(printf '%04X' "$1")"
+  inodes="$(awk -v p=":$port_hex" '$4 == "0A" && $2 ~ p"$" {print $10}' /proc/net/tcp /proc/net/tcp6 2>/dev/null | sort -u)"
+  [ -z "$inodes" ] && return 0
+  for dir in /proc/[0-9]*; do
+    pid="${dir#/proc/}"
+    for fd in "$dir"/fd/*; do
+      target="$(readlink "$fd" 2>/dev/null)" || continue
+      for ino in $inodes; do
+        if [ "$target" = "socket:[$ino]" ]; then
+          echo "$pid"
+          return
+        fi
+      done
+    done
+  done
+}
+backend_pid="$(listening_pid 5000)"
 if [ "$(http_code http://localhost:5000/)" = "200" ]; then
-  pass "backend answering on 5000"
+  pass "backend answering on 5000${backend_pid:+ (pid $backend_pid)}"
+  if [ -n "$backend_pid" ]; then
+    backend_dll="$repo_root/src/SIL.XForge.Scripture/bin/Debug/net10.0/SIL.XForge.Scripture.dll"
+    elapsed="$(ps -o etimes= -p "$backend_pid" 2>/dev/null | tr -d ' ')"
+    if [ -n "$elapsed" ] && [ -f "$backend_dll" ]; then
+      started_at=$(($(date +%s) - elapsed))
+      dll_mtime=$(stat -c %Y "$backend_dll")
+      if [ "$dll_mtime" -gt "$started_at" ]; then
+        fail "backend (pid $backend_pid) started BEFORE the current build — it is serving stale code" \
+          "$package_root/scripts/restart-backend.sh"
+      else
+        pass "backend build is current (process newer than its dll)"
+      fi
+    fi
+    extra_pids="$(pgrep -f 'SIL\.XForge\.Scripture/bin/.*SIL\.XForge\.Scripture' | grep -vx "$backend_pid" || true)"
+    if [ -n "$extra_pids" ]; then
+      fail "extra backend process(es) besides the one serving 5000: $(echo $extra_pids | tr '\n' ' ')" \
+        "$package_root/scripts/restart-backend.sh   (kills them all, then starts one)"
+    fi
+  fi
   login_code="$(http_code http://localhost:5000/login)"
   if [ "$login_code" = "200" ]; then
     pass "/login proxies to the Angular dev server"
   else
     fail "/login returns $login_code — the backend cannot reach the Angular dev server" \
-      "run ng separately and use listen mode: (cd $repo_root/src/SIL.XForge.Scripture/ClientApp && npm run start:mock &) then restart the backend with: SF_MOCK_SERVICES=true dotnet run --start-ng-serve listen"
+      "run ng separately (cd $repo_root/src/SIL.XForge.Scripture/ClientApp && npm run start:mock &) then: $package_root/scripts/restart-backend.sh"
   fi
 else
-  fail "backend not running" \
-    "cd $repo_root/src/SIL.XForge.Scripture && SF_MOCK_SERVICES=true dotnet run --start-ng-serve listen   (with ng running separately: cd ClientApp && npm run start:mock). Both in the background."
+  if [ -n "$backend_pid" ]; then
+    fail "something owns port 5000 (pid $backend_pid) but does not answer 200" \
+      "$package_root/scripts/restart-backend.sh"
+  else
+    fail "backend not running" \
+      "$package_root/scripts/restart-backend.sh   (with ng running separately: cd $repo_root/src/SIL.XForge.Scripture/ClientApp && npm run start:mock &)"
+  fi
 fi
 
 echo "== Angular dev server (http://localhost:4200) =="

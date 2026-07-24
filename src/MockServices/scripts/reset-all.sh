@@ -28,5 +28,4 @@ rm -rf "$repo_root/.sf-local-data/scriptureforge/sync" "$repo_root/.sf-local-dat
 
 echo
 echo "Done. Now RESTART the SF backend (it caches realtime docs in memory):"
-echo "  kill the 'dotnet run' process, then:"
-echo "  cd $repo_root/src/SIL.XForge.Scripture && SF_MOCK_SERVICES=true dotnet run --start-ng-serve listen"
+echo "  $package_root/scripts/restart-backend.sh"

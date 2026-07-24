@@ -62,10 +62,14 @@ node scripts/drive.mjs sync MSRC                                      # pull it 
 node scripts/drive.mjs text '/projects/@MSRC/translate/RUT/1'         # observe the result
 ```
 
-To verify a backend fix: rebuild + restart the backend (kill the `dotnet run` process, start it
-again with the same command), then repeat the reproduction. Mongo state for assertions lives in
-the `xforge_mock` database (`mongosh xforge_mock`). `node client/cli.mjs summary` prints the
-mock's users/projects/resources compactly.
+To verify a backend fix, restart the backend with `scripts/restart-backend.sh` (it rebuilds if
+sources changed), then repeat the reproduction. Always restart through that script — never kill
+the backend by process-name patterns: it often runs as the apphost binary, which 'dotnet'/'.dll'
+patterns miss, leaving a survivor serving stale code on port 5000 while every new backend
+crashes on the port conflict. The script kills by port and verifies the process serving 5000 is
+the one it started; `doctor.sh` independently flags a backend that predates the current build.
+Mongo state for assertions lives in the `xforge_mock` database (`mongosh xforge_mock`).
+`node client/cli.mjs summary` prints the mock's users/projects/resources compactly.
 
 To start over from a clean slate use `scripts/reset-all.sh` (then restart the backend). A plain
 control-API `reset` only clears mock-services state — the SF side (Mongo `xforge_mock` and the
