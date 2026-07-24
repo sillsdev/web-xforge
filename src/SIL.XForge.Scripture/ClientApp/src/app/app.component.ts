@@ -18,7 +18,7 @@ import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -290,6 +290,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.currentUserDoc == null
       ? undefined
       : (this._selectedProjectDoc?.data?.userRoles[this.currentUserDoc.id] as SFProjectRole);
+  }
+
+  get userIsMemberOfPTProject(): boolean | undefined {
+    const role = this.selectedProjectRole;
+    return role == null ? undefined : isParatextRole(role);
   }
 
   async ngOnInit(): Promise<void> {
