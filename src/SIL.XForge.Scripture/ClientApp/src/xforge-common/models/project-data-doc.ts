@@ -44,7 +44,7 @@ export abstract class ProjectDataDoc<T extends ProjectData = ProjectData> extend
       );
     }
 
-    return await this.realtimeService.fileService.onlineUploadFileOrFail(
+    return await this.realtimeService.fileService.tryOnlineUploadFile(
       fileType,
       this.data.projectRef,
       this.collection,

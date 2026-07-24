@@ -13,6 +13,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import {
   TrainingDataUploadDialogComponent,
@@ -33,8 +34,13 @@ export class TrainingDataMultiSelectComponent {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
+    private readonly onlineStatus: OnlineStatusService,
     private readonly userService: UserService
   ) {}
+
+  get appOnline(): boolean {
+    return this.onlineStatus.isOnline;
+  }
 
   canDeleteTrainingData(trainingData: TrainingData): boolean {
     const userId: string = this.userService.currentUserId;

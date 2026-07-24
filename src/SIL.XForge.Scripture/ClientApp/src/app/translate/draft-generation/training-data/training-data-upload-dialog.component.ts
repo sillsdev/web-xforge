@@ -1,4 +1,5 @@
 import { NgClass } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -112,26 +113,37 @@ export class TrainingDataUploadDialogComponent implements AfterViewInit {
   }
 
   async save(): Promise<void> {
-    // We cannot save a file if it has not been uploaded, or if offline
+    // We cannot save a file if it has not been uploaded
     if (!this.hasBeenUploaded) {
       return;
     }
 
     this._isUploading = true;
     const dataId: string = objectId();
-    const fileUrl: string | undefined = await this.fileService.onlineUploadFileOrFail(
-      FileType.TrainingData,
-      this.data.projectId,
-      TrainingDataDoc.COLLECTION,
-      dataId,
-      this.trainingDataFile!.blob!,
-      this.trainingDataFile!.fileName!,
-      true
-    );
-    this._isUploading = false;
-    if (fileUrl == null) {
-      void this.dialogService.message('training_data_upload_dialog.upload_failed');
+    let fileUrl: string | undefined;
+    try {
+      fileUrl = await this.fileService.onlineUploadFile(
+        FileType.TrainingData,
+        this.data.projectId,
+        TrainingDataDoc.COLLECTION,
+        dataId,
+        this.trainingDataFile!.blob!,
+        this.trainingDataFile!.fileName!,
+        true
+      );
+      if (fileUrl === undefined) {
+        void this.dialogService.message('training_data_upload_dialog.no_upload_offline');
+        return;
+      }
+    } catch (e) {
+      if (e instanceof HttpErrorResponse && e.status === 400) {
+        void this.dialogService.message('training_data_upload_dialog.invalid_format');
+      } else {
+        void this.dialogService.message('training_data_upload_dialog.upload_failed');
+      }
       return;
+    } finally {
+      this._isUploading = false;
     }
 
     // Create the training_data record
