@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { Subject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FontService } from 'xforge-common/font.service';
@@ -33,7 +33,7 @@ describe('EditorResourceComponent', () => {
   beforeEach(async () => {
     fixture = TestBed.createComponent(EditorResourceComponent);
     component = fixture.componentInstance;
-    component.resourceText = { editorCreated: new Subject<void>() } as any;
+    component.resourceText = { editorCreated: new ReplaySubject<void>(1) } as any;
   });
 
   afterEach(() => {

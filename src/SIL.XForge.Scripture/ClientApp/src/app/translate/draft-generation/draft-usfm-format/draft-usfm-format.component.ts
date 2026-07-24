@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, EventEmitter, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
@@ -151,7 +151,7 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
   }
 
   ngAfterViewInit(): void {
-    combineLatest([this.activatedRoute.params, this.draftText.editorCreated as EventEmitter<void>])
+    combineLatest([this.activatedRoute.params, this.draftText.editorCreated])
       .pipe(first(), quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([params]) => {
         const projectDoc = this.activatedProjectService.projectDoc;

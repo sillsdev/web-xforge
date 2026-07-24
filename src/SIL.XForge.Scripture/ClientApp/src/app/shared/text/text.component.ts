@@ -23,7 +23,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
-import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { fromEvent, ReplaySubject, Subject, Subscription, timer } from 'rxjs';
 import { takeUntil, tap } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import tinyColor from 'tinycolor2';
@@ -112,7 +112,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   @Output() loaded = new EventEmitter<boolean>(true);
   @Output() focused = new EventEmitter<boolean>(true);
   @Output() presenceChange = new EventEmitter<RemotePresences | undefined>(true);
-  @Output() editorCreated = new EventEmitter<void>();
+  @Output() readonly editorCreated = new ReplaySubject<void>(1);
 
   lang: string = '';
 
@@ -698,7 +698,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.viewModel.editor = editor;
     void this.bindQuill(); // not awaited
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
-    this.editorCreated.emit();
+    this.editorCreated.next();
   }
 
   focus(): void {
