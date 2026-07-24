@@ -42,6 +42,8 @@ minimumReleaseAgeExclude:
   - immutable@5.1.8
   - fast-uri@3.1.4
   - fast-uri@3.1.3
+  - tar@7.5.21
+  - postcss@8.5.18
 overrides:
   "webpack": "5.105.0" # Fix for @storybook/builder-webpack5. Remove if updating Angular
 patchedDependencies:
