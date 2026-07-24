@@ -1334,10 +1334,10 @@ public class ParatextService : DisposableBase, IParatextService
 
         // CommentThread.VerseRef determines the location of a thread, even if moved. However, in Paratext a note can
         // only be relocated within the chapter, so for our query, we only need to look at the first note location.
-        var threads = manager.FindThreads(
+        var threads = manager.FindCompleteThreads(
             commentThread =>
                 commentThread.Comments[0].VerseRefStr.StartsWith(verseRefBook, StringComparison.OrdinalIgnoreCase),
-            true
+            activeOnly: true
         );
         return NotesFormatter.FormatNotes(threads);
     }
@@ -1372,6 +1372,13 @@ public class ParatextService : DisposableBase, IParatextService
             nt.Data.Notes.Any(n => !n.Deleted)
         );
 
+        // FindThread(id) answers by scanning the project's entire comment list, so calling it for
+        // each of the project's threads costs one full scan per thread (minutes of work at tens
+        // of thousands of threads). Instead, get every thread in one pass and index them by id.
+        Dictionary<string, CommentThread> commentThreadsById = commentManager
+            .FindCompleteThreads()
+            .ToDictionary(t => t.Id);
+
         foreach (var threadDoc in activeNoteThreadDocs)
         {
             List<string> matchedCommentIds = [];
@@ -1388,7 +1395,7 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.ExtraHeadingInfo
             );
             // Find the corresponding comment thread
-            CommentThread? existingThread = commentManager.FindThread(threadDoc.Data.ThreadId);
+            commentThreadsById.TryGetValue(threadDoc.Data.ThreadId, out CommentThread? existingThread);
             if (existingThread is null)
             {
                 // The thread has been removed
@@ -1462,7 +1469,7 @@ public class ParatextService : DisposableBase, IParatextService
         IEnumerable<string> newThreadIds = ptThreadIds.Except(matchedThreadIds);
         foreach (string threadId in newThreadIds)
         {
-            CommentThread? thread = commentManager.FindThread(threadId);
+            commentThreadsById.TryGetValue(threadId, out CommentThread? thread);
             if (thread is null || thread.Comments.All(c => c.Deleted))
                 continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
@@ -2989,17 +2996,13 @@ public class ParatextService : DisposableBase, IParatextService
         // reallocated within the chapter, so for our query, we only need the first location.
         // A Biblical Term has a VerseRef, but it is usually not useful, so we exclude BT notes when getting a book's notes
         // The VerseRef will still be stored for a BT note, as this is a PT requirement.
-        return manager.FindThreads(
-            commentThread =>
-                (
-                    bookNum != null
-                    && commentThread
-                        .Comments[0]
-                        .VerseRefStr.StartsWith(verseRefBook, StringComparison.OrdinalIgnoreCase)
-                    && !commentThread.IsBTNote
-                    && !commentThread.Id.StartsWith("ANSWER_")
-                ) || (bookNum == null && commentThread.IsBTNote),
-            false
+        return manager.FindCompleteThreads(commentThread =>
+            (
+                bookNum != null
+                && commentThread.Comments[0].VerseRefStr.StartsWith(verseRefBook, StringComparison.OrdinalIgnoreCase)
+                && !commentThread.IsBTNote
+                && !commentThread.Id.StartsWith("ANSWER_")
+            ) || (bookNum == null && commentThread.IsBTNote)
         );
     }
 

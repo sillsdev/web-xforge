@@ -42,7 +42,7 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
     public IReadOnlyList<ParatextNote> GetNotes(CommentManager commentManager, CommentTags commentTags)
     {
         // Only return note threads that are not resolved and active
-        IEnumerable<CommentThread> threads = commentManager.FindThreads(
+        IEnumerable<CommentThread> threads = commentManager.FindCompleteThreads(
             t => t.Status != NoteStatus.Resolved,
             activeOnly: true
         );
