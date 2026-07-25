@@ -40,7 +40,7 @@
     "appearance_device": "Perangkat",
     "appearance_dark": "Gelap",
     "appearance_light": "Cahaya",
-    "experimental_features": "Experimental features"
+    "experimental_features": "Fitur eksperimental"
   },
   "attach_audio": {
     "tooltip_record": "Rekam suara",
@@ -172,7 +172,9 @@
       "REP": "Reproof (Proverbs 25-31)",
       "4BA": "4 Baruch (Rest of Baruch)",
       "LAO": "Laodiceans"
-    }
+    },
+    "book_with_chapters": "{{ book }} {{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "Pasal sebelumnya",
@@ -334,6 +336,8 @@
     "error_occurred_login": "Terjadi kesalahan saat masuk.",
     "failed_to_retrieve_suggestions": "Tidak bisa mendapatkan saran terjemahan.",
     "failed_to_update_avatar": "Gambar avatar Anda tidak dapat diperbarui.",
+    "login": "Masuk",
+    "login_expired": "Sesi masuk Anda telah kedaluwarsa. Silakan masuk kembali.",
     "suggestion_engine_requires_retrain": "Tidak bisa mendapatkan saran terjemahan. Harap latih kembali saran di halaman Ringkasan.",
     "go_to_retrain": "Buka Ringkasan",
     "try_again": "Coba Lagi"
@@ -345,8 +349,8 @@
     "unknown_error": "Kesalahan yang tidak diketahui"
   },
   "experimental_features_dialog": {
-    "title": "Experimental features",
-    "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
+    "title": "Fitur eksperimental",
+    "description": "Fitur-fitur eksperimental ini dapat diaktifkan atau dinonaktifkan dan hanya berlaku untuk akun Anda. Saat ini, keluar dan masuk kembali akan mengembalikan pengaturan fitur-fitur tersebut ke kondisi semula. Jika Anda mencobanya, mohon berikan masukan kepada kami agar kami dapat memperbaikinya."
   },
   "file_service": {
     "failed_to_save": "Gagal menyimpan perubahan Anda. Periksa apakah Anda memiliki ruang kosong 500 MB yang disarankan pada perangkat Anda.",
@@ -364,7 +368,7 @@
     "upcoming_maintenance": "Scripture Forge akan berhenti beroperasi untuk pemeliharaan selama sekitar {{ duration }} mulai dari {{ startTime }}."
   },
   "issue_email": {
-    "heading": "Please describe what you were doing when this error happened. Include:\n- What you were trying to do\n- What you expected to happen\n- What actually happened\n- Whether it happens every time, or only once",
+    "heading": "Tolong jelaskan apa yang sedang Anda lakukan saat kesalahan ini terjadi. Sertakan:\n- Apa yang sedang Anda coba lakukan\n- Apa yang Anda harapkan akan terjadi\n- Apa yang sebenarnya terjadi\n- Apakah hal ini terjadi setiap kali, atau hanya sekali",
     "technical_details": "Detail teknis",
     "unknown": "tidak diketahui"
   },
@@ -380,6 +384,7 @@
     "please_connect_to_use_link": "Silakan terhubung ke internet untuk bergabung dengan proyek menggunakan tautan.",
     "project_link_is_invalid": "Tautan proyek telah kedaluwarsa. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
     "role_not_found": "Peran yang Anda tugaskan pada proyek ini sudah tidak tersedia lagi. Silakan hubungi orang yang mengirimi Anda tautan tersebut dan mintalah tautan baru.",
+    "user_missing": "Akun pengguna Anda tidak dapat ditemukan. Silakan keluar dari akun dan daftar kembali menggunakan tautan tersebut.",
     "your_name": "Nama"
   },
   "dialog": {
@@ -412,7 +417,7 @@
     "update_role": "Perbarui Peran",
     "updated_roles": "Perbarui Peran",
     "update_paratext_role": "Peran Anda dalam proyek ini telah berubah di Paratext.",
-    "user_no_permission_on_project": "You do not have permission to access this project. Contact an administrator of the project to get access.",
+    "user_no_permission_on_project": "Anda tidak memiliki izin untuk mengakses proyek ini. Silakan hubungi administrator proyek untuk mendapatkan izin akses.",
     "user_role_updated": "Peran Anda dalam proyek ini telah berhasil diperbarui."
   },
   "roles": {
@@ -442,7 +447,7 @@
     "link_copied": "Tautan telah disalin ke Papan-klip",
     "link_sharing": "Tautan juga dapat dibagikan kepada pengguna tanpa alamat email melalui platform media sosial.",
     "not_inviting_already_member": "Tidak mengundang: Pengguna sudah menjadi anggota proyek ini",
-    "not_inviting_email_invalid": "Not inviting: Invalid email address",
+    "not_inviting_email_invalid": "Tidak dapat diundang: Alamat email tidak valid",
     "resend": "Kirim ulang",
     "send_a_link": "Kirim tautan",
     "select_invitation_language": "Pilih bahasa untuk surel undangan",
@@ -491,12 +496,12 @@
   },
   "text": {
     "book_is_empty": "Kitab masih kosong. Tambahkan pasal di Paratext.",
-    "chapter_does_not_exist": "This chapter does not exist in {{ projectName }}",
-    "error": "An error occurred while loading the text",
+    "chapter_does_not_exist": "Pasal ini tidak ada di {{ projectName }}",
+    "error": "Terjadi kesalahan ketika memuat berkas",
     "loading": "Memuat...",
     "not_available_offline": "Teks ini tidak tersedia secara luring. Sambungkan ke Internet untuk melihat teks.",
     "permission_denied": "Anda tidak memiliki izin untuk melihat teks ini. Silakan hubungi administrator proyek untuk mendapatkan izin.",
-    "this_book_does_not_exist": "{{ bookName }} does not exist in {{ projectName }}"
+    "this_book_does_not_exist": "{{ bookName }} tidak ada di {{ projectName }}"
   },
   "text_chooser_dialog": {
     "cancel": "Batal",

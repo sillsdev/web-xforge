@@ -172,7 +172,9 @@
       "REP": "Reproof (Proverbs 25-31)",
       "4BA": "4 Baruch (Rest of Baruch)",
       "LAO": "Laodiceans"
-    }
+    },
+    "book_with_chapters": "{{ book }} {{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "Capitolul anterior",
@@ -334,6 +336,8 @@
     "error_occurred_login": "A apărut o eroare la autentificare.",
     "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
+    "login": "Log in",
+    "login_expired": "Your log in has expired. Please log in again.",
     "suggestion_engine_requires_retrain": "Couldn't get translation suggestions. Please retrain the suggestions on the Overview page.",
     "go_to_retrain": "Go to Overview",
     "try_again": "Încearcă din nou"
@@ -380,6 +384,7 @@
     "please_connect_to_use_link": "Vă rugăm să vă conectați la internet pentru a vă alătura unui proiect folosind un link.",
     "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
     "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "user_missing": "Your user account could not be found. Please log out and join using the link again.",
     "your_name": "Numele dvs."
   },
   "dialog": {

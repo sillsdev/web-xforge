@@ -48,7 +48,6 @@
   },
   "book_select": {
     "deuterocanon": "Deuterocanónico",
-    "loading_message": "Cargando libros disponibles...",
     "new_testament": "Nuevo Testamento",
     "old_testament": "Antiguo Testamento",
     "book_progress": "‎{{ percent }}% traducido"
@@ -184,7 +183,7 @@
     "download_draft": "Descargar borrador",
     "draft_active_detail": "Generar el borrador; esto suele llevar al menos {{ count }} horas.",
     "draft_active_header": "Borrador en proceso",
-    "draft_already_running": "Ya se ha solicitado la generación de borradores para este proyecto. Espere a que finalice el trabajo actual para iniciar un nuevo borrador.",
+    "draft_already_running": "A draft is already being generated. Please wait until the current draft finishes before starting a new draft.",
     "draft_finishing_detail": "Tu borrador está siendo finalizado y guardado.",
     "draft_finishing_header": "El borrador está terminando",
     "draft_is_ready": "Su borrador está listo",
@@ -230,6 +229,91 @@
     "warning_generation_faulted": "El último intento de generación ha fallado. Haga clic en [em]\"{{ generateButtonText }}\"[/em] a continuación para volver a intentarlo.",
     "click_book_to_preview": "Haga clic en un libro de los que aparecen a continuación para previsualizar el borrador y añadirlo a su proyecto."
   },
+  "new_draft": {
+    "offline_message": "Draft generation is not available offline.",
+    "loading": "Cargando…",
+    "step_indicator": "Step {{ step }} of {{ total }}",
+    "abort": {
+      "config_changed": "The draft configuration has changed. Please go back and try again.",
+      "project_syncing": "A project started syncing, which can change the available books and chapters. Please go back and try again.",
+      "no_access_list_heading": "The following projects could not be accessed:",
+      "no_access_instruction": "Check that you have access and try again.",
+      "no_access": "Some projects could not be accessed. Check that you have access and try again.",
+      "go_back": "Go back"
+    },
+    "chapter_input": {
+      "available": "Available chapters: {{ range }}",
+      "invalid_range": "Invalid chapter range.",
+      "empty_draft": "Enter the chapters to draft, or deselect this book if you don't want to draft it.",
+      "empty_training": "Enter the chapters to use for training, or deselect this book if you don't want to train on it.",
+      "chapters_not_in_source": "Chapters {{ chapters }} cannot be generated because they are not in the source project, {{ sourceName }}.",
+      "chapters_empty_in_source": "Chapters {{ chapters }} cannot be generated because they are blank in the source project, {{ sourceName }}.",
+      "chapters_not_in_target": "Chapters {{ chapters }} cannot be used for training because they are not in the main project, {{ targetName }}.",
+      "chapters_empty_in_target": "Chapters {{ chapters }} cannot be used for training because they are blank in the main project, {{ targetName }}.",
+      "chapters_will_be_translated": "Chapters {{ chapters }} cannot be used for training because they are going to be translated."
+    },
+    "change_source_configuration": "Change source configuration",
+    "books_hidden": {
+      "show_why": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Demuestre por qué{{ underlineEnd }}",
+      "hide": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Ocultar explicación{{ underlineEnd }}"
+    },
+    "training_files": "Training data files",
+    "fix_chapter_errors": "Please fix the chapter range errors above before continuing.",
+    "no_drafting_books_selected": "Select at least one book to draft before continuing.",
+    "no_training_books_selected": "Select training books from your project and at least one source project before continuing.",
+    "no_training_pair_selected": "Some of the books you selected to train on don't have a matching reference book selected. Select a matching reference book for each.",
+    "reference_books": "Libros de referencia",
+    "summary": {
+      "example_translations": "Language training data",
+      "no_training_books": "No hay libros de entrenamiento seleccionados.",
+      "custom_configurations_apply": "Un administrador ha aplicado configuraciones de borrador personalizadas.",
+      "settings": "Configuración",
+      "choose_different_books": "Choose different books",
+      "choose_different_training_data": "Choose different training data",
+      "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
+      "email_me": "Envíame un correo electrónico a {{ email }} cuando el borrador esté terminado.",
+      "draft_title": "Draft {{ books }}",
+      "draft_books": "Draft books",
+      "training_books": "Libros de formación",
+      "draft_books_subtitle": "The following books in {{ boldStart }}{{ source }}{{ boldEnd }} will be translated from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
+    },
+    "pending_updates": {
+      "heading": "Sync before drafting",
+      "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
+      "sync": "Sincronizar",
+      "sync_all": "Sync all",
+      "continue_anyway": "Continuar de todos modos",
+      "synced": "Up to date",
+      "sync_failed": "Sincronización fallida",
+      "retry": "Reintentar",
+      "cant_sync": "Has changes — ask a project admin to sync",
+      "wait_for_sync": "Wait for the sync to finish before continuing."
+    },
+    "draft_books": {
+      "title": "Seleccionar libros para el borrador",
+      "subtitle": "Which books in {{ boldStart }}{{ project }}{{ boldEnd }} do you want to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "which_chapters": "Which chapters of each book do you want to draft?",
+      "partial_explanation": "Some of the chapters in the books you selected already have text.",
+      "excluded_no_source_content": "These books aren't available to draft because they are blank in {{ source }}: {{ books }}.",
+      "excluded_not_in_source": "These books aren't available to draft because they are not in {{ source }}: {{ books }}.",
+      "no_available_books": "No tiene libros disponibles para la redacción."
+    },
+    "training_books": {
+      "title": "Seleccione libros en los que entrenar",
+      "subtitle": "Which books in {{ boldStart }}{{ project }}{{ boldEnd }} are good enough to use to train the model to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "which_chapters": "Which chapters of each book do you want to use to train the model?",
+      "partial_explanation": "Some of the chapters in the books you selected will be translated and cannot be used as training data.",
+      "excluded_not_in_any_source": "These books aren't available to train on because they aren't in any of the reference projects: {{ books }}.",
+      "auto_selected": "Los libros que parecen completos han sido preseleccionados. Por favor, revise y actualice los datos de formación que deben incluirse.",
+      "no_target_books": "No books from your project are available for training.",
+      "reference_books_will_appear": "Reference books will appear here as you select books from your project."
+    },
+    "navigation": {
+      "back": "Atrás",
+      "next": "Siguiente",
+      "generate_draft": "Generate Draft"
+    }
+  },
   "draft_generation_steps": {
     "back": "Atrás",
     "books_are_hidden_hide_explanation": "{{ numBooks }} libros están ocultos. {{ underlineStart }}Ocultar explicación{{ underlineEnd }}",
@@ -247,6 +331,7 @@
     "configure_advanced_settings_title": "Configuración avanzada",
     "confirm_codes_correct_to_continue": "Por favor, confirma que los códigos de idioma son correctos antes de continuar",
     "custom_configurations_apply": "Un administrador ha aplicado configuraciones de borrador personalizadas.",
+    "draft_book_unavailable": "Can't find the book you're looking for? Be sure the book exists in your drafting source text ({{ sourceProjectName }}) and synchronize the project.",
     "email_me": "Envíame un correo electrónico a {{ email }} cuando el borrador esté terminado.",
     "fast_training_warning": "Si lo activa, ahorrará tiempo pero reducirá en gran medida la precisión.",
     "fast_training": "Permitir una formación rápida",
@@ -277,7 +362,6 @@
     "training_files": "Archivos de entrenamiento",
     "translated_book_selected_no_training_pair": "Algunos de los libros de formación que ha seleccionado no tienen libros de referencia correspondientes. Por favor, seleccione los libros de referencia correspondientes.",
     "translated_books": "Libros traducidos",
-    "unusable_target_books": "¿No encuentras el libro que buscas? Asegúrate de que el libro se ha creado en Paratext y, a continuación, sincroniza tu proyecto.",
     "use_echo_warning": "Si activa esta opción, se hará eco del texto original en lugar de traducirlo.",
     "use_echo": "Utilizar el motor de traducción Eco"
   },
@@ -323,7 +407,7 @@
     "choose_project": "Elegir un proyecto",
     "complete": "Total (acromático)",
     "confirm_books_to_import": "Confirmar libros a importar",
-    "confirm_books_to_import_description": "Se importarán los siguientes libros. Puede hacer clic en un libro para anular la selección y no importarlo.",
+    "confirm_books_to_import_description": "Select which books you would like to import.",
     "confirm_overwrite": "Confirmar sobrescritura",
     "connect_project_description": "El proyecto seleccionado [b]{{ projectNameLabel }}[/b] aún no se ha conectado en Scripture Forge. ¿Quieres conectarlo para poder importar el borrador a él?",
     "connect_project": "Conectar el proyecto",

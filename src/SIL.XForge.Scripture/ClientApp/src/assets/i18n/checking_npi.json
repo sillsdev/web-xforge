@@ -172,7 +172,9 @@
       "REP": "Reproof (Proverbs 25-31)",
       "4BA": "4 Baruch (Rest of Baruch)",
       "LAO": "Laodiceans"
-    }
+    },
+    "book_with_chapters": "{{ book }} {{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",
@@ -334,6 +336,8 @@
     "error_occurred_login": "लगइन गर्दा त्रुटि भयो।",
     "failed_to_retrieve_suggestions": "अनुवाद सुझावहरू प्राप्त गर्न सकिएन।",
     "failed_to_update_avatar": "तपाईंको अवतार तस्बिर अद्यावधिक गर्न सकिएन।",
+    "login": "Log in",
+    "login_expired": "Your log in has expired. Please log in again.",
     "suggestion_engine_requires_retrain": "अनुवादको लागि सुझावहरू प्राप्त भएन। कृपया संक्षिप्‍त विवरण पृष्ठमा दिइएको सुझावहरूलाई पुनः तालिम दिनुहोस्।",
     "go_to_retrain": "संक्षिप्‍त विवरणमा जानुहोस्",
     "try_again": "पुन: प्रयास गर्नुहोस्"
@@ -380,6 +384,7 @@
     "please_connect_to_use_link": "लिङ्क प्रयोग गरेर प्रोजेक्टमा ​​जोडिन कृपया इन्टरनेटमा जडान हुनुहोस्।",
     "project_link_is_invalid": "यो प्रोजेक्ट लिङ्क अमान्य छ। कृपया तपाईंलाई लिङ्क पठाउने व्यक्तिलाई सम्पर्क गर्नुहोस् र नयाँ लिङ्क पठाउनको लागि भन्नुहोस्।",
     "role_not_found": "यस प्रोजेक्टमा ​​तपाइँलाई तोकिएको भूमिका अब उपलब्ध छैन। कृपया तपाईंलाई लिङ्क पठाउने व्यक्तिलाई सम्पर्क गर्नुहोस् र नयाँ लिङ्क पठाउनको लागि भन्नुहोस्।",
+    "user_missing": "Your user account could not be found. Please log out and join using the link again.",
     "your_name": "तपाईंको नाम प्रविष्ट गर्नुहोस्"
   },
   "dialog": {
