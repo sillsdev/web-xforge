@@ -48,7 +48,6 @@
   },
   "book_select": {
     "deuterocanon": "Deutérocanoniques",
-    "loading_message": "Chargement des livres disponibles...",
     "new_testament": "Nouveau Testament",
     "old_testament": "Ancien Testament",
     "book_progress": "{{ percent }} traduit"
@@ -184,7 +183,7 @@
     "download_draft": "Télécharger l'ébauche",
     "draft_active_detail": "La génération d'un brouillon prend généralement au moins {{ count }} heures.",
     "draft_active_header": "L'ébauche en cours",
-    "draft_already_running": "La génération d'une ébauche a déjà été demandée pour ce projet. Attendez que la tâche en cours se termine pour commencer une nouvelle ébauche.",
+    "draft_already_running": "Une ébauche est déjà en cours de création. Veuillez attendre que l'ébauche en cours se termine avant de commencer une nouvelle ébauche.",
     "draft_finishing_detail": "Votre ébauche est en cours de finalisation et d'enregistrement.",
     "draft_finishing_header": "L'ebauche est en cours de finalisation",
     "draft_is_ready": "Votre ébauche est prête",
@@ -230,6 +229,91 @@
     "warning_generation_faulted": "La dernière tentative de génération a échoué. Cliquez sur [em]\"{{ generateButtonText }}\"[/em] ci-dessous pour réessayer.",
     "click_book_to_preview": "Cliquez sur un livre ci-dessous pour prévisualiser l'ébauche et l'ajouter à votre projet."
   },
+  "new_draft": {
+    "offline_message": "La génération d'une ébauche n'est pas disponible hors connexion.",
+    "loading": "Chargement en cours…",
+    "step_indicator": "Étape {{ step }} de {{ total }}",
+    "abort": {
+      "config_changed": "La configuration d'ébauche a été modifiée. Veuillez revenir en arrière et réessayer.",
+      "project_syncing": "La synchronisation d'un projet a commencé, ce qui peut modifier la liste des livres et des chapitres disponibles. Veuillez revenir en arrière et réessayer.",
+      "no_access_list_heading": "Les projets suivants n'ont pas pu être consultés :",
+      "no_access_instruction": "Vérifiez que vous y avez bien accès, puis réessayez.",
+      "no_access": "Certains projets n'ont pas pu être accédés. Vérifiez que vous avez accès et réessayez.",
+      "go_back": "Revenir en arrière"
+    },
+    "chapter_input": {
+      "available": "Chapitres disponibles : {{ range }}",
+      "invalid_range": "Numéro de chapitre non valide.",
+      "empty_draft": "Entrez les chapitres à ébaucher, ou désélectionnez ce livre si vous ne voulez pas le faire.",
+      "empty_training": "Sélectionnez les chapitres que vous souhaitez utiliser pour la formation, ou désélectionnez cet ouvrage si vous ne souhaitez pas vous former à partir de celui-ci.",
+      "chapters_not_in_source": "Les chapitres {{ chapters }} ne peuvent pas être générés car ils ne figurent pas dans le projet source, {{ sourceName }}.",
+      "chapters_empty_in_source": "Les chapitres {{ chapters }} ne peuvent pas être générés car ils sont vides dans le projet source, {{ sourceName }}.",
+      "chapters_not_in_target": "Les chapitres {{ chapters }} ne peuvent pas être utilisés pour la formation car ils ne font pas partie du projet principal, {{ targetName }}.",
+      "chapters_empty_in_target": "Les chapitres {{ chapters }} ne peuvent pas être utilisés pour la formation car ils sont vides dans le projet principal, {{ targetName }}.",
+      "chapters_will_be_translated": "Les chapitres « {{ chapters }} » ne peuvent pas être utilisés pour la formation, car ils vont être traduits."
+    },
+    "change_source_configuration": "Changer la configuration source",
+    "books_hidden": {
+      "show_why": "Les livres {{ numBooks }} sont cachés. {{ underlineStart }}montre pourquoi{{ underlineEnd }}",
+      "hide": "{{ numBooks }} Les livres sont cachés. {{ underlineStart }}Cacher l'explication{{ underlineEnd }}"
+    },
+    "training_files": "Livres de formation",
+    "fix_chapter_errors": "Veuillez corriger les erreurs concernant la plage de chapitres indiquées ci-dessus avant de continuer.",
+    "no_drafting_books_selected": "Sélectionnez au moins un livre a ébauché avant de continuer.",
+    "no_training_books_selected": "Sélectionnez les livres de formation de votre projet et au moins un projet source avant de continuer.",
+    "no_training_pair_selected": "Certains des ouvrages que vous avez choisis pour votre formation ne sont pas associés à un ouvrage de référence. Veuillez sélectionner un ouvrage de référence correspondant pour chacun d'entre eux.",
+    "reference_books": "Livres de référence",
+    "summary": {
+      "example_translations": "Données de formation linguistique",
+      "no_training_books": "Aucun livre de formation sélectionnée.",
+      "custom_configurations_apply": "Des configurations des ébauches personnalisées ont été appliquées par un administrateur.",
+      "settings": "Paramètres",
+      "choose_different_books": "Choisir une autre mise en page",
+      "choose_different_training_data": "Choisir différentes données d'entraînement",
+      "example_translations_subtitle": "Scripture Forge utilise des données de formation (exemples de traductions) pour apprendre à traduire de {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
+      "email_me": "Envoyez-moi un e-mail à {{ email }} lorsque l'ébauche est terminée.",
+      "draft_title": "Ébauche {{ books }}",
+      "draft_books": "Ébauches de livres",
+      "training_books": "Livres de formation",
+      "draft_books_subtitle": "Les livres suivants, disponibles sur {{ boldStart }}{{ source }}{{ boldEnd }} , seront traduits depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
+    },
+    "pending_updates": {
+      "heading": "Synchroniser avant de rédiger",
+      "body": "Ces projets ont des modifications dans Paratext qui ne sont pas encore reflétées ici. Le fait de rédiger sans synchroniser peut réduire la qualité des ébauches.",
+      "sync": "Synchroniser",
+      "sync_all": "Tout synchroniser",
+      "continue_anyway": "Continuer quand même",
+      "synced": "A jour",
+      "sync_failed": "Échec de la synchronisation",
+      "retry": "Réessayer",
+      "cant_sync": "A des modifications — demander à un administrateur de projet de synchroniser",
+      "wait_for_sync": "Attendez que la synchronisation soit terminée avant de continuer."
+    },
+    "draft_books": {
+      "title": "Sélectionnez les livres à ébaucher",
+      "subtitle": "Les livres suivants, disponibles sur {{ boldStart }}{{ project }}{{ boldEnd }} , seront traduits depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "which_chapters": "Quels chapitres de chaque livre voulez-vous ébaucher ?",
+      "partial_explanation": "Certains chapitres des livres que vous avez sélectionnés contiennent déjà du texte.",
+      "excluded_no_source_content": "Ces livres ne sont pas disponibles pour ébaucher car ils sont vides dans {{ source }}: {{ books }}.",
+      "excluded_not_in_source": "Ces livres ne sont pas disponibles pour ébaucher car ils ne sont pas dans {{ source }}: {{ books }}.",
+      "no_available_books": "Vous n'avez pas de livres disponibles pour l'ébauchage."
+    },
+    "training_books": {
+      "title": "Sélectionner des livres pour s'entraîner",
+      "subtitle": "Les livres suivants, disponibles sur {{ boldStart }}{{ project }}{{ boldEnd }} , seront traduits depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "which_chapters": "Quels chapitres de chaque livre voulez-vous utiliser pour former le modèle ?",
+      "partial_explanation": "Certains des chapitres des livres que vous avez sélectionnés seront traduits et ne pourront pas être utilisés comme données de formation.",
+      "excluded_not_in_any_source": "Ces livres ne peuvent pas être utilisés pour l'apprentissage, car ils ne figurent dans aucun des projets de référence : {{ books }}.",
+      "auto_selected": "Les livres qui semblent être complets ont été pré-sélectionnés. Veuillez consulter et mettre à jour les données de formation qui devraient être incluses.",
+      "no_target_books": "Aucun ouvrage issu de votre projet n'est disponible à des fins de formation.",
+      "reference_books_will_appear": "Les ouvrages de référence s'afficheront ici au fur et à mesure que vous sélectionnerez des livres dans votre projet."
+    },
+    "navigation": {
+      "back": "Retour",
+      "next": "Suivant",
+      "generate_draft": "Générer une ébauche"
+    }
+  },
   "draft_generation_steps": {
     "back": "Retour",
     "books_are_hidden_hide_explanation": "{{ numBooks }} Les livres sont cachés. {{ underlineStart }}Cacher l'explication{{ underlineEnd }}",
@@ -247,6 +331,7 @@
     "configure_advanced_settings_title": "Paramètres avancés",
     "confirm_codes_correct_to_continue": "Veuillez confirmer que les codes de langue sont corrects avant de continuer",
     "custom_configurations_apply": "Des configurations des ébauches personnalisées ont été appliquées par un administrateur.",
+    "draft_book_unavailable": "Vous ne trouvez pas le livre que vous cherchez ? Assurer vous que le livre existe dans votre source d'ébauche ({{ sourceProjectName }}) et synchronisez le projet.",
     "email_me": "Envoyez-moi un e-mail à {{ email }} lorsque l'ébauche est terminée.",
     "fast_training_warning": "L'activation de ceci permettra de gagner du temps mais réduira considérablement la précision.",
     "fast_training": "Activer un apprentissage rapide",
@@ -277,7 +362,6 @@
     "training_files": "Livres de formation",
     "translated_book_selected_no_training_pair": "Certains des livres de formation que vous avez sélectionnés n'ont aucun livre de référence correspondant. Veuillez sélectionner les livres de référence correspondants.",
     "translated_books": "Livres traduits",
-    "unusable_target_books": "Vous ne trouvez pas le livre que vous cherchez ? Assurez-vous que le livre est créé dans Paratext, puis synchronisez votre projet.",
     "use_echo_warning": "En activant cette option, vous ferez écho à votre texte source au lieu de le traduire.",
     "use_echo": "Utiliser le moteur de traduction d'Echo"
   },
@@ -323,7 +407,7 @@
     "choose_project": "Choisir \nun projet",
     "complete": "Complet",
     "confirm_books_to_import": "Confirmer les livres à importer",
-    "confirm_books_to_import_description": "Les livres suivants seront importés. Vous pouvez cliquer sur un livre pour le désélectionner et ne pas l'importer.",
+    "confirm_books_to_import_description": "Sélectionnez les livres que vous souhaitez importer.",
     "confirm_overwrite": "Confirmer l'écrasement",
     "connect_project_description": "Le projet sélectionné [b]{{ projectNameLabel }}[/b] n'a pas encore été connecté dans Scripture Forge. Voulez-vous le connecter pour pouvoir importer l'ébauche ?",
     "connect_project": "Connecter le projet",
