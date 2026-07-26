@@ -172,7 +172,9 @@
       "REP": "Re-examinar (Proverbios 25-31)",
       "4BA": "4 Baruc",
       "LAO": "Laodicenses"
-    }
+    },
+    "book_with_chapters": "{{ book }} {{ chapters }}",
+    "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
     "previous_chapter": "Capítulo anterior",
@@ -334,6 +336,8 @@
     "error_occurred_login": "Se produjo un error durante el inicio de sesión.",
     "failed_to_retrieve_suggestions": "No pude conseguir sugerencias de traducción.",
     "failed_to_update_avatar": "No se ha podido actualizar la imagen de su avatar.",
+    "login": "Iniciar sesión",
+    "login_expired": "Your log in has expired. Please log in again.",
     "suggestion_engine_requires_retrain": "No se han podido obtener sugerencias de traducción. Por favor, vuelva a entrenar las sugerencias en la página Resumen.",
     "go_to_retrain": "Ir al resumen",
     "try_again": "Inténtelo de nuevo"
@@ -380,6 +384,7 @@
     "please_connect_to_use_link": "Conéctese a Internet para unirse a un proyecto mediante un enlace.",
     "project_link_is_invalid": "El enlace del proyecto no es válido. Póngase en contacto con la persona que le envió el enlace y solicite uno nuevo.",
     "role_not_found": "El rol que se le asignó en este proyecto ya no está disponible. Póngase en contacto con la persona que le envió el enlace y solicite uno nuevo.",
+    "user_missing": "Your user account could not be found. Please log out and join using the link again.",
     "your_name": "Ingrese su nombre"
   },
   "dialog": {

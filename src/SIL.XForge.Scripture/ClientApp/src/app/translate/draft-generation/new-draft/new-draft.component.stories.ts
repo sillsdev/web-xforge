@@ -2,21 +2,21 @@ import { ErrorHandler } from '@angular/core';
 import { Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { Meta, StoryObj } from '@storybook/angular';
+import userEvent from '@testing-library/user-event';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { of } from 'rxjs';
-import userEvent from '@testing-library/user-event';
 import { expect, waitFor, within } from 'storybook/test';
 import { anything, instance, mock, reset, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { UserService } from 'xforge-common/user.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -24,6 +24,7 @@ import { ParatextService } from '../../../core/paratext.service';
 import { PermissionsService } from '../../../core/permissions.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { ProgressService } from '../../../shared/progress-service/progress.service';
+import { VerboseScriptureRange } from '../../../shared/scripture-range';
 import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
@@ -31,7 +32,6 @@ import { DraftSourcesService } from '../draft-sources.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftProgressService } from './draft-progress.service';
 import { NewDraftComponent } from './new-draft.component';
-import { VerboseScriptureRange } from '../../../shared/scripture-range';
 
 // Project IDs used throughout the stories.
 const TARGET_ID = 'target-project-id';
@@ -344,7 +344,7 @@ type Canvas = ReturnType<typeof within>;
 
 /** Advance to the next wizard step. */
 async function clickNext(canvas: Canvas): Promise<void> {
-  await userEvent.click(await canvas.findByRole('button', { name: /next/i }));
+  await userEvent.click(await canvas.findByTestId('next-button'));
 }
 
 /** Toggle a book chip (e.g. "Genesis") in the visible book multi-select. */
@@ -386,7 +386,7 @@ export const PendingUpdates: Story = {
     const canvas = within(canvasElement);
     await canvas.findByText('Spanish Draft Source');
     // The continue-anyway action is always offered; the wizard's own step buttons are hidden here.
-    expect(canvas.queryByRole('button', { name: /next/i })).toBeNull();
+    expect(canvas.queryByTestId('next-button')).toBeNull();
   }
 };
 
@@ -395,7 +395,7 @@ export const Preface: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await waitFor(() => expect(canvasElement.querySelector('.configure-sources-link')).not.toBeNull());
-    await canvas.findByRole('button', { name: /next/i });
+    await canvas.findByTestId('next-button');
   }
 };
 
@@ -472,7 +472,7 @@ export const Summary: Story = {
     await clickNext(canvas); // draft_books -> training_books
     await canvas.findByText('Select books to train on');
     await clickNext(canvas); // training_books -> summary
-    await canvas.findByRole('button', { name: /generate draft/i });
+    await canvas.findByTestId('generate-draft-button');
     await canvas.findByText('Custom draft configurations have been applied by an administrator.');
   }
 };
@@ -487,7 +487,7 @@ export const SummaryOfflineDevTools: Story = {
     await canvas.findByText('Select books to train on');
     await clickNext(canvas); // training_books -> summary
     await canvas.findByText('Developer options');
-    const generate = await canvas.findByRole('button', { name: /generate draft/i });
+    const generate = await canvas.findByTestId('generate-draft-button');
     expect(generate).toBeDisabled();
   }
 };
