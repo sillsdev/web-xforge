@@ -86,6 +86,7 @@ app-copyright-banner {
 
 .chapter-input {
   @include mat.form-field-density(-5);
+  width: 15em;
 }
 
 .chapter-error {
