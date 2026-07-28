@@ -20,6 +20,7 @@ The software and a backing database can be run using the [dev container](.devcon
 
 ## Running commands
 
-- If you run frontend tests, run them in the `src/SIL.XForge.Scripture/ClientApp` directory with a command such as `pnpm run test:headless --watch=false --include '**/text.component.spec.ts' --include '**/settings.component.spec.ts'`
-- If you need to run all frontend tests, you can run them in the `src/SIL.XForge.Scripture/ClientApp` directory with command `pnpm run test:headless --watch=false`
-- If you run backend dotnet tests, run them in the repository root directory with a command such as `dotnet test`.
+- To run RealtimeServer tests, in directory `src/RealtimeServer` run command `pnpm run test`
+- To run backend dotnet tests, in the repo root directory run command `dotnet test`
+- To run some frontend tests, in directory `src/SIL.XForge.Scripture/ClientApp` run a command like `pnpm run test:headless --watch=false --include '**/foo.component.spec.ts' --include '**/baz.component.spec.ts'`
+- To run all frontend tests, in directory `src/SIL.XForge.Scripture/ClientApp` run command `pnpm run test:headless --watch=false`

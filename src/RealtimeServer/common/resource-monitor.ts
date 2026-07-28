@@ -37,7 +37,6 @@ export interface ConnectionInfo {
   kind: ConnectionKind;
   owner: string | undefined;
   createdAt: string;
-  stoppedAt: string | undefined;
   collectionsDocsCount: number;
   collectionsDocsBytes: number;
   queriesCount: number;
@@ -163,7 +162,6 @@ interface ConnectionMonitorState {
   kind: ConnectionKind;
   owner: string | undefined;
   createdAt: string;
-  stoppedAt: string | undefined;
 }
 
 interface FetchOperationState {
@@ -174,7 +172,6 @@ interface FetchOperationState {
   collection: string;
   requestedIdsCount: number;
   startedAt: number;
-  startedAtIso: string;
   inFlightAtStart: number;
 }
 
@@ -247,17 +244,12 @@ export class ResourceMonitor {
     this.connectionStates.set(connection, {
       kind: metadata?.kind ?? 'unknown',
       owner: metadata?.owner,
-      createdAt: metadata?.createdAt ?? new Date().toISOString(),
-      stoppedAt: undefined
+      createdAt: metadata?.createdAt ?? new Date().toISOString()
     });
   }
 
   public stopMonitoringConnection(connection: Connection): void {
     this.stopMonitoringAgentOnConnection(connection);
-    const state = this.connectionStates.get(connection);
-    if (state != null) {
-      state.stoppedAt = new Date().toISOString();
-    }
     this.connections.delete(connection);
     this.connectionStates.delete(connection);
   }
@@ -297,7 +289,6 @@ export class ResourceMonitor {
       collection,
       requestedIdsCount,
       startedAt: Date.now(),
-      startedAtIso: new Date().toISOString(),
       inFlightAtStart: this.inFlightFetchCount
     });
     return operationId;
@@ -419,7 +410,6 @@ export class ResourceMonitor {
       kind: state?.kind ?? 'unknown',
       owner: state?.owner,
       createdAt: state?.createdAt ?? timestamp,
-      stoppedAt: state?.stoppedAt,
       collectionsDocsCount: collectionDiagnostics.reduce((count, connCollInfo) => count + connCollInfo.docsCount, 0),
       collectionsDocsBytes: collectionDiagnostics.reduce((sum, connCollInfo) => sum + connCollInfo.docsBytes, 0),
       queriesCount: Object.keys(conn.queries).length,
