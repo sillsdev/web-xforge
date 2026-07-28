@@ -2224,7 +2224,12 @@ public class MachineApiService(
     )
     {
         // Ensure that the user has permission
-        await EnsureProjectPermissionAsync(curUserId, sfProjectId, isServalAdmin, cancellationToken);
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
 
         IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
             curUserId,
@@ -2233,7 +2238,7 @@ public class MachineApiService(
             isServalAdmin,
             cancellationToken
         );
-        builds = FilterBuildsByBookAndChapter(builds, bookNum, chapterNum);
+        builds = await FilterBuildsByBookAndChapterAsync(project, builds, bookNum, chapterNum, cancellationToken);
 
         // Set up the list of revisions to be returned
         List<DocumentRevision> revisions =
@@ -2633,8 +2638,24 @@ public class MachineApiService(
                     throw new DataNotFoundException("The project does not exist.");
                 }
 
+                // Get the user to perform this action as
+                string userId = GetHighestRankedUserId(projectDoc.Data);
+
+                // Retrieve the user secret
+                Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
+                if (!attempt.TryResult(out UserSecret userSecret))
+                {
+                    throw new DataNotFoundException("The user does not exist.");
+                }
+
+                // Get the project versification
+                ScrVers versification =
+                    paratextService.GetParatextSettings(userSecret, projectDoc.Data.ParatextId)?.Versification
+                    ?? VerseRef.defaultVersification;
+
                 // Store the CurrentScriptureRange based on the books we asked Serval to draft
-                string currentScriptureRange = GetDraftedScriptureRange(translationBuild);
+                ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
+                string currentScriptureRange = GetDraftedScriptureRange(translationBuild, scriptureRangeParser);
                 if (string.IsNullOrWhiteSpace(currentScriptureRange))
                 {
                     throw new DataNotFoundException(
@@ -2654,7 +2675,6 @@ public class MachineApiService(
                 // Update the drafted scripture range to include the current scripture range
                 string draftedScriptureRange =
                     projectDoc.Data.TranslateConfig.DraftConfig.DraftedScriptureRange ?? string.Empty;
-                ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
                 Dictionary<string, SortedSet<int>> booksWithDrafts = [];
                 ParseScriptureRange(currentScriptureRange, scriptureRangeParser, ref booksWithDrafts);
                 ParseScriptureRange(draftedScriptureRange, scriptureRangeParser, ref booksWithDrafts);
@@ -3213,9 +3233,15 @@ public class MachineApiService(
             ? [.. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken)]
             : [];
 
+        // Get the project versification
+        ScrVers versification =
+            paratextService.GetParatextSettings(userSecret, projectDoc.Data.ParatextId)?.Versification
+            ?? VerseRef.defaultVersification;
+
         // For every text we have a draft applied to, get the pre-translation
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
         foreach (
-            (string bookId, List<int> chapters) in ScriptureRangeParser.GetChapters(
+            (string bookId, List<int> chapters) in scriptureRangeParser.GetChapters(
                 projectDoc.Data.TranslateConfig.DraftConfig.CurrentScriptureRange
             )
         )
@@ -3391,13 +3417,16 @@ public class MachineApiService(
     /// Gets the drafted scripture range for a translation build.
     /// </summary>
     /// <param name="translationBuild">The translation build.</param>
+    /// <param name="scriptureRangeParser">The scripture range parser.</param>
     /// <returns>
     /// The scripture range that was drafted. This will include the book name and any chapters (where specified).
     /// </returns>
-    private static string GetDraftedScriptureRange(TranslationBuild translationBuild)
+    private static string GetDraftedScriptureRange(
+        TranslationBuild translationBuild,
+        ScriptureRangeParser scriptureRangeParser
+    )
     {
         Dictionary<string, SortedSet<int>> booksWithDrafts = [];
-        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
         foreach (PretranslateCorpus ptc in translationBuild.Pretranslate ?? [])
         {
             // We are using the TranslationBuild.Pretranslate.SourceFilters.ScriptureRange to find the
@@ -3528,6 +3557,14 @@ public class MachineApiService(
         CancellationToken cancellationToken
     )
     {
+        // Ensure that the user has permission
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
+
         IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
             curUserId,
             sfProjectId,
@@ -3535,7 +3572,7 @@ public class MachineApiService(
             isServalAdmin,
             cancellationToken
         );
-        builds = FilterBuildsByBookAndChapter(builds, bookNum, chapterNum);
+        builds = await FilterBuildsByBookAndChapterAsync(project, builds, bookNum, chapterNum, cancellationToken);
 
         // See if there is a build that was requested after the timestamp
         DateTimeOffset? time = builds
@@ -3554,18 +3591,35 @@ public class MachineApiService(
     /// <summary>
     /// Filters a list of builds to only those that contain the specified book number and chapter in their translation scripture ranges.
     /// </summary>
+    /// <param name="project">The project.</param>
     /// <param name="builds">The builds.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The builds containing the specified book and chapter.</returns>
-    private static IReadOnlyList<ServalBuildDto> FilterBuildsByBookAndChapter(
+    private async Task<IReadOnlyList<ServalBuildDto>> FilterBuildsByBookAndChapterAsync(
+        SFProject project,
         IReadOnlyList<ServalBuildDto> builds,
         int bookNum,
-        int chapterNum
+        int chapterNum,
+        CancellationToken cancellationToken
     )
     {
-        // As we are only parsing books, we do not need to set the versification
-        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+        // Get the user to perform this action as
+        string userId = GetHighestRankedUserId(project);
+
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
+        // Get the project versification
+        ScrVers versification =
+            paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
+            ?? VerseRef.defaultVersification;
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
         return
         [
             .. builds.Where(b =>
