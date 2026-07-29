@@ -189,7 +189,6 @@ export interface FetchInfo {
   inFlightAtStart: number;
   inFlightAtEnd: number;
   status: 'ok' | 'error';
-  errorMessage: string | undefined;
 }
 
 /**
@@ -306,7 +305,6 @@ export class ResourceMonitor {
 
     const returnedDocsCount = results?.length ?? 0;
     const returnedDocsBytes = results?.reduce((sum, result) => sum + sizeof(result.data), 0) ?? 0;
-    const errorMessage = err == null ? undefined : `${err}`;
     const data: FetchInfo = {
       timestamp: new Date().toISOString(),
       operationId,
@@ -320,8 +318,7 @@ export class ResourceMonitor {
       durationMs: Date.now() - state.startedAt,
       inFlightAtStart: state.inFlightAtStart,
       inFlightAtEnd: this.inFlightFetchCount,
-      status: err == null ? 'ok' : 'error',
-      errorMessage
+      status: err == null ? 'ok' : 'error'
     };
     await this.saveToCsv(this.fetchInfoPath, [data]);
   }
