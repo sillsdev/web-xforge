@@ -82,7 +82,7 @@
     "xlink",
     "zizmor"
   ],
-  "dotnet.defaultSolution": "xForge.sln",
+  "dotnet.defaultSolution": "xForge.slnx",
   "dotnet.formatting.organizeImportsOnFormat": true,
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
   "editor.formatOnSave": true,
