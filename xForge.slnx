@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Docker/Docker.dcproj">
+      <Build />
+    </Project>
+    <Project Path="src/SIL.Converters.Usj/SIL.Converters.Usj.csproj" />
+    <Project Path="src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj" />
+    <Project Path="src/SIL.XForge/SIL.XForge.csproj" />
+  </Folder>
+  <Folder Name="/src/Help/">
+    <Project Path="src/Help/UpdateHelp/UpdateHelp.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/SIL.Converters.Usj.Tests/SIL.Converters.Usj.Tests.csproj" />
+    <Project Path="test/SIL.XForge.Scripture.Tests/SIL.XForge.Scripture.Tests.csproj" />
+    <Project Path="test/SIL.XForge.Tests/SIL.XForge.Tests.csproj" />
+  </Folder>
+</Solution>

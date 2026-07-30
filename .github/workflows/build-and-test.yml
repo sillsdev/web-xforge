@@ -93,7 +93,7 @@ jobs:
         run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci))
 
       - name: "Build: Backend, RealtimeServer"
-        run: dotnet build xForge.sln
+        run: dotnet build xForge.slnx
       - name: "Build: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build
 
@@ -212,7 +212,7 @@ jobs:
         run: scripts/build-production
 
       - name: "Test: Backend"
-        run: dotnet test xForge.sln
+        run: dotnet test xForge.slnx
       - name: "Test: RealtimeServer"
         run: cd src/RealtimeServer && pnpm run test:ci
       - name: "Test: Frontend"
