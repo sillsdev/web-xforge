@@ -1016,6 +1016,394 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetBuildDraftUsfmAsync_ReturnsEverythingTheBuildDrafted()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT1-2", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+        env.AddDraftTextDocument(Project01, 40, 1);
+        env.AddDraftTextDocument(Project01, 40, 2);
+        const string expected = "\\id MAT\r\n\\c 1\r\n\\v 1 Verse 1";
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(expected);
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: null,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(ServalBuildId01, actual.BuildId);
+        Assert.AreEqual(1, actual.Books.Count);
+        Assert.AreEqual("MAT", actual.Books[0].BookId);
+        Assert.AreEqual(new[] { 1, 2 }, actual.Books[0].Chapters);
+        Assert.AreEqual(expected, actual.Books[0].Usfm);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_BookOnlyDraftedTermResolvesToSavedDraftChapters()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+        env.AddDraftTextDocument(Project01, 40, 2);
+        env.AddDraftTextDocument(Project01, 40, 5);
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(TestUsfm);
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: null,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        // The build's range has no chapter detail, so the saved draft documents determine the chapters
+        Assert.AreEqual(1, actual.Books.Count);
+        Assert.AreEqual(new[] { 2, 5 }, actual.Books[0].Chapters);
+    }
+
+    [Test]
+    public void GetBuildDraftUsfmAsync_BuildDoesNotExistThrows()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                ServalBuildId01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public void GetBuildDraftUsfmAsync_BuildNotCompleteThrows()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT1-2", DateTime.UtcNow.AddHours(-1), JobState.Active));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                ServalBuildId01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_OlderBuildOnlyReturnsChaptersItDrafted()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds(
+            (ServalBuildId01, "MAT1", DateTime.UtcNow.AddHours(-2), JobState.Completed),
+            (ServalBuildId02, "MAT2", DateTime.UtcNow.AddHours(-1), JobState.Completed)
+        );
+        env.AddDraftTextDocument(Project01, 40, 1);
+        env.AddDraftTextDocument(Project01, 40, 2);
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(TestUsfm);
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: null,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        // Only the chapter drafted by the older build is returned, not the chapter drafted by the newer build
+        Assert.AreEqual(1, actual.Books.Count);
+        Assert.AreEqual(new[] { 1 }, actual.Books[0].Chapters);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_OlderBuildDoesNotFallBackToServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds(
+            (ServalBuildId01, "MAT1", DateTime.UtcNow.AddHours(-2), JobState.Completed),
+            (ServalBuildId02, "MAT2", DateTime.UtcNow.AddHours(-1), JobState.Completed)
+        );
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                ServalBuildId01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+
+        // Serval only retains the latest completed build's pre-translations
+        await env
+            .PreTranslationService.DidNotReceiveWithAnyArgs()
+            .GetPreTranslationUsfmAsync(
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<int>(),
+                Arg.Any<DraftUsfmConfig>(),
+                Arg.Any<CancellationToken>()
+            );
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_LatestBuildFallsBackToServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(Project01, u => u.Set(p => p.Name, "Project 01"));
+        env.SetupPreTranslationBuilds(
+            (ServalBuildId01, "MAT1", DateTime.UtcNow.AddHours(-2), JobState.Completed),
+            (ServalBuildId02, "MAT2", DateTime.UtcNow.AddHours(-1), JobState.Completed)
+        );
+        env.PreTranslationService.GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                0,
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(TestUsfm));
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId02,
+            draftUsfmConfig: null,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        // The USFM from Serval is missing the leading \id line, so one is added
+        Assert.AreEqual(1, actual.Books.Count);
+        Assert.AreEqual(new[] { 2 }, actual.Books[0].Chapters);
+        Assert.AreEqual($"\\id MAT - Project 01\n{TestUsfm}", actual.Books[0].Usfm);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_ServalFallbackReportsChaptersFromTheUsfm()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+
+        // No draft documents are saved, and the build's range has no chapter detail,
+        // so the chapters come from the USFM that Serval returns
+        env.PreTranslationService.GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                0,
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult("\\id MAT\n\\c 2\n\\v 1 Verse 1\n\\c 5\n\\v 1 Verse 1"));
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: null,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, actual.Books.Count);
+        Assert.AreEqual(new[] { 2, 5 }, actual.Books[0].Chapters);
+    }
+
+    [Test]
+    public void GetBuildDraftUsfmAsync_CustomFormatOnlyAvailableForLatestBuild()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds(
+            (ServalBuildId01, "MAT1", DateTime.UtcNow.AddHours(-2), JobState.Completed),
+            (ServalBuildId02, "MAT2", DateTime.UtcNow.AddHours(-1), JobState.Completed)
+        );
+        env.AddDraftTextDocument(Project01, 40, 1);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                ServalBuildId01,
+                draftUsfmConfig: new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove },
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_CustomFormatRetrievesFromServal()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT1-2", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+        env.AddDraftTextDocument(Project01, 40, 1);
+        env.AddDraftTextDocument(Project01, 40, 2);
+        var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
+        env.PreTranslationService.GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                0,
+                Arg.Any<DraftUsfmConfig>(),
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(TestUsfm));
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: config,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        // The custom format is applied by Serval, so the local snapshots are not used
+        Assert.AreEqual(1, actual.Books.Count);
+        await env
+            .PreTranslationService.Received(1)
+            .GetPreTranslationUsfmAsync(
+                Project01,
+                40,
+                0,
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == config.ParagraphFormat),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_LegacyBuildWithNoRangesServesSavedDraftDocuments()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, null, DateTime.UtcNow.AddHours(-1), JobState.Completed));
+
+        // The saved draft documents are the authority: GEN 3 has a draft, and MAT 1 has a draft even though
+        // MAT is not in the project texts (books can be drafted without being added to the project, or removed)
+        env.AddDraftTextDocument(Project01, 1, 3);
+        env.AddDraftTextDocument(Project01, 40, 1);
+        env.ParatextService.ConvertUsxToUsfm(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<XDocument>()
+            )
+            .Returns(TestUsfm);
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User01,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: null,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(2, actual.Books.Count);
+        Assert.AreEqual("GEN", actual.Books[0].BookId);
+        Assert.AreEqual(new[] { 3 }, actual.Books[0].Chapters);
+        Assert.AreEqual("MAT", actual.Books[1].BookId);
+        Assert.AreEqual(new[] { 1 }, actual.Books[1].Chapters);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_ServalAdminDoesNotNeedPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT1", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+        env.AddDraftTextDocument(Project01, 40, 1);
+        env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
+            .Returns(TestUsfm);
+
+        // SUT
+        DraftUsfmDto actual = await env.Service.GetBuildDraftUsfmAsync(
+            User02,
+            Project01,
+            ServalBuildId01,
+            draftUsfmConfig: null,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, actual.Books.Count);
+    }
+
+    [Test]
+    public void GetBuildDraftUsfmAsync_NoPermissionThrows()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetBuildDraftUsfmAsync(
+                User02,
+                Project01,
+                ServalBuildId01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_MissingUserSecretThrows()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.UserSecrets.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                ServalBuildId01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+        );
+    }
+
+    [Test]
     public void GetBuildsAsync_NoPermission()
     {
         // Set up test environment
@@ -6451,6 +6839,106 @@ public class MachineApiServiceTests
                                 UserId = User01,
                             }),
                             UnpagedCount = 1,
+                        }
+                    )
+                );
+        }
+
+        /// <summary>
+        /// Adds a draft text document for the specified chapter to the realtime service.
+        /// </summary>
+        public void AddDraftTextDocument(string projectId, int bookNum, int chapterNum) =>
+            TextDocuments.Add(
+                new TextDocument
+                {
+                    Id = TextDocument.GetDocId(projectId, bookNum, chapterNum, TextDocument.Draft),
+                    Type = Usj.UsjType,
+                    Version = Usj.UsjVersion,
+                    Content =
+                    [
+                        new UsjMarker
+                        {
+                            Type = "chapter",
+                            Marker = "c",
+                            Number = chapterNum.ToString(),
+                        },
+                        new UsjMarker
+                        {
+                            Type = "verse",
+                            Marker = "v",
+                            Number = "1",
+                        },
+                        $"Chapter {chapterNum} verse 1",
+                    ],
+                }
+            );
+
+        /// <summary>
+        /// Sets up pre-translation builds on Serval for Project01, with each build's translation scripture range
+        /// and requested date recorded via a BuildProjectAsync event metric. A null scripture range simulates a
+        /// legacy build recorded before event metrics existed.
+        /// </summary>
+        public void SetupPreTranslationBuilds(
+            params (string BuildId, string? ScriptureRange, DateTime DateRequested, JobState State)[] builds
+        )
+        {
+            TranslationEnginesClient
+                .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult<IList<TranslationBuild>>([
+                        .. builds.Select(b => new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = b.BuildId,
+                            Engine = new ResourceLink { Id = TranslationEngine01, Url = "https://example.com" },
+                            Message = string.Empty,
+                            Progress = 0,
+                            Revision = 43,
+                            State = b.State,
+                            DateFinished = b.DateRequested.AddMinutes(30),
+                        }),
+                    ])
+                );
+            EventMetricService
+                .GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+                .Returns(
+                    Task.FromResult(
+                        new QueryResults<EventMetric>
+                        {
+                            Results = builds
+                                .Where(b => b.ScriptureRange is not null)
+                                .Select(b => new EventMetric
+                                {
+                                    Result = b.BuildId,
+                                    EventType = "BuildProjectAsync",
+                                    Payload =
+                                    {
+                                        {
+                                            "buildConfig",
+                                            BsonDocument.Parse(
+                                                JsonConvert.SerializeObject(
+                                                    new BuildConfig
+                                                    {
+                                                        TranslationScriptureRanges =
+                                                        [
+                                                            new ProjectScriptureRange
+                                                            {
+                                                                ProjectId = Project01,
+                                                                ScriptureRange = b.ScriptureRange!,
+                                                            },
+                                                        ],
+                                                        ProjectId = Project01,
+                                                    }
+                                                )
+                                            )
+                                        },
+                                    },
+                                    ProjectId = Project01,
+                                    Scope = EventScope.Drafting,
+                                    TimeStamp = b.DateRequested,
+                                    UserId = User01,
+                                }),
+                            UnpagedCount = builds.Length,
                         }
                     )
                 );

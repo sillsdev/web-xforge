@@ -134,6 +134,16 @@ public interface IMachineApiService
     );
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: false)]
+    Task<DraftUsfmDto> GetBuildDraftUsfmAsync(
+        string curUserId,
+        string sfProjectId,
+        string buildId,
+        DraftUsfmConfig? draftUsfmConfig,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    );
+
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId), captureReturnValue: false)]
     Task<string> GetPreTranslationUsfmAsync(
         string curUserId,
         string sfProjectId,

@@ -286,6 +286,37 @@ export = {
     conn?.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => callback(err, snapshot));
   },
 
+  fetchSnapshotsByTimestamp: (
+    callback: InteropCallback,
+    handle: number,
+    collection: string,
+    ids: string[],
+    timestamp: number
+  ): void => {
+    if (server == null) {
+      callback(new Error('Server not started.'));
+      return;
+    }
+    const conn = connections.get(handle);
+    if (conn == null) {
+      callback(new Error('Connection not found.'));
+      return;
+    }
+    Promise.all(
+      ids.map(
+        id =>
+          new Promise((resolve, reject) =>
+            conn.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) =>
+              err == null ? resolve(snapshot) : reject(err)
+            )
+          )
+      )
+    ).then(
+      snapshots => callback(undefined, snapshots),
+      err => callback(err)
+    );
+  },
+
   getOps: (callback: InteropCallback, collection: string, id: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
