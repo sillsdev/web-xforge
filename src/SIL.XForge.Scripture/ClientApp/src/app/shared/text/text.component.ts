@@ -1091,7 +1091,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   /** Is a given selection range valid for editing the current segment? */
   isValidSelectionForCurrentSegment(sel: Range): boolean {
-    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel);
+    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel, false);
     return !(newSel == null || sel.index !== newSel.index || sel.length !== newSel.length);
   }
 
