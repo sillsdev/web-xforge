@@ -187,7 +187,10 @@ export = {
     connection.on('error', err => console.log(err));
     const index = connectionIndex++;
     connections.set(index, connection);
-    ResourceMonitor.instance.startMonitoringConnection(connection);
+    ResourceMonitor.instance.startMonitoringConnection(connection, {
+      kind: 'interop',
+      owner: userId
+    });
     callback(undefined, index);
   },
 
@@ -254,8 +257,18 @@ export = {
       return;
     }
     const conn = connections.get(handle);
+    const operationId = ResourceMonitor.instance.beginFetchOperation(conn, collection, ids.length);
+    if (conn == null) {
+      const err = new Error('Connection not found.');
+      void ResourceMonitor.instance.endFetchOperation(operationId, undefined, err);
+      callback(err);
+      return;
+    }
     const query = { _id: { $in: ids } };
-    conn?.createFetchQuery(collection, query, {}, (err, results) => callback(err, createSnapshots(results)));
+    conn.createFetchQuery(collection, query, {}, (err, results) => {
+      void ResourceMonitor.instance.endFetchOperation(operationId, results, err);
+      callback(err, createSnapshots(results));
+    });
   },
 
   fetchSnapshotByTimestamp: (

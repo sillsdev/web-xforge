@@ -10,6 +10,17 @@ jest.mock('fs/promises', () => ({
 
 describe('ResourceMonitor', () => {
   describe('getOutputDir', () => {
+    function expectWriteCallsForBaseDir(expectedDir: string): void {
+      expect(mockFsPromises.writeFileCalls.length).toBeGreaterThan(0);
+      expect(mockFsPromises.writeFileCalls[0]).toContain(`${expectedDir}${path.sep}heap-info.csv`);
+      expect(mockFsPromises.writeFileCalls).toContain(`${expectedDir}${path.sep}heap-space-info.csv`);
+      for (const filePath of mockFsPromises.writeFileCalls) {
+        expect(filePath).toContain(`${expectedDir}${path.sep}`);
+      }
+      expect(mockFsPromises.mkdirCalls.length).toBeGreaterThan(0);
+      expect(mockFsPromises.mkdirCalls).toContain(expectedDir);
+    }
+
     it('prioritizes SF_RESOURCE_REPORTS_PATH', async () => {
       const sfResourceReportsPath: string = `${path.sep}sf-resource-reports-path`;
       const env: TestEnvironment = new TestEnvironment({
@@ -20,10 +31,7 @@ describe('ResourceMonitor', () => {
       const expectedDir: string = sfResourceReportsPath;
       // SUT
       await env.monitor.record();
-      expect(mockFsPromises.writeFileCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.writeFileCalls[0]).toContain(`${expectedDir}${path.sep}heap-info.csv`);
-      expect(mockFsPromises.mkdirCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.mkdirCalls).toContain(expectedDir);
+      expectWriteCallsForBaseDir(expectedDir);
     });
 
     it('uses XDG_DATA_HOME when SF_RESOURCE_REPORTS_PATH is unset', async () => {
@@ -37,10 +45,7 @@ describe('ResourceMonitor', () => {
       const expectedDir: string = path.join(xdgDataHome, reportDirName);
       // SUT
       await env.monitor.record();
-      expect(mockFsPromises.writeFileCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.writeFileCalls[0]).toContain(`${expectedDir}${path.sep}heap-info.csv`);
-      expect(mockFsPromises.mkdirCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.mkdirCalls).toContain(expectedDir);
+      expectWriteCallsForBaseDir(expectedDir);
     });
 
     it('uses HOME when SF_RESOURCE_REPORTS_PATH and XDG_DATA_HOME are unset', async () => {
@@ -49,10 +54,7 @@ describe('ResourceMonitor', () => {
       const expectedDir: string = path.join(`${path.sep}home`, '.local', 'share', reportDirName);
       // SUT
       await env.monitor.record();
-      expect(mockFsPromises.writeFileCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.writeFileCalls[0]).toContain(`${expectedDir}${path.sep}heap-info.csv`);
-      expect(mockFsPromises.mkdirCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.mkdirCalls).toContain(expectedDir);
+      expectWriteCallsForBaseDir(expectedDir);
     });
 
     it('uses HOME when SF_RESOURCE_REPORTS_PATH is unset and XDG_DATA_HOME is empty', async () => {
@@ -63,10 +65,7 @@ describe('ResourceMonitor', () => {
       const expectedDir: string = path.join(`${path.sep}home`, '.local', 'share', reportDirName);
       // SUT
       await env.monitor.record();
-      expect(mockFsPromises.writeFileCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.writeFileCalls[0]).toContain(`${expectedDir}${path.sep}heap-info.csv`);
-      expect(mockFsPromises.mkdirCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.mkdirCalls).toContain(expectedDir);
+      expectWriteCallsForBaseDir(expectedDir);
     });
 
     it('uses cwd when HOME, SF_RESOURCE_REPORTS_PATH, and XDG_DATA_HOME are unset', async () => {
@@ -75,10 +74,7 @@ describe('ResourceMonitor', () => {
       const expectedDir: string = path.join(process.cwd(), reportDirName);
       // SUT
       await env.monitor.record();
-      expect(mockFsPromises.writeFileCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.writeFileCalls[0]).toContain(`${expectedDir}${path.sep}heap-info.csv`);
-      expect(mockFsPromises.mkdirCalls.length).toBeGreaterThan(0);
-      expect(mockFsPromises.mkdirCalls).toContain(expectedDir);
+      expectWriteCallsForBaseDir(expectedDir);
     });
   });
 });
