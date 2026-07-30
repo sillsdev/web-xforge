@@ -5,7 +5,7 @@ import JSZip from 'jszip';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
-import { EMPTY, firstValueFrom, Observable, of, throwError, timer } from 'rxjs';
+import { defer, EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 
 import { I18nService } from 'xforge-common/i18n.service';
@@ -15,16 +15,16 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { Revision } from '../../core/paratext.service';
 import { BuildDto } from '../../machine-api/build-dto';
+import { DraftUsfmBook, DraftUsfmDto } from '../../machine-api/draft-usfm-dto';
 import { HttpClient } from '../../machine-api/http-client';
 import { interpretTypes, ServalBuildReportDto } from '../../serval-administration/serval-build-report';
-import { booksFromScriptureRange, formatDateForFilename, getBookFileNameDigits } from '../../shared/utils';
+import { formatDateForFilename, getBookFileNameDigits } from '../../shared/utils';
 import { BuildConfidences } from './build-confidences/build-confidences';
 import {
   activeBuildStates,
   BuildConfig,
   DRAFT_GENERATION_SERVICE_OPTIONS,
   DraftGenerationServiceOptions,
-  DraftZipProgress,
   StartBuildResult
 } from './draft-generation';
 
@@ -451,123 +451,61 @@ export class DraftGenerationService {
   }
 
   /**
-   * Gets the pre-translation USFM for the specified book/chapter.
-   * @param projectId The SF project id for the target translation.
-   * @param book The book number.
-   * @param chapter The chapter number. Specify 0 to return all chapters in the book.
-   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
-   * @returns An observable string of USFM data, or undefined if no pre-translations exist.
+   * Downloads the draft a build generated as a zip of USFM files, one per book.
+   * @param projectDoc The project document.
+   * @param build The build that generated the draft.
+   * @returns An observable that completes once the zip file has been downloaded to the user's machine.
    */
-  getGeneratedDraftUsfm(
-    projectId: string,
-    book: number,
-    chapter: number,
-    timestamp?: Date
-  ): Observable<string | undefined> {
-    if (!this.onlineStatusService.isOnline) {
-      return of(undefined);
-    }
-    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`;
-    const params = new URLSearchParams();
-    if (timestamp != null) {
-      params.append('timestamp', timestamp.toISOString());
-      url += `?${params.toString()}`;
-    }
-    return this.httpClient.get<string>(url).pipe(
-      map(res => res.data),
-      catchError(() => {
-        // If no USFM could be retrieved, return undefined
-        return of(undefined);
-      })
-    );
+  downloadDraft(projectDoc: SFProjectProfileDoc | undefined, build: BuildDto | undefined): Observable<void> {
+    return defer(() => {
+      if (projectDoc?.data == null || build == null) {
+        return throwError(() => this.draftDownloadError);
+      }
+
+      const projectShortName: string = projectDoc.data.shortName;
+      const url = `translation/builds/id:${build.id}/usfm`;
+
+      // The zip file is named for the build that generated the draft
+      let filename: string = projectShortName + ' Draft';
+      if (build.additionalInfo?.dateFinished != null) {
+        filename += ' ' + formatDateForFilename(new Date(build.additionalInfo.dateFinished));
+      }
+
+      filename += '.zip';
+
+      return this.httpClient.get<DraftUsfmDto>(url).pipe(
+        switchMap(res => {
+          const books: DraftUsfmBook[] = res.data?.books ?? [];
+          if (books.length === 0) {
+            throw this.draftDownloadError;
+          }
+
+          return this.zipDraftBooks(books, projectShortName);
+        }),
+        map(blob => saveAs(blob, filename)),
+        catchError(() => throwError(() => this.draftDownloadError))
+      );
+    });
   }
 
   /**
-   * Downloads the generated drafts for a project as a zip file.
-   * @param projectDoc The project document.
-   * @param lastCompletedBuild The last completed build from the Machine API.
-   * @returns An observable of the zip progress until on completion a zip file is downloaded to the user's machine.
+   * Zips the USFM for each book into a single archive, one file per book.
+   * @param books The books to zip.
+   * @param projectShortName The project short name, which is part of each file name.
+   * @returns A promise of the zip file contents.
    */
-  downloadGeneratedDraftZip(
-    projectDoc: SFProjectProfileDoc | undefined,
-    lastCompletedBuild: BuildDto | undefined
-  ): Observable<DraftZipProgress> {
-    return new Observable<DraftZipProgress>(observer => {
-      if (projectDoc?.data == null) {
-        observer.error(this.i18n.translateStatic('draft_generation.info_alert_download_error'));
-        return;
-      }
+  private zipDraftBooks(books: DraftUsfmBook[], projectShortName: string): Promise<Blob> {
+    const zip = new JSZip();
+    for (const book of books) {
+      const bookNum: number = Canon.bookIdToNumber(book.bookId);
+      const fileName: string = getBookFileNameDigits(bookNum) + book.bookId + projectShortName + '.SFM';
+      zip.file(fileName, book.usfm);
+    }
 
-      const zip = new JSZip();
-      const projectShortName: string = projectDoc.data.shortName;
-      const projectName: string = projectDoc.data.name;
-      const usfmFiles: Promise<void>[] = [];
+    return zip.generateAsync({ type: 'blob' });
+  }
 
-      // Build the list of book numbers, first checking the build, then the project document if that is null
-      let books = new Set<number>(
-        lastCompletedBuild?.additionalInfo?.translationScriptureRanges?.flatMap(range =>
-          booksFromScriptureRange(range.scriptureRange)
-        )
-      );
-
-      // If no books were found in the build, use the project document
-      if (books.size === 0) {
-        books = new Set<number>(
-          // Legacy calculation for very old drafts
-          booksFromScriptureRange(projectDoc.data.translateConfig.draftConfig.currentScriptureRange)
-        );
-      }
-
-      const zipProgress: DraftZipProgress = { current: 0, total: books.size };
-      observer.next(zipProgress);
-
-      // Get the date the draft was generated and written to Scripture Forge
-      let dateGenerated: Date | undefined = undefined;
-      if (lastCompletedBuild?.additionalInfo?.dateGenerated != null) {
-        dateGenerated = new Date(lastCompletedBuild.additionalInfo.dateGenerated);
-      }
-
-      // Create the promises to download each book's USFM
-      for (const bookNum of books) {
-        const usfmFile = firstValueFrom(this.getGeneratedDraftUsfm(projectDoc.id, bookNum, 0, dateGenerated)).then(
-          usfm => {
-            if (usfm != null) {
-              // USFM files must start with an \id marker; it is missing when the draft excludes chapter 1.
-              if (!/^\s*\\id /.test(usfm)) {
-                usfm = `\\id ${Canon.bookNumberToId(bookNum)} - ${projectName}\n${usfm}`;
-              }
-              const fileName: string =
-                getBookFileNameDigits(bookNum) + Canon.bookNumberToId(bookNum) + projectShortName + '.SFM';
-              zip.file(fileName, usfm);
-              zipProgress.current++;
-              observer.next(zipProgress);
-            }
-          }
-        );
-        usfmFiles.push(usfmFile);
-      }
-
-      void Promise.all(usfmFiles).then(() => {
-        if (Object.keys(zip.files).length === 0) {
-          observer.next({ current: 0, total: 0 });
-          observer.error(this.i18n.translateStatic('draft_generation.info_alert_download_error'));
-          return;
-        }
-
-        // Download the zip file
-        let filename: string = (projectDoc.data?.shortName ?? 'Translation') + ' Draft';
-        if (lastCompletedBuild?.additionalInfo?.dateFinished != null) {
-          filename += ' ' + formatDateForFilename(new Date(lastCompletedBuild.additionalInfo.dateFinished));
-        }
-
-        filename += '.zip';
-
-        void zip.generateAsync({ type: 'blob' }).then(blob => {
-          saveAs(blob, filename);
-          observer.next({ current: 0, total: 0 });
-          observer.complete();
-        });
-      });
-    });
+  private get draftDownloadError(): Error {
+    return new Error(this.i18n.translateStatic('draft_generation.info_alert_download_error'));
   }
 }

@@ -1050,90 +1050,12 @@ describe('DraftGenerationService', () => {
     }));
   });
 
-  describe('getGeneratedDraftUsfm', () => {
-    it('should get USFM for the specified book/chapter without a timestamp and return an observable', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
-
-      // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
-        expect(result).toEqual(usfm);
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(usfm);
-      tick();
-    }));
-
-    it('should get USFM for the specified book/chapter with a timestamp and return an observable', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
-      const date = new Date();
-
-      // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter, date).subscribe(result => {
-        expect(result).toEqual(usfm);
-      });
-      tick();
-
-      const params = new URLSearchParams();
-      params.append('timestamp', date.toISOString());
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm?${params.toString()}`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(usfm);
-      tick();
-    }));
-
-    it('should return undefined for a 404 error', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-
-      // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
-        expect(result).toBeUndefined();
-      });
-      tick();
-
-      // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/usfm`
-      );
-      expect(req.request.method).toEqual('GET');
-      req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
-      tick();
-    }));
-
-    it('should return undefined if offline', fakeAsync(() => {
-      const book = 43;
-      const chapter = 3;
-      testOnlineStatusService.setIsOnline(false);
-
-      // SUT
-      service.getGeneratedDraftUsfm(projectId, book, chapter, undefined).subscribe(result => {
-        expect(result).toBeUndefined();
-      });
-      tick();
-    }));
-  });
-
   describe('downloadDraft', () => {
-    it('should throw an error if the chapters have no drafts', done => {
+    it('should throw an error if the build is undefined', done => {
       const projectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          texts: []
-        })
+        data: createTestProjectProfile()
       } as SFProjectProfileDoc;
-      service.downloadGeneratedDraftZip(projectDoc, undefined).subscribe({
+      service.downloadDraft(projectDoc, undefined).subscribe({
         error: (error: Error) => {
           expect(error).not.toBeNull();
           done();
@@ -1143,7 +1065,7 @@ describe('DraftGenerationService', () => {
     });
 
     it('should throw an error if the project has no data', done => {
-      service.downloadGeneratedDraftZip(undefined, undefined).subscribe({
+      service.downloadDraft(undefined, buildDto).subscribe({
         error: (error: Error) => {
           expect(error).not.toBeNull();
           done();
@@ -1152,192 +1074,64 @@ describe('DraftGenerationService', () => {
       });
     });
 
-    it('should create a zip file containing all of the books with drafts without a generated date', fakeAsync(() => {
-      const projectDoc: SFProjectProfileDoc = {
-        id: projectId,
-        data: createTestProjectProfile({
-          translateConfig: {
-            draftConfig: {
-              currentScriptureRange: '1JN;2JN;3JN'
-            }
-          },
-          texts: [
-            {
-              bookNum: 62,
-              chapters: [{ number: 1 }, { number: 2 }]
-            },
-            { bookNum: 63, chapters: [{ number: 1 }] },
-            { bookNum: 64, chapters: [{ number: 1 }] }
-          ]
-        })
-      } as SFProjectProfileDoc;
-      const lastCompletedBuild: BuildDto = {
-        additionalInfo: { dateFinished: '2024-08-27T00:00:00.000Z' }
-      } as BuildDto;
-
-      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
-        complete: () => {
-          expect(saveAs).toHaveBeenCalled();
-        }
-      });
-      tick();
-
-      // Setup the HTTP request for 1 John
-      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
-      const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm`
-      );
-      expect(req1jn.request.method).toEqual('GET');
-      req1jn.flush(usfm);
-
-      // Setup the HTTP request for 2 John
-      const req2jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/63_0/usfm`
-      );
-      expect(req2jn.request.method).toEqual('GET');
-      req2jn.flush(usfm);
-      tick();
-    }));
-
-    it('should create a zip file containing all of the books with drafts at the generated date if the build scripture range is missing', fakeAsync(() => {
-      const projectDoc: SFProjectProfileDoc = {
-        id: projectId,
-        data: createTestProjectProfile({
-          translateConfig: {
-            draftConfig: {
-              currentScriptureRange: '1JN'
-            }
-          },
-          texts: [{ bookNum: 62, chapters: [{ number: 1 }] }]
-        })
-      } as SFProjectProfileDoc;
-      const lastCompletedBuild: BuildDto = {
-        additionalInfo: {
-          dateFinished: '2024-08-27T00:00:00.000Z',
-          dateGenerated: '2024-08-27T01:02:03.004Z'
-        }
-      } as BuildDto;
-
-      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
-        complete: () => {
-          expect(saveAs).toHaveBeenCalled();
-        }
-      });
-      tick();
-
-      const params = new URLSearchParams();
-      params.append('timestamp', '2024-08-27T01:02:03.004Z');
-      // Setup the HTTP request for 1 John
-      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
-      const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?${params.toString()}`
-      );
-      expect(req1jn.request.method).toEqual('GET');
-      req1jn.flush(usfm);
-      tick();
-    }));
-
-    it('should create a zip file containing all of the books with drafts at the generated date using the build scripture range', fakeAsync(() => {
-      const projectDoc: SFProjectProfileDoc = {
-        id: projectId,
-        data: createTestProjectProfile({
-          texts: []
-        })
-      } as SFProjectProfileDoc;
-      const lastCompletedBuild: BuildDto = {
-        additionalInfo: {
-          dateFinished: '2024-08-27T00:00:00.000Z',
-          dateGenerated: '2024-08-27T01:02:03.004Z',
-          translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
-        }
-      } as BuildDto;
-
-      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
-        complete: () => {
-          expect(saveAs).toHaveBeenCalled();
-        }
-      });
-      tick();
-
-      const params = new URLSearchParams();
-      params.append('timestamp', '2024-08-27T01:02:03.004Z');
-      // Setup the HTTP request for 1 John
-      const usfm = '\\id Test USFM \\c 1 \\v 1 Test';
-      const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm?${params.toString()}`
-      );
-      expect(req1jn.request.method).toEqual('GET');
-      req1jn.flush(usfm);
-      tick();
-    }));
-
-    it('should prepend an \\id marker when the draft does not include chapter 1', fakeAsync(() => {
+    it('should download the books the build drafted in one request and zip them', fakeAsync(() => {
       const zipFileSpy = spyOn(JSZip.prototype, 'file').and.callThrough() as jasmine.Spy;
       const projectDoc: SFProjectProfileDoc = {
         id: projectId,
-        data: createTestProjectProfile({
-          name: 'My Project',
-          shortName: 'MP',
-          texts: []
-        })
+        data: createTestProjectProfile({ shortName: 'MP' })
       } as SFProjectProfileDoc;
-      const lastCompletedBuild: BuildDto = {
-        additionalInfo: {
-          dateFinished: '2024-08-27T00:00:00.000Z',
-          translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
-        }
-      } as BuildDto;
+      const build: BuildDto = {
+        ...buildDto,
+        id: `${projectId}.${buildId}`,
+        additionalInfo: { dateFinished: '2024-08-27T00:00:00.000Z' } as ServalBuildAdditionalInfo
+      };
+      let completed = false;
 
-      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
-        complete: () => {
-          expect(saveAs).toHaveBeenCalled();
-        }
+      // SUT
+      service.downloadDraft(projectDoc, build).subscribe({
+        complete: () => (completed = true)
       });
       tick();
 
-      // The draft starts at chapter 2, so there is no \id marker
-      const usfm = '\\c 2 \\v 1 Test';
-      const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm`
+      // The server sends complete USFM books, so no client side fixup occurs
+      const usfm = '\\id 1JN - My Project\n\\c 1\n\\v 1 Test';
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/usfm`
       );
-      req1jn.flush(usfm);
-      tick();
-
-      expect(zipFileSpy).toHaveBeenCalledWith('631JNMP.SFM', '\\id 1JN - My Project\n\\c 2 \\v 1 Test');
-    }));
-
-    it('should not prepend an \\id marker when the draft already begins with one', fakeAsync(() => {
-      const zipFileSpy = spyOn(JSZip.prototype, 'file').and.callThrough() as jasmine.Spy;
-      const projectDoc: SFProjectProfileDoc = {
-        id: projectId,
-        data: createTestProjectProfile({
-          name: 'My Project',
-          shortName: 'MP',
-          texts: []
-        })
-      } as SFProjectProfileDoc;
-      const lastCompletedBuild: BuildDto = {
-        additionalInfo: {
-          dateFinished: '2024-08-27T00:00:00.000Z',
-          translationScriptureRanges: [{ projectId, scriptureRange: '1JN' }]
-        }
-      } as BuildDto;
-
-      service.downloadGeneratedDraftZip(projectDoc, lastCompletedBuild).subscribe({
-        complete: () => {
-          expect(saveAs).toHaveBeenCalled();
-        }
-      });
-      tick();
-
-      const usfm = '\\id 1JN \\c 1 \\v 1 Test';
-      const req1jn = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/engines/project:${projectId}/actions/pretranslate/62_0/usfm`
-      );
-      req1jn.flush(usfm);
+      expect(req.request.method).toEqual('GET');
+      req.flush({ buildId, books: [{ bookId: '1JN', chapters: [1], usfm }] });
       tick();
 
       expect(zipFileSpy).toHaveBeenCalledWith('631JNMP.SFM', usfm);
+      expect(saveAs).toHaveBeenCalled();
+      expect(completed).toBe(true);
+    }));
+
+    it('should throw an error if the draft cannot be retrieved', fakeAsync(() => {
+      const projectDoc: SFProjectProfileDoc = {
+        id: projectId,
+        data: createTestProjectProfile({ shortName: 'MP' })
+      } as SFProjectProfileDoc;
+      const build: BuildDto = { ...buildDto, id: `${projectId}.${buildId}` };
+      let error: Error | undefined;
+
+      // SUT
+      service.downloadDraft(projectDoc, build).subscribe({
+        error: (e: Error) => (error = e)
+      });
+      tick();
+
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}.${buildId}/usfm`
+      );
+      req.flush('No draft content is available for the build.', {
+        status: HttpStatusCode.NotFound,
+        statusText: 'Not Found'
+      });
+      tick();
+
+      expect(error).not.toBeNull();
+      expect(saveAs).not.toHaveBeenCalled();
     }));
   });
 });

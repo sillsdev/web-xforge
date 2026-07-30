@@ -14,6 +14,7 @@ public static class MachineApi
     public const string GetBuilds = "translation/builds/project:{sfProjectId}";
     public const string GetBuildsSince = "translation/builds/since:{dateTime}";
     public const string GetBuildConfidences = "translation/builds/id:{sfProjectId}.{buildId}/confidences";
+    public const string GetBuildDraftUsfm = "translation/builds/id:{sfProjectId}.{buildId}/usfm";
     public const string GetEngine = "translation/engines/project:{sfProjectId}";
     public const string GetRawEngine = "translation/engines/project:{sfProjectId}/raw";
     public const string GetWordGraph = "translation/engines/project:{sfProjectId}/actions/getWordGraph";

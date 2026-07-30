@@ -53,7 +53,6 @@ import { NoticeComponent } from '../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../shared/scripture-range-display';
 import { projectLabel } from '../shared/utils';
-import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
@@ -141,14 +140,13 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   trainingFiles: string[] = [];
   translationBooksByProject: ProjectAndRange[] = [];
 
-  downloadBooksProgress: number = 0;
-  downloadBooksTotal: number = 0;
+  downloadingDraft: boolean = false;
 
   draftConfig: Object | undefined;
   draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
   lastCompletedBuild: BuildDto | undefined;
   rawLastCompletedBuild: any;
-  zipSubscription: Subscription | undefined;
+  downloadSubscription: Subscription | undefined;
   trainingDataFiles: TrainingData[] = [];
 
   constructor(
@@ -303,15 +301,16 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   async downloadDraft(): Promise<void> {
-    this.zipSubscription?.unsubscribe();
-    this.zipSubscription = this.draftGenerationService
-      .downloadGeneratedDraftZip(this.activatedProjectService.projectDoc, this.lastCompletedBuild)
+    this.downloadSubscription?.unsubscribe();
+    this.downloadingDraft = true;
+    this.downloadSubscription = this.draftGenerationService
+      .downloadDraft(this.activatedProjectService.projectDoc, this.lastCompletedBuild)
       .subscribe({
-        next: (draftZipProgress: DraftZipProgress) => {
-          this.downloadBooksProgress = draftZipProgress.current;
-          this.downloadBooksTotal = draftZipProgress.total;
+        error: (error: Error) => {
+          this.downloadingDraft = false;
+          this.noticeService.showError(error.message);
         },
-        error: (error: Error) => this.noticeService.showError(error.message)
+        complete: () => (this.downloadingDraft = false)
       });
   }
 

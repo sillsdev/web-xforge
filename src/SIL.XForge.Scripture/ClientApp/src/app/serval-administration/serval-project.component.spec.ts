@@ -8,7 +8,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -23,7 +23,6 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
-import { DraftZipProgress } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -171,22 +170,18 @@ describe('ServalProjectComponent', () => {
 
     it('should allow clicking of the download draft button to download a zip file', fakeAsync(() => {
       const env = new TestEnvironment({ preTranslate: true, lastCompletedBuild: {} as BuildDto });
-      when(mockDraftGenerationService.downloadGeneratedDraftZip(anything(), anything())).thenReturn(
-        of({ current: 1, total: 2 } as DraftZipProgress)
-      );
+      when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(NEVER);
       expect(env.downloadDraftButton.disabled).toBe(false);
       env.clickElement(env.downloadDraftButton);
-      expect(env.component.downloadBooksProgress).toBe(1);
-      expect(env.component.downloadBooksTotal).toBe(2);
+      expect(env.component.downloadingDraft).toBe(true);
     }));
 
     it('should display any errors when downloading a zip file', fakeAsync(() => {
       const env = new TestEnvironment({ preTranslate: true, lastCompletedBuild: {} as BuildDto });
-      when(mockDraftGenerationService.downloadGeneratedDraftZip(anything(), anything())).thenReturn(
-        throwError(() => new Error())
-      );
+      when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(throwError(() => new Error()));
       expect(env.downloadDraftButton.disabled).toBe(false);
       env.clickElement(env.downloadDraftButton);
+      expect(env.component.downloadingDraft).toBe(false);
       verify(mockNoticeService.showError(anything())).once();
     }));
   });

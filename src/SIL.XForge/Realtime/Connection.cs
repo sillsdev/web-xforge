@@ -301,6 +301,22 @@ public class Connection : DisposableBase, IConnection
     }
 
     /// <summary>
+    /// Fetches a snapshot of each of the specified documents at the specified timestamp asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The document type.</typeparam>
+    /// <param name="ids">The identifiers.</param>
+    /// <param name="timestamp">The timestamp.</param>
+    /// <returns>
+    /// A snapshot for each identifier, in the same order as <paramref name="ids"/>.
+    /// </returns>
+    public async Task<Snapshot<T>[]> FetchSnapshotsAsync<T>(IReadOnlyCollection<string> ids, DateTime timestamp)
+        where T : IIdentifiable
+    {
+        DocConfig docConfig = _realtimeService.GetDocConfig<T>();
+        return await _realtimeServer.FetchSnapshotsAsync<T>(_handle, docConfig.CollectionName, ids, timestamp);
+    }
+
+    /// <summary>
     /// Gets all the ops for the specified document.
     /// </summary>
     /// <typeparam name="T">The document type.</typeparam>

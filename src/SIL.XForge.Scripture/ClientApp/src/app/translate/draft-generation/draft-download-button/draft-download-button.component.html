@@ -2,23 +2,17 @@
   <button
     [matButton]="matButton"
     (click)="downloadDraft()"
-    [disabled]="downloadProgress > 0"
+    [disabled]="downloadingDraft"
     data-test-id="download-button"
     color="primary"
   >
-    @if (downloadProgress === 0) {
+    @if (!downloadingDraft) {
       <mat-icon [class]="matButton === 'filled' ? 'material-icons-outlined' : 'material-icons'">
         cloud_download
       </mat-icon>
-    } @else if (downloadProgress > 0) {
+    } @else {
       <mat-icon>
-        <mat-spinner
-          diameter="18"
-          [value]="downloadProgress"
-          mode="determinate"
-          color="accent"
-          data-test-id="download-spinner"
-        ></mat-spinner>
+        <mat-spinner diameter="18" mode="indeterminate" color="accent" data-test-id="download-spinner"></mat-spinner>
       </mat-icon>
     }
     {{ t("download_draft") }}

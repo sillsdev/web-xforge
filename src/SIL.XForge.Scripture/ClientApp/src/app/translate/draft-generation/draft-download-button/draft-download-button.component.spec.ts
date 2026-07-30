@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of, throwError } from 'rxjs';
+import { EMPTY, NEVER, throwError } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -28,22 +28,6 @@ describe('DraftDownloadButtonComponent', () => {
     expect(env.component).toBeTruthy();
   });
 
-  describe('downloadProgress', () => {
-    it('should show number between 0 and 100', () => {
-      const env = new TestEnvironment();
-      env.component.downloadBooksProgress = 4;
-      env.component.downloadBooksTotal = 8;
-      expect(env.component.downloadProgress).toBe(50);
-    });
-
-    it('should not divide by zero', () => {
-      const env = new TestEnvironment();
-      env.component.downloadBooksProgress = 4;
-      env.component.downloadBooksTotal = 0;
-      expect(env.component.downloadProgress).toBe(0);
-    });
-  });
-
   describe('download draft button', () => {
     it('button should start the download', () => {
       const env = new TestEnvironment();
@@ -56,8 +40,7 @@ describe('DraftDownloadButtonComponent', () => {
 
     it('spinner should display while the download is in progress', () => {
       const env = new TestEnvironment();
-      env.component.downloadBooksProgress = 2;
-      env.component.downloadBooksTotal = 4;
+      env.component.downloadingDraft = true;
       env.fixture.detectChanges();
 
       expect(env.downloadSpinner).not.toBeNull();
@@ -65,8 +48,7 @@ describe('DraftDownloadButtonComponent', () => {
 
     it('spinner should not display while no download is in progress', () => {
       const env = new TestEnvironment();
-      env.component.downloadBooksProgress = 0;
-      env.component.downloadBooksTotal = 0;
+      env.component.downloadingDraft = false;
       env.fixture.detectChanges();
 
       expect(env.downloadSpinner).toBeNull();
@@ -76,28 +58,27 @@ describe('DraftDownloadButtonComponent', () => {
   describe('downloadDraft', () => {
     it('should display an error if one occurs', () => {
       const env = new TestEnvironment();
-      when(mockDraftGenerationService.downloadGeneratedDraftZip(anything(), anything())).thenReturn(
-        throwError(() => new Error())
-      );
+      when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(throwError(() => new Error()));
 
       env.component.downloadDraft();
-      expect(env.component.downloadBooksProgress).toBe(0);
-      expect(env.component.downloadBooksTotal).toBe(0);
+      expect(env.component.downloadingDraft).toBe(false);
       verify(mockNoticeService.showError(anything())).once();
     });
 
-    it('should emit draft progress', () => {
+    it('should track that the download is in progress until it completes', () => {
       const env = new TestEnvironment();
-      when(mockDraftGenerationService.downloadGeneratedDraftZip(anything(), anything())).thenReturn(
-        of({
-          current: 1,
-          total: 2
-        })
-      );
+      when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(NEVER);
 
       env.component.downloadDraft();
-      expect(env.component.downloadBooksProgress).toBe(1);
-      expect(env.component.downloadBooksTotal).toBe(2);
+      expect(env.component.downloadingDraft).toBe(true);
+    });
+
+    it('should clear the in progress state when the download completes', () => {
+      const env = new TestEnvironment();
+      when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(EMPTY);
+
+      env.component.downloadDraft();
+      expect(env.component.downloadingDraft).toBe(false);
     });
   });
 
