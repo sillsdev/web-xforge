@@ -362,6 +362,69 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the draft USFM for every book drafted by the specified build.
+    /// </summary>
+    /// <remarks>This method can be called by Serval Administrators for any project.</remarks>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="paragraphFormat">The format to use for paragraph breaks.</param>
+    /// <param name="quoteFormat">The format to use for quotes.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The draft USFM was successfully retrieved.</response>
+    /// <response code="403">You do not have permission to retrieve the draft for this project.</response>
+    /// <response code="404">
+    /// The project or build does not exist, the build is not complete, or the build has no drafted content.
+    /// </response>
+    /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
+    /// <response code="409">The engine has not been built on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetBuildDraftUsfm)]
+    public async Task<ActionResult<DraftUsfmDto>> GetBuildDraftUsfmAsync(
+        string sfProjectId,
+        string buildId,
+        [FromQuery] string? paragraphFormat,
+        [FromQuery] string? quoteFormat,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            bool isServalAdmin = _userAccessor.SystemRoles.Contains(SystemRole.ServalAdmin);
+            DraftUsfmConfig? config = GetDraftUsfmConfig(paragraphFormat, quoteFormat);
+            DraftUsfmDto draftUsfm = await _machineApiService.GetBuildDraftUsfmAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                buildId,
+                config,
+                isServalAdmin,
+                cancellationToken
+            );
+            return Ok(draftUsfm);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException e)
+        {
+            return NotFound(e.Message);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(StatusCodes.Status405MethodNotAllowed);
+        }
+    }
+
+    /// <summary>
     /// Gets a translation engine.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
@@ -742,6 +805,7 @@ public class MachineApiController : ControllerBase
     /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
     /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [Obsolete("Use GetBuildDraftUsfmAsync instead, which is keyed by build rather than timestamp. Deprecated 2026-07")]
     [HttpGet(MachineApi.GetPreTranslationUsfm)]
     public async Task<ActionResult<string>> GetPreTranslationUsfmAsync(
         string sfProjectId,

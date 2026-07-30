@@ -23,6 +23,12 @@ public interface IRealtimeServer
     Task<Snapshot<T>> FetchDocAsync<T>(int handle, string collection, string id);
     Task<Snapshot<T>[]> FetchDocsAsync<T>(int handle, string collection, IReadOnlyCollection<string> ids);
     Task<Snapshot<T>> FetchSnapshotAsync<T>(int handle, string collection, string id, DateTime timestamp);
+    Task<Snapshot<T>[]> FetchSnapshotsAsync<T>(
+        int handle,
+        string collection,
+        IReadOnlyCollection<string> ids,
+        DateTime timestamp
+    );
     Task<Op[]> GetOpsAsync(string collection, string id);
     void Start(object options);
     void Stop();

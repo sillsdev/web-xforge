@@ -732,6 +732,187 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetBuildDraftUsfmAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                Build01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(
+                Task.FromResult(
+                    new DraftUsfmDto
+                    {
+                        BuildId = Build01,
+                        Books =
+                        [
+                            new DraftUsfmBookDto
+                            {
+                                BookId = "MAT",
+                                Chapters = [1],
+                                Usfm = "\\id MAT\n\\c 1\n\\v 1 Verse 1",
+                            },
+                        ],
+                    }
+                )
+            );
+
+        // SUT
+        ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
+            Project01,
+            Build01,
+            paragraphFormat: null,
+            quoteFormat: null,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_ServalAdmin()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                Build01,
+                draftUsfmConfig: null,
+                isServalAdmin: true,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new DraftUsfmDto { BuildId = Build01 }));
+        env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
+
+        // SUT
+        ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
+            Project01,
+            Build01,
+            paragraphFormat: null,
+            quoteFormat: null,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_NoBuild()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                Build01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new DataNotFoundException("The build does not exist."));
+
+        // SUT
+        ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
+            Project01,
+            Build01,
+            paragraphFormat: null,
+            quoteFormat: null,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                Build01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
+            Project01,
+            Build01,
+            paragraphFormat: null,
+            quoteFormat: null,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                Build01,
+                draftUsfmConfig: null,
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
+            Project01,
+            Build01,
+            paragraphFormat: null,
+            quoteFormat: null,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetBuildDraftUsfmAsync_CustomFormatPassedToService()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.GetBuildDraftUsfmAsync(
+                User01,
+                Project01,
+                Build01,
+                Arg.Is<DraftUsfmConfig>(d => d.ParagraphFormat == ParagraphBreakFormatOptions.Remove),
+                isServalAdmin: false,
+                CancellationToken.None
+            )
+            .Returns(Task.FromResult(new DraftUsfmDto { BuildId = Build01 }));
+
+        // SUT
+        ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
+            Project01,
+            Build01,
+            paragraphFormat: ParagraphBreakFormatOptions.Remove,
+            quoteFormat: null,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetEngineAsync_MachineApiDown()
     {
         // Set up test environment
@@ -1453,6 +1634,7 @@ public class MachineApiControllerTests
         Assert.IsTrue(revisionsExist);
     }
 
+#pragma warning disable CS0618 // GetPreTranslationUsfmAsync is deprecated, but tested until it is removed
     [Test]
     public async Task GetPreTranslationUsfmAsync_MachineApiDown()
     {
@@ -1686,6 +1868,7 @@ public class MachineApiControllerTests
             );
     }
 
+#pragma warning restore CS0618
     [Test]
     public async Task GetPreTranslationUsjAsync_MachineApiDown()
     {
