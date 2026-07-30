@@ -244,7 +244,7 @@ jobs:
           version: ${{matrix.pnpm_version}}
       - name: "Build: dotnet Backend"
         if: steps.cache-backend.outputs.cache-hit != 'true'
-        run: dotnet build xForge.sln
+        run: dotnet build xForge.slnx
 
   prepare-e2e:
     name: "Prepare E2E"

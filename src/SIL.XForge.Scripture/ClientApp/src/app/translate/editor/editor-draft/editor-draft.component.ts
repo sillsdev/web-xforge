@@ -1,5 +1,5 @@
 import { AsyncPipe, NgClass } from '@angular/common';
-import { AfterViewInit, Component, DestroyRef, EventEmitter, Input, OnChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, Input, OnChanges, ViewChild } from '@angular/core';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatButton } from '@angular/material/button';
 import { MatFormField } from '@angular/material/form-field';
@@ -39,6 +39,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -119,6 +120,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     switchMap(projectId => this.draftGenerationService.getLastCompletedBuild(projectId)),
     map(build => this.draftOptionsService.areFormattingOptionsSupportedForBuild(build))
   );
+
+  locale$: Observable<Locale> = this.i18n.locale$;
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
@@ -228,7 +231,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       this.onlineStatusService.onlineStatus$,
       this.draftGenerationService.pollBuildProgress(this.textDocId!.projectId),
       this.inputChanged$.pipe(filterNullish()),
-      this.draftText.editorCreated as EventEmitter<any>
+      this.draftText.editorCreated
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
@@ -310,7 +313,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
       this.activatedProjectService.projectDoc$,
-      this.draftText.editorCreated as EventEmitter<any>,
+      this.draftText.editorCreated,
       this.inputChanged$
     ])
       .pipe(

@@ -14,7 +14,6 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Delta } from 'quill';
 import { combineLatest, startWith, tap } from 'rxjs';
-import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -66,7 +65,6 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   constructor(
     private readonly destroyRef: DestroyRef,
     private readonly editorHistoryService: EditorHistoryService,
-    readonly fontService: FontService,
     private readonly i18nService: I18nService,
     readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService
@@ -95,11 +93,12 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
   }
 
   private loadHistory(): void {
-    if (this.historyChooser == null) {
+    if (this.historyChooser == null || this.snapshotText == null) {
       return;
     }
 
     combineLatest([
+      this.snapshotText.editorCreated,
       this.historyChooser.revisionSelect.pipe(
         tap((e: RevisionSelectEvent) => {
           this.revisionSelect.emit(e.revision);
@@ -108,10 +107,10 @@ export class EditorHistoryComponent implements OnChanges, OnInit, AfterViewInit 
       this.historyChooser.showDiffChange.pipe(startWith(this.historyChooser.showDiff))
     ])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(async ([e, showDiff]: [RevisionSelectEvent, boolean]) => {
-        const snapshotContents: Delta = new Delta(e.snapshot?.data.ops);
+      .subscribe(async ([, revisionEvent, showDiff]) => {
+        const snapshotContents: Delta = new Delta(revisionEvent.snapshot?.data.ops);
         this.snapshotText?.setContents(snapshotContents, 'api');
-        this.loadedRevision = e.revision;
+        this.loadedRevision = revisionEvent.revision;
 
         // Show the diff, if requested
         if (showDiff && this.diffText?.id != null) {

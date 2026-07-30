@@ -14,5 +14,9 @@ internal class ConsoleExceptionHandler : IExceptionHandler
     public void RecordEndpointInfoForException(Dictionary<string, string> metadata) =>
         throw new NotImplementedException();
 
+    public void ReportUnhandledException(Exception exception) => throw new NotImplementedException();
+
+    public void ReportUnhandledExceptions(IApplicationBuilder app) => throw new NotImplementedException();
+
     public void RecordUserIdForException(string userId) => throw new NotImplementedException();
 }

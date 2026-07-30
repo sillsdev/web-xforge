@@ -1153,7 +1153,10 @@ public class MachineApiService(
             )
             .Where(kvp => kvp.Value.Count > 0)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        List<ServalBuildReportDto> eventsOnlyReports = BuildEventsOnlyReports(unmatchedEventsByProject);
+        List<ServalBuildReportDto> eventsOnlyReports = await BuildEventsOnlyReportsAsync(
+            unmatchedEventsByProject,
+            cancellationToken
+        );
         reports.AddRange(eventsOnlyReports);
 
         return reports;
@@ -1677,8 +1680,9 @@ public class MachineApiService(
     /// <summary>
     /// Builds events-only report entries for draft generation events that did not match any known Serval build.
     /// </summary>
-    private static List<ServalBuildReportDto> BuildEventsOnlyReports(
-        Dictionary<string, List<EventMetric>> eventsByProject
+    private async Task<List<ServalBuildReportDto>> BuildEventsOnlyReportsAsync(
+        Dictionary<string, List<EventMetric>> eventsByProject,
+        CancellationToken cancellationToken
     )
     {
         // Suppose that when gathering information about Serval builds, we have event metrics that refer to a draft
@@ -1688,6 +1692,13 @@ public class MachineApiService(
         List<ServalBuildReportDto> reports = [];
         foreach ((string sfProjectId, List<EventMetric> events) in eventsByProject)
         {
+            // Get the project so we can display the project name and short name in the report
+            Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(
+                sfProjectId,
+                cancellationToken
+            );
+            attempt.TryResult(out SFProject? sfProject);
+
             // Group events by their draft generation request ID
             var groupedByRequestId = events.GroupBy(e => GetRequestIdFromEvent(e)).ToList();
 
@@ -1722,7 +1733,13 @@ public class MachineApiService(
                         new ServalBuildReportDto
                         {
                             Build = null,
-                            Project = new BuildReportProject { SFProjectId = sfProjectId },
+                            Project = new BuildReportProject
+                            {
+                                SFProjectId = sfProjectId,
+                                PTProjectId = sfProject?.ParatextId,
+                                ShortName = sfProject?.ShortName,
+                                Name = sfProject?.Name,
+                            },
                             Timeline = new BuildReportTimeline
                             {
                                 SFUserRequested = sfUserRequested,
@@ -1765,7 +1782,13 @@ public class MachineApiService(
                             new ServalBuildReportDto
                             {
                                 Build = null,
-                                Project = new BuildReportProject { SFProjectId = sfProjectId },
+                                Project = new BuildReportProject
+                                {
+                                    SFProjectId = sfProjectId,
+                                    PTProjectId = sfProject?.ParatextId,
+                                    ShortName = sfProject?.ShortName,
+                                    Name = sfProject?.Name,
+                                },
                                 Timeline = new BuildReportTimeline
                                 {
                                     SFUserRequested = sfUserRequested,

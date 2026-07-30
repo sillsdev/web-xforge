@@ -27,7 +27,7 @@
         "lucono.karma-test-explorer"
       ],
       "settings": {
-        "dotnet.defaultSolution": "xForge.sln"
+        "dotnet.defaultSolution": "xForge.slnx"
       }
     }
   },
