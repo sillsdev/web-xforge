@@ -1465,7 +1465,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      const deleteAudio: boolean = answer.comments[commentIndex].audioUrl != null && answer.audioUrl == null;
+      const deleteAudio: boolean = answer.comments[commentIndex].audioUrl != null && comment.audioUrl == null;
       const submitPromise: Promise<boolean> = activeQuestionDoc.submitJson0Op(op =>
         op
           .set(q => q.answers[answerIndex].comments[commentIndex].text, comment.text)
