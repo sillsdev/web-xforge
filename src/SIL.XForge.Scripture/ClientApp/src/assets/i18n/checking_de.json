@@ -384,7 +384,7 @@
     "please_connect_to_use_link": "Bitte verbinde Dich mit dem Internet, um einem Projekt über einen Link beizutreten.",
     "project_link_is_invalid": "Der Projektlink ist ungültig. Bitte kontaktiere die Person, die Dir den Link geschickt hat, und bitte um einen neuen Link.",
     "role_not_found": "Die Rolle, die Dir für dieses Projekt zugewiesen wurde, ist nicht mehr verfügbar. Bitte kontaktiere die Person, die Dir den Link geschickt hat, und bitte um einen neuen Link.",
-    "user_missing": "Your user account could not be found. Please log out and join using the link again.",
+    "user_missing": "Dein Benutzerkonto konnte nicht gefunden werden. Bitte melde Dich ab und verbinde Dich mit dem Link erneut.",
     "your_name": "Name eingeben"
   },
   "dialog": {
