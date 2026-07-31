@@ -1036,6 +1036,62 @@ describe('TextComponent', () => {
     });
   }));
 
+  it('does not allow selecting a range that includes a footnote', fakeAsync(() => {
+    const chapterNum = 2;
+    const textDocOps: RichText.DeltaOperation[] = chapterTextOpsWithFootnote(chapterNum);
+    const segmentRef: string = textDocOps.find(op => op.attributes?.segment)?.attributes?.segment as string;
+
+    const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+
+    env.waitForEditor();
+    env.component.setSegment(segmentRef);
+    tick();
+    const segmentRange: QuillRange | undefined = env.component.getSegmentRange(segmentRef);
+    if (segmentRange == null) {
+      fail('setup');
+      return;
+    }
+
+    const expectedRange: QuillRange = {
+      index: segmentRange.index,
+      length: 'quick brown fox'.length
+    };
+    const newSel = env.component.conformToValidSelectionForCurrentSegment(
+      {
+        index: segmentRange.index,
+        length: segmentRange.length
+      },
+      false
+    );
+    expect(newSel).toEqual(expectedRange);
+  }));
+
+  it('does not allow modifying a selection that includes a footnote', fakeAsync(() => {
+    const chapterNum = 2;
+    const textDocOps: RichText.DeltaOperation[] = chapterTextOpsWithFootnote(chapterNum);
+    const segmentRef: string = textDocOps.find(op => op.attributes?.segment)?.attributes?.segment as string;
+
+    const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+
+    env.waitForEditor();
+    env.component.setSegment(segmentRef);
+    tick();
+    const segmentRange: QuillRange | undefined = env.component.getSegmentRange(segmentRef);
+    if (segmentRange == null) {
+      fail('setup');
+      return;
+    }
+
+    const selectionWithFootnote: QuillRange = {
+      index: segmentRange.index,
+      length: segmentRange.length
+    };
+    // edits are ignored if the selection contains an embed
+    expect(env.component.isValidSelectionForCurrentSegment(selectionWithFootnote)).toBeFalse();
+    expect(env.quillHandleBackspace(selectionWithFootnote)).toBeFalse();
+    expect(env.quillHandleDelete(selectionWithFootnote)).toBeFalse();
+  }));
+
   it('does not cancel in beforeinput when valid selection', fakeAsync(() => {
     const { env }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
@@ -2169,4 +2225,33 @@ function basicSimpleText(): { env: TestEnvironment; segmentRange: QuillRange } {
   env.fixture.detectChanges();
   tick();
   return { env, segmentRange };
+}
+
+function chapterTextOpsWithFootnote(chapterNum: number): RichText.DeltaOperation[] {
+  const segmentRef: string = `verse_${chapterNum}_1`;
+  const textDocOps: RichText.DeltaOperation[] = [
+    { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+    { insert: { verse: { number: '1', style: 'v' } } },
+    {
+      insert: `quick brown fox`,
+      attributes: {
+        segment: segmentRef
+      }
+    },
+    {
+      insert: {
+        note: {
+          content: 'footnote on text',
+          style: 'f'
+        }
+      }
+    },
+    {
+      insert: ' jumped over',
+      attributes: {
+        segment: segmentRef
+      }
+    }
+  ];
+  return textDocOps;
 }

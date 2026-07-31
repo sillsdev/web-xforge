@@ -1091,7 +1091,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   /** Is a given selection range valid for editing the current segment? */
   isValidSelectionForCurrentSegment(sel: Range): boolean {
-    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel);
+    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel, false);
     return !(newSel == null || sel.index !== newSel.index || sel.length !== newSel.length);
   }
 
@@ -1893,7 +1893,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel);
+    const newSel: Range | null = this.conformToValidSelectionForCurrentSegment(sel, false);
     if (newSel != null && (sel.index !== newSel.index || sel.length !== newSel.length)) {
       this._editor.setSelection(newSel, 'user');
     }
@@ -1901,7 +1901,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   /** Given a selection, return a possibly modified selection that is a valid for editing the current segment.
    * For example, a selection over a segment boundary is sometimes not valid. */
-  conformToValidSelectionForCurrentSegment(sel: Range): Range | null {
+  conformToValidSelectionForCurrentSegment(sel: Range, allowEmbedSelection: boolean = true): Range | null {
     if (this._editor == null || this._segment == null) {
       return null;
     }
@@ -1921,7 +1921,18 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       if (newStart > segEnd) {
         newStart = segEnd;
       }
-      const newEnd: number = Math.min(oldEnd, segEnd);
+      let newEnd: number = Math.min(oldEnd, segEnd);
+      const selectionLength: number = newEnd - newStart;
+      if (!allowEmbedSelection) {
+        // Get the content of the range.
+        const content: Delta = this._editor.getContents(newStart, selectionLength);
+        const lengthToEmbed: number = this.calculateNextEmbedIndex(content);
+
+        if (lengthToEmbed < selectionLength) {
+          // if the content includes a text note, cut the selection at the note
+          newEnd = newStart + lengthToEmbed;
+        }
+      }
 
       const embedPositions: number[] = Array.from(this.embeddedElements.values()).sort();
       if (newStart === this._segment.range.index || embedPositions.includes(newStart - 1)) {
@@ -1951,6 +1962,21 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     if (!this.isValidSelectionForCurrentSegment(sel)) {
       ev.preventDefault();
     }
+  }
+
+  private calculateNextEmbedIndex(content: Delta): number {
+    if (content.ops == null) return 0;
+    let textualNoteIndex: number = 0;
+    for (const op of content.ops) {
+      // count the length from the start of the selection to the embed if it exists
+      if (op.insert != null && typeof op.insert === 'string') {
+        textualNoteIndex += op.insert.length;
+      } else if (op.insert != null && typeof op.insert === 'object') {
+        // objects indicate an embed which we want to prevent the user from manipulating
+        break;
+      }
+    }
+    return textualNoteIndex;
   }
 
   /** Returns the number of embedded elements that are located at or after editorStartPos, through length of editor
