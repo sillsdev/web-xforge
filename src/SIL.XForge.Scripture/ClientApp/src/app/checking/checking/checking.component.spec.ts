@@ -2158,12 +2158,57 @@ describe('CheckingComponent', () => {
         env.waitForSliderUpdate();
         expect(env.getAnswerCommentText(0, 0)).toContain('comment with audio');
         expect(env.getAnswerCommentAudio(0, 0)).not.toBeNull();
-        env.clickButton(env.getEditCommentButton(0, 0));
-        env.clickButton(env.getSaveCommentButton(0));
-        env.waitForSliderUpdate();
+        // 'reset' is what the attach audio component emits when the user clears the attached audio
+        env.editCommentOnAnswer(0, 0, 'comment with audio', { status: 'reset' });
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toBeUndefined();
         verify(
           mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
         ).once();
+      }));
+
+      it('does not delete the audio when the audio on a comment is replaced', fakeAsync(() => {
+        const env = new TestEnvironment({ user: CHECKER_USER });
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
+        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        resolveUpload$.next();
+        env.waitForSliderUpdate();
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
+        env.waitForSliderUpdate();
+        // Remove the existing audio and record a new one, as the user does when editing the comment
+        const resolveSecondUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio2');
+        env.editCommentOnAnswer(0, 0, 'comment with audio', {
+          status: 'processed',
+          blob: getAudioBlob(),
+          fileName: 'newAudioFile.mp3'
+        });
+        resolveSecondUpload$.next();
+        env.waitForSliderUpdate();
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio2');
+        verify(
+          mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
+        ).never();
+        flush();
+      }));
+
+      it('does not delete the audio when only the text of a comment is edited', fakeAsync(() => {
+        const env = new TestEnvironment({ user: CHECKER_USER });
+        env.selectQuestion(1);
+        env.answerQuestion('Answer question to be commented on');
+        const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
+        env.commentOnAnswer(0, 'comment with audio', 'audioFile.mp3');
+        resolveUpload$.next();
+        env.waitForSliderUpdate();
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
+        env.waitForSliderUpdate();
+        env.editCommentOnAnswer(0, 0, 'edited comment with audio');
+        expect(env.getAnswerCommentText(0, 0)).toContain('edited comment with audio');
+        expect(env.component.answersPanel!.answers[0].comments[0].audioUrl).toEqual('blob://audio');
+        verify(
+          mockedFileService.deleteFile(FileType.Audio, 'project01', QuestionDoc.COLLECTION, anything(), anything())
+        ).never();
+        flush();
       }));
 
       it('will delete comment audio when comment is deleted', fakeAsync(() => {
@@ -3311,6 +3356,15 @@ class TestEnvironment {
     const commentsComponent = this.fixture.debugElement.query(By.css('#answer-comments'))!
       .componentInstance as CheckingCommentsComponent;
     commentsComponent.submit({ text: comment, audio: commentAudio });
+    this.waitForSliderUpdate();
+  }
+
+  /** Edit an existing comment via the checking-comments.component. */
+  editCommentOnAnswer(answerIndex: number, commentIndex: number, text: string, audio?: AudioAttachment): void {
+    this.clickButton(this.getEditCommentButton(answerIndex, commentIndex));
+    const commentsComponent = this.fixture.debugElement.query(By.css('#answer-comments'))!
+      .componentInstance as CheckingCommentsComponent;
+    commentsComponent.submit({ text, audio });
     this.waitForSliderUpdate();
   }
 
