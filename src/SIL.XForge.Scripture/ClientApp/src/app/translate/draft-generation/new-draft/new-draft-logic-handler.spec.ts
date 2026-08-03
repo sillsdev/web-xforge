@@ -388,6 +388,52 @@ describe('NewDraftLogicHandler', () => {
     });
   });
 
+  describe('scripture ranges for the build request', () => {
+    it('enumerates drafting chapters only for books the UI offered a chapter input for', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      // GEN is offered a chapter input (defaulting to the untranslated chapters 6-50); EXO has no target progress,
+      // so it was only selectable whole
+      env.logicHandler.selectDraftingBooks(['GEN', 'EXO']);
+
+      expect(env.logicHandler.draftingScriptureRangeForBuild()).toBe('GEN6-50;EXO');
+    });
+
+    it('keeps explicit chapters even when they cover every chapter the source currently has', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      env.logicHandler.selectDraftingChapters('GEN', '1-50');
+
+      // A bare "GEN" would extend the draft to any chapters a pre-build sync brings in; the chapter-specific
+      // selection must be preserved exactly
+      expect(env.logicHandler.draftingScriptureRangeForBuild()).toBe('GEN1-50');
+    });
+
+    it('enumerates target training chapters only for books the UI offered a chapter input for', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      env.logicHandler.selectDraftingBooks(['GEN']);
+      env.logicHandler.setInputMode('training_books');
+      env.logicHandler.selectTargetTrainingBooks(['GEN', 'MAT']);
+
+      // GEN is partially drafted, so its training chapters have an input and are spelled out; MAT was only
+      // selectable whole
+      expect(env.logicHandler.targetTrainingScriptureRangeForBuild()).toBe('GEN1-5;MAT');
+    });
+
+    it('serializes empty selections as empty strings', async () => {
+      const env = new TestEnvironment(teamStartingToTranslateGenesis);
+      await env.waitForInit();
+
+      expect(env.logicHandler.draftingScriptureRangeForBuild()).toBe('');
+      expect(env.logicHandler.targetTrainingScriptureRangeForBuild()).toBe('');
+    });
+  });
+
   describe('partial-training offering tracks the drafting selection', () => {
     // A book is only offered for partial target training while it is itself being drafted; otherwise the whole book
     // is available for training with no per-chapter restriction. This must still hold after the drafting selection

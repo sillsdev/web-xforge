@@ -500,7 +500,7 @@ export class NewDraftComponent {
       const translationScriptureRanges: ProjectScriptureRange[] = [
         {
           projectId: draftingSource.projectRef,
-          scriptureRange: this.logicHandler.selectedDraftingScriptureRange.toString()
+          scriptureRange: this.logicHandler.draftingScriptureRangeForBuild()
         }
       ];
 
@@ -512,10 +512,11 @@ export class NewDraftComponent {
           trainingScriptureRanges.push({ projectId: source.projectRef, scriptureRange: bookIds.join(';') });
         }
       }
-      // Include target project entry at chapter-level: persists training selection and drives backend filter
+      // Include target project entry: persists training selection and drives backend filter. Chapters are only
+      // enumerated where the enumeration means something (see targetTrainingScriptureRangeForBuild).
       trainingScriptureRanges.push({
         projectId,
-        scriptureRange: this.logicHandler.selectedTargetTrainingScriptureRange.toString()
+        scriptureRange: this.logicHandler.targetTrainingScriptureRangeForBuild()
       });
 
       // Record available files alongside the selection so later builds can distinguish new files from deliberately deselected ones.

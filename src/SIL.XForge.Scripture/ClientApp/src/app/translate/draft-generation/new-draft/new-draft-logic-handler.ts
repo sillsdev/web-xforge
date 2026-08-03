@@ -511,6 +511,19 @@ export class NewDraftLogicHandler {
     this.selectedTargetTrainingScriptureRange = newTargetTrainingScriptureRange;
   }
 
+  /** The drafting selection serialized for the build request (see rangeStringForBuild). */
+  draftingScriptureRangeForBuild(): string {
+    return this.rangeStringForBuild(this.selectedDraftingScriptureRange, this.booksOfferedForPartialDrafting);
+  }
+
+  /** The target training selection serialized for the build request (see rangeStringForBuild). */
+  targetTrainingScriptureRangeForBuild(): string {
+    return this.rangeStringForBuild(
+      this.selectedTargetTrainingScriptureRange,
+      this.booksOfferedForPartialTargetTraining
+    );
+  }
+
   /**
    * A stable fingerprint of which projects are configured as drafting/training sources, used to detect mid-flow
    * reconfiguration. Only the set of project refs matters (order-independent); the target is excluded since it is
@@ -604,6 +617,20 @@ export class NewDraftLogicHandler {
     if (this.trainingBooksWereAutoSelected && this.selectedTargetTrainingScriptureRange.books.size === 0) {
       this.trainingBooksWereAutoSelected = false;
     }
+  }
+
+  /**
+   * Serializes a selection in the canonical scripture range format. A book the UI offered a chapter input for
+   * (`booksWithChapterInput`) carries a chapter-specific selection, so its chapters are enumerated — even when they
+   * happen to cover every chapter currently available. Enumerating in that case still matters: a sync runs when the
+   * build starts, and if it brings in chapters the book did not have when the user chose, a whole-book token would
+   * silently extend the build to chapters the user never saw. Every other book was only ever selectable whole, so it
+   * is written as a bare book token (meaning the whole book).
+   */
+  private rangeStringForBuild(selection: VerboseScriptureRange, booksWithChapterInput: string[]): string {
+    return Array.from(selection.books.entries())
+      .map(([bookId, chapters]) => (booksWithChapterInput.includes(bookId) ? bookId + chapters.toString() : bookId))
+      .join(VerboseScriptureRange.bookSeparator);
   }
 
   /**
