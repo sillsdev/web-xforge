@@ -47,6 +47,13 @@ minimumReleaseAgeExclude:
   - brace-expansion@5.0.8
   - brace-expansion@1.1.17
   - brace-expansion@2.1.3
+  - '@angular/common@20.3.27'
+  - '@angular/core@20.3.27'
+  - '@angular/compiler@20.3.27'
+  - brace-expansion@5.0.9
+  - brace-expansion@2.1.4
+  - brace-expansion@1.1.18
+  - postcss@8.5.23
 overrides:
   "webpack": "5.105.0" # Fix for @storybook/builder-webpack5. Remove if updating Angular
 patchedDependencies:
