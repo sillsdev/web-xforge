@@ -210,7 +210,13 @@
         </div>
       }
     } @else if (page === "summary") {
-      <h1>{{ t("summary.draft_title", { books: draftingBookNamesFormatted }) }}</h1>
+      <h1>
+        {{
+          draftingItems.length < 5
+            ? t("summary.draft_title", { books: draftingBookNamesFormatted })
+            : t("summary.draft_title_n_books", { count: draftingItems.length })
+        }}
+      </h1>
 
       <mat-card class="summary-card">
         <mat-card-content>
