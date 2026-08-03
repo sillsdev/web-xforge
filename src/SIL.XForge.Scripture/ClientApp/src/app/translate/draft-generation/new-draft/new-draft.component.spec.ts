@@ -628,6 +628,42 @@ describe('NewDraftComponent', () => {
       expect().nothing();
     }));
 
+    it('enumerates chapters only for books with a chapter input, sending other books as bare tokens', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+      // Both books get a drafting chapter input (source has 12+ chapters, target has content), so both enumerate
+      // their chapters: GEN defaults to the untranslated 6-50, fully-translated MAT falls back to all 28
+      env.component.logicHandler.selectDraftingBooks(['GEN', 'MAT']);
+      env.component.logicHandler.setInputMode('training_books');
+      // JHN is not being drafted, so it has no training chapter input -> bare token; GEN is partially drafted, so
+      // its training chapter list must survive
+      env.component.logicHandler.selectTargetTrainingBooks(['GEN', 'JHN']);
+      env.component.logicHandler.selectTrainingSourceBooks('training-source-1-id', ['GEN', 'JHN']);
+
+      // SUT
+      env.component.generateDraftClicked();
+      tick();
+
+      verify(
+        mockedDraftGenerationService.startBuildOrGetActiveBuild(
+          deepEqual({
+            projectId: 'testProjectId',
+            translationScriptureRanges: [{ projectId: 'draft-source-1-id', scriptureRange: 'GEN6-50;MAT1-28' }],
+            trainingScriptureRanges: [
+              { projectId: 'training-source-1-id', scriptureRange: 'GEN;JHN' },
+              { projectId: 'testProjectId', scriptureRange: 'GEN1-5;JHN' }
+            ],
+            trainingDataFiles: [],
+            availableTrainingDataFiles: [],
+            fastTraining: false,
+            useEcho: false,
+            sendEmailOnBuildFinished: false
+          })
+        )
+      ).once();
+      expect().nothing();
+    }));
+
     it('navigates to draft-generation after submitting the build', fakeAsync(() => {
       const env = new TestEnvironment(testState);
       tick();
