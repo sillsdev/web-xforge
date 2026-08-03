@@ -10,12 +10,12 @@ public class DraftUsfmDto
     /// <summary>
     /// The Serval build identifier.
     /// </summary>
-    public string BuildId { get; init; } = string.Empty;
+    public required string BuildId { get; init; }
 
     /// <summary>
     /// The books drafted by the build, in canonical order.
     /// </summary>
-    public IReadOnlyList<DraftUsfmBookDto> Books { get; init; } = [];
+    public required IReadOnlyList<DraftUsfmBookDto> Books { get; init; }
 }
 
 /// <summary>
@@ -26,15 +26,15 @@ public class DraftUsfmBookDto
     /// <summary>
     /// The USFM book identifier, e.g. GEN.
     /// </summary>
-    public string BookId { get; init; } = string.Empty;
+    public required string BookId { get; init; }
 
     /// <summary>
     /// The chapters included in the USFM.
     /// </summary>
-    public IReadOnlyList<int> Chapters { get; init; } = [];
+    public required IReadOnlyList<int> Chapters { get; init; }
 
     /// <summary>
     /// The complete USFM book text, starting with an \id line.
     /// </summary>
-    public string Usfm { get; init; } = string.Empty;
+    public required string Usfm { get; init; }
 }

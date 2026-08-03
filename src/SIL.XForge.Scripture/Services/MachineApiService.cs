@@ -112,6 +112,12 @@ public partial class MachineApiService(
     private static readonly IEqualityComparer<IList<string>?> _nullableListStringComparer =
         new NullableSequenceEqualityComparer<string>();
 
+    /// <summary>
+    /// Matches the chapter numbers of the \c markers in a USFM string.
+    /// </summary>
+    [GeneratedRegex(@"\\c\s+(\d+)", RegexOptions.CultureInvariant)]
+    private static partial Regex UsfmChapterRegex();
+
     public async Task<DraftApplyResult> ApplyPreTranslationToProjectAsync(
         string curUserId,
         string sfProjectId,
@@ -2352,9 +2358,14 @@ public partial class MachineApiService(
             throw new DataNotFoundException("A custom USFM format is only available for the latest completed build.");
         }
 
+        // Get the draft project versification
+        ScrVers versification =
+            paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
+            ?? VerseRef.defaultVersification;
+
         // Determine which chapters of which books the build drafted.
         // An empty chapter set means every chapter of the book.
-        Dictionary<string, SortedSet<int>> draftedBooks = GetDraftedChaptersForBuild(build);
+        Dictionary<string, SortedSet<int>> draftedBooks = GetDraftedChaptersForBuild(build, versification);
 
         // Get the chapters of each book with a saved draft document. The saved drafts resolve book terms without
         // chapter detail, and are the authority rather than the project texts, as books can be removed from the
@@ -2533,13 +2544,17 @@ public partial class MachineApiService(
     /// Gets the chapters of each book that the specified build drafted.
     /// </summary>
     /// <param name="build">The build.</param>
+    /// <param name="versification">The draft project versification.</param>
     /// <returns>
     /// A dictionary of book identifier to the drafted chapters. An empty chapter set means every chapter of the
     /// book, and an empty dictionary means the build recorded no scripture range that could be parsed.
     /// </returns>
-    private static Dictionary<string, SortedSet<int>> GetDraftedChaptersForBuild(ServalBuildDto build)
+    private static Dictionary<string, SortedSet<int>> GetDraftedChaptersForBuild(
+        ServalBuildDto build,
+        ScrVers versification
+    )
     {
-        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser();
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
         Dictionary<string, SortedSet<int>> draftedBooks = [];
         foreach (ProjectScriptureRange range in build.AdditionalInfo?.TranslationScriptureRanges ?? [])
         {
@@ -3730,12 +3745,6 @@ public partial class MachineApiService(
             await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
         }
     }
-
-    /// <summary>
-    /// Matches the chapter numbers of the \c markers in a USFM string.
-    /// </summary>
-    [GeneratedRegex(@"\\c\s+(\d+)", RegexOptions.CultureInvariant)]
-    private static partial Regex UsfmChapterRegex();
 
     /// <summary>
     /// Creates the Build DTO for the front end.

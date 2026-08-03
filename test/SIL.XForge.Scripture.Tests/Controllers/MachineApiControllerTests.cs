@@ -787,7 +787,7 @@ public class MachineApiControllerTests
                 isServalAdmin: true,
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new DraftUsfmDto { BuildId = Build01 }));
+            .Returns(Task.FromResult(new DraftUsfmDto { BuildId = Build01, Books = [] }));
         env.UserAccessor.SystemRoles.Returns([SystemRole.ServalAdmin]);
 
         // SUT
@@ -898,7 +898,7 @@ public class MachineApiControllerTests
                 isServalAdmin: false,
                 CancellationToken.None
             )
-            .Returns(Task.FromResult(new DraftUsfmDto { BuildId = Build01 }));
+            .Returns(Task.FromResult(new DraftUsfmDto { BuildId = Build01, Books = [] }));
 
         // SUT
         ActionResult<DraftUsfmDto> actual = await env.Controller.GetBuildDraftUsfmAsync(
