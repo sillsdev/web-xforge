@@ -3,8 +3,10 @@ import { LynxInsightFilter, LynxInsightType } from 'realtime-server/lib/esm/scri
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -89,14 +91,15 @@ describe('LynxInsightStateService', () => {
       createTestProjectUserConfig({
         projectRef: 'project1',
         lynxInsightState: {
+          assessmentsEnabled: false,
           panelData: {
             isOpen: true,
             filter: {
               types: ['warning', 'error'],
               scope: 'chapter',
-              includeDismissed: false
+              includeDismissed: true
             },
-            sortOrder: 'severity'
+            sortOrder: 'appearance'
           }
         }
       })
@@ -164,6 +167,7 @@ describe('LynxInsightStateService', () => {
       }
     );
 
+    resetCalls(mockProjectUserConfigDoc);
     service = TestBed.inject(LynxInsightStateService);
   });
 
@@ -370,6 +374,46 @@ describe('LynxInsightStateService', () => {
       expect(counts.warning).toBe(2);
       expect(counts.error).toBe(1);
       expect(counts.info).toBe(1);
+    });
+  });
+
+  describe('panel state persistence', () => {
+    it('should not write to project user config on load when panel state is unchanged', () => {
+      verify(mockProjectUserConfigDoc.submitJson0Op(anything())).never();
+    });
+
+    it('should set only the panelData sub-path, preserving other lynxInsightState props', () => {
+      service.updateSort('severity');
+
+      verify(mockProjectUserConfigDoc.submitJson0Op(anything())).once();
+      const [build] = capture<(op: Json0OpBuilder<SFProjectUserConfig>) => void>(
+        mockProjectUserConfigDoc.submitJson0Op
+      ).last();
+      const builder = new Json0OpBuilder<SFProjectUserConfig>(instance(mockProjectUserConfigDoc).data!);
+      build(builder);
+
+      expect(builder.op.length).toBe(1);
+      expect(builder.op[0].p).toEqual(['lynxInsightState', 'panelData']);
+      expect(builder.op[0].oi.sortOrder).toBe('severity');
+    });
+
+    it('should create lynxInsightState before setting panelData when it does not exist', () => {
+      const dataWithoutLynxState = createTestProjectUserConfig({ projectRef: 'project1' });
+      delete (dataWithoutLynxState as any).lynxInsightState;
+      when(mockProjectUserConfigDoc.data).thenReturn(dataWithoutLynxState);
+
+      service.togglePanelVisibility();
+
+      verify(mockProjectUserConfigDoc.submitJson0Op(anything())).once();
+      const [build] = capture<(op: Json0OpBuilder<SFProjectUserConfig>) => void>(
+        mockProjectUserConfigDoc.submitJson0Op
+      ).last();
+      const builder = new Json0OpBuilder<SFProjectUserConfig>(dataWithoutLynxState);
+      build(builder);
+
+      expect(builder.op.length).toBe(2);
+      expect(builder.op[0].p).toEqual(['lynxInsightState']);
+      expect(builder.op[1].p).toEqual(['lynxInsightState', 'panelData']);
     });
   });
 });

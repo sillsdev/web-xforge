@@ -6,7 +6,10 @@ import {
   LynxInsightSortOrder,
   LynxInsightType
 } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
-import { LynxInsightUserData } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight-user-data';
+import {
+  LynxInsightPanelUserData,
+  LynxInsightUserData
+} from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight-user-data';
 import {
   BehaviorSubject,
   combineLatest,
@@ -281,15 +284,21 @@ export class LynxInsightStateService {
     combineLatest([this.filter$, this.orderBy$, this.insightPanelVisible$, stateLoaded$.pipe(filter(loaded => loaded))])
       .pipe(withLatestFrom(this.activatedProjectUserConfig.projectUserConfigDoc$))
       .subscribe(([[filter, sortOrder, isOpen], pucDoc]) => {
-        void pucDoc?.submitJson0Op(op =>
-          op.set(puc => puc.lynxInsightState, {
-            panelData: {
-              isOpen,
-              filter,
-              sortOrder
-            }
-          })
-        );
+        const panelData: LynxInsightPanelUserData = { isOpen, filter, sortOrder };
+
+        // Avoid a no-op write on load, and only set the panelData sub-path so other
+        // lynxInsightState props (e.g. assessmentsEnabled) are not overwritten
+        if (pucDoc?.data == null || isEqual(pucDoc.data.lynxInsightState?.panelData, panelData)) {
+          return;
+        }
+
+        void pucDoc.submitJson0Op(op => {
+          if (pucDoc.data?.lynxInsightState == null) {
+            op.set(puc => puc.lynxInsightState, {});
+          }
+
+          op.set(puc => puc.lynxInsightState.panelData, panelData);
+        });
       });
   }
 }
