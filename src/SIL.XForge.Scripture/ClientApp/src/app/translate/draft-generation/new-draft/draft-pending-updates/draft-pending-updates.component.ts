@@ -44,6 +44,8 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   rows: PendingProjectRow[] = [];
   loading = true;
+  /** Whether everything is up to date and the auto-advance to the next step has been scheduled. */
+  autoAdvancing = false;
 
   private autoAdvanceTimeout?: ReturnType<typeof setTimeout>;
 
@@ -83,6 +85,32 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   get syncableRows(): PendingProjectRow[] {
     return this.rows.filter(r => r.canSync);
+  }
+
+  get syncedSyncableCount(): number {
+    return this.syncableRows.filter(r => r.syncState === 'synced').length;
+  }
+
+  /** "Sync all" only makes sense with more than one syncable project, and only while any of them still needs it. */
+  get showSyncAll(): boolean {
+    return this.syncableRows.length > 1 && this.syncableRows.some(r => r.syncState === 'pending');
+  }
+
+  /** Whether to show the "n of m projects synced" summary. With a single project its own row says enough. */
+  get showSyncCountMessage(): boolean {
+    return this.syncableRows.length > 1 && this.syncableRows.some(r => r.syncState === 'syncing');
+  }
+
+  /**
+   * Whether "Continue anyway" is the expected next action and should be the primary button: the user has done all
+   * they can (no project left to sync or still syncing) but something still blocks an all-synced auto-advance
+   * (a failed sync or a project they lack permission to sync).
+   */
+  get continueIsPrimary(): boolean {
+    const hasBlockedRow = this.rows.some(r => !r.canSync && r.syncState !== 'synced');
+    const hasFailedRow = this.rows.some(r => r.syncState === 'failed');
+    const hasActionableRow = this.syncableRows.some(r => r.syncState === 'pending' || r.syncState === 'syncing');
+    return (hasBlockedRow || hasFailedRow) && !hasActionableRow;
   }
 
   /**
@@ -153,9 +181,12 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   private checkAutoAdvance(): void {
     if (this.autoAdvanceTimeout != null || this.syncableRows.length === 0) return;
-    const hasCannotSyncRow = this.rows.some(r => !r.canSync);
+    // A project the user cannot sync only blocks auto-advance while it remains out of date; if someone else's sync
+    // brought it up to date during this pre-step, it no longer stands in the way.
+    const hasCannotSyncRow = this.rows.some(r => !r.canSync && r.syncState !== 'synced');
     const allSyncableSynced = this.syncableRows.every(r => r.syncState === 'synced');
     if (!hasCannotSyncRow && allSyncableSynced) {
+      this.autoAdvancing = true;
       this.autoAdvanceTimeout = setTimeout(() => this.continue.emit(this.syncedProjectIds()), AUTO_ADVANCE_DELAY_MS);
     }
   }

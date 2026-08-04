@@ -41,6 +41,8 @@ enum SyncPhase {
 })
 export class SyncProgressComponent {
   @Input() showSyncStatus: boolean = true;
+  /** Renders a single small phase-message line above the progress bar, for embedding in a list row. */
+  @Input() compact: boolean = false;
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   syncPhase?: SyncPhase;

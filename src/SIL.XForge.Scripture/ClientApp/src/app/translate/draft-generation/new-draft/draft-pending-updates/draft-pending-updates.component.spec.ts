@@ -95,6 +95,106 @@ describe('DraftPendingUpdatesComponent', () => {
     });
   });
 
+  describe('showSyncAll', () => {
+    it('is false with a single syncable project', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator)]);
+      await env.component.ngOnInit();
+
+      expect(env.component.showSyncAll).toBeFalse();
+    });
+
+    it('is true with multiple syncable projects that still need syncing', async () => {
+      const env = new TestEnvironment([
+        makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator),
+        makeProject('proj2', 'P2', SFProjectRole.ParatextAdministrator)
+      ]);
+      await env.component.ngOnInit();
+
+      expect(env.component.showSyncAll).toBeTrue();
+    });
+
+    it('is false once no syncable project is pending', async () => {
+      const env = new TestEnvironment([
+        makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator),
+        makeProject('proj2', 'P2', SFProjectRole.ParatextAdministrator)
+      ]);
+      await env.component.ngOnInit();
+      when(env.mockedProjectService.onlineSync(anything())).thenResolve();
+
+      env.component.syncAll();
+
+      expect(env.component.showSyncAll).toBeFalse();
+    });
+  });
+
+  describe('sync count message', () => {
+    it('is not shown for a single syncable project even while it syncs', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
+      await env.component.ngOnInit();
+
+      expect(env.component.rows[0].syncState).toBe('syncing');
+      expect(env.component.showSyncCountMessage).toBeFalse();
+    });
+
+    it('is shown while any of multiple syncable projects is syncing, with completion counts', async () => {
+      const env = new TestEnvironment([
+        makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1),
+        makeProject('proj2', 'P2', SFProjectRole.ParatextAdministrator, 1)
+      ]);
+      await env.component.ngOnInit();
+      expect(env.component.showSyncCountMessage).toBeTrue();
+      expect(env.component.syncedSyncableCount).toBe(0);
+
+      env.completeSync('proj1', true);
+
+      expect(env.component.showSyncCountMessage).toBeTrue();
+      expect(env.component.syncedSyncableCount).toBe(1);
+
+      env.completeSync('proj2', true);
+
+      expect(env.component.showSyncCountMessage).toBeFalse();
+      expect(env.component.syncedSyncableCount).toBe(2);
+    });
+  });
+
+  describe('continueIsPrimary', () => {
+    it('is true when the only rows cannot be synced by the user', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.CommunityChecker)]);
+      await env.component.ngOnInit();
+
+      expect(env.component.continueIsPrimary).toBeTrue();
+    });
+
+    it('is false while a syncable row is still pending or syncing', async () => {
+      const env = new TestEnvironment([
+        makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator),
+        makeProject('proj2', 'P2', SFProjectRole.CommunityChecker)
+      ]);
+      await env.component.ngOnInit();
+
+      expect(env.component.continueIsPrimary).toBeFalse();
+    });
+
+    it('is true once a sync has failed and nothing else is actionable', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
+      await env.component.ngOnInit();
+
+      env.completeSync('proj1', false);
+
+      expect(env.component.rows[0].syncState).toBe('failed');
+      expect(env.component.continueIsPrimary).toBeTrue();
+    });
+
+    it('is false when everything is synced', async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
+      await env.component.ngOnInit();
+
+      env.completeSync('proj1', true);
+
+      expect(env.component.continueIsPrimary).toBeFalse();
+    });
+  });
+
   describe('syncProject', () => {
     it('calls onlineSync and sets syncState to syncing', async () => {
       const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator)]);
@@ -327,6 +427,33 @@ describe('DraftPendingUpdatesComponent', () => {
 
       tick(1500);
       expect(emitted).toEqual(['proj1']);
+    }));
+
+    it('sets autoAdvancing while the auto-advance is scheduled', fakeAsync(async () => {
+      const env = new TestEnvironment([makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1)]);
+      await env.component.ngOnInit();
+      expect(env.component.autoAdvancing).toBeFalse();
+
+      env.completeSync('proj1', true);
+
+      expect(env.component.autoAdvancing).toBeTrue();
+      tick(1500);
+    }));
+
+    it('auto-advances when a cant-sync row was brought up to date by someone else', fakeAsync(async () => {
+      const env = new TestEnvironment([
+        makeProject('proj1', 'P1', SFProjectRole.ParatextAdministrator, 1),
+        makeProject('proj2', 'P2', SFProjectRole.CommunityChecker, 1)
+      ]);
+      await env.component.ngOnInit();
+      let emitted: string[] | undefined;
+      env.component.continue.subscribe(ids => (emitted = ids));
+
+      env.completeSync('proj1', true);
+      env.completeSync('proj2', true);
+      tick(1500);
+
+      expect(emitted).toEqual(['proj1', 'proj2']);
     }));
 
     it('does not auto-advance when cant-sync rows exist', fakeAsync(async () => {
