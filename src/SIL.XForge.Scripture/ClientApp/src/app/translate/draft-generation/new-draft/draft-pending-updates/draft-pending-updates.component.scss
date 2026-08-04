@@ -92,11 +92,14 @@ app-sync-progress {
 .pending-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 16px;
 }
 
 .wait-for-sync {
+  // On narrow screens the buttons leave too little room; take a full line instead of squeezing.
+  flex-basis: 100%;
   color: var(--mat-sys-on-surface-variant);
   font-size: 0.85em;
 }

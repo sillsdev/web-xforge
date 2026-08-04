@@ -147,11 +147,9 @@ export class SyncProgressComponent {
   }
 
   protected updateProgressState(projectId: string, progressState: ProgressState): void {
+    // The SignalR connection is shared, so this handler sees notifications for projects belonging to other
+    // SyncProgressComponent instances; ignore everything but this component's target and source projects.
     const hasSourceProject = this.sourceProjectDoc?.data != null;
-    this.syncPhase = progressState.syncPhase;
-    this.syncProgress = Math.floor(progressState.syncProgress ?? 0);
-    this.phasePercentage =
-      progressState.syncProgress != null ? Math.round((progressState.syncProgress - this.syncProgress) * 100) : 0;
     if (projectId === this._projectDoc?.id) {
       this.activeSyncProjectDoc = this._projectDoc;
       this.progressPercent$.next(
@@ -160,7 +158,13 @@ export class SyncProgressComponent {
     } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
       this.activeSyncProjectDoc = this.sourceProjectDoc;
       this.progressPercent$.next(progressState.progressValue * 0.5);
+    } else {
+      return;
     }
+    this.syncPhase = progressState.syncPhase;
+    this.syncProgress = Math.floor(progressState.syncProgress ?? 0);
+    this.phasePercentage =
+      progressState.syncProgress != null ? Math.round((progressState.syncProgress - this.syncProgress) * 100) : 0;
   }
 
   private checkSyncStatus(): void {

@@ -3,6 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
@@ -17,12 +18,11 @@ interface PendingProjectRow {
   projectId: string;
   name: string;
   canSync: boolean;
+  /** Undefined when the doc failed to load; the row is then read-only (canSync false, sync state unobservable). */
   projectDoc?: SFProjectDoc;
   syncState: 'pending' | 'syncing' | 'synced' | 'failed';
   /** Latch tracking whether this project has been observed actively syncing, so completion is the high→low edge. */
   wasSyncing: boolean;
-  /** Whether a remoteChanges$ subscription is already watching this row's sync state. */
-  monitoring: boolean;
   /**
    * Whether the user kicked off this row's sync from the pre-step (vs. it already syncing on entry). A user-initiated
    * sync suppresses "Continue anyway" (they chose to wait); a pre-existing one does not (it may be stuck, and we must
@@ -44,14 +44,18 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   rows: PendingProjectRow[] = [];
   loading = true;
-  /** Whether everything is up to date and the auto-advance to the next step has been scheduled. */
-  autoAdvancing = false;
 
   private autoAdvanceTimeout?: ReturnType<typeof setTimeout>;
+
+  /** Whether everything is up to date and the auto-advance to the next step has been scheduled. */
+  get autoAdvancing(): boolean {
+    return this.autoAdvanceTimeout != null;
+  }
 
   constructor(
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
+    private readonly errorReportingService: ErrorReportingService,
     private readonly destroyRef: DestroyRef
   ) {
     this.destroyRef.onDestroy(() => {
@@ -60,12 +64,24 @@ export class DraftPendingUpdatesComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    // Load all the project docs concurrently, then build rows in the original order.
-    const projectDocs = await Promise.all(this.pendingProjects.map(p => this.projectService.get(p.projectId)));
+    // Load all the project docs concurrently, then build rows in the original order. Loading is best-effort,
+    // matching the advisory nature of pending-update detection: a project whose doc fails to load still gets a row
+    // (we know from the Paratext project list that it has updates), just one we can't sync or observe.
+    const projectDocs = await Promise.all(
+      this.pendingProjects.map(p =>
+        this.projectService.get(p.projectId).catch(error => {
+          this.errorReportingService.silentError(
+            'Failed to load a project doc for the pending-updates pre-step',
+            ErrorReportingService.normalizeError(error)
+          );
+          return undefined;
+        })
+      )
+    );
     for (const [i, { projectId, name }] of this.pendingProjects.entries()) {
       const projectDoc = projectDocs[i];
-      const canSync = this.permissionsService.canSync(projectDoc);
-      const syncing = projectDoc.data != null && isSFProjectSyncing(projectDoc.data);
+      const canSync = projectDoc != null && this.permissionsService.canSync(projectDoc);
+      const syncing = projectDoc?.data != null && isSFProjectSyncing(projectDoc.data);
       const row: PendingProjectRow = {
         projectId,
         name,
@@ -73,12 +89,13 @@ export class DraftPendingUpdatesComponent implements OnInit {
         projectDoc,
         syncState: syncing ? 'syncing' : 'pending',
         wasSyncing: syncing,
-        monitoring: false,
         userInitiated: false
       };
       this.rows.push(row);
-      // A project already syncing when the wizard opens still needs its completion observed.
-      if (syncing) this.monitorSync(row);
+      // Watch every row, not just ones the user syncs: a sync someone else starts (e.g. a project admin, possibly
+      // at the user's request) must still update the row and unblock auto-advance when it brings the project up
+      // to date.
+      this.monitorSync(row);
     }
     this.loading = false;
   }
@@ -109,7 +126,11 @@ export class DraftPendingUpdatesComponent implements OnInit {
   get continueIsPrimary(): boolean {
     const hasBlockedRow = this.rows.some(r => !r.canSync && r.syncState !== 'synced');
     const hasFailedRow = this.rows.some(r => r.syncState === 'failed');
-    const hasActionableRow = this.syncableRows.some(r => r.syncState === 'pending' || r.syncState === 'syncing');
+    // A running sync counts as actionable even on a row the user can't sync: waiting for it may unblock the
+    // all-synced auto-advance, so don't steer the user toward continuing with incomplete data. A *pending*
+    // cant-sync row does not count — the user can take no action on it.
+    const hasActionableRow =
+      this.syncableRows.some(r => r.syncState === 'pending') || this.rows.some(r => r.syncState === 'syncing');
     return (hasBlockedRow || hasFailedRow) && !hasActionableRow;
   }
 
@@ -126,8 +147,6 @@ export class DraftPendingUpdatesComponent implements OnInit {
     if (!row.canSync || row.syncState === 'syncing') return;
     row.userInitiated = true;
     row.syncState = 'syncing';
-    // Subscribe before the network round-trip so the queuedCount transition can't be missed.
-    this.monitorSync(row);
     this.projectService.onlineSync(row.projectId).catch(() => {
       // Failure to even enqueue the sync (e.g. RPC/network error).
       row.syncState = 'failed';
@@ -156,8 +175,7 @@ export class DraftPendingUpdatesComponent implements OnInit {
 
   /** Watches a row's project doc for the sync to complete (queuedCount returning to 0). */
   private monitorSync(row: PendingProjectRow): void {
-    if (row.monitoring || row.projectDoc == null) return;
-    row.monitoring = true;
+    if (row.projectDoc == null) return;
     row.projectDoc.remoteChanges$
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.checkSyncStatus(row));
@@ -180,13 +198,10 @@ export class DraftPendingUpdatesComponent implements OnInit {
   }
 
   private checkAutoAdvance(): void {
-    if (this.autoAdvanceTimeout != null || this.syncableRows.length === 0) return;
-    // A project the user cannot sync only blocks auto-advance while it remains out of date; if someone else's sync
-    // brought it up to date during this pre-step, it no longer stands in the way.
-    const hasCannotSyncRow = this.rows.some(r => !r.canSync && r.syncState !== 'synced');
-    const allSyncableSynced = this.syncableRows.every(r => r.syncState === 'synced');
-    if (!hasCannotSyncRow && allSyncableSynced) {
-      this.autoAdvancing = true;
+    if (this.autoAdvanceTimeout != null || this.rows.length === 0) return;
+    // Every row must be synced, including ones the user cannot sync themselves: those only block while they remain
+    // out of date, so someone else's sync bringing one up to date during this pre-step can complete the set.
+    if (this.rows.every(r => r.syncState === 'synced')) {
       this.autoAdvanceTimeout = setTimeout(() => this.continue.emit(this.syncedProjectIds()), AUTO_ADVANCE_DELAY_MS);
     }
   }

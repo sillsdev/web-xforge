@@ -14,19 +14,24 @@
           <div class="row-main">
             <span class="project-name">{{ row.name }}</span>
             <span class="row-status">
-              @if (row.syncState === "syncing") {
-                <mat-spinner diameter="20"></mat-spinner>
-              } @else if (row.syncState === "synced") {
+              <!-- A syncing row shows nothing here; the compact progress bar below the row shows the activity. -->
+              @if (row.syncState === "synced") {
                 <span class="sync-done"><mat-icon>check_circle</mat-icon>{{ t("synced") }}</span>
               } @else if (row.syncState === "failed") {
                 <span class="sync-failed"><mat-icon>error</mat-icon>{{ t("sync_failed") }}</span>
                 @if (row.canSync) {
                   <button mat-stroked-button (click)="retrySyncProject(row)">{{ t("retry") }}</button>
+                } @else {
+                  <span class="cant-sync"><mat-icon>warning</mat-icon>{{ t("cant_sync") }}</span>
                 }
-              } @else if (row.canSync) {
-                <button mat-stroked-button (click)="syncProject(row)"><mat-icon>sync</mat-icon>{{ t("sync") }}</button>
-              } @else {
-                <span class="cant-sync"><mat-icon>warning</mat-icon>{{ t("cant_sync") }}</span>
+              } @else if (row.syncState === "pending") {
+                @if (row.canSync) {
+                  <button mat-stroked-button (click)="syncProject(row)">
+                    <mat-icon>sync</mat-icon>{{ t("sync") }}
+                  </button>
+                } @else {
+                  <span class="cant-sync"><mat-icon>warning</mat-icon>{{ t("cant_sync") }}</span>
+                }
               }
             </span>
           </div>
