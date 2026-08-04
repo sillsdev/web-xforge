@@ -215,7 +215,6 @@ public class SFProjectsRpcController(
                             : string.Join(',', settings.TrainingSourcesParatextIds)
                     },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
-                    { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
                     { "HideCommunityCheckingText", settings?.HideCommunityCheckingText?.ToString() },
                 }

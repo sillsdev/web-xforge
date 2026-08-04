@@ -47,7 +47,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UserDoesNotExist()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, true, false);
+        env.SetupSFData(true, true, false);
         env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
 
         await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
@@ -64,7 +64,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_Error()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>())).Do(x => throw new Exception());
 
@@ -83,7 +83,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UserPermissionError()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Any<SFProject>(),
@@ -105,7 +105,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UserPermissionErrorBackTranslation()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Any<SFProject>(),
@@ -129,7 +129,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         int count = 0;
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         env.DeltaUsxMapper.When(d => d.ToChapterDeltas(Arg.Any<XDocument>()))
             .Do(x =>
@@ -171,10 +171,10 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingDisabled()
+    public async Task SyncAsync_NewProjectCheckingEnabled()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(false, false, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
 
         await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
@@ -206,117 +206,10 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    public async Task SyncAsync_NewProjectTranslationSuggestionsAndCheckingEnabled()
+    public async Task SyncAsync_NewProjectOnlyNoMatchingSourceText()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
-        env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
-
-        await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
-        await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
-
-        Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
-        Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
-        Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
-        Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
-
-        Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
-        Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
-        Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
-        Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
-
-        Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
-
-        env.VerifyProjectSync(true);
-
-        // Verify the sync metrics
-        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
-        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
-        syncMetrics = env.GetSyncMetrics("project02");
-        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
-    }
-
-    [Test]
-    public async Task SyncAsync_NewProjectOnlyTranslationSuggestionsEnabled()
-    {
-        var env = new TestEnvironment();
-        env.SetupSFData(true, false, false, false);
-        env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
-
-        await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
-        await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
-
-        Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
-        Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
-        Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
-        Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
-
-        Assert.That(env.ContainsText("project02", "MAT", 1), Is.True);
-        Assert.That(env.ContainsText("project02", "MAT", 2), Is.True);
-        Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
-        Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
-
-        Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
-
-        env.VerifyProjectSync(true);
-
-        // Verify the sync metrics
-        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
-        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
-        syncMetrics = env.GetSyncMetrics("project02");
-        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
-    }
-
-    [Test]
-    public async Task SyncAsync_NewProjectOnlyCheckingEnabled()
-    {
-        var env = new TestEnvironment();
-        env.SetupSFData(false, true, false, false);
-        env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2, false));
-
-        await env.Runner.RunAsync("project01", "user01", "project01", true, CancellationToken.None);
-
-        Assert.That(env.ContainsText("project01", "MAT", 1), Is.True);
-        Assert.That(env.ContainsText("project01", "MAT", 2), Is.True);
-        Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
-        Assert.That(env.ContainsText("project01", "MRK", 2), Is.True);
-
-        Assert.That(env.ContainsText("project02", "MAT", 1), Is.False);
-        Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
-        Assert.That(env.ContainsText("project02", "MRK", 1), Is.False);
-        Assert.That(env.ContainsText("project02", "MRK", 2), Is.False);
-
-        Assert.That(env.ContainsQuestion("MAT", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MAT", 2), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
-
-        env.VerifyProjectSync(true);
-
-        // Verify the sync metrics
-        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
-        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 4, deleted: 0, updated: 0)));
-        syncMetrics = env.GetSyncMetrics("project02");
-        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
-    }
-
-    [Test]
-    public async Task SyncAsync_NewProjectOnlyNoMatchingSourceText_TranslationSuggestionEnabled()
-    {
-        var env = new TestEnvironment();
-        env.SetupSFData(true, false, false, false);
+        env.SetupSFData(false, false, false);
         env.SetupPTData(new Book("MAT", 2, false));
 
         await env.Runner.RunAsync("project02", "user01", "project02", true, CancellationToken.None);
@@ -343,7 +236,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, false, false, books);
+        env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
 
         // SUT
@@ -393,7 +286,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
 
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
@@ -436,7 +329,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, false, true, false, books);
+        env.SetupSFData(false, true, false, books);
         env.SetupPTData(books);
 
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
@@ -486,7 +379,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_ChaptersChanged()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
         Book[] books = [new Book("MRK", 2)];
         env.AddParatextNoteThreadData(books);
@@ -549,7 +442,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_ChapterValidityChanged()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2) { InvalidChapters = { 1 } });
         env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 2 } }, new Book("MRK", 2));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -566,7 +459,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_BooksChanged()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
         // Need to make sure we have notes BEFORE the sync
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
@@ -638,7 +531,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, false, false, books);
+        env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
@@ -663,7 +556,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, false, false, books);
+        env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
@@ -694,7 +587,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, false, false, books);
+        env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
             .Throws<UnauthorizedAccessException>();
@@ -716,7 +609,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 1)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
         SFProject project = env.GetProject("project01");
         Assert.That(project.Editable, Is.True, "setup");
@@ -742,7 +635,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] sfBooks = [new Book("2JN", 1), new Book("3JN", 1)];
-        env.SetupSFData(false, false, true, false, sfBooks);
+        env.SetupSFData(false, true, false, sfBooks);
         Book[] ptBooks = [new Book("2JN", 1)];
         env.SetupPTData(ptBooks);
 
@@ -771,7 +664,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 1)];
-        env.SetupSFData(true, true, false, true, books);
+        env.SetupSFData(true, false, true, books);
         await env.SetupUndefinedNoteTag("project01", false);
         SFProject project = env.GetProject();
         Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.Null);
@@ -801,7 +694,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 1)];
-        env.SetupSFData(false, true, false, false, books);
+        env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
 
         SFProject project = env.GetProject("project05");
@@ -847,7 +740,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 1)];
-        env.SetupSFData(true, true, false, true, books);
+        env.SetupSFData(true, false, true, books);
         var noteTags = new List<NoteTag>
         {
             new NoteTag
@@ -899,7 +792,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 1)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
 
         env.ParatextService.GetParatextUsersAsync(
@@ -1020,7 +913,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 1)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
 
         env.ParatextService.GetParatextUsersAsync(
@@ -1045,7 +938,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, false, false, books);
+        env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(
                 Arg.Any<UserSecret>(),
@@ -1072,7 +965,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, false, false, false, books);
+        env.SetupSFData(false, false, false, books);
         env.SetupPTData(books);
 
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target")
@@ -1089,7 +982,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, false, false, false, books);
+        env.SetupSFData(false, false, false, books);
         env.SetupPTData(books);
 
         env.ParatextService.GetParatextSettings(Arg.Any<UserSecret>(), "target").Returns(new ParatextSettings());
@@ -1107,7 +1000,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, false, false, false, books);
+        env.SetupSFData(false, false, false, books);
         env.SetupPTData(books);
 
         string newFullName = "New Full Name";
@@ -1126,7 +1019,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_TextDocAlreadyExists()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(false, false, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(false, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.RealtimeService.GetRepository<TextData>()
             .Add(new TextData(Delta.New().InsertText("old text")) { Id = TextData.GetTextDocId("project01", 42, 1) });
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2), new Book("LUK", 2));
@@ -1154,7 +1047,7 @@ public class ParatextSyncRunnerTests
     {
         // The project in the DB has a book, but a Source chapter is missing from that book.
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+        env.SetupSFData(true, false, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
         env.SetupPTData(new Book("MAT", 3, true));
 
         // DB should start with Target chapter 2 but without Source chapter 2.
@@ -1189,7 +1082,7 @@ public class ParatextSyncRunnerTests
     {
         // The project in Paratext has a book, but a chapter is missing from that book.
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 3, true));
+        env.SetupSFData(true, false, false, new Book("MAT", 3, true));
         env.SetupPTData(new Book("MAT", 3, 3) { MissingTargetChapters = { 2 }, MissingSourceChapters = { 2 } });
 
         var chapterContent = Delta.New().InsertText("text");
@@ -1232,7 +1125,7 @@ public class ParatextSyncRunnerTests
     {
         // The project has a book, but a Source chapter is missing from that book. Both in the DB and in Paratext.
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
+        env.SetupSFData(true, false, false, new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
         env.SetupPTData(new Book("MAT", 3, 3) { MissingSourceChapters = { 2 } });
 
         // DB should start without Source chapter 2.
@@ -1263,7 +1156,7 @@ public class ParatextSyncRunnerTests
     {
         // The project in PT has a book, but no chapters.
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 3, true));
+        env.SetupSFData(true, false, false, new Book("MAT", 3, true));
         env.SetupPTData(new Book("MAT", 0, true));
 
         var chapterContent = Delta.New().InsertText("text");
@@ -1420,7 +1313,7 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -1448,7 +1341,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_DataInSyncTrueAfterRestore()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         // Simulate a successful backup to a hg repo at a revision not matching our project doc
         // after a failed send/receive
@@ -1481,7 +1374,7 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -1518,7 +1411,7 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -1550,7 +1443,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_TaskCancelledAndRestoreFails_DataNotInSync()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, false, true, false);
+        env.SetupSFData(false, true, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
         env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
@@ -1583,12 +1476,12 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
         // Cancel the token before awaiting the task
-        cancellationTokenSource.Cancel();
+        await cancellationTokenSource.CancelAsync();
 
         // Run the task
         await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
@@ -1607,7 +1500,7 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment(substituteRealtimeService: true);
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -1646,7 +1539,7 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment(substituteRealtimeService: true);
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -1685,7 +1578,7 @@ public class ParatextSyncRunnerTests
     {
         // Set up the environment
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -1817,7 +1710,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         const string dataId = "dataId01";
         env.SetupNoteChanges(dataId, "thread01", "MAT 1:1", false);
@@ -1858,7 +1751,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         Book[] books = [book];
         env.AddParatextNoteThreadData(books, true, true);
@@ -1909,7 +1802,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SavesNewParatextUser()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(false, false, false, true);
+        env.SetupSFData(false, false, true);
         env.SetupPTData(new Book("MAT", 1, true));
         SFProject project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(["User 1", "User 2"]));
@@ -1938,7 +1831,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UpdatesParatextUserRole()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(false, false, false, true);
+        env.SetupSFData(false, false, true);
         env.SetupPTData(new Book("MAT", 1, true));
         SFProject project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
@@ -1966,7 +1859,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UpdatesExistingParatextUser()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(false, false, false, true);
+        env.SetupSFData(false, false, true);
         env.SetupPTData(new Book("MAT", 1, true));
         SFProject project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
@@ -1996,7 +1889,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_UpdatesRoleIfUserNoLongerAMember()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(false, false, false, true);
+        env.SetupSFData(false, false, true);
         env.SetupPTData(new Book("MAT", 1, true));
         SFProject project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
@@ -2017,7 +1910,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         const string dataId = "dataId01";
         NoteThread thread01Before = env.GetNoteThread("project01", "dataId01");
@@ -2072,7 +1965,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         string dataId = "dataId01";
         string threadId = "thread01";
@@ -2103,7 +1996,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1);
-        env.SetupSFData(false, true, false, false);
+        env.SetupSFData(true, false, false);
         env.SetupPTData(book);
 
         env.SetupNewNoteThreadChange("thread02", "syncuser01");
@@ -2136,7 +2029,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 3, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         env.SetupNewNoteThreadChange("thread02", "syncuser01");
         string dataId = "dataId02";
@@ -2192,7 +2085,7 @@ public class ParatextSyncRunnerTests
         string threadId = "thread01";
         string dataId = "dataId01";
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         List<Note> beginningNoteSet = env.GetNoteThread(sfProjectId, dataId).Notes;
         beginningNoteSet.Add(
             new Note
@@ -2259,7 +2152,7 @@ public class ParatextSyncRunnerTests
         string threadId = "thread01";
         string dataId = "dataId01";
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         List<Note> beginningNoteSet = env.GetNoteThread(sfProjectId, dataId).Notes;
         beginningNoteSet.Add(
             new Note
@@ -2300,7 +2193,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         env.SetupNoteRemovedChange("dataId01", "thread01", ["n01", "n02"]);
 
@@ -2320,7 +2213,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 3, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         string threadId = "thread02";
         string dataId = "dataId02";
@@ -2384,7 +2277,7 @@ public class ParatextSyncRunnerTests
         // Set up some PT and SF project data, including a Note.
         string projectId = "project01";
         var book = new Book("MAT", 3, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         string threadId = "thread01";
         string dataId = "dataId01";
@@ -2454,7 +2347,7 @@ public class ParatextSyncRunnerTests
     {
         // Setup the environment so there will be Paratext changes
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
         // Setup the environment so the Paratext service will return that the resource has changed
@@ -2508,7 +2401,7 @@ public class ParatextSyncRunnerTests
     {
         // Setup the environment so there will be no Paratext changes
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
 
         // Setup the environment so the Paratext service will return that the resource has not changed
@@ -2557,7 +2450,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SyncMetricsSetsDateStartedAndDateFinished()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, true, false);
+        env.SetupSFData(true, true, false);
 
         await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
 
@@ -2574,7 +2467,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SyncMetricsRecordsLogs()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, true, false);
+        env.SetupSFData(true, true, false);
 
         await env.Runner.RunAsync("project01", "user03", "project01", false, CancellationToken.None);
 
@@ -2589,7 +2482,7 @@ public class ParatextSyncRunnerTests
     public async Task SyncAsync_SyncMetricsRecordsBackupCreated()
     {
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, true, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(true, true, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
 
         // Simulate that there is no backup, and that the backups are created successfully
@@ -2613,7 +2506,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
         var syncMetricInfo = new SyncMetricInfo(1, 2, 3);
         env.ParatextService.PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>()).Returns(syncMetricInfo);
@@ -2634,7 +2527,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
         env.ParatextService.PutBookText(
                 Arg.Any<UserSecret>(),
@@ -2672,7 +2565,7 @@ public class ParatextSyncRunnerTests
     {
         // Setup the environment so there will be Paratext changes
         var env = new TestEnvironment();
-        env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
 
         // Make user02 an SF only user
@@ -2716,7 +2609,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-        env.SetupSFData(true, true, true, false, books);
+        env.SetupSFData(true, true, false, books);
         env.SetupPTData(books);
 
         env.ParatextService.UpdateBiblicalTerms(
@@ -2887,7 +2780,7 @@ public class ParatextSyncRunnerTests
     {
         var env = new TestEnvironment();
         var book = new Book("MAT", 1, true);
-        env.SetupSFData(true, false, false, true, book);
+        env.SetupSFData(false, false, true, book);
         env.SetupPTData(book);
         Book[] books = [book];
         env.AddParatextNoteThreadData(books, true, true, true);
@@ -3333,7 +3226,6 @@ public class ParatextSyncRunnerTests
                 DefaultFont = ProjectSettings.defaultFontName,
                 TranslateConfig = new TranslateConfig
                 {
-                    TranslationSuggestionsEnabled = false,
                     Source = new TranslateSource
                     {
                         ParatextId = "source",
@@ -3805,29 +3697,12 @@ public class ParatextSyncRunnerTests
             return textInfo;
         }
 
-        public void SetupSFData(
-            bool translationSuggestionsEnabled,
-            bool checkingEnabled,
-            bool changed,
-            bool noteOnFirstBook,
-            params Book[] books
-        )
-        {
-            SetupSFData(
-                "project01",
-                "project02",
-                translationSuggestionsEnabled,
-                checkingEnabled,
-                changed,
-                noteOnFirstBook,
-                books
-            );
-        }
+        public void SetupSFData(bool checkingEnabled, bool changed, bool noteOnFirstBook, params Book[] books) =>
+            SetupSFData("project01", "project02", checkingEnabled, changed, noteOnFirstBook, books);
 
         public void SetupSFData(
             string targetProjectSFId,
             string sourceProjectSFId,
-            bool translationSuggestionsEnabled,
             bool checkingEnabled,
             bool changed,
             bool noteOnFirstBook,
@@ -3876,7 +3751,6 @@ public class ParatextSyncRunnerTests
                     DefaultFont = ProjectSettings.defaultFontName,
                     TranslateConfig = new TranslateConfig
                     {
-                        TranslationSuggestionsEnabled = translationSuggestionsEnabled,
                         Source = new TranslateSource
                         {
                             ParatextId = "source",
@@ -3929,7 +3803,6 @@ public class ParatextSyncRunnerTests
                     UserRoles = [],
                     ParatextId = "source",
                     IsRightToLeft = false,
-                    TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
                     NoteTags = [],
                     CheckingConfig = new CheckingConfig
                     {
@@ -3956,7 +3829,6 @@ public class ParatextSyncRunnerTests
                     IsRightToLeft = false,
                     TranslateConfig = new TranslateConfig
                     {
-                        TranslationSuggestionsEnabled = translationSuggestionsEnabled,
                         Source = new TranslateSource
                         {
                             ParatextId = "paratext-project04",
@@ -4004,7 +3876,6 @@ public class ParatextSyncRunnerTests
                     UserRoles = [],
                     ParatextId = "paratext-project04",
                     IsRightToLeft = false,
-                    TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
@@ -4036,7 +3907,6 @@ public class ParatextSyncRunnerTests
                     IsRightToLeft = false,
                     TranslateConfig = new TranslateConfig
                     {
-                        TranslationSuggestionsEnabled = translationSuggestionsEnabled,
                         Source = new TranslateSource
                         {
                             ParatextId = "paratext-project04",
@@ -4436,7 +4306,7 @@ public class ParatextSyncRunnerTests
             // Set up some PT and SF project data, including a note.
             string projectId = "project01";
             var book = new Book("MAT", 3, true);
-            SetupSFData(true, false, false, true, book);
+            SetupSFData(false, false, true, book);
             SetupPTData(book);
             string dataId = "dataId01";
             string threadId = "thread01";
@@ -4544,14 +4414,12 @@ public class ParatextSyncRunnerTests
         )
         {
             Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
-            bool translationSuggestionsEnabled = false;
             bool checkingEnabled = true;
             bool changed = true;
             bool hasNoteThreads = false;
             SetupSFData(
                 targetProjectSFId: projectSFId,
                 sourceProjectSFId: "project04",
-                translationSuggestionsEnabled,
                 checkingEnabled,
                 changed,
                 hasNoteThreads,
