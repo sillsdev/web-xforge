@@ -250,11 +250,13 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   filterRequests(): void {
     const filterOption = this.filterOptions[this._activeFilter];
     const filterFunction = filterOption?.filter;
-    let filterToggleRequests: OnboardingRequest[] = [];
+    let requestsMatchingFilterOption: OnboardingRequest[] = [];
     if (filterFunction) {
-      filterToggleRequests = this.requests.filter(request => filterFunction(request, this.userService.currentUserId));
+      requestsMatchingFilterOption = this.requests.filter(request =>
+        filterFunction(request, this.userService.currentUserId)
+      );
     }
-    this.filteredRequests = filterToggleRequests.filter(
+    this.filteredRequests = requestsMatchingFilterOption.filter(
       request => this.isWithinSelectedDateRange(request) && this.applyFilter(request)
     );
   }
