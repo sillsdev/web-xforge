@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { Component, DestroyRef, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -10,22 +12,26 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { saveAs } from 'file-saver';
+import { distinctUntilChanged, map } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
+import { isPopulatedString, isString } from '../../../type-utils';
 import { InfoComponent } from '../../shared/info/info.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { projectLabel } from '../../shared/utils';
+import { parseDate, projectLabel } from '../../shared/utils';
 import {
   ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
   OnboardingRequest,
   OnboardingRequestResolutionKey,
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
+import { DateRangePickerComponent, NormalizedDateRange } from '../date-range-picker.component';
 import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from '../serval-administration.service';
 import { OnboardingRequestsExportService } from './onboarding-requests-export.service';
@@ -84,6 +90,7 @@ type FilterName = keyof typeof filterOptions;
     OnboardingRequestAssigneeSelectComponent,
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     TranslocoModule,
     MatTableModule,
     MatFormFieldModule,
@@ -97,8 +104,10 @@ type FilterName = keyof typeof filterOptions;
     MatIconModule,
     MatInputModule,
     MatMenuModule,
-    InfoComponent
-  ]
+    InfoComponent,
+    DateRangePickerComponent
+  ],
+  providers: [provideNativeDateAdapter()]
 })
 export class OnboardingRequestsComponent extends DataLoadingComponent implements OnInit {
   requests: OnboardingRequest[] = [];
@@ -108,9 +117,13 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   assignedUserIds: Set<string> = new Set();
   projectNames: Map<string, string> = new Map();
   filterOptions = filterOptions;
+  dateFrom: Date | null = null;
+  dateTo: Date | null = null;
 
   resolutionOptions = ONBOARDING_REQUEST_RESOLUTION_OPTIONS;
   existingAssigneeIds: string[] = [];
+  searchControl: FormControl<string> = new FormControl('', { nonNullable: true });
+  private currentSearchQueryParam: string | null = null;
 
   value: number | null = null;
 
@@ -119,12 +132,36 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     noticeService: NoticeService,
     private readonly servalAdministrationService: ServalAdministrationService,
     readonly onboardingRequestService: OnboardingRequestService,
-    private readonly exportService: OnboardingRequestsExportService
+    private readonly exportService: OnboardingRequestsExportService,
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly destroyRef: DestroyRef
   ) {
     super(noticeService, 'OnboardingRequestsComponent');
+
+    this.searchControl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((searchTerm: string) => {
+      this.updateUrlSearchQueryParam(searchTerm);
+      this.filterRequests();
+    });
   }
 
   ngOnInit(): void {
+    this.route.queryParams
+      .pipe(
+        map(params => params['q']),
+        map((queryParam: unknown) => (isString(queryParam) ? queryParam : null)),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((searchText: string | null) => {
+        this.currentSearchQueryParam = searchText;
+        const searchTextValue: string = searchText ?? '';
+        if (this.searchControl.value !== searchTextValue) {
+          this.searchControl.setValue(searchTextValue, { emitEvent: false });
+        }
+        this.filterRequests();
+      });
+
     void this.loadRequests();
   }
 
@@ -161,6 +198,9 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
         this.projectNames.set(projectId, projectId);
       }
     }
+
+    // Re-filter once project labels are loaded so search by project name works.
+    this.filterRequests();
   }
 
   /** Exports the currently filtered requests as a CSV file. */
@@ -208,9 +248,83 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   filterRequests(): void {
     const filterOption = this.filterOptions[this._activeFilter];
     const filterFunction = filterOption?.filter;
+    let filterToggleRequests: OnboardingRequest[] = [];
     if (filterFunction) {
-      this.filteredRequests = this.requests.filter(request => filterFunction(request, this.userService.currentUserId));
+      filterToggleRequests = this.requests.filter(request => filterFunction(request, this.userService.currentUserId));
     }
+    this.filteredRequests = filterToggleRequests.filter(
+      request => this.isWithinSelectedDateRange(request) && this.applyFilter(request)
+    );
+  }
+
+  onDateFilterChange(dateRange: NormalizedDateRange): void {
+    this.dateFrom = dateRange.start;
+    this.dateTo = dateRange.end;
+    this.filterRequests();
+  }
+
+  clearSearch(): void {
+    this.searchControl.setValue('');
+  }
+
+  private applyFilter(request: OnboardingRequest): boolean {
+    const normalizedSearchTerm: string = this.normalizeSearchTerm(this.searchControl.value);
+    if (!isPopulatedString(normalizedSearchTerm)) {
+      return true;
+    }
+
+    return this.searchableData(request).some(data => data.includes(normalizedSearchTerm));
+  }
+
+  private searchableData(request: OnboardingRequest): string[] {
+    return [
+      this.getProjectName(request.submission.projectId),
+      request.submission.formData.name,
+      request.submission.formData.email,
+      request.submission.formData.translationLanguageIsoCode
+    ]
+      .filter(isPopulatedString)
+      .map(data => this.normalizeSearchTerm(data));
+  }
+
+  private normalizeSearchTerm(value: string): string {
+    return value.trim().toLowerCase();
+  }
+
+  private updateUrlSearchQueryParam(query: string): void {
+    const queryParam: string | null = isPopulatedString(query) ? query : null;
+    if (this.currentSearchQueryParam === queryParam) {
+      return;
+    }
+
+    this.currentSearchQueryParam = queryParam;
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { q: queryParam },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
+  }
+
+  private isWithinSelectedDateRange(request: OnboardingRequest): boolean {
+    const requestDate: Date | undefined = parseDate(request.submission.timestamp);
+    if (requestDate == null) {
+      return false;
+    }
+
+    if (this.dateFrom != null) {
+      if (requestDate < this.dateFrom) {
+        return false;
+      }
+    }
+
+    if (this.dateTo != null) {
+      if (requestDate > this.dateTo) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

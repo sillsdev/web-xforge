@@ -9,7 +9,39 @@
       Progress". When a request is marked with one of the resolutions, the assignee will be cleared. Marking a request
       as resolved does not automatically enable drafting on the project.
     </app-notice>
+    <div class="filter-controls">
+      <div class="date-range-controls">
+        <app-date-range-picker
+          [showReset]="true"
+          (dateRangeChange)="onDateFilterChange($event)"
+        ></app-date-range-picker>
+      </div>
 
+      <div class="identifier-search-group">
+        <mat-form-field
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="identifier-search-field"
+          [class.identifier-search-field-active]="searchControl.value.length > 0"
+        >
+          <mat-label>Search</mat-label>
+          <mat-icon matPrefix>search</mat-icon>
+          <input matInput type="text" [formControl]="searchControl" />
+
+          @if (searchControl.value.length > 0) {
+            <button mat-icon-button matSuffix type="button" (click)="clearSearch()" aria-label="Clear search">
+              <mat-icon>close</mat-icon>
+            </button>
+          } @else {
+            <app-info
+              matSuffix
+              class="identifier-search-info"
+              text="project name, requester name/email or language code"
+            ></app-info>
+          }
+        </mat-form-field>
+      </div>
+    </div>
     <div class="filter-bar">
       <mat-button-toggle-group [(ngModel)]="activeFilter" class="status-filter">
         @for (option of filterOptions | keyvalue: null; track option.key) {
