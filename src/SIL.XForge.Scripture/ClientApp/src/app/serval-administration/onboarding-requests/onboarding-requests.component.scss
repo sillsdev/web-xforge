@@ -25,6 +25,42 @@
   margin: 16px 0;
 }
 
+.filter-controls {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.date-range-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.identifier-search-group {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.identifier-search-field {
+  width: 14rem;
+}
+
+/** Make the app-info icon in the same place as the close button. */
+.identifier-search-info {
+  margin-right: 0.6rem;
+}
+
+:host ::ng-deep .identifier-search-field.identifier-search-field-active .mat-mdc-text-field-wrapper {
+  background-color: var(--sf-serval-builds-search-background-populated);
+  color: var(--sf-serval-builds-search-text-populated);
+  transition: background-color 150ms ease-in;
+}
+
 .export-button-group {
   display: flex;
 
