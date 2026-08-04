@@ -97,7 +97,7 @@ export class JobDetailsDialogComponent implements OnInit {
     });
 
     // Fetch raw engine data (pre-translate is true for draft jobs)
-    this.draftGenerationService.getRawEngine(this.data.projectId, true).subscribe({
+    this.draftGenerationService.getRawEngine(this.data.projectId).subscribe({
       next: data => {
         this.engine = data;
         this.isLoadingEngine = false;

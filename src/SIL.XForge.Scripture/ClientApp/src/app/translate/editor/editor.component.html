@@ -1,7 +1,4 @@
 <ng-container *transloco="let t; read: 'editor'">
-  @if (translationSuggestionsEnabled && userHasGeneralEditRight) {
-    <app-smt-retirement-notice></app-smt-retirement-notice>
-  }
   <div class="content" [class.reverse-columns]="!isTargetTextRight" [class.target-only]="!showSourceTab">
     <div class="toolbar">
       <div class="toolbar-options">
@@ -196,14 +193,6 @@
                             [selectableVerses]="showAddCommentUI"
                             [ngClass]="{ 'comment-enabled-editor': showAddCommentUI }"
                           ></app-text>
-                          <app-suggestions
-                            class="mat-elevation-z2"
-                            [show]="showSuggestions && translationSuggestionsEnabled"
-                            [suggestions]="suggestions"
-                            [text]="target"
-                            (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
-                            (showChange)="showSuggestions = $event"
-                          ></app-suggestions>
                           <ng-template #fabBottomSheet>
                             <div class="fab-bottom-sheet" [dir]="direction">
                               <b>{{ currentSegmentReference }}</b>
@@ -293,5 +282,4 @@
       </app-tab-group>
     }
   </div>
-  <app-training-progress [projectId]="projectId"></app-training-progress>
 </ng-container>

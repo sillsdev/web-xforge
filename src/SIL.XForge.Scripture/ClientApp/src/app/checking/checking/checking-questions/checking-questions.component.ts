@@ -38,7 +38,6 @@ import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
 import { CheckingQuestionsService } from '../checking-questions.service';
 
@@ -155,7 +154,6 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
   constructor(
     private readonly questionsService: CheckingQuestionsService,
     private readonly userService: UserService,
-    private readonly translationEngineService: TranslationEngineService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly projectService: SFProjectService,
     private readonly i18n: I18nService,
@@ -472,16 +470,6 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     if (this._projectUserConfigDoc != null && this._projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
-        if (
-          this.project != null &&
-          this.project.translateConfig.translationSuggestionsEnabled &&
-          this.project.translateConfig.source !== undefined
-        ) {
-          await this.translationEngineService.trainSelectedSegment(
-            this._projectUserConfigDoc.data,
-            this.project.translateConfig.source.projectRef
-          );
-        }
         await this._projectUserConfigDoc.submitJson0Op(op => {
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
           op.unset(puc => puc.selectedSegment);
