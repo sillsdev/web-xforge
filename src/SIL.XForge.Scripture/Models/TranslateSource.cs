@@ -11,9 +11,6 @@ public class TranslateSource
     /// <value>
     /// The paratext identifier.
     /// </value>
-    /// <remarks>
-    /// Only use this if <see cref="TranslateConfig.TranslationSuggestionsEnabled" /> is set to <c>true.</c>
-    /// </remarks>
     public string ParatextId { get; set; }
 
     /// <summary>
@@ -22,9 +19,6 @@ public class TranslateSource
     /// <value>
     /// The SF project id reference.
     /// </value>
-    /// <remarks>
-    /// Only use this if <see cref="TranslateConfig.TranslationSuggestionsEnabled" /> is set to <c>true.</c>
-    /// </remarks>
     public string ProjectRef { get; set; }
     public string Name { get; set; }
     public string ShortName { get; set; }
