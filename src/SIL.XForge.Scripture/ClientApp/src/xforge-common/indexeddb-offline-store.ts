@@ -178,6 +178,13 @@ export class IndexeddbOfflineStore extends OfflineStore {
   }
 
   private openDB(): Promise<IDBDatabase> {
+    if (this.disabled) {
+      // Never settles, so that reads and writes still in flight at logout halt rather than
+      // re-create the deleted database or act on fabricated empty results (SF-3855). The page is
+      // about to unload; this is the same graceful waiting used in AuthHttpInterceptor while a
+      // redirect is pending. Do not store this promise in openDBPromise, or closeDB would hang.
+      return new Promise<never>(() => {});
+    }
     if (this.openDBPromise != null) {
       return this.openDBPromise;
     }

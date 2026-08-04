@@ -49,6 +49,17 @@ if (environment.production || environment.pwaTest) {
 
 ExceptionHandlingService.initBugsnag();
 
+// The browser may snapshot a page into the back/forward cache when navigating away (Chrome 149+
+// does this even while the realtime WebSocket is open), and pressing Back restores the snapshot —
+// including auth state and user data that logging out was meant to destroy (SF-3855). No browser
+// API can prevent or destroy the snapshot (the browser evicts it after a bounded time), so make
+// restoring it a dead end: reload, so authentication is re-evaluated from scratch.
+window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
+
 bootstrapApplication(AppComponent, {
   providers: [
     { provide: 'BASE_URL', useFactory: getBaseUrl, deps: [] as any[] },
