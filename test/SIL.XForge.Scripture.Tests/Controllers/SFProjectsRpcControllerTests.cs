@@ -1445,7 +1445,6 @@ public class SFProjectsRpcControllerTests
             CheckingEnabled = true,
             HideCommunityCheckingText = true,
             SourceParatextId = string.Empty,
-            TranslationSuggestionsEnabled = true,
             UsersSeeEachOthersResponses = true,
         };
         env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings).Throws(new ArgumentNullException());
