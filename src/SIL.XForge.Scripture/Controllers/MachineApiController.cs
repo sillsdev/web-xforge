@@ -91,7 +91,6 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="buildId">The build identifier.</param>
     /// <param name="minRevision">The minimum revision.</param>
-    /// <param name="preTranslate"><c>true</c> if the build is a pre-translation build.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <remarks>Omitting <paramref name="buildId"/> returns the current build running for the project.</remarks>
     /// <response code="200">The build is running.</response>
@@ -104,7 +103,6 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         string? buildId,
         [FromQuery] int? minRevision,
-        [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -118,7 +116,6 @@ public class MachineApiController : ControllerBase
                 build = await _machineApiService.GetQueuedStateAsync(
                     _userAccessor.UserId,
                     sfProjectId,
-                    preTranslate,
                     isServalAdmin,
                     cancellationToken
                 );
@@ -136,7 +133,6 @@ public class MachineApiController : ControllerBase
                     _userAccessor.UserId,
                     sfProjectId,
                     minRevision,
-                    preTranslate,
                     isServalAdmin,
                     cancellationToken
                 )
@@ -145,7 +141,6 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     buildId,
                     minRevision,
-                    preTranslate,
                     isServalAdmin,
                     cancellationToken
                 );
@@ -179,7 +174,6 @@ public class MachineApiController : ControllerBase
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="buildId">The build identifier.</param>
     /// <param name="minRevision">The minimum revision.</param>
-    /// <param name="preTranslate"><c>true</c> if the build is a pre-translation build.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The build is returned.</response>
     /// <response code="403">You do not have permission to retrieve builds for this project.</response>
@@ -190,7 +184,6 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         string buildId,
         [FromQuery] int? minRevision,
-        [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -202,7 +195,6 @@ public class MachineApiController : ControllerBase
                 sfProjectId,
                 buildId,
                 minRevision,
-                preTranslate,
                 isServalAdmin,
                 cancellationToken
             );
@@ -228,7 +220,6 @@ public class MachineApiController : ControllerBase
     /// Gets the previous and current builds for a project.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="preTranslate"><c>true</c> if the builds are pre-translation builds.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The builds are returned.</response>
     /// <response code="403">You do not have permission to retrieve builds for this project.</response>
@@ -237,7 +228,6 @@ public class MachineApiController : ControllerBase
     [HttpGet(MachineApi.GetBuilds)]
     public async Task<ActionResult<IReadOnlyList<ServalBuildDto>>> GetBuildsAsync(
         string sfProjectId,
-        [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -248,7 +238,6 @@ public class MachineApiController : ControllerBase
                 await _machineApiService.GetBuildsAsync(
                     _userAccessor.UserId,
                     sfProjectId,
-                    preTranslate,
                     isServalAdmin,
                     cancellationToken
                 )
@@ -362,49 +351,9 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
-    /// Gets a translation engine.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The translation engine is configured for the project.</response>
-    /// <response code="403">You do not have permission to retrieve the translation engine for this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpGet(MachineApi.GetEngine)]
-    public async Task<ActionResult<ServalEngineDto>> GetEngineAsync(
-        string sfProjectId,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            ServalEngineDto engine = await _machineApiService.GetEngineAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                cancellationToken
-            );
-            return Ok(engine);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-    }
-
-    /// <summary>
     /// Gets a translation engine exactly as Serval provides it.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="preTranslate"><c>true</c> if the engine is a pre-translation engine.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The engine is returned.</response>
     /// <response code="403">You do not have permission to retrieve the engine for this project.</response>
@@ -413,7 +362,6 @@ public class MachineApiController : ControllerBase
     [HttpGet(MachineApi.GetRawEngine)]
     public async Task<ActionResult<TranslationEngine?>> GetRawEngineAsync(
         string sfProjectId,
-        [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -423,7 +371,6 @@ public class MachineApiController : ControllerBase
             TranslationEngine? engine = await _machineApiService.GetRawEngineAsync(
                 _userAccessor.UserId,
                 sfProjectId,
-                preTranslate,
                 isServalAdmin,
                 cancellationToken
             );
@@ -914,53 +861,6 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
-    /// Gets the word graph that represents all possible translations of a segment of text.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="segment">The source segment.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The word graph was successfully generated.</response>
-    /// <response code="403">You do not have permission to retrieve the word graph for this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="409">The engine has not been built on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpPost(MachineApi.GetWordGraph)]
-    public async Task<ActionResult<WordGraph>> GetWordGraphAsync(
-        string sfProjectId,
-        [FromBody] string segment,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            WordGraph wordGraph = await _machineApiService.GetWordGraphAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                segment,
-                cancellationToken
-            );
-            return Ok(wordGraph);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException)
-        {
-            return Conflict();
-        }
-    }
-
-    /// <summary>
     /// Retrieves information on whether a language is supported by Serval.
     /// </summary>
     /// <param name="languageCode">The language code.</param>
@@ -982,50 +882,6 @@ public class MachineApiController : ControllerBase
         {
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-    }
-
-    /// <summary>
-    /// Starts a build job for a translation engine.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The build was successfully started.</response>
-    /// <response code="401">Your Paratext tokens have expired, and you must log in again.</response>
-    /// <response code="403">You do not have permission to build this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpPost(MachineApi.StartBuild)]
-    public async Task<ActionResult> StartBuildAsync([FromBody] string sfProjectId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _machineApiService.StartBuildAsync(_userAccessor.UserId, sfProjectId, cancellationToken);
-            ServalBuildDto? build = await _machineApiService.GetQueuedStateAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                preTranslate: false,
-                isServalAdmin: false,
-                cancellationToken
-            );
-            return Ok(build);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Unauthorized();
         }
     }
 
@@ -1084,135 +940,6 @@ public class MachineApiController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Unauthorized();
-        }
-    }
-
-    /// <summary>
-    /// Incrementally trains a translation engine with a segment pair.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="segmentPair">The segment pair.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The segment was successfully trained.</response>
-    /// <response code="403">You do not have permission to train a segment for this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpPost(MachineApi.TrainSegment)]
-    public async Task<ActionResult> TrainSegmentAsync(
-        string sfProjectId,
-        [FromBody] SegmentPair segmentPair,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            await _machineApiService.TrainSegmentAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                segmentPair,
-                cancellationToken
-            );
-            return Ok();
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-    }
-
-    /// <summary>
-    /// Translates a segment of text.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="segment">The source segment.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The translation was successfully generated.</response>
-    /// <response code="403">You do not have permission to translate a segment for this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpPost(MachineApi.Translate)]
-    public async Task<ActionResult<TranslationResult>> TranslateAsync(
-        string sfProjectId,
-        [FromBody] string segment,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            TranslationResult translationResult = await _machineApiService.TranslateAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                segment,
-                cancellationToken
-            );
-            return Ok(translationResult);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
-        }
-    }
-
-    /// <summary>
-    /// Translates a segment of text into the top N results.
-    /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="n">The number of translations.</param>
-    /// <param name="segment">The source segment.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <response code="200">The translation was successfully generated.</response>
-    /// <response code="403">You do not have permission to translate a segment for this project.</response>
-    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
-    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
-    [HttpPost(MachineApi.TranslateN)]
-    public async Task<ActionResult<TranslationResult[]>> TranslateNAsync(
-        string sfProjectId,
-        int n,
-        [FromBody] string segment,
-        CancellationToken cancellationToken
-    )
-    {
-        try
-        {
-            TranslationResult[] translationResults = await _machineApiService.TranslateNAsync(
-                _userAccessor.UserId,
-                sfProjectId,
-                n,
-                segment,
-                cancellationToken
-            );
-            return Ok(translationResults);
-        }
-        catch (BrokenCircuitException e)
-        {
-            _exceptionHandler.ReportException(e);
-            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
-        }
-        catch (DataNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (ForbiddenException)
-        {
-            return Forbid();
         }
     }
 

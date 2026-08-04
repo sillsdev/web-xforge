@@ -1,7 +1,10 @@
+using System;
+
 namespace SIL.XForge.Scripture.Models;
 
 public class TranslateConfig
 {
+    [Obsolete("SMT suggestions are no longer supported. Deprecated August 2026")]
     public bool TranslationSuggestionsEnabled { get; set; }
     public TranslateSource? Source { get; set; }
     public int? DefaultNoteTagId { get; set; }
