@@ -21,7 +21,7 @@ public class SFProjectCreateSettings
     /// The source Paratext project identifier.
     /// </value>
     /// <remarks>
-    /// This will specify the project to be used for SMT suggestions and the left hand panel in the editor.
+    /// This will specify the project to be used for the left hand panel in the editor.
     /// </remarks>
     public string? SourceParatextId { get; init; }
 
