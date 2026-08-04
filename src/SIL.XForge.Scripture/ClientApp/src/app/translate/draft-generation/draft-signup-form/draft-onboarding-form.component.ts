@@ -163,12 +163,11 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
       .then(userDoc => {
         const user: Readonly<User | undefined> = userDoc.data;
         if (user != null) {
-          // Omit email if it's a noreply email
-          const userEmail = user.email?.includes('@users.noreply.scriptureforge.org') ? '' : (user.email ?? '');
-          this.signupForm.patchValue({
-            name: user.displayName || user.name || '',
-            email: userEmail
-          });
+          const defaultNameValue = user.displayName || user.name || '';
+          // In some rare cases the email address ends up inside the user's name field, so don't auto fill it
+          if (!defaultNameValue.includes('@')) {
+            this.signupForm.patchValue({ name: defaultNameValue });
+          }
         }
       })
       .catch(err => console.error('Error loading user:', err));
