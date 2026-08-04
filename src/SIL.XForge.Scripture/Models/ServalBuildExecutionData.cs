@@ -8,9 +8,14 @@ namespace SIL.XForge.Scripture.Models;
 /// </summary>
 public class ServalBuildExecutionData
 {
-    public int TrainCount { get; set; }
-    public int PretranslateCount { get; set; }
-    public string? SourceLanguageTag { get; set; }
-    public string? TargetLanguageTag { get; set; }
-    public List<string> Warnings { get; set; } = [];
+    public double? AveragePretranslationConfidence { get; init; }
+    public bool? IsPretranslateFilteredByChapter { get; init; }
+    public bool? IsTrainFilteredByChapter { get; init; }
+    public int TrainCount { get; init; }
+    public int PretranslateCount { get; init; }
+    public string? ResolvedSourceLanguage { get; init; }
+    public string? ResolvedTargetLanguage { get; init; }
+    public string? SourceLanguageTag { get; init; }
+    public string? TargetLanguageTag { get; init; }
+    public required IReadOnlyList<string> Warnings { get; init; }
 }

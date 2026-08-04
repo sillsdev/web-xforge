@@ -45,7 +45,6 @@ public interface IMachineApiService
         string sfProjectId,
         string buildId,
         long? minRevision,
-        bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
@@ -54,7 +53,6 @@ public interface IMachineApiService
         string sfProjectId,
         string buildId,
         long? minRevision,
-        bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
@@ -67,7 +65,6 @@ public interface IMachineApiService
     Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
         string curUserId,
         string sfProjectId,
-        bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
@@ -75,7 +72,6 @@ public interface IMachineApiService
         string curUserId,
         string sfProjectId,
         long? minRevision,
-        bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
@@ -86,11 +82,9 @@ public interface IMachineApiService
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
-    Task<ServalEngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task<TranslationEngine?> GetRawEngineAsync(
         string curUserId,
         string sfProjectId,
-        bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
@@ -109,7 +103,6 @@ public interface IMachineApiService
     Task<ServalBuildDto?> GetQueuedStateAsync(
         string curUserId,
         string sfProjectId,
-        bool preTranslate,
         bool isServalAdmin,
         CancellationToken cancellationToken
     );
@@ -164,12 +157,6 @@ public interface IMachineApiService
         DraftUsfmConfig? draftUsfmConfig,
         CancellationToken cancellationToken
     );
-    Task<WordGraph> GetWordGraphAsync(
-        string curUserId,
-        string sfProjectId,
-        string segment,
-        CancellationToken cancellationToken
-    );
     Task<LanguageDto> IsLanguageSupportedAsync(string languageCode, CancellationToken cancellationToken);
 
     Task ProcessBuildAsync(
@@ -181,30 +168,8 @@ public interface IMachineApiService
 
     [Mutex]
     [LogEventMetric(EventScope.Drafting, projectId: nameof(sfProjectId), captureReturnValue: true)]
-    Task<string> RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
-
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId), nameof(sfProjectId))]
-    Task StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<string?> RetrievePreTranslationStatusAsync(string sfProjectId, CancellationToken cancellationToken);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId), projectId: "buildConfig.ProjectId")]
     Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
-    Task TrainSegmentAsync(
-        string curUserId,
-        string sfProjectId,
-        SegmentPair segmentPair,
-        CancellationToken cancellationToken
-    );
-    Task<TranslationResult> TranslateAsync(
-        string curUserId,
-        string sfProjectId,
-        string segment,
-        CancellationToken cancellationToken
-    );
-    Task<TranslationResult[]> TranslateNAsync(
-        string curUserId,
-        string sfProjectId,
-        int n,
-        string segment,
-        CancellationToken cancellationToken
-    );
 }
