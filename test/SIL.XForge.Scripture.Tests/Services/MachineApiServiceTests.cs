@@ -53,8 +53,6 @@ public class MachineApiServiceTests
     private const string Paratext01 = "paratext01";
     private const string Paratext02 = "paratext02";
     private const string ParatextUserId01 = "paratextUser01";
-    private const string Segment = "segment";
-    private const string TargetSegment = "targetSegment";
     private const string HangfireJobId = "jobId";
     private const string Data01 = "data01";
 
@@ -672,7 +670,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData!.PreTranslationEngineId));
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
@@ -689,7 +687,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
         env.ConfigureTranslationBuild();
         env.SetEmptyDraftGenerationMetricAssociations();
         // SUT
@@ -707,7 +705,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
         env.ConfigureTranslationBuild();
         const string draftGenerationRequestId = "2345";
         env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
@@ -758,7 +756,6 @@ public class MachineApiServiceTests
                 Project01,
                 ServalBuildId01,
                 minRevision,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -779,7 +776,6 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             minRevision: null,
-            preTranslate: false,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -800,7 +796,6 @@ public class MachineApiServiceTests
                 Project01,
                 ServalBuildId01,
                 minRevision: null,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -820,7 +815,6 @@ public class MachineApiServiceTests
                 "invalid_project_id",
                 ServalBuildId01,
                 minRevision: null,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -840,7 +834,6 @@ public class MachineApiServiceTests
                 Project03,
                 ServalBuildId01,
                 minRevision: null,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -861,7 +854,6 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             minRevision: null,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -883,7 +875,6 @@ public class MachineApiServiceTests
             Project01,
             ServalBuildId01,
             minRevision: null,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -986,7 +977,6 @@ public class MachineApiServiceTests
             Project01,
             buildId,
             minRevision: null,
-            preTranslate: false,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -1411,13 +1401,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetBuildsAsync(
-                User02,
-                Project01,
-                preTranslate: false,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
+            env.Service.GetBuildsAsync(User02, Project01, isServalAdmin: false, CancellationToken.None)
         );
     }
 
@@ -1429,13 +1413,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetBuildsAsync(
-                User01,
-                "invalid_project_id",
-                preTranslate: false,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
+            env.Service.GetBuildsAsync(User01, "invalid_project_id", isServalAdmin: false, CancellationToken.None)
         );
     }
 
@@ -1447,13 +1425,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetBuildsAsync(
-                User01,
-                Project03,
-                preTranslate: false,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
+            env.Service.GetBuildsAsync(User01, Project03, isServalAdmin: false, CancellationToken.None)
         );
     }
 
@@ -1462,7 +1434,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -1472,7 +1444,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -1983,7 +1954,7 @@ public class MachineApiServiceTests
         const string trainingScriptureRange = "GEN;EXO";
         const string translationScriptureRange = "LEV;NUM";
         DateTime requestedDateTime = DateTime.UtcNow;
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
@@ -2041,7 +2012,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2076,7 +2046,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2094,13 +2063,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetBuildsAsync(
-                User01,
-                Project01,
-                preTranslate: false,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
+            env.Service.GetBuildsAsync(User01, Project01, isServalAdmin: false, CancellationToken.None)
         );
     }
 
@@ -2117,7 +2080,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2203,7 +2165,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2221,48 +2182,6 @@ public class MachineApiServiceTests
         );
         Assert.AreEqual(TrainingDataId01, builds[0].AdditionalInfo!.TrainingDataFileIds.Single());
         Assert.That(builds[0].AdditionalInfo!.CanDenormalizeQuotes, Is.True);
-    }
-
-    [Test]
-    public async Task GetBuildsAsync_SuccessWithFallbackToLegacyBuild()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        TranslationBuild translationBuild = env.ConfigureTranslationBuild();
-
-        // Add additional build properties
-        const string translationScriptureRange = "GEN;EXO";
-        const string trainingScriptureRange = "LEV;NUM";
-#pragma warning disable CS0612 // Type or member is obsolete
-        translationBuild.Pretranslate = [new PretranslateCorpus { ScriptureRange = translationScriptureRange }];
-        translationBuild.TrainOn = [new TrainingCorpus { ScriptureRange = trainingScriptureRange }];
-#pragma warning restore CS0612 // Type or member is obsolete
-
-        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
-            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
-
-        // SUT
-        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
-            User02,
-            Project01,
-            preTranslate: true,
-            isServalAdmin: true,
-            CancellationToken.None
-        );
-
-        Assert.AreEqual(1, builds.Count);
-        TestEnvironment.AssertCoreBuildProperties(translationBuild, builds[0]);
-        Assert.NotNull(builds[0].AdditionalInfo);
-        Assert.AreEqual(Project01, builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ProjectId);
-        Assert.AreEqual(
-            translationScriptureRange,
-            builds[0].AdditionalInfo?.TranslationScriptureRanges.Single().ScriptureRange
-        );
-        Assert.AreEqual(
-            trainingScriptureRange,
-            builds[0].AdditionalInfo?.TrainingScriptureRanges.Single().ScriptureRange
-        );
-        Assert.That(builds[0].AdditionalInfo!.CanDenormalizeQuotes, Is.False);
     }
 
     [Test]
@@ -2297,7 +2216,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2332,7 +2250,6 @@ public class MachineApiServiceTests
                 User01,
                 Project01,
                 minRevision,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -2352,7 +2269,6 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
-            preTranslate: false,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -2372,7 +2288,6 @@ public class MachineApiServiceTests
                 User02,
                 Project01,
                 minRevision: null,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -2391,26 +2306,6 @@ public class MachineApiServiceTests
                 User01,
                 "invalid_project_id",
                 minRevision: null,
-                preTranslate: false,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
-        );
-    }
-
-    [Test]
-    public void GetCurrentBuildAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetCurrentBuildAsync(
-                User01,
-                Project03,
-                minRevision: null,
-                preTranslate: false,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -2429,7 +2324,6 @@ public class MachineApiServiceTests
             User02,
             Project01,
             minRevision: null,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2449,7 +2343,6 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
-            preTranslate: false,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -2484,7 +2377,6 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -2512,7 +2404,6 @@ public class MachineApiServiceTests
                 User01,
                 Project01,
                 minRevision: null,
-                preTranslate: true,
                 isServalAdmin: false,
                 CancellationToken.None
             )
@@ -2623,111 +2514,6 @@ public class MachineApiServiceTests
             Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
             Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
-    }
-
-    [Test]
-    public void GetEngineAsync_NoPermission()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetEngineAsync(User02, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetEngineAsync_NoProject()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetEngineAsync(User01, "invalid_project_id", CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetEngineAsync_DoesNotOwnTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Throws(ServalApiExceptions.Forbidden);
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetEngineAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetEngineAsync(User01, Project03, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetEngineAsync_ServalOutage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(() =>
-            env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task GetEngineAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string sourceLanguageTag = "en_US";
-        const string targetLanguageTag = "en_NZ";
-        const double confidence = 96.0;
-        const int corpusSize = 472;
-        env.TranslationEnginesClient.GetAsync(TranslationEngine01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationEngine
-                    {
-                        Confidence = confidence,
-                        CorpusSize = corpusSize,
-                        Url = "https://example.com",
-                        Id = Project01,
-                        IsBuilding = true,
-                        ModelRevision = 1,
-                        Name = "my_translation_engine",
-                        SourceLanguage = sourceLanguageTag,
-                        TargetLanguage = targetLanguageTag,
-                        Type = MachineProjectService.SmtTransfer,
-                    }
-                )
-            );
-
-        // SUT
-        ServalEngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
-
-        Assert.AreEqual(confidence / 100.0, actual.Confidence);
-        Assert.AreEqual(corpusSize, actual.TrainedSegmentCount);
-        Assert.AreEqual(sourceLanguageTag, actual.SourceLanguageTag);
-        Assert.AreEqual(targetLanguageTag, actual.TargetLanguageTag);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Href);
-        Assert.AreEqual(1, actual.Projects.Length);
-        Assert.AreEqual(Project01, actual.Projects.First().Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Projects.First().Href);
     }
 
     [Test]
@@ -4057,185 +3843,17 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetWordGraphAsync_NoPermission()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetWordGraphAsync(User02, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetWordGraphAsync_NoProject()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetWordGraphAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetWordGraphAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetWordGraphAsync(User01, Project03, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void GetWordGraphAsync_ServalOutage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(() =>
-            env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task GetWordGraphAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const float initialStateScore = -91.43696f;
-        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new WordGraph
-                    {
-                        Arcs = [new WordGraphArc()],
-                        FinalStates = [1],
-                        InitialStateScore = initialStateScore,
-                        SourceTokens = [Segment],
-                    }
-                )
-            );
-
-        // SUT
-        WordGraph actual = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(initialStateScore, actual.InitialStateScore);
-        Assert.AreEqual(1, actual.Arcs.Count);
-        Assert.AreEqual(1, actual.FinalStates.Count);
-    }
-
-    [Test]
-    public void GetWordGraph_EngineNotBuilt()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.GetWordGraphAsync(TranslationEngine01, Segment)
-            .Throws(ServalApiExceptions.EngineNotBuilt);
-
-        // SUT
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
-            env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task GetQueuedStateAsync_BuildCrashed()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        const string errorMessage = "This is an error message from Serval";
-        await env.QueueBuildAsync(Project01, preTranslate: false, DateTime.UtcNow.AddHours(-6), errorMessage);
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
-        Assert.AreEqual(MachineApiService.BuildStateFaulted, actual?.State);
-        Assert.AreEqual(errorMessage, actual?.Message);
-    }
-
-    [Test]
-    public async Task GetQueuedStateAsync_BuildRunTooLong()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: false, DateTime.UtcNow.AddHours(-6));
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
-        Assert.AreEqual(MachineApiService.BuildStateFaulted, actual?.State);
-        Assert.IsFalse(string.IsNullOrWhiteSpace(actual?.Message));
-    }
-
-    [Test]
-    public async Task GetQueuedStateAsync_BuildQueued()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: false, dateTime: DateTime.UtcNow);
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
-        Assert.AreEqual(MachineApiService.BuildStateQueued, actual?.State);
-        Assert.AreEqual(Project01, actual?.Id);
-    }
-
-    [Test]
-    public async Task GetQueuedStateAsync_NoBuildQueued()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
-            User01,
-            Project01,
-            preTranslate: false,
-            isServalAdmin: false,
-            CancellationToken.None
-        );
-        Assert.IsNull(actual);
-    }
-
-    [Test]
     public async Task GetQueuedStateAsync_PreTranslationBuildCrashed()
     {
         // Set up test environment
         var env = new TestEnvironment();
         const string errorMessage = "This is an error message from Serval";
-        await env.QueueBuildAsync(Project01, preTranslate: true, DateTime.UtcNow.AddHours(-6), errorMessage);
+        await env.QueueBuildAsync(Project01, DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -4248,13 +3866,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true, DateTime.UtcNow.AddHours(-6));
+        await env.QueueBuildAsync(Project01, DateTime.UtcNow.AddHours(-6));
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -4267,13 +3884,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -4294,13 +3910,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project02, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project02, dateTime: DateTime.UtcNow);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User01,
             Project02,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -4326,7 +3941,6 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -4341,13 +3955,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetQueuedStateAsync(
-                User02,
-                Project01,
-                preTranslate: true,
-                isServalAdmin: false,
-                CancellationToken.None
-            )
+            env.Service.GetQueuedStateAsync(User02, Project01, isServalAdmin: false, CancellationToken.None)
         );
     }
 
@@ -4361,7 +3969,6 @@ public class MachineApiServiceTests
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -4373,19 +3980,12 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(
-            Project01,
-            preTranslate: true,
-            dateTime: null,
-            errorMessage: null,
-            preTranslationsRetrieved: false
-        );
+        await env.QueueBuildAsync(Project01, dateTime: null, errorMessage: null, preTranslationsRetrieved: false);
 
         // SUT
         ServalBuildDto? actual = await env.Service.GetQueuedStateAsync(
             User01,
             Project01,
-            preTranslate: true,
             isServalAdmin: false,
             CancellationToken.None
         );
@@ -4770,7 +4370,7 @@ public class MachineApiServiceTests
         build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
         build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
         env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .GetBuildsAsync(User01, Project01, isServalAdmin: true, CancellationToken.None)
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
 
         // SUT
@@ -4800,7 +4400,7 @@ public class MachineApiServiceTests
         build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
         build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
         env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .GetBuildsAsync(User01, Project01, isServalAdmin: true, CancellationToken.None)
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
 
         // SUT
@@ -4830,7 +4430,7 @@ public class MachineApiServiceTests
         build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
         build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
         env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .GetBuildsAsync(User01, Project01, isServalAdmin: true, CancellationToken.None)
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
 
         // SUT
@@ -4860,7 +4460,7 @@ public class MachineApiServiceTests
         build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
         build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "LEV-DEU" });
         env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .GetBuildsAsync(User01, Project01, isServalAdmin: true, CancellationToken.None)
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
 
         // SUT
@@ -4882,7 +4482,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
+            .GetBuildsAsync(User01, Project01, isServalAdmin: true, CancellationToken.None)
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([]));
 
         // SUT
@@ -4896,46 +4496,6 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         Assert.AreEqual(actual, timestamp);
-    }
-
-    [Test]
-    public void StartBuildAsync_NoPermission()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.StartBuildAsync(User02, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void StartBuildAsync_NoProject()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task StartBuildAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
-
-        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.TranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.TranslationQueuedAt);
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.TranslationErrorMessage);
     }
 
     [Test]
@@ -5144,7 +4704,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         DateTime queuedAt = DateTime.UtcNow;
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: queuedAt);
+        await env.QueueBuildAsync(Project01, dateTime: queuedAt);
         const string existingRange = "GEN";
         await env.Projects.UpdateAsync(
             Project01,
@@ -5249,7 +4809,7 @@ public class MachineApiServiceTests
         // A stale claim whose Hangfire job never ran (e.g. a continuation deleted after a failed sync)
         // leaves both the job id and the queued timestamp behind
         DateTime staleQueuedAt = DateTime.UtcNow - MachineApiService.QueuedBuildStaleThreshold - TimeSpan.FromHours(1);
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: staleQueuedAt);
+        await env.QueueBuildAsync(Project01, dateTime: staleQueuedAt);
 
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
@@ -5620,260 +5180,6 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TrainSegmentAsync_NoPermission()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.TrainSegmentAsync(User02, Project01, new SegmentPair(), CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TrainSegmentAsync_NoProject()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.TrainSegmentAsync(User01, "invalid_project_id", new SegmentPair(), CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TrainSegmentAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.TrainSegmentAsync(User01, Project03, new SegmentPair(), CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TrainSegmentAsync_ServalOutage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TrainSegmentAsync(
-                TranslationEngine01,
-                Arg.Any<SegmentPair>(),
-                CancellationToken.None
-            )
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(() =>
-            env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task TrainSegmentAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None);
-
-        await env
-            .TranslationEnginesClient.Received(1)
-            .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None);
-    }
-
-    [Test]
-    public void TranslateAsync_NoPermission()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.TranslateAsync(User02, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateAsync_NoProject()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.TranslateAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.TranslateAsync(User01, Project03, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateAsync_ServalOutage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(() =>
-            env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task TranslateAsync_Success()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationResult
-                    {
-                        Alignment = [new AlignedWordPair()],
-                        Confidences = [0.0],
-                        Phrases = [new Phrase()],
-                        Sources =
-                        [
-                            [TranslationSource.Primary],
-                        ],
-                        TargetTokens = [TargetSegment],
-                        SourceTokens = [Segment],
-                        Translation = TargetSegment,
-                    }
-                )
-            );
-
-        // SUT
-        TranslationResult actual = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(1, actual.SourceTokens.Count);
-        Assert.AreEqual(1, actual.TargetTokens.Count);
-        Assert.AreEqual(1, actual.Confidences.Count);
-        Assert.AreEqual(1, actual.Sources.Count);
-        Assert.AreEqual(1, actual.Alignment.Count);
-        Assert.AreEqual(1, actual.Phrases.Count);
-        Assert.AreEqual(TargetSegment, actual.Translation);
-    }
-
-    [Test]
-    public void TranslateNAsync_NoPermission()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.TranslateNAsync(User02, Project01, n, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateNAsync_NoProject()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.TranslateNAsync(User01, "invalid_project_id", n, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateNAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.TranslateNAsync(User01, Project03, n, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void TranslateNAsync_ServalOutage()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(() =>
-            env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task TranslateNAsync_Success()
-    {
-        // Set up test environment
-        const int n = 1;
-        var env = new TestEnvironment();
-        env.TranslationEnginesClient.TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
-            .Returns(
-                Task.FromResult<IList<TranslationResult>>([
-                    new TranslationResult
-                    {
-                        Alignment = [new AlignedWordPair()],
-                        Confidences = [0.0],
-                        Phrases = [new Phrase()],
-                        Sources =
-                        [
-                            [TranslationSource.Primary],
-                        ],
-                        TargetTokens = [TargetSegment],
-                        SourceTokens = [Segment],
-                        Translation = TargetSegment,
-                    },
-                ])
-            );
-
-        // SUT
-        TranslationResult[] actual = await env.Service.TranslateNAsync(
-            User01,
-            Project01,
-            n,
-            Segment,
-            CancellationToken.None
-        );
-
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(1, actual.Length);
-        Assert.AreEqual(1, actual.First().SourceTokens.Count);
-        Assert.AreEqual(1, actual.First().TargetTokens.Count);
-        Assert.AreEqual(1, actual.First().Confidences.Count);
-        Assert.AreEqual(1, actual.First().Sources.Count);
-        Assert.AreEqual(1, actual.First().Alignment.Count);
-        Assert.AreEqual(1, actual.First().Phrases.Count);
-        Assert.AreEqual(TargetSegment, actual.First().Translation);
-    }
-
-    [Test]
     public async Task UpdatePreTranslationTextDocumentsAsync_CreatesNewDocument()
     {
         // Set up test environment
@@ -6137,7 +5443,6 @@ public class MachineApiServiceTests
                     {
                         ParallelCorpusIdForPreTranslate = ParallelCorpusId01,
                         PreTranslationEngineId = TranslationEngine01,
-                        TranslationEngineId = TranslationEngine01,
                     },
                 },
                 new SFProjectSecret
@@ -6674,7 +5979,6 @@ public class MachineApiServiceTests
 
         public async Task QueueBuildAsync(
             string sfProjectId,
-            bool preTranslate,
             DateTime? dateTime,
             string? errorMessage = null,
             bool? preTranslationsRetrieved = null
@@ -6683,32 +5987,16 @@ public class MachineApiServiceTests
                 sfProjectId,
                 u =>
                 {
-                    if (preTranslate)
+                    u.Set(p => p.ServalData!.PreTranslationJobId, HangfireJobId);
+                    u.Set(p => p.ServalData!.PreTranslationQueuedAt, dateTime);
+                    u.Set(p => p.ServalData!.PreTranslationsRetrieved, preTranslationsRetrieved);
+                    if (string.IsNullOrWhiteSpace(errorMessage))
                     {
-                        u.Set(p => p.ServalData!.PreTranslationJobId, HangfireJobId);
-                        u.Set(p => p.ServalData!.PreTranslationQueuedAt, dateTime);
-                        u.Set(p => p.ServalData!.PreTranslationsRetrieved, preTranslationsRetrieved);
-                        if (string.IsNullOrWhiteSpace(errorMessage))
-                        {
-                            u.Unset(p => p.ServalData!.PreTranslationErrorMessage);
-                        }
-                        else
-                        {
-                            u.Set(p => p.ServalData!.PreTranslationErrorMessage, errorMessage);
-                        }
+                        u.Unset(p => p.ServalData!.PreTranslationErrorMessage);
                     }
                     else
                     {
-                        u.Set(p => p.ServalData!.TranslationJobId, HangfireJobId);
-                        u.Set(p => p.ServalData!.TranslationQueuedAt, dateTime);
-                        if (string.IsNullOrWhiteSpace(errorMessage))
-                        {
-                            u.Unset(p => p.ServalData!.TranslationErrorMessage);
-                        }
-                        else
-                        {
-                            u.Set(p => p.ServalData!.TranslationErrorMessage, errorMessage);
-                        }
+                        u.Set(p => p.ServalData!.PreTranslationErrorMessage, errorMessage);
                     }
                 }
             );
