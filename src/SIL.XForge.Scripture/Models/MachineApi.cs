@@ -8,19 +8,13 @@ public static class MachineApi
     public const string HttpClientName = "machine_api";
     public const string TokenClientName = "machine_api_token";
     public const string Namespace = "machine-api/v3";
-    public const string StartBuild = "translation/builds";
     public const string GetBuild = "translation/builds/id:{sfProjectId}.{buildId?}";
     public const string GetRawBuild = "translation/builds/id:{sfProjectId}.{buildId}/raw";
     public const string GetBuilds = "translation/builds/project:{sfProjectId}";
     public const string GetBuildsSince = "translation/builds/since:{dateTime}";
     public const string GetBuildConfidences = "translation/builds/id:{sfProjectId}.{buildId}/confidences";
-    public const string GetEngine = "translation/engines/project:{sfProjectId}";
     public const string GetRawEngine = "translation/engines/project:{sfProjectId}/raw";
-    public const string GetWordGraph = "translation/engines/project:{sfProjectId}/actions/getWordGraph";
     public const string IsLanguageSupported = "translation/languages/{languageCode}";
-    public const string TrainSegment = "translation/engines/project:{sfProjectId}/actions/trainSegment";
-    public const string Translate = "translation/engines/project:{sfProjectId}/actions/translate";
-    public const string TranslateN = "translation/engines/project:{sfProjectId}/actions/translate/{n}";
     public const string StartPreTranslationBuild = "translation/pretranslations";
     public const string CancelPreTranslationBuild = "translation/pretranslations/cancel";
     public const string GetPreTranslationDelta =
@@ -47,6 +41,5 @@ public static class MachineApi
         return $"{Namespace}/{buildHref}".TrimEnd('.');
     }
 
-    public static string GetEngineHref(string sfProjectId) =>
-        $"{Namespace}/{GetEngine.Replace("{sfProjectId}", sfProjectId)}";
+    public static string GetEngineHref(string sfProjectId) => $"{Namespace}/translation/engines/project:{sfProjectId}";
 }

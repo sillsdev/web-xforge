@@ -75,7 +75,6 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { TranslationEngineService } from '../../core/translation-engine.service';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
@@ -103,7 +102,6 @@ import { FontSizeComponent } from './font-size/font-size.component';
 
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
-const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
@@ -175,7 +173,6 @@ describe('CheckingComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
@@ -1392,15 +1389,10 @@ describe('CheckingComponent', () => {
     it('saves the last visited question', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
-      env.component.projectDoc!.submitJson0Op(op => {
-        op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, false);
-      });
       env.waitForSliderUpdate();
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q4Id');
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
@@ -1411,11 +1403,9 @@ describe('CheckingComponent', () => {
         questionScope: 'all'
       });
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
       env.selectQuestion(4);
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q3Id');
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).twice();
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
@@ -3215,7 +3205,6 @@ class TestEnvironment {
         tag: TestEnvironment.project01WritingSystemTag
       },
       translateConfig: {
-        translationSuggestionsEnabled: true,
         source: {
           paratextId: 'project02',
           projectRef: 'project02',
