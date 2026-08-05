@@ -112,6 +112,12 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
     }
 
     /// <summary>
+    /// Fetches a snapshot of each of the specified documents at a point in time asynchronously.
+    /// </summary>
+    public async Task<Snapshot<T>[]> FetchSnapshotsAsync<T>(IReadOnlyCollection<string> ids, DateTime timestamp)
+        where T : IIdentifiable => await Task.WhenAll(ids.Select(id => FetchSnapshotAsync<T>(id, timestamp)));
+
+    /// <summary>
     /// Gets the ops for a document.
     /// </summary>
     /// <returns>An Op array.</returns>

@@ -124,9 +124,8 @@ describe('DraftGenerationComponent', () => {
           'getBuildHistory',
           'getBuildProgress',
           'pollBuildProgress',
-          'getGeneratedDraftUsfm',
           'getLastCompletedBuild',
-          'downloadGeneratedDraftZip'
+          'downloadDraft'
         ],
         { draftHistoryCutOffDate: new Date('2025-04-03') }
       );
@@ -137,7 +136,6 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
-      mockDraftGenerationService.getGeneratedDraftUsfm.and.returnValue(of('\\id Test USFM \\c 1 \\v 1 Test'));
       mockDraftSourcesService = jasmine.createSpyObj<DraftSourcesService>(['getDraftProjectSources']);
       mockDraftSourcesService.getDraftProjectSources.and.returnValue(
         of({

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -40,7 +41,7 @@ namespace SIL.XForge.Scripture.Services;
 /// <summary>
 /// The Machine API service for use with <see cref="Controllers.MachineApiController"/>.
 /// </summary>
-public class MachineApiService(
+public partial class MachineApiService(
     IBackgroundJobClient backgroundJobClient,
     IDeltaUsxMapper deltaUsxMapper,
     IRepository<DraftMetrics> draftMetrics,
@@ -110,6 +111,12 @@ public class MachineApiService(
         SequenceEqualityComparer.Create(EqualityComparer<ProjectScriptureRange>.Default);
     private static readonly IEqualityComparer<IList<string>?> _nullableListStringComparer =
         new NullableSequenceEqualityComparer<string>();
+
+    /// <summary>
+    /// Matches the chapter numbers of the \c markers in a USFM string.
+    /// </summary>
+    [GeneratedRegex(@"\\c\s+(\d+)", RegexOptions.CultureInvariant)]
+    private static partial Regex UsfmChapterRegex();
 
     public async Task<DraftApplyResult> ApplyPreTranslationToProjectAsync(
         string curUserId,
@@ -2278,6 +2285,387 @@ public class MachineApiService(
         // Display the revisions in descending order to match the history API endpoint
         revisions.Reverse();
         return revisions;
+    }
+
+    /// <summary>
+    /// Gets the draft USFM for every book drafted by the specified build.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The Serval build identifier.</param>
+    /// <param name="draftUsfmConfig">(Optional) A custom draft USFM configuration.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The USFM for each book the build drafted.</returns>
+    /// <exception cref="DataNotFoundException">
+    /// The project or build does not exist, the build is not complete, or the build has no drafted content.
+    /// </exception>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to access the Serval/Machine API.
+    /// </exception>
+    public async Task<DraftUsfmDto> GetBuildDraftUsfmAsync(
+        string curUserId,
+        string sfProjectId,
+        string buildId,
+        DraftUsfmConfig? draftUsfmConfig,
+        bool isServalAdmin,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        SFProject project = await EnsureProjectPermissionAsync(
+            curUserId,
+            sfProjectId,
+            isServalAdmin,
+            cancellationToken
+        );
+
+        // If the user is a serval admin, get the highest ranked user on the project
+        string userId = isServalAdmin ? GetHighestRankedUserId(project) : curUserId;
+
+        // Retrieve the user secret
+        Attempt<UserSecret> attempt = await userSecrets.TryGetAsync(userId, cancellationToken);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist.");
+        }
+
+        // Locate the build
+        IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
+            curUserId,
+            sfProjectId,
+            preTranslate: true,
+            isServalAdmin,
+            cancellationToken
+        );
+        ServalBuildDto? build =
+            builds.FirstOrDefault(b => b.AdditionalInfo?.BuildId == buildId)
+            ?? throw new DataNotFoundException("The build does not exist.");
+        if (build.State != BuildStateCompleted)
+        {
+            throw new DataNotFoundException("The build is not complete.");
+        }
+
+        // The build's drafts are the latest chapter snapshots before the next build for the engine was requested
+        DateTime snapshotCutoff = GetSnapshotCutoff(builds, build);
+
+        // Serval only retains the pre-translations for the latest completed build
+        bool isLatestCompletedBuild = IsLatestCompletedBuild(builds, buildId);
+
+        // A custom format is applied by Serval, so is only available for the latest completed build
+        if (draftUsfmConfig is not null && !isLatestCompletedBuild)
+        {
+            throw new DataNotFoundException("A custom USFM format is only available for the latest completed build.");
+        }
+
+        // Get the draft project versification
+        ScrVers versification =
+            paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
+            ?? VerseRef.defaultVersification;
+
+        // Determine which chapters of which books the build drafted.
+        // An empty chapter set means every chapter of the book.
+        Dictionary<string, SortedSet<int>> draftedBooks = GetDraftedChaptersForBuild(build, versification);
+
+        // Get the chapters of each book with a saved draft document. The saved drafts resolve book terms without
+        // chapter detail, and are the authority rather than the project texts, as books can be removed from the
+        // project or drafted without being added to it.
+        Dictionary<string, SortedSet<int>> savedDraftChapters = GetSavedDraftChapters(sfProjectId);
+
+        // Legacy builds with no resolvable ranges: serve every saved draft document at this build's snapshot cutoff
+        if (draftedBooks.Count == 0)
+        {
+            draftedBooks = savedDraftChapters;
+        }
+
+        DraftUsfmConfig config =
+            draftUsfmConfig ?? project.TranslateConfig.DraftConfig.UsfmConfig ?? new DraftUsfmConfig();
+
+        // Connect to the realtime server
+        await using IConnection connection = await realtimeService.ConnectAsync(userId);
+
+        List<DraftUsfmBookDto> books = [];
+        foreach (
+            (string bookId, SortedSet<int> draftedChapters) in draftedBooks.OrderBy(kvp =>
+                Array.IndexOf(Canon.AllBookIds, kvp.Key)
+            )
+        )
+        {
+            int bookNum = Canon.BookIdToNumber(bookId);
+            savedDraftChapters.TryGetValue(bookId, out SortedSet<int> savedChapters);
+
+            // A book term without chapter detail means every drafted chapter of the book, which the saved draft
+            // documents record. If no drafts were saved, the chapters cannot be known until the USFM is retrieved
+            // from Serval below, which a null chapter list records.
+            IEnumerable<int>? chapters = draftedChapters.Count > 0 ? draftedChapters : savedChapters;
+            List<int>? chaptersToInclude = chapters is null ? null : [.. chapters];
+
+            // Only chapters with a saved draft document can have a snapshot, so do not fetch the others
+            List<int> chaptersToAssemble =
+                chaptersToInclude is null || savedChapters is null
+                    ? []
+                    : [.. chaptersToInclude.Where(savedChapters.Contains)];
+
+            // Assemble the book from the draft chapter snapshots at this build's cutoff,
+            // unless a custom format was requested, which only Serval can apply
+            string usfm = string.Empty;
+            List<int> includedChapters = [];
+            if (draftUsfmConfig is null && chaptersToAssemble.Count > 0)
+            {
+                (includedChapters, usfm) = await AssembleDraftBookUsfmAsync(
+                    connection,
+                    userSecret,
+                    project,
+                    bookNum,
+                    chaptersToAssemble,
+                    snapshotCutoff
+                );
+            }
+
+            if (includedChapters.Count == 0)
+            {
+                // The draft was never written to Scripture Forge, or a custom format was requested,
+                // so retrieve it from Serval. Serval only retains the latest completed build's pre-translations,
+                // so for older builds the book is omitted.
+                if (!isLatestCompletedBuild)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    usfm = await preTranslationService.GetPreTranslationUsfmAsync(
+                        sfProjectId,
+                        bookNum,
+                        chapterNum: 0,
+                        config,
+                        cancellationToken
+                    );
+                }
+                catch (ServalApiException e)
+                    when (e.StatusCode is StatusCodes.Status204NoContent or StatusCodes.Status404NotFound)
+                {
+                    // The pre-translations for this book are no longer on Serval, so omit the book
+                    continue;
+                }
+                catch (ServalApiException e)
+                {
+                    ProcessServalApiException(e);
+                    throw;
+                }
+
+                if (chaptersToInclude is null)
+                {
+                    // Report the chapters actually present in the USFM Serval returned
+                    includedChapters =
+                    [
+                        .. UsfmChapterRegex()
+                            .Matches(usfm)
+                            .Select(m => int.Parse(m.Groups[1].Value))
+                            .Distinct()
+                            .Order(),
+                    ];
+                    if (includedChapters.Count == 0)
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    includedChapters = chaptersToInclude;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(usfm))
+            {
+                continue;
+            }
+
+            // USFM files must start with an \id marker; it is missing when the draft excludes chapter 1
+            if (!usfm.TrimStart().StartsWith(@"\id ", StringComparison.Ordinal))
+            {
+                usfm = $"\\id {bookId} - {project.Name}\n{usfm}";
+            }
+
+            books.Add(
+                new DraftUsfmBookDto
+                {
+                    BookId = bookId,
+                    Chapters = includedChapters,
+                    Usfm = usfm,
+                }
+            );
+        }
+
+        if (books.Count == 0)
+        {
+            throw new DataNotFoundException("No draft content is available for the build.");
+        }
+
+        return new DraftUsfmDto { BuildId = buildId, Books = books };
+    }
+
+    /// <summary>
+    /// Gets the timestamp that separates the specified build's drafts from the next build's drafts.
+    /// </summary>
+    /// <param name="builds">Every build for the project's translation engine.</param>
+    /// <param name="build">The build to get the cutoff for.</param>
+    /// <returns>
+    /// The date the following build was requested, or the current date and time if none followed it.
+    /// </returns>
+    /// <remarks>
+    /// A build's drafts are the latest chapter snapshots written before the next build was requested.
+    /// </remarks>
+    private static DateTime GetSnapshotCutoff(IEnumerable<ServalBuildDto> builds, ServalBuildDto build) =>
+        builds
+            .Where(b =>
+                build.AdditionalInfo?.DateRequested is not null
+                && b.AdditionalInfo?.DateRequested > build.AdditionalInfo.DateRequested
+            )
+            .Min(b => b.AdditionalInfo?.DateRequested)
+            ?.UtcDateTime
+        ?? DateTime.UtcNow;
+
+    /// <summary>
+    /// Determines whether the specified build is the most recently requested completed build.
+    /// </summary>
+    /// <param name="builds">Every build for the project's translation engine.</param>
+    /// <param name="buildId">The Serval build identifier.</param>
+    /// <returns><c>true</c> if this is the latest completed build; otherwise, <c>false</c>.</returns>
+    /// <remarks>Serval only retains the pre-translations for the latest completed build.</remarks>
+    private static bool IsLatestCompletedBuild(IEnumerable<ServalBuildDto> builds, string buildId) =>
+        builds
+            .Where(b => b.State == BuildStateCompleted)
+            .OrderBy(b => b.AdditionalInfo?.DateRequested)
+            .LastOrDefault()
+            ?.AdditionalInfo?.BuildId == buildId;
+
+    /// <summary>
+    /// Gets the chapters of each book that the specified build drafted.
+    /// </summary>
+    /// <param name="build">The build.</param>
+    /// <param name="versification">The draft project versification.</param>
+    /// <returns>
+    /// A dictionary of book identifier to the drafted chapters. An empty chapter set means every chapter of the
+    /// book, and an empty dictionary means the build recorded no scripture range that could be parsed.
+    /// </returns>
+    private static Dictionary<string, SortedSet<int>> GetDraftedChaptersForBuild(
+        ServalBuildDto build,
+        ScrVers versification
+    )
+    {
+        ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(versification);
+        Dictionary<string, SortedSet<int>> draftedBooks = [];
+        foreach (ProjectScriptureRange range in build.AdditionalInfo?.TranslationScriptureRanges ?? [])
+        {
+            try
+            {
+                ParseScriptureRange(range.ScriptureRange, scriptureRangeParser, ref draftedBooks);
+            }
+            catch (ArgumentException)
+            {
+                // Ignore a stored scripture range that cannot be parsed - the caller's fallback handles the build
+            }
+        }
+
+        return draftedBooks;
+    }
+
+    /// <summary>
+    /// Gets the chapters of each book in the project that have a saved draft text document.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <returns>A dictionary of book identifier to the chapters with a saved draft.</returns>
+    private Dictionary<string, SortedSet<int>> GetSavedDraftChapters(string sfProjectId)
+    {
+        string docIdPrefix = $"{sfProjectId}:";
+        string docIdSuffix = $":{TextDocument.Draft}";
+        List<string> draftDocIds =
+        [
+            .. realtimeService
+                .QuerySnapshots<TextDocument>()
+                .Where(t => t.Id.StartsWith(docIdPrefix) && t.Id.EndsWith(docIdSuffix))
+                .Select(t => t.Id),
+        ];
+
+        Dictionary<string, SortedSet<int>> savedDraftChapters = [];
+        foreach (string docId in draftDocIds)
+        {
+            if (TextDocument.TryParseDocId(docId, out _, out string bookId, out int chapter, out _))
+            {
+                if (!savedDraftChapters.TryGetValue(bookId, out SortedSet<int> chapters))
+                {
+                    chapters = [];
+                    savedDraftChapters[bookId] = chapters;
+                }
+
+                chapters.Add(chapter);
+            }
+        }
+
+        return savedDraftChapters;
+    }
+
+    /// <summary>
+    /// Assembles a book of draft USFM from the saved draft chapter snapshots at the specified cutoff.
+    /// </summary>
+    /// <param name="connection">The realtime server connection.</param>
+    /// <param name="userSecret">The user secret of the user to convert the USFM as.</param>
+    /// <param name="project">The Scripture Forge project.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="chapters">
+    /// The chapters with saved draft documents to assemble, in the order they will appear in the USFM.
+    /// </param>
+    /// <param name="snapshotCutoff">The timestamp to retrieve each chapter snapshot at.</param>
+    /// <returns>
+    /// The chapters that had a snapshot at the cutoff, and the assembled USFM.
+    /// Both are empty if no chapter had a snapshot.
+    /// </returns>
+    private async Task<(List<int> IncludedChapters, string Usfm)> AssembleDraftBookUsfmAsync(
+        IConnection connection,
+        UserSecret userSecret,
+        SFProject project,
+        int bookNum,
+        IReadOnlyList<int> chapters,
+        DateTime snapshotCutoff
+    )
+    {
+        string[] docIds =
+        [
+            .. chapters.Select(chapter => TextDocument.GetDocId(project.Id, bookNum, chapter, TextDocument.Draft)),
+        ];
+        Snapshot<TextDocument>[] snapshots = await connection.FetchSnapshotsAsync<TextDocument>(docIds, snapshotCutoff);
+        Dictionary<string, Snapshot<TextDocument>> snapshotsByDocId = snapshots
+            .Where(s => s.Id is not null)
+            .ToDictionary(s => s.Id);
+
+        List<object> content = [];
+        List<int> includedChapters = [];
+        for (int i = 0; i < chapters.Count; i++)
+        {
+            if (
+                snapshotsByDocId.TryGetValue(docIds[i], out Snapshot<TextDocument> snapshot)
+                && snapshot.Data?.Content is { } chapterContent
+            )
+            {
+                content.AddRange(chapterContent);
+                includedChapters.Add(chapters[i]);
+            }
+        }
+
+        if (includedChapters.Count == 0)
+        {
+            return ([], string.Empty);
+        }
+
+        IUsj usj = new Usj
+        {
+            Type = Usj.UsjType,
+            Version = Usj.UsjVersion,
+            Content = content,
+        };
+        XDocument usx = UsjToUsx.UsjToUsxXDocument(usj);
+        return (includedChapters, paratextService.ConvertUsxToUsfm(userSecret, project.ParatextId, bookNum, usx));
     }
 
     public async Task<string> GetPreTranslationUsfmAsync(

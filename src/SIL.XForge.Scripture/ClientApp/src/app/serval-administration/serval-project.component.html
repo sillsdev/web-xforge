@@ -41,15 +41,15 @@
       (click)="downloadDraft()"
       mat-flat-button
       color="primary"
-      [disabled]="!isOnline || lastCompletedBuild == null || downloadBooksTotal > 0"
+      [disabled]="!isOnline || lastCompletedBuild == null || downloadingDraft"
       id="download-draft"
     >
       <mat-icon>download</mat-icon>
       Download draft
     </button>
     <app-info text="A zip file containing the latest generated draft."></app-info>
-    @if (downloadBooksTotal > 0) {
-      <div class="zip-progress">Zipping file {{ downloadBooksProgress }} of {{ downloadBooksTotal }}...</div>
+    @if (downloadingDraft) {
+      <div class="zip-progress">Downloading draft...</div>
     }
   </div>
   <div class="admin-tool-control">
