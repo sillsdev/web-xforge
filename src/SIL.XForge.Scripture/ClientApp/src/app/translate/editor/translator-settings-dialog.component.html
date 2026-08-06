@@ -1,15 +1,30 @@
 <ng-container *transloco="let t; read: 'translator_settings_dialog'">
   <h1 mat-dialog-title>{{ t("translator_settings") }}</h1>
   <mat-dialog-content>
+    @if (!onlineStatusService.isOnline) {
+      <app-notice type="info" icon="cloud_off">
+        {{ t("settings_not_available_offline") }}
+      </app-notice>
+    }
+    <mat-card>
+      <mat-card-content [class.offline]="!onlineStatusService.isOnline">
+        <div class="card-header-with-toggle">
+          <span class="card-title toggle-label">{{ t("editor_settings_title") }}</span>
+        </div>
+        <div class="settings-content">
+          <mat-slide-toggle
+            id="editor-tabs-single-pane-switch"
+            [formControl]="showEditorTabsInSinglePaneSwitch"
+            (change)="setShowEditorTabsInSinglePaneEnabled($event.checked)"
+          >
+            <span class="toggle-label">{{ t("editor_tabs_in_single_pane") }}</span>
+          </mat-slide-toggle>
+        </div>
+      </mat-card-content>
+    </mat-card>
     @if (showSuggestionsSettings) {
       <mat-card>
         <mat-card-content [class.offline]="!onlineStatusService.isOnline">
-          @if (!onlineStatusService.isOnline) {
-            <app-notice type="info" icon="cloud_off">
-              {{ t("settings_not_available_offline") }}
-            </app-notice>
-          }
-
           <div class="card-header-with-toggle">
             <mat-slide-toggle
               id="translation-suggestions-master-switch"
