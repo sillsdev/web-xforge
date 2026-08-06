@@ -632,6 +632,18 @@ describe('AuthService', () => {
     env.discardTokenExpiryTimer();
   }));
 
+  it('should disable the offline store on log out so in-flight writes cannot re-create it', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
+    expect(env.isAuthenticated).toBe(true);
+    const offlineStore = TestBed.inject(OfflineStore);
+    expect(offlineStore.disabled).toBe(false);
+
+    env.logOut();
+    tick();
+    expect(offlineStore.disabled).toBe(true);
+    env.discardTokenExpiryTimer();
+  }));
+
   it('prompt on log out if transparent authentication cookie is set', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, setTransparentAuthenticationCookie: true });
     expect(env.isAuthenticated).toBe(true);

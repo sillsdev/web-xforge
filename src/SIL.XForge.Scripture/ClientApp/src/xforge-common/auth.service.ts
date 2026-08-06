@@ -276,6 +276,9 @@ export class AuthService {
     }
     if (proceedWithLogout) {
       this.cookieService.deleteAll('/');
+      // Disable before deleting so realtime persistence still in flight cannot re-create the
+      // database with the logged-out user's data (SF-3855)
+      this.offlineStore.disable();
       await this.offlineStore.deleteDB();
       this.localSettings.clear();
       this.unscheduleRenewal();
