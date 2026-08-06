@@ -1,17 +1,34 @@
 @if (isOnline) {
   <div class="filter-controls">
-    <app-date-range-picker [showReset]="true" (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
-    <div class="export-button-group">
-      <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
-        <mat-icon>download</mat-icon>
-        <span class="export-item-label">
-          Export CSV <app-info text="Download a .csv (comma-separated values) spreadsheet of the table data"></app-info>
-        </span>
-      </button>
-      <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
-        <mat-icon>arrow_drop_down</mat-icon>
-      </button>
+    <div class="filter-group">
+      <app-date-range-picker [showReset]="true" (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+      <div class="duration-area-toggle">
+        <mat-slide-toggle [checked]="includeDeleted" (change)="onIncludeDeletedChange($event.checked)">
+          Include deleted projects
+        </mat-slide-toggle>
+        <app-info
+          text="Include builds in the list that do not correspond to any projects that are currently in this site database."
+        ></app-info>
+      </div>
     </div>
+    <div class="identifier-search-group">
+      <app-search-records
+        [searchControl]="searchControl"
+        [infoText]="'Search builds by project ID, name, books, user ID, name, email.'"
+        (clearSearch)="clearSearch()"
+      ></app-search-records>
+    </div>
+  </div>
+  <div class="export-button-group">
+    <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
+      <mat-icon>download</mat-icon>
+      <span class="export-item-label">
+        Export CSV <app-info text="Download a .csv (comma-separated values) spreadsheet of the table data"></app-info>
+      </span>
+    </button>
+    <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
     <mat-menu #exportMenu="matMenu" xPosition="before">
       <button mat-menu-item (click)="exportTsv()">
         <mat-icon>download</mat-icon>
@@ -30,39 +47,6 @@
         </span>
       </button>
     </mat-menu>
-    <div class="duration-area-toggle">
-      <mat-slide-toggle [checked]="includeDeleted" (change)="onIncludeDeletedChange($event.checked)">
-        Include deleted projects
-      </mat-slide-toggle>
-      <app-info
-        text="Include builds in the list that do not correspond to any projects that are currently in this site database."
-      ></app-info>
-    </div>
-
-    <div class="identifier-search-group">
-      <mat-form-field
-        appearance="outline"
-        subscriptSizing="dynamic"
-        class="identifier-search-field"
-        [class.identifier-search-field-active]="searchControl.value.length > 0"
-      >
-        <mat-label>Search</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput type="text" [formControl]="searchControl" />
-
-        @if (searchControl.value.length > 0) {
-          <button mat-icon-button matSuffix type="button" (click)="clearSearch()" aria-label="Clear search">
-            <mat-icon>close</mat-icon>
-          </button>
-        } @else {
-          <app-info
-            matSuffix
-            class="identifier-search-info"
-            text="Search builds by project ID, name, books, user ID, name, email."
-          ></app-info>
-        }
-      </mat-form-field>
-    </div>
   </div>
 
   @if (summaryDisplayItems.length > 0) {

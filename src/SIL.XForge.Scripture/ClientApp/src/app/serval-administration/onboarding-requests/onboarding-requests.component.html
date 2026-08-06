@@ -18,28 +18,11 @@
       </div>
 
       <div class="identifier-search-group">
-        <mat-form-field
-          appearance="outline"
-          subscriptSizing="dynamic"
-          class="identifier-search-field"
-          [class.identifier-search-field-active]="searchControl.value.length > 0"
-        >
-          <mat-label>Search</mat-label>
-          <mat-icon matPrefix>search</mat-icon>
-          <input matInput type="text" [formControl]="searchControl" />
-
-          @if (searchControl.value.length > 0) {
-            <button mat-icon-button matSuffix type="button" (click)="clearSearch()" aria-label="Clear search">
-              <mat-icon>close</mat-icon>
-            </button>
-          } @else {
-            <app-info
-              matSuffix
-              class="identifier-search-info"
-              text="Search by project name, requester name/email or language code"
-            ></app-info>
-          }
-        </mat-form-field>
+        <app-search-records
+          [searchControl]="searchControl"
+          [infoText]="'Search by project name, requester name/email or language code'"
+          (clearSearch)="clearSearch()"
+        ></app-search-records>
       </div>
     </div>
     <div class="filter-bar">

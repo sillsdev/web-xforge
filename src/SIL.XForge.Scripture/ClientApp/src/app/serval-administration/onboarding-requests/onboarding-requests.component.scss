@@ -46,21 +46,6 @@
   justify-content: flex-end;
 }
 
-.identifier-search-field {
-  width: 14rem;
-}
-
-/** Make the app-info icon in the same place as the close button. */
-.identifier-search-info {
-  margin-right: 0.6rem;
-}
-
-:host ::ng-deep .identifier-search-field.identifier-search-field-active .mat-mdc-text-field-wrapper {
-  background-color: var(--sf-serval-builds-search-background-populated);
-  color: var(--sf-serval-builds-search-text-populated);
-  transition: background-color 150ms ease-in;
-}
-
 .export-button-group {
   display: flex;
 
