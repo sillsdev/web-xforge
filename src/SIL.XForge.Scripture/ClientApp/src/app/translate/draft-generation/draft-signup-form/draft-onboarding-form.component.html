@@ -78,6 +78,9 @@
                   formControlName="translationLanguageName"
                   [placeholder]="t('translation_language_name_placeholder')"
                 />
+                @if (signupForm.controls.translationLanguageName.hasError("required")) {
+                  <mat-error>{{ t("translation_language_name_required") }}</mat-error>
+                }
               </mat-form-field>
             </div>
 
@@ -89,6 +92,9 @@
                   formControlName="translationLanguageIsoCode"
                   [placeholder]="t('translation_language_iso_placeholder')"
                 />
+                @if (signupForm.controls.translationLanguageIsoCode.hasError("required")) {
+                  <mat-error>{{ t("translation_language_iso_required") }}</mat-error>
+                }
               </mat-form-field>
             </div>
 
