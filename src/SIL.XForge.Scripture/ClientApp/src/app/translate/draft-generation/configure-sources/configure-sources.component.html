@@ -25,6 +25,7 @@
           <button
             mat-button
             (click)="trainingSources.push(undefined); $event.preventDefault()"
+            [disabled]="!appOnline"
             class="add-another-project"
           >
             <mat-icon>add</mat-icon> {{ t("add_another_reference_project") }}
