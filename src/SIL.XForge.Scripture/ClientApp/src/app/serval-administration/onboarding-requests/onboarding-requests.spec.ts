@@ -25,7 +25,7 @@ const mockedActivatedRoute = {
   queryParams: activatedRouteQueryParams$.asObservable()
 };
 
-fdescribe('OnboardingRequestsComponent', () => {
+describe('OnboardingRequestsComponent', () => {
   configureTestingModule(() => ({
     imports: [OnboardingRequestsComponent],
     providers: [

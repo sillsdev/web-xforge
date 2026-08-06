@@ -33,6 +33,7 @@ import {
 } from '../../translate/draft-generation/onboarding-request.service';
 import { DateRangePickerComponent, NormalizedDateRange } from '../date-range-picker.component';
 import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
+import { SearchRecordsComponent } from '../search-records.component';
 import { ServalAdministrationService } from '../serval-administration.service';
 import { OnboardingRequestsExportService } from './onboarding-requests-export.service';
 
@@ -107,7 +108,8 @@ type FilterName = keyof typeof filterOptions;
     MatInputModule,
     MatMenuModule,
     InfoComponent,
-    DateRangePickerComponent
+    DateRangePickerComponent,
+    SearchRecordsComponent
   ],
   providers: [provideNativeDateAdapter()]
 })
