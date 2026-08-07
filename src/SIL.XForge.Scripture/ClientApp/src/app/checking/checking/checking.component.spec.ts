@@ -1330,6 +1330,32 @@ describe('CheckingComponent', () => {
         flush();
         discardPeriodicTasks();
       }));
+
+      it('should not activate a question that is filtered out when clicking a verse', fakeAsync(() => {
+        const env = new TestEnvironment({
+          user: ADMIN_USER,
+          projectBookRoute: 'JHN',
+          projectChapterRoute: 1,
+          questionScope: 'chapter'
+        });
+        // q4 spans JHN 1:3-4 and has no answers. Move q6 (which has an answer) to the end verse of q4, so that
+        // clicking verse 4 could match either question.
+        env
+          .getQuestionDoc('q6Id')
+          .submitJson0Op(op => op.set(q => q.verseRef, { bookNum: 43, chapterNum: 1, verseNum: 4, verse: '4' }));
+        env.realtimeService.updateQueryAdaptersRemote();
+        tick(100);
+        env.fixture.detectChanges();
+
+        env.setQuestionFilter(QuestionFilter.NoAnswers);
+        expect(env.component.visibleQuestions!.map(q => q.data!.dataId)).toContain('q4Id');
+        expect(env.component.visibleQuestions!.map(q => q.data!.dataId)).not.toContain('q6Id');
+
+        env.clickVerse(1, 4);
+
+        expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toEqual('q4Id');
+        env.waitForQuestionTimersToComplete();
+      }));
     });
   });
 
@@ -3496,6 +3522,13 @@ class TestEnvironment {
 
   getVerse(chapter: number, verse: number | string): Element {
     return this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
+  }
+
+  /** Click a verse segment in the Scripture text, as a user selecting the verse of a question */
+  clickVerse(chapter: number, verse: number | string): void {
+    this.ngZone.run(() => this.getVerse(chapter, verse).dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    tick();
+    this.fixture.detectChanges();
   }
 
   isSegmentHighlighted(chapter: number, verse: number | string): boolean {
