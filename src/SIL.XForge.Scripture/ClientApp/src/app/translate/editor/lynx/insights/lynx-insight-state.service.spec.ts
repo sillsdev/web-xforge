@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
 import { LynxInsightFilter, LynxInsightType } from 'realtime-server/lib/esm/scriptureforge/models/lynx-insight';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Json0OpBuilder } from 'realtime-server/lib/esm/common/utils/json0-op-builder';
-import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject, firstValueFrom, Subject } from 'rxjs';
 import { anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedBookChapterService, RouteBookChapter } from 'xforge-common/activated-book-chapter.service';
@@ -380,6 +380,7 @@ describe('LynxInsightStateService', () => {
   describe('panel state persistence', () => {
     it('should not write to project user config on load when panel state is unchanged', () => {
       verify(mockProjectUserConfigDoc.submitJson0Op(anything())).never();
+      expect().nothing();
     });
 
     it('should set only the panelData sub-path, preserving other lynxInsightState props', () => {
