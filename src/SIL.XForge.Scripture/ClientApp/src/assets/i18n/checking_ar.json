@@ -1,9 +1,9 @@
 {
   "audio_recorder_dialog": {
     "mic_access_denied": "تم رفض الاتصال بالميكروفون. الرجاء تمكين متصفّحك من الاتصال بالميكروفون.",
-    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "mic_not_found": "لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون بجهازك.",
     "record": "سجِّل",
-    "re_record": "Re-record",
+    "re_record": "إعادة التسجيل",
     "save": "حفظ الإجابة",
     "stop_recording": "إيقاف التسجيل"
   },
@@ -16,20 +16,20 @@
     "community_checking": "المراجعة المجتمعية",
     "community_support": "دعم المجتمع",
     "help": "المساعدة",
-    "install_on_device": "Install on device",
+    "install_on_device": "التثبيت على الجهاز",
     "language": "اللغة",
     "log_out": "تسجيل الخروج",
     "logged_in_as": "تسجيل الدخول بحساب",
     "my_progress": "مستوى التقدُّم",
     "offline": "غير متصل بالانترنت",
     "online": "متّصل بالإنترنت",
-    "open_source_licenses": "Open source licenses",
+    "open_source_licenses": "تراخيص البرامج مفتوحة المصدر",
     "overview": "نظرة عامة",
     "page_not_found": "لم يتمّ العثور على الصفحة",
     "password_reset_email_sent": "أرسلنا لك بريداً إلكترونياً لإعادة تعيين كلمة المرور خاصتك.",
     "product_version": "نسخة المنتج: v{{ version }}",
     "project_has_been_deleted": "تمّ حذف المشروع أو لم يعد الوصول إليه ممكناً.",
-    "questions_answers": "Questions & answers",
+    "questions_answers": "الأسئلة والأجوبة",
     "redirecting_in_moments": "إعادة التوجيه في لحظات قليلة...",
     "refresh": "تحديث",
     "report_issue_email": "البريد الإلكتروني {{ email }}",
@@ -37,15 +37,15 @@
     "scripture_checking_not_available": "التحقُّق من النصوص الكتابية غير متوفر في هذا المشروع.",
     "update_is_available": "يتوفَّر تحديثٌ للبرنامج. يُرجى تحديث الصفحة.",
     "appearance": "المظهر",
-    "appearance_device": "Device",
+    "appearance_device": "الجهاز",
     "appearance_dark": "مُظلم",
     "appearance_light": "ضوء",
-    "experimental_features": "Experimental features"
+    "experimental_features": "ميّزات اختبارية"
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
-    "tooltip_upload": "Upload audio"
+    "tooltip_record": "تسجيل الصوت",
+    "tooltip_stop": "إيقاف التسجيل",
+    "tooltip_upload": "تحميل الصوت"
   },
   "canon": {
     "book_names": {
@@ -182,22 +182,22 @@
   },
   "checking": {
     "filter_questions": "تصفية الأسئلة",
-    "input_required_before_saving": "Provide text or audio before saving",
-    "manage_audio": "Manage audio",
+    "input_required_before_saving": "أدخل نصًا أو مقطعًا صوتيًا قبل الحفظ",
+    "manage_audio": "إدارة الصوت",
     "me": "إجابتي",
     "next": "التالي",
-    "play_chapter": "Play chapter",
+    "play_chapter": "تشغيل الإصحاح",
     "previous": "السابق",
     "questions": "أسئلة",
-    "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
-    "question_filter_none": "Show all",
-    "question_filter_exportable": "Answers flagged for review",
-    "question_filter_has_answers": "Has answers",
-    "question_filter_answered": "Answered",
-    "question_filter_no_answers": "No answers",
-    "question_filter_not_answered": "Not answered",
-    "question_filter_not_reviewed": "Unreviewed answers",
-    "question_filter_resolved": "Answers marked resolved",
+    "question_does_not_have_audio": "لم يتم تحميل أي تسجيلات صوتية لهذا الإصحاح. يرجى الاتصال بمسؤول المشروع لتحميل التسجيلات الصوتية.",
+    "question_filter_none": "إظهار الكل",
+    "question_filter_exportable": "تم الإبلاغ عن الإجابات للمراجعة",
+    "question_filter_has_answers": "يحتوي على إجابات",
+    "question_filter_answered": "تم الرد عليه",
+    "question_filter_no_answers": "لا توجد إجابات",
+    "question_filter_not_answered": "لم يجب عنه",
+    "question_filter_not_reviewed": "الإجابات التي لم تتم مراجعتها",
+    "question_filter_resolved": "الإجابات التي تم وضع علامة «تم حلها» عليها",
     "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
     "question_scope_all": "جميع الكتب",
     "question_scope_book": "الكتاب الحالي",
@@ -349,7 +349,7 @@
     "unknown_error": "خطأ مجهول"
   },
   "experimental_features_dialog": {
-    "title": "Experimental features",
+    "title": "ميّزات اختبارية",
     "description": "These experimental features can be turned on or off and only apply to your account. Currently, logging out and back in will reset them. If you try them out, please leave us feedback so we can improve them."
   },
   "file_service": {

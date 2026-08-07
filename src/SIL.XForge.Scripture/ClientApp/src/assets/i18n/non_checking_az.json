@@ -273,6 +273,7 @@
       "example_translations_subtitle": "Scripture Forge uses training data (example translations) to learn how to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} into {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
       "email_me": "Email me at {{ email }} when the draft is finished.",
       "draft_title": "Draft {{ books }}",
+      "draft_title_n_books": "Draft {{ count }} books",
       "draft_books": "Draft books",
       "training_books": "Training books",
       "draft_books_subtitle": "The following books in {{ boldStart }}{{ source }}{{ boldEnd }} will be translated from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
@@ -302,7 +303,7 @@
       "title": "Select books to train on",
       "subtitle": "Which books in {{ boldStart }}{{ project }}{{ boldEnd }} are good enough to use to train the model to translate from {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} to {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
       "which_chapters": "Which chapters of each book do you want to use to train the model?",
-      "partial_explanation": "Some of the chapters in the books you selected will be translated and cannot be used as training data.",
+      "partial_explanation": "Chapters that you selected to be drafted cannot be used as training data.",
       "excluded_not_in_any_source": "These books aren't available to train on because they aren't in any of the reference projects: {{ books }}.",
       "auto_selected": "Books that appear to be complete have been pre-selected. Please review and update the training data that should be included.",
       "no_target_books": "No books from your project are available for training.",
@@ -900,12 +901,14 @@
   "translator_settings_dialog": {
     "better": "Daha yaxşı",
     "close": "Bağla",
+    "editor_settings_title": "Tərtibatçı",
+    "editor_tabs_in_single_pane": "Show editor tabs in a single pane",
     "insights_enable_assessments": "Show assessments",
     "insights_enable_autocorrect": "Allow auto-corrections",
     "insights_settings_title": "Insights",
     "more": "Daha çox",
     "number_of_suggestions": "Təkliflərin sayı",
-    "settings_not_available_offline": "Translation suggestion settings are not available while you are offline.",
+    "settings_not_available_offline": "Translator settings are not available while you are offline.",
     "suggestion_confidence": "Təklifə əminlik",
     "translation_suggestions_settings_title": "Tərcümə təklifləri",
     "translator_settings": "Translator settings"

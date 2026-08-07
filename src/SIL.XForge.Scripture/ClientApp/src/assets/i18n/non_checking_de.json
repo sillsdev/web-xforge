@@ -273,6 +273,7 @@
       "example_translations_subtitle": "Scripture Forge nutzt Schulungsdaten (Beispielübersetzungen), um zu lernen, wie man von {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} in {{ boldStart }}{{ targetLanguage }}{{ boldEnd }} übersetzt.",
       "email_me": "Sende mir eine E-Mail an {{ email }}, wenn der Entwurf fertig ist.",
       "draft_title": "Entwurf für {{ books }} generieren",
+      "draft_title_n_books": "Entwurf für {{ count }} Bücher generieren",
       "draft_books": "Entwurf für Bücher generieren",
       "training_books": "Bücher für die Schulung",
       "draft_books_subtitle": "Die folgenden Bücher unter {{ boldStart }}{{ source }}{{ boldEnd }} werden von {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} übersetzt in {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
@@ -302,7 +303,7 @@
       "title": "Bücher für die Schulung auswählen",
       "subtitle": "Welche Bücher auf {{ boldStart }}{{ project }}{{ boldEnd }} eignen sich gut genug, um das Modell so zu schulen, dass es Texte von {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} auf {{ boldStart }}{{ targetLanguage }}{{ boldEnd }} übersetzt?",
       "which_chapters": "Welche Kapitel der einzelnen Bücher möchtest Du verwenden, um das Modell zu schulen?",
-      "partial_explanation": "Einige Kapitel der von Dir ausgewählten Bücher werden übersetzt und können daher nicht als Schulungsdaten verwendet werden.",
+      "partial_explanation": "Kapitel, die Du für das Generieren eines Entwurfs ausgewählt hast, können nicht als Schulungsdaten verwendet werden.",
       "excluded_not_in_any_source": "Diese Bücher stehen nicht für die Schulung zur Verfügung, da sie keinen Referenzprojekten vorhanden sind: {{ books }}.",
       "auto_selected": "Bücher, die vollständig zu sein scheinen, wurden vorausgewählt. Bitte überprüfe und aktualisiere die Schulungsdaten, die enthalten sein sollten.",
       "no_target_books": "Es stehen keine Bücher aus Deinem Projekt für die Schulung zur Verfügung.",
@@ -900,12 +901,14 @@
   "translator_settings_dialog": {
     "better": "Besser",
     "close": "Schliessen",
+    "editor_settings_title": "Editor",
+    "editor_tabs_in_single_pane": "Editor-Registerkarten in einem einzigen Fenster anzeigen",
     "insights_enable_assessments": "Bewertungen anzeigen",
     "insights_enable_autocorrect": "Auto-Korrekturen erlauben",
     "insights_settings_title": "Erkenntnisse",
     "more": "Mehr",
     "number_of_suggestions": "Anzahl Vorschläge",
-    "settings_not_available_offline": "Einstellungen für Übersetzungsvorschläge sind nicht verfügbar, wenn Du offline bist.",
+    "settings_not_available_offline": "Übersetzungseinstellungen sind nicht verfügbar, wenn Du offline bist.",
     "suggestion_confidence": "Vertrauen in Vorschlag",
     "translation_suggestions_settings_title": "Übersetzungsvorschläge",
     "translator_settings": "Übersetzungseinstellungen"
