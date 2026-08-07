@@ -1805,6 +1805,32 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('keeps the clipped scripture ellipses when editing an answer', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      const selection: TextSelection = {
+        verses: { bookNum: 43, chapterNum: 2, verseNum: 2, verse: '2-5' },
+        text: 'The selected text',
+        startClipped: true,
+        endClipped: true
+      };
+      when(env.mockedTextChooserDialogComponent.afterClosed()).thenReturn(of(selection));
+      env.selectQuestion(1);
+      env.clickButton(env.addAnswerButton);
+      env.setTextFieldValue(env.yourAnswerField, 'Answer question');
+      env.clickButton(env.selectVersesButton);
+      env.clickButton(env.saveAnswerButton);
+      expect(env.getAnswerScriptureText(0)).toBe('…The selected text…(John 2:2-5)');
+      // Edit the answer text, leaving the scripture selection alone
+      env.clickButton(env.getAnswerEditButton(0));
+      env.waitForSliderUpdate();
+      env.setTextFieldValue(env.yourAnswerField, 'Edited answer');
+      env.clickButton(env.saveAnswerButton);
+      expect(env.getAnswerScriptureText(0)).toBe('…The selected text…(John 2:2-5)');
+      tick(100);
+      flush();
+      discardPeriodicTasks();
+    }));
+
     it('can remove scripture from an answer', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(6);
