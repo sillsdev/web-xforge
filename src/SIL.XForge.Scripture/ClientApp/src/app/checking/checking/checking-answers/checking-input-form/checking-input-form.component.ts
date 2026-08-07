@@ -101,8 +101,10 @@ export class CheckingInputFormComponent {
 
   @Input() set checkingInput(value: Comment | Answer | undefined) {
     if (isAnswer(value) && this.textSelectionEnabled) {
-      this.selectedText = value?.scriptureText;
-      this.verseRef = value?.verseRef;
+      this.selectedText = value.scriptureText;
+      this.verseRef = value.verseRef;
+      this.selectionStartClipped = value.selectionStartClipped;
+      this.selectionEndClipped = value.selectionEndClipped;
     }
     this.textAndAudioInput = value;
   }
