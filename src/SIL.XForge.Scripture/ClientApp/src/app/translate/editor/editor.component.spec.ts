@@ -2943,6 +2943,10 @@ describe('EditorComponent', () => {
       expect(noteThread.notes[0].ownerRef).toEqual(userId);
       expect(noteThread.notes[0].content).toEqual(content);
 
+      // Close the bottom sheet, which is showing again for the still selected verse
+      env.clickSegmentRef(segmentRef);
+      env.wait();
+
       env.dispose();
     }));
 
@@ -2971,6 +2975,84 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows fab again after saving a note from the bottom sheet on mobile viewport', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.setCurrentUser('user04');
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      env.breakpointObserver.matchedResult = true;
+      env.clickSegmentRef('verse_1_2');
+      env.insertNoteFab.nativeElement.click();
+      env.wait();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
+      env.component.mobileNoteControl.setValue('mobile note');
+      env.saveMobileNoteButton!.click();
+      env.wait();
+
+      // The verse is still selected, so the fab should be available for adding another note to it
+      expect(env.mobileNoteTextArea).toBeFalsy();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
+
+      env.dispose();
+    }));
+
+    it('keeps fab visible when the editor loses focus while a verse is still selected', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.setCurrentUser('user04');
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      env.breakpointObserver.matchedResult = true;
+      env.clickSegmentRef('verse_1_2');
+      env.insertNoteFab.nativeElement.click();
+      env.wait();
+      env.component.mobileNoteControl.setValue('mobile note');
+      env.saveMobileNoteButton!.click();
+      env.wait();
+
+      // On a real device, tapping the fab focuses it, so when the bottom sheet is dismissed it cannot restore
+      // focus to the hidden fab and the editor stays blurred with no quill selection. Closing the on-screen
+      // keyboard then fires a window resize. The fab should stay visible for the still selected verse.
+      env.component.target!.editor!.blur();
+      window.dispatchEvent(new Event('resize'));
+      env.wait();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
+
+      env.dispose();
+    }));
+
+    it('shows bottom sheet again after a commenter saves a note on mobile viewport', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCommenterUser();
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      env.breakpointObserver.matchedResult = true;
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
+      env.insertNoteFabMobile!.click();
+      env.wait();
+      env.component.mobileNoteControl.setValue('commenter leaving mobile note');
+      env.saveMobileNoteButton!.click();
+      env.wait();
+
+      // The verse is still selected, so the bottom sheet should be showing its add comment button again
+      expect(env.mobileNoteTextArea).toBeFalsy();
+      expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
+      expect(env.insertNoteFabMobile).toBeTruthy();
+
+      // Close the bottom sheet
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
+
+      env.dispose();
+    }));
+
     it('shows current selected verse on bottom sheet', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -2992,6 +3074,9 @@ describe('EditorComponent', () => {
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
       expect(noteThread.notes[0].content).toEqual(content);
+      // Close the bottom sheet, which is showing again for the still selected verse
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
       env.dispose();
     }));
 
@@ -3016,6 +3101,9 @@ describe('EditorComponent', () => {
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
       expect(noteThread.notes[0].content).toEqual(XmlUtils.encodeForXml(content));
+      // Close the bottom sheet, which is showing again for the still selected verse
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
       env.dispose();
     }));
 

@@ -1308,6 +1308,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.addingMobileNote = false;
     this.bottomSheetRef?.dismiss();
     this.toggleNoteThreadVerseRefs$.next();
+    // The verse stays selected after saving, so restore the UI for adding another note to it: for users with
+    // edit rights, re-show the FAB; for commenters on mobile viewports (who have no FAB), reopen the bottom
+    // sheet with its add comment button
+    this.showAddCommentButton = true;
   }
 
   onViewerClicked(viewer: MultiCursorViewer): void {
@@ -2337,7 +2341,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.insertNoteFab == null || this.target?.editor == null || this.addingMobileNote) return;
     // getSelection can steal the focus, so we should not call this if the add mobile note bottom sheet is open
     const selection: Range | null | undefined = this.target.editor.getSelection();
-    if (selection != null) {
+    // quill has no selection when the editor is not focused (e.g. after the add note bottom sheet or dialog
+    // closes), but while a verse is still selected the FAB should stay available and anchored to it
+    if (selection != null || this.commenterSelectedVerseRef != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
     } else {
