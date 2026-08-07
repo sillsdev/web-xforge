@@ -342,6 +342,14 @@ describe('DraftUsfmFormatComponent', () => {
     expect(env.quoteFormatWarning).not.toBeNull();
   }));
 
+  it('shows the draft using the font size configured for the project', fakeAsync(() => {
+    const env = new TestEnvironment({ project: { defaultFontSize: 24 } });
+    tick(EDITOR_READY_TIMEOUT);
+    env.fixture.detectChanges();
+    expect(env.component.fontSize).toEqual('2rem');
+    expect(env.draftTextContainer?.style.fontSize).toEqual('2rem');
+  }));
+
   it('shows a notice if unable to access the draft source', fakeAsync(() => {
     const env = new TestEnvironment({ userCanAccessDraftingSource: false });
     expect(env.draftSourceWarning).not.toBeNull();
@@ -433,6 +441,10 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.quote-format-warning');
   }
 
+  get draftTextContainer(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.viewer .ql-container');
+  }
+
   private setupProject(project?: Partial<SFProjectProfile>): void {
     const texts: TextInfo[] = [
       {
@@ -468,7 +480,8 @@ class TestEnvironment {
       id: this.projectId,
       data: createTestProjectProfile({
         translateConfig: project?.translateConfig ?? this.translateConfig,
-        texts: project?.texts ?? texts
+        texts: project?.texts ?? texts,
+        defaultFontSize: project?.defaultFontSize
       })
     } as SFProjectProfileDoc;
     when(mockedActivatedProjectService.projectId).thenReturn(this.projectId);
