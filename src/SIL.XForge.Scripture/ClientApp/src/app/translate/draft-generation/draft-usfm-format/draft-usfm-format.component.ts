@@ -35,7 +35,7 @@ import { BookChapterChooserComponent } from '../../../shared/book-chapter-choose
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ConfirmOnLeave } from '../../../shared/project-router.guard';
 import { TextComponent } from '../../../shared/text/text.component';
-import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
+import { booksFromScriptureRange, formatFontSizeToRems, projectLabel } from '../../../shared/utils';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHandlingService } from '../draft-handling.service';
 import { DraftSourcesAsArrays } from '../draft-source';
@@ -123,6 +123,10 @@ export class DraftUsfmFormatComponent extends DataLoadingComponent implements Af
 
   get isRightToLeft(): boolean {
     return !!this.activatedProjectService.projectDoc?.data?.isRightToLeft;
+  }
+
+  get fontSize(): string | undefined {
+    return formatFontSizeToRems(this.activatedProjectService.projectDoc?.data?.defaultFontSize);
   }
 
   get textDocId(): TextDocId | undefined {
