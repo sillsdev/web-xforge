@@ -186,7 +186,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return this.projectDoc?.data?.checkingConfig.usersSeeEachOthersResponses === true;
+    return CheckingUtils.canSeeOtherUsersResponses(this.projectDoc?.data, this.userService.currentUserId);
   }
 
   get showImportButton(): boolean {

@@ -2179,6 +2179,28 @@ describe('CheckingComponent', () => {
       flush();
     }));
 
+    // Question 7 has one answer, authored by the admin user.
+    it('checker cannot see other users answers if see-others-answers is disabled', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      env.setSeeOtherUserResponses(false);
+      env.selectQuestion(7);
+      env.answerQuestion('New answer from the checker');
+      expect(env.answers.length).toEqual(1);
+      expect(env.totalAnswersMessageText).toEqual('Your answer');
+      flush();
+    }));
+
+    it('translator can see other users answers if see-others-answers is disabled', fakeAsync(() => {
+      // The setting only governs community checkers, so it does not hide answers from Paratext users.
+      const env = new TestEnvironment({ user: TRANSLATOR_USER });
+      env.setSeeOtherUserResponses(false);
+      env.selectQuestion(7);
+      env.answerQuestion('New answer from the translator');
+      expect(env.answers.length).toEqual(2);
+      expect(env.totalAnswersMessageCount).toEqual(2);
+      flush();
+    }));
+
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
         const env = new TestEnvironment({ user: CHECKER_USER });
