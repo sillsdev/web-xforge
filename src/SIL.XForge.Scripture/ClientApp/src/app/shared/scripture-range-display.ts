@@ -46,8 +46,7 @@ export function groupContiguousBookNumbers(bookNumbers: number[]): BookNumberGro
  * (rendered with its chapter range). Partial books are never absorbed into a range.
  */
 export type BookDisplaySegment =
-  | { kind: 'range'; bookNumbers: number[] }
-  | { kind: 'partial'; bookId: string; chapterRange: string };
+  { kind: 'range'; bookNumbers: number[] } | { kind: 'partial'; bookId: string; chapterRange: string };
 
 /**
  * Sorts books canonically and groups them for display: consecutive full books (null chapterRange) merge into one
