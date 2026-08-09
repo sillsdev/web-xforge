@@ -77,9 +77,6 @@ importers:
       '@sillsdev/lynx-punctuation-checker':
         specifier: ^0.2.0
         version: 0.2.0
-      '@sillsdev/machine':
-        specifier: ^2.4.2
-        version: 2.4.2
       '@sillsdev/scripture':
         specifier: 1.4.1
         version: 1.4.1
@@ -2982,9 +2979,6 @@ packages:
 
   '@sillsdev/lynx@0.3.5':
     resolution: {integrity: sha512-gV946mrheOeUlfdNwyFxMA5SMuI6q4+3Bj7tahLKcJPI+SiuydmR24jmPJ3EgcsaV153hsnpMRSPr126XdMfUA==}
-
-  '@sillsdev/machine@2.4.2':
-    resolution: {integrity: sha512-DDptLxfBuC38MaOIytWozI1DmP/5OjApuGgj73jEMGgn17uETH2pCKMs2i+1yGZx8IpdQwqBAhrsn/xxPUitCA==}
 
   '@sillsdev/scripture@1.4.1':
     resolution: {integrity: sha512-v38aTSdiuIokNPyYbfa0amx690v0VALBrJclX9GQCuJOglAXdkcfHMe9BHnOjBgBzuJEUN1EWZUeX9eTZF+qJw==}
@@ -6854,9 +6848,6 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  mnemonist@0.38.5:
-    resolution: {integrity: sha512-bZTFT5rrPKtPJxj8KSV0WkPyNxl72vQepqqVUAW2ARUpUSF2qXMB6jZj7hW5/k7C1rtpzqbD/IIbJwLXUjCHeg==}
-
   mongodb-connection-string-url@2.6.0:
     resolution: {integrity: sha512-WvTZlI9ab0QYtTYnuMLgobULWhokRjtC7db9LtcVfJ+Hsnyr5eo6ZtNAt3Ly24XZScGMelOcGtm7lSn0332tPQ==}
 
@@ -7185,9 +7176,6 @@ packages:
   object.values@1.2.1:
     resolution: {integrity: sha512-gXah6aZrcUxjWg2zR2MwouP2eHlCBzdV4pygudehaKXSGW4v2AsRQUK+lwwXhii6KFZcunEnmSUoYp5CXibxtA==}
     engines: {node: '>= 0.4'}
-
-  obliterator@2.0.5:
-    resolution: {integrity: sha512-42CPE9AhahZRsMNslczq0ctAEtqk8Eka26QofnqC346BZdHDySk3LWka23LI7ULIw11NmltpiLagIq8gBozxTw==}
 
   obuf@1.1.2:
     resolution: {integrity: sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==}
@@ -12729,10 +12717,6 @@ snapshots:
       i18next: 23.16.8
       rxjs: 7.8.2
 
-  '@sillsdev/machine@2.4.2':
-    dependencies:
-      mnemonist: 0.38.5
-
   '@sillsdev/scripture@1.4.1': {}
 
   '@sinclair/typebox@0.27.12': {}
@@ -17323,10 +17307,6 @@ snapshots:
 
   mkdirp@1.0.4: {}
 
-  mnemonist@0.38.5:
-    dependencies:
-      obliterator: 2.0.5
-
   mongodb-connection-string-url@2.6.0:
     dependencies:
       '@types/whatwg-url': 8.2.2
@@ -17641,8 +17621,6 @@ snapshots:
       call-bound: 1.0.4
       define-properties: 1.2.1
       es-object-atoms: 1.1.2
-
-  obliterator@2.0.5: {}
 
   obuf@1.1.2: {}
 
