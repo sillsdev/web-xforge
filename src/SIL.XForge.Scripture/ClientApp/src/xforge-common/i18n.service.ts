@@ -210,6 +210,10 @@ export class I18nService {
     this.transloco.setActiveLang(locale.canonicalTag);
     const date = new Date();
     date.setFullYear(date.getFullYear() + 1);
+    // 'Lax', not 'Strict': the server renders the home, terms and error pages in the language from this cookie, and
+    // a 'Strict' cookie is not sent when the browser navigates to the site from another site (such as returning from
+    // the Auth0 login page), which makes those pages fall back to English. This matches how the server writes the
+    // cookie in LanguageController.SetLanguage.
     this.cookieService.set(
       ASP_CULTURE_COOKIE_NAME,
       aspCultureCookieValue(locale.canonicalTag),
@@ -217,7 +221,7 @@ export class I18nService {
       '/',
       undefined,
       true,
-      'Strict'
+      'Lax'
     );
     this.bugsnagService.leaveBreadcrumb(
       'Set Locale',

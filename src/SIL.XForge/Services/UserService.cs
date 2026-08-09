@@ -108,8 +108,14 @@ public class UserService : IUserService
                     userProfile["user_metadata"] == null
                         ? null
                         : (string)userProfile["user_metadata"]["interface_language"];
-                string interfaceLanguage = string.IsNullOrWhiteSpace(language) ? "en" : language;
-                op.Set(u => u.InterfaceLanguage, interfaceLanguage);
+                // Auth0 only records an interface language once the user has chosen one from the language menu
+                // (see UpdateInterfaceLanguageAsync). Leave it unset if they never have, rather than recording
+                // "en": the app applies a recorded language when the user logs in, so a fabricated default would
+                // override the language they selected on the site before logging in.
+                if (string.IsNullOrWhiteSpace(language))
+                    op.Unset(u => u.InterfaceLanguage);
+                else
+                    op.Set(u => u.InterfaceLanguage, language);
                 string key = _siteOptions.Value.Id;
                 if (!userDoc.Data.Sites.ContainsKey(key))
                     op.Set(u => u.Sites[key], new Site());

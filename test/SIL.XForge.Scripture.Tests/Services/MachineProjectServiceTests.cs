@@ -3099,6 +3099,27 @@ public class MachineProjectServiceTests
             .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
     }
 
+    [Test]
+    public async Task SendBuildCompletedEmailAsync_NoInterfaceLanguage()
+    {
+        // Set up test environment - the user has never chosen an interface language
+        var env = new TestEnvironment();
+        env.Users.Get(User01).InterfaceLanguage = null!;
+
+        // SUT
+        await env.Service.SendBuildCompletedEmailAsync(
+            User01,
+            Project01,
+            Build01,
+            JobState.Completed,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
+        );
+        await env
+            .EmailService.Received()
+            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+    }
+
     [TestCase(JobState.Canceled)]
     [TestCase(JobState.Completed)]
     [TestCase(JobState.Faulted)]

@@ -459,8 +459,10 @@ public class MachineProjectService(
         IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
         if (projectDoc.IsLoaded && userDoc.IsLoaded && emailService.ValidateEmail(userDoc.Data.Email))
         {
-            // Set the locale for the email
-            CultureInfo.CurrentUICulture = new CultureInfo(userDoc.Data.InterfaceLanguage);
+            // Set the locale for the email, defaulting to English if the user has not chosen a language
+            CultureInfo.CurrentUICulture = new CultureInfo(
+                string.IsNullOrWhiteSpace(userDoc.Data.InterfaceLanguage) ? "en" : userDoc.Data.InterfaceLanguage
+            );
 
             // Build the email
             string resourceKeySubject =

@@ -132,6 +132,46 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task UpdateUserFromProfileAsync_Metadata_InterfaceLanguageSet()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt);
+        userProfile["user_metadata"] = new JObject(new JProperty("interface_language", "mri"));
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.InterfaceLanguage, Is.EqualTo("mri"));
+    }
+
+    [Test]
+    public async Task UpdateUserFromProfileAsync_Metadata_InterfaceLanguageNotSet()
+    {
+        var env = new TestEnvironment();
+
+        // A user who has never chosen a language in the UI has no interface language in Auth0. Recording one anyway
+        // would be indistinguishable from a deliberate choice, and would override the language they chose on the
+        // site before logging in.
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt);
+        Assert.That(userProfile["user_metadata"]?["interface_language"], Is.Null, "setup");
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.InterfaceLanguage, Is.Null);
+    }
+
+    [Test]
+    public async Task UpdateUserFromProfileAsync_Metadata_InterfaceLanguageCleared()
+    {
+        var env = new TestEnvironment();
+
+        // user04 has an interface language recorded from before it was only recorded on explicit choice
+        JObject userProfile = TestEnvironment.CreateUserProfile("user04", "auth04", env.IssuedAt);
+        Assert.That(env.GetUser("user04").InterfaceLanguage, Is.EqualTo("en"), "setup");
+        await env.Service.UpdateUserFromProfileAsync("user04", userProfile.ToString());
+        User user4 = env.GetUser("user04");
+        Assert.That(user4.InterfaceLanguage, Is.Null);
+    }
+
+    [Test]
     public async Task UpdateUserFromProfileAsync_Metadata_NotSet()
     {
         var env = new TestEnvironment();
@@ -409,6 +449,7 @@ public class UserServiceTests
                             Id = "user04",
                             AvatarUrl = "https://cdn.auth0.com/avatars/example.png",
                             AuthId = "auth04",
+                            InterfaceLanguage = "en",
                         },
                     }
                 )
