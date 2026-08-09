@@ -1147,7 +1147,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     let bestMatch: QuestionDoc | undefined;
 
-    for (const questionDoc of this.questionDocs) {
+    for (const questionDoc of this.visibleQuestions ?? []) {
       const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
       if (questionVerseRef == null || questionVerseRef.bookNum !== this.book) {
         continue;
