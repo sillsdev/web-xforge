@@ -1505,7 +1505,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     } else if (existingSourceTab != null) {
-      this.tabState.removeTab('source', existingSourceTab.index);
+      // Remove from the group the tab is actually in, which is not the 'source' group when tab groups are
+      // consolidated for small screens
+      this.tabState.removeTab(existingSourceTab.groupId, existingSourceTab.index);
     }
   }
 

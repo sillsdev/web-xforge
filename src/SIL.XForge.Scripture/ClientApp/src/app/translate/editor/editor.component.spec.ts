@@ -4051,6 +4051,45 @@ describe('EditorComponent', () => {
         expect(spyConsolidate).not.toHaveBeenCalled();
         flush();
       }));
+
+      it('should remove the source tab when the source project is removed and tab groups are consolidated', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.wait();
+        env.breakpointObserver.emitObserveValue(true);
+        env.component['tabStateInitialized$'].next(true);
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+
+        // The source tab has been consolidated into the target tab group
+        expect(env.component.tabState.getTabGroup('target')?.tabs.map(tab => tab.type)).toEqual([
+          'project-source',
+          'project-target'
+        ]);
+
+        env.removeSourceProject('project01');
+
+        expect(env.component.tabState.getTabGroup('target')?.tabs.map(tab => tab.type)).toEqual(['project-target']);
+        discardPeriodicTasks();
+        env.dispose();
+      }));
+
+      it('should remove the source tab when the source project is removed and tab groups are not consolidated', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.wait();
+        env.breakpointObserver.emitObserveValue(false);
+        env.component['tabStateInitialized$'].next(true);
+        env.component['targetEditorLoaded$'].next();
+        env.wait();
+
+        expect(env.component.tabState.getTabGroup('source')?.tabs.map(tab => tab.type)).toEqual(['project-source']);
+
+        env.removeSourceProject('project01');
+
+        // The blank tab takes the place of the removed source tab
+        expect(env.component.tabState.getTabGroup('source')?.tabs.map(tab => tab.type)).toEqual(['blank-tab']);
+        discardPeriodicTasks();
+        env.dispose();
+      }));
     });
 
     describe('initEditorTabs', () => {
@@ -5352,6 +5391,13 @@ class TestEnvironment {
     this.insertNoteFab.nativeElement.click();
     tick();
     this.fixture.detectChanges();
+  }
+
+  /** Simulates an administrator removing the source project on the project settings page. */
+  removeSourceProject(projectId: string): void {
+    const projectDoc: SFProjectProfileDoc = this.getProjectDoc(projectId);
+    projectDoc.submitJson0Op(op => op.unset(p => p.translateConfig.source!), false);
+    this.wait();
   }
 
   updateFontSize(projectId: string, size: number): void {
