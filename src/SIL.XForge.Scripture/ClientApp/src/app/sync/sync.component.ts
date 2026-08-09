@@ -119,13 +119,11 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   set syncActive(isActive: boolean) {
     if (this._syncActive && !isActive && this.projectDoc?.data != null) {
       const projectName: string = this.projectDoc.data.name;
-      if (
-        !(
-          this.isSyncCancelled &&
-          (this.previousLastSyncDate == null ||
-            (this.lastSyncDate != null && this.lastSyncDate <= this.previousLastSyncDate))
-        )
-      ) {
+      if (!(
+        this.isSyncCancelled &&
+        (this.previousLastSyncDate == null ||
+          (this.lastSyncDate != null && this.lastSyncDate <= this.previousLastSyncDate))
+      )) {
         if (this.projectDoc.data.sync.lastSyncSuccessful) {
           this.noticeService.show(
             this.i18n.translateStatic('sync.successfully_synchronized_with_paratext', { projectName })

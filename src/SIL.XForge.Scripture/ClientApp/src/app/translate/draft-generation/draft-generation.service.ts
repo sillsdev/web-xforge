@@ -432,9 +432,9 @@ export class DraftGenerationService {
       return of(undefined);
     }
     return this.httpClient
-      .get<
-        Revision[] | undefined
-      >(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`)
+      .get<Revision[] | undefined>(
+        `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/history`
+      )
       .pipe(
         map(res => res?.data ?? []),
         map(revisions => revisions.filter(revision => new Date(revision.timestamp) >= this.draftHistoryCutOffDate)),

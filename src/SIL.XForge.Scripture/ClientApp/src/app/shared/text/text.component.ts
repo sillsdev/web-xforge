@@ -293,12 +293,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private contentSet: boolean = false;
   /** State that the component is in with respect to loading content. */
   private loadingState:
-    | 'loading'
-    | 'offline-or-loading'
-    | 'no-content'
-    | 'empty-viewModel'
-    | 'unloaded'
-    | 'permission-denied' = 'loading';
+    'loading' | 'offline-or-loading' | 'no-content' | 'empty-viewModel' | 'unloaded' | 'permission-denied' = 'loading';
   private initialTextFetched: boolean = false;
   private initialSegmentRef?: string;
   private initialSegmentChecksum?: number;
