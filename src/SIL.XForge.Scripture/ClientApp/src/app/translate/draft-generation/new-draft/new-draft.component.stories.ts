@@ -356,7 +356,7 @@ async function toggleBook(canvas: Canvas, bookName: string): Promise<void> {
  * rather than by name keeps this working under any locale (book names are localized; the chrome is not). */
 async function gotoDraftBooksWithGen(canvas: Canvas): Promise<void> {
   await clickNext(canvas); // preface -> draft_books
-  await canvas.findByText('Select books to draft');
+  await canvas.findByTestId('draft_books_title');
   const books = await canvas.findAllByRole('option'); // ordered by book number, so GEN is first
   await userEvent.click(books[0]);
 }
@@ -414,7 +414,7 @@ export const SelectBooksToDraft: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await clickNext(canvas); // preface -> draft_books
-    await canvas.findByText('Select books to draft');
+    await canvas.findByTestId('draft_books_title');
     await toggleBook(canvas, 'Philemon');
     // PHM has only one chapter, so it isn't eligible for partial drafting and no chapter inputs appear.
     await waitFor(() => expect(canvasElement.querySelector('.partial-book-drafting-table')).toBeNull());
@@ -426,7 +426,7 @@ export const ExcludedBooks: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await clickNext(canvas); // preface -> draft_books
-    await canvas.findByText('Select books to draft');
+    await canvas.findByTestId('draft_books_title');
     // The exclusion notice starts collapsed; expand it to reveal which books were left out and why.
     await userEvent.click(await canvas.findByText(/books are hidden/i));
     // EXO is in the target but not in the source at all, so it is named in the "not in source" notice.

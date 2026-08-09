@@ -273,6 +273,7 @@
       "example_translations_subtitle": "Scripture Forge utiliza datos de entrenamiento (traducciones de ejemplo) para aprender a traducir de {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} a {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
       "email_me": "Envíame un correo electrónico a {{ email }} cuando el borrador esté terminado.",
       "draft_title": "Redacta el {{ books }}",
+      "draft_title_n_books": "Redactar {{ count }} libros",
       "draft_books": "Redacta los libros",
       "training_books": "Libros de formación",
       "draft_books_subtitle": "Los siguientes libros de {{ boldStart }}{{ source }}{{ boldEnd }} se traducirán de {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} a {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
@@ -302,7 +303,7 @@
       "title": "Seleccione libros en los que entrenar",
       "subtitle": "¿Qué libros en {{ boldStart }}{{ project }}{{ boldEnd }} son lo suficientemente buenos como para entrenar el modelo para traducir de {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} a {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
       "which_chapters": "¿Qué capítulos de cada libro quiere utilizar para entrenar el modelo?",
-      "partial_explanation": "Algunos de los capítulos de los libros que ha seleccionado se traducirán y, por lo tanto, no podrán utilizarse como datos de entrenamiento.",
+      "partial_explanation": "Los capítulos que has seleccionado para su redacción no pueden utilizarse como datos de entrenamiento.",
       "excluded_not_in_any_source": "Estos libros no están disponibles para ser entrenados porque no están en ninguno de los proyectos de referencia: {{ books }}.",
       "auto_selected": "Los libros que parecen completos han sido preseleccionados. Por favor, revise y actualice los datos de formación que deben incluirse.",
       "no_target_books": "No hay ningún libro de su proyecto disponible para el entrenamiento.",
@@ -900,12 +901,14 @@
   "translator_settings_dialog": {
     "better": "Mejor",
     "close": "Cerrar",
+    "editor_settings_title": "Editor",
+    "editor_tabs_in_single_pane": "Mostrar pestañas del editor en un solo panel",
     "insights_enable_assessments": "Mostrar evaluaciones",
     "insights_enable_autocorrect": "Permitir autocorrecciones",
     "insights_settings_title": "Insights",
     "more": "Más",
     "number_of_suggestions": "Número de sugerencias",
-    "settings_not_available_offline": "La configuración de las sugerencias de traducción no está disponible mientras no estás conectado.",
+    "settings_not_available_offline": "Las opciones del traductor no están disponibles cuando no tiene conexión a Internet.",
     "suggestion_confidence": "Confianza en la sugerencia",
     "translation_suggestions_settings_title": "Sugerencias de traducción",
     "translator_settings": "Configuración del traductor"

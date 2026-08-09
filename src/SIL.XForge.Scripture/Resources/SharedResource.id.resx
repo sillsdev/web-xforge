@@ -201,21 +201,21 @@
     <value>Pengguna tidak ada.</value>
   </data>
   <data name="DraftCanceledEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was canceled.</value>
+    <value>Draf Anda untuk {0} telah dibatalkan.</value>
   </data>
   <data name="DraftEmailMoreInformation" xml:space="preserve">
-    <value>For more information see {0}</value>
+    <value>Untuk informasi lebih lanjut, lihat {0}</value>
   </data>
   <data name="DraftFailedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} did not generate successfully.</value>
+    <value>Draf Anda untuk {0} tidak berhasil dibuat.</value>
   </data>
   <data name="DraftGeneratedEmailBody" xml:space="preserve">
-    <value>Your draft for {0} was generated successfully.</value>
+    <value>Draf Anda untuk {0} telah berhasil dibuat.</value>
   </data>
   <data name="DraftGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft generated successfully</value>
+    <value>Draf {0} berhasil dibuat</value>
   </data>
   <data name="DraftNotGeneratedEmailSubject" xml:space="preserve">
-    <value>{0} draft was not generated</value>
+    <value>Draf {0} tidak dibuat</value>
   </data>
 </root>
