@@ -8,7 +8,6 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  Inject,
   OnDestroy,
   OnInit,
   QueryList,
@@ -26,19 +25,10 @@ import { MatInput } from '@angular/material/input';
 import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
-import {
-  InteractiveTranslator,
-  InteractiveTranslatorFactory,
-  LatinWordDetokenizer,
-  LatinWordTokenizer,
-  PhraseTranslationSuggester,
-  RangeTokenizer,
-  TranslationSuggester
-} from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AngularSplitModule } from 'angular-split';
 import { isEqual } from 'lodash-es';
-import Quill, { Bounds, Delta, Range } from 'quill';
+import { Bounds, Delta, Range } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { EditorTabGroupType, editorTabGroupTypes } from 'realtime-server/lib/esm/scriptureforge/models/editor-tab';
@@ -72,29 +62,13 @@ import {
   Observable,
   of,
   Subject,
-  Subscription,
-  timer
+  Subscription
 } from 'rxjs';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  first,
-  map,
-  repeat,
-  retry,
-  startWith,
-  switchMap,
-  take,
-  tap,
-  throttleTime
-} from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith, switchMap, take, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { BlurOnClickDirective } from 'xforge-common/blur-on-click.directive';
-import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
-import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -120,9 +94,7 @@ import { Revision } from '../../core/paratext.service';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
-import { TranslationEngineService } from '../../core/translation-engine.service';
 import { BuildDto } from '../../machine-api/build-dto';
-import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { BookChapterChooserComponent } from '../../shared/book-chapter-chooser/book-chapter-chooser.component';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
@@ -166,8 +138,6 @@ import {
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
-import { SmtRetirementNoticeComponent } from '../smt-retirement-notice/smt-retirement-notice.component';
-import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { EditorHistoryComponent } from './editor-history/editor-history.component';
 import { EditorHistoryService } from './editor-history/editor-history.service';
@@ -177,21 +147,16 @@ import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/
 import { MultiCursorViewer, MultiViewerComponent } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SaveNoteParameters } from './save-note-parameters';
-import { Suggestion, SuggestionsComponent } from './suggestions.component';
 import { EditorTabAddRequestService } from './tabs/editor-tab-add-request.service';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabPersistenceService } from './tabs/editor-tab-persistence.service';
 import { EditorTabInfo } from './tabs/editor-tabs.types';
-import { TranslateMetricsSession } from './translate-metrics-session';
 import {
   TranslatorSettingsDialogComponent,
   TranslatorSettingsDialogData
 } from './translator-settings-dialog.component';
 
-export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
-
-const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 const UNSUPPORTED_LANGUAGE_CODES = [
   'ko',
   'kor',
@@ -276,21 +241,15 @@ const UNSUPPORTED_LANGUAGE_CODES = [
     EditorHistoryComponent,
     EditorResourceComponent,
     LynxInsightsPanelComponent,
-    SuggestionsComponent,
-    TextDocIdPipe,
-    TrainingProgressComponent,
-    SmtRetirementNoticeComponent
+    TextDocIdPipe
   ]
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, OnInit, AfterViewInit {
   addingMobileNote: boolean = false;
-  suggestions: Suggestion[] = [];
-  showSuggestions: boolean = false;
   books: number[] = [];
   chapters: number[] = [];
   text?: TextInfo;
   isProjectAdmin: boolean = false;
-  metricsSession?: TranslateMetricsSession;
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   multiCursorViewers: MultiCursorViewer[] = [];
   target: TextComponent | undefined;
@@ -307,15 +266,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private sourceScrollContainer: Element | undefined;
   private targetScrollContainer: Element | undefined;
-  private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
-  private translationEngine?: RemoteTranslationEngine;
-  private isTranslating: boolean = false;
-  private readonly detokenizer = new LatinWordDetokenizer();
-  private readonly sourceWordTokenizer: RangeTokenizer;
-  private readonly targetWordTokenizer: RangeTokenizer;
-  private translator?: InteractiveTranslator;
-  private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester(0.2);
-  private insertSuggestionEnd: number = -1;
   private bottomSheetRef?: MatBottomSheetRef;
   private currentUserDoc?: UserDoc;
   projectDoc?: SFProjectProfileDoc;
@@ -331,10 +281,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private _targetFocused: boolean = false;
   private chapter$ = new BehaviorSubject<number | undefined>(undefined);
   private _verse: string = '0';
-  private lastShownSuggestions: Suggestion[] = [];
-  private readonly segmentUpdated$: Subject<void>;
   private onTargetDeleteSub?: Subscription;
-  private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private selectionClickSubs: Subscription[] = [];
@@ -368,12 +315,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly changeDetector: ChangeDetectorRef,
 
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly translationEngineService: TranslationEngineService,
     readonly i18n: I18nService,
     readonly fontService: FontService,
-    private readonly reportingService: ErrorReportingService,
     private readonly activatedProject: ActivatedProjectService,
-    @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
     private bottomSheet: MatBottomSheet,
     readonly tabState: TabStateService<EditorTabGroupType, EditorTabInfo>,
@@ -390,14 +334,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     readonly editorInsightState: LynxInsightStateService
   ) {
     super(noticeService, 'EditorComponent');
-    const wordTokenizer = new LatinWordTokenizer();
-    this.sourceWordTokenizer = wordTokenizer;
-    this.targetWordTokenizer = wordTokenizer;
-
-    this.segmentUpdated$ = new Subject<void>();
-    this.segmentUpdated$
-      .pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT), quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.updateSuggestions());
     this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
   }
 
@@ -424,31 +360,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  get translationSuggestionsEnabled(): boolean {
-    return this.hasSource && this.translationSuggestionsProjectEnabled && this.translationSuggestionsUserEnabled;
-  }
-
-  get translationSuggestionsUserEnabled(): boolean {
-    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
-      ? true
-      : this.projectUserConfigDoc.data.translationSuggestionsEnabled;
-  }
-
-  get translationSuggestionsProjectEnabled(): boolean {
-    return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
-  }
-
   get lynxProjectEnabled(): boolean {
     return (
       !!this.projectDoc?.data?.lynxConfig.assessmentsEnabled ||
       !!this.projectDoc?.data?.lynxConfig.autoCorrectionsEnabled
     );
-  }
-
-  get numSuggestions(): number {
-    return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
-      ? 1
-      : this.projectUserConfigDoc.data.numSuggestions;
   }
 
   get noteTags(): NoteTag[] {
@@ -765,7 +681,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([params, targetViewChildren]) => {
         this.target = targetViewChildren.first;
-        this.showSuggestions = false;
         this.sourceLoaded = false;
         this.targetLoaded = false;
         this.bottomSheet.dismiss();
@@ -802,13 +717,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.projectUserConfigChangesSub?.unsubscribe();
 
           this.projectUserConfigChangesSub = this.projectUserConfigDoc.remoteChanges$.subscribe(async () => {
-            if (this.projectUserConfigDoc?.data != null) {
+            if (
+              this.projectUserConfigDoc?.data != null &&
+              this.projectUserConfigDoc.data.selectedSegmentChecksum == null &&
+              this._bookNum != null
+            ) {
               // Reload config if the checksum has been reset on the server
-              if (this.projectUserConfigDoc.data.selectedSegmentChecksum == null && this._bookNum != null) {
-                await this.loadProjectUserConfig(this._bookNum);
-              } else {
-                this.loadTranslateSuggesterConfidence();
-              }
+              await this.loadProjectUserConfig(this._bookNum);
             }
           });
 
@@ -851,7 +766,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.initLynxFeatureStates(this.projectUserConfigDoc);
 
         if (this.projectDoc.id !== prevProjectId) {
-          this.setupTranslationEngine();
           this.projectDataChangesSub?.unsubscribe();
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(async () => {
             let sourceId: TextDocId | undefined;
@@ -871,32 +785,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.source.id = sourceId;
             }
 
-            if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
-              this.setupTranslationEngine();
-            }
-
             await this.addRemoveSourceTabAsync(this.projectDoc!);
           });
-
-          if (this.metricsSession != null) {
-            this.metricsSession.dispose();
-          }
-          if (
-            this.target != null &&
-            this.source != null &&
-            this.sourceProjectDoc?.data?.userRoles[this.userService.currentUserId] != null
-          ) {
-            this.metricsSession = new TranslateMetricsSession(
-              this.projectService,
-              this.projectDoc.id,
-              this.source,
-              this.target,
-              this.sourceWordTokenizer,
-              this.targetWordTokenizer,
-              this.onlineStatusService,
-              this.reportingService
-            );
-          }
         }
       });
 
@@ -952,11 +842,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngOnDestroy(): void {
     this.projectUserConfigChangesSub?.unsubscribe();
-    this.trainingSub?.unsubscribe();
     this.projectDataChangesSub?.unsubscribe();
     this.initializeLynxStateSub?.unsubscribe();
     this.showEditorTabsInSinglePaneSub?.unsubscribe();
-    this.metricsSession?.dispose();
     this.onTargetDeleteSub?.unsubscribe();
     this.bottomSheet?.dismiss();
     this.resizeObserver?.disconnect();
@@ -975,7 +863,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     if (segment !== prevSegment) {
-      this.lastShownSuggestions = [];
       if (this.source != null) {
         this.source.setSegment(this.target.segmentRef);
         this.syncScrollRequested$.next();
@@ -984,77 +871,39 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.resetCommenterVerseSelection();
       }
 
-      this.insertSuggestionEnd = -1;
-      this.onStartTranslating();
-      try {
-        if (
-          this.projectUserConfigDoc?.data != null &&
-          this.text != null &&
-          this.target.segmentRef !== '' &&
-          (this.projectUserConfigDoc.data.selectedBookNum !== this.text.bookNum ||
-            this.projectUserConfigDoc.data.selectedChapterNum !== this.chapter ||
-            this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
-        ) {
-          if ((prevSegment == null || this.translator == null) && this.sourceProjectId !== undefined) {
-            await this.translationEngineService.trainSelectedSegment(
-              this.projectUserConfigDoc.data,
-              this.sourceProjectId
-            );
-          } else {
-            await this.trainSegment(prevSegment, this.sourceProjectId);
-          }
-          await this.projectUserConfigDoc.submitJson0Op(op => {
-            op.set(puc => puc.selectedSegment, this.target!.segmentRef);
-            op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
-          });
-        }
-        if (this.bookNum != null && this.hasEditRight) {
-          const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
-          this.toggleVerseRefElement(verseRef);
-        }
-        await this.translateSegment();
-      } finally {
-        this.onFinishTranslating();
+      if (
+        this.projectUserConfigDoc?.data != null &&
+        this.text != null &&
+        this.target.segmentRef !== '' &&
+        (this.projectUserConfigDoc.data.selectedBookNum !== this.text.bookNum ||
+          this.projectUserConfigDoc.data.selectedChapterNum !== this.chapter ||
+          this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
+      ) {
+        await this.projectUserConfigDoc.submitJson0Op(op => {
+          op.set(puc => puc.selectedSegment, this.target!.segmentRef);
+          op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
+        });
+      }
+      if (this.bookNum != null && this.hasEditRight) {
+        const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
+        this.toggleVerseRefElement(verseRef);
       }
     } else {
       if (this.source != null && this.source.segmentRef !== this.target.segmentRef) {
         this.source.setSegment(this.target.segmentRef);
       }
 
-      if (delta?.ops != null) {
-        const retainCount: number | undefined = getRetainCount(delta.ops[0]);
-        const insertText: string | undefined = isString(delta.ops[1]?.insert) ? delta.ops[1].insert : undefined;
-        // insert a space if the user just inserted a suggestion and started typing
-        if (
-          delta.ops.length === 2 &&
-          retainCount === this.insertSuggestionEnd &&
-          insertText != null &&
-          insertText.length > 0 &&
-          !PUNCT_SPACE_REGEX.test(insertText)
-        ) {
-          this.target.editor.insertText(this.insertSuggestionEnd, ' ', 'user');
-          const selectIndex = this.insertSuggestionEnd + insertText.length + 1;
-          this.insertSuggestionEnd = -1;
-          this.target.editor.setSelection(selectIndex, 0, 'user');
-        }
-        if (
-          segment != null &&
-          preDeltaAffectedEmbeds != null &&
-          this.shouldNoteThreadsRespondToEdits &&
-          !!isLocalUpdate
-        ) {
-          // only update the note anchors if the update is local, otherwise remote edits will mess up the note anchors
-          await this.updateVerseNoteThreadAnchors(preDeltaAffectedEmbeds, delta);
-        }
+      if (
+        delta?.ops != null &&
+        segment != null &&
+        preDeltaAffectedEmbeds != null &&
+        this.shouldNoteThreadsRespondToEdits &&
+        !!isLocalUpdate
+      ) {
+        // only update the note anchors if the update is local, otherwise remote edits will mess up the note anchors
+        await this.updateVerseNoteThreadAnchors(preDeltaAffectedEmbeds, delta);
       }
 
-      if (this.insertSuggestionEnd !== -1) {
-        const selection = this.target.editor.getSelection();
-        if (selection == null || selection.length > 0 || selection.index !== this.insertSuggestionEnd) {
-          this.insertSuggestionEnd = -1;
-        }
-      }
-      this.segmentUpdated$.next();
       this.syncScrollRequested$.next();
     }
 
@@ -1082,20 +931,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     this.syncScrollRequested$.next();
-
-    if (
-      this.target != null &&
-      this.target.segment != null &&
-      this.target.segment.bookNum === this.bookNum &&
-      this.target.segment.chapter === this.chapter
-    ) {
-      this.onStartTranslating();
-      try {
-        await this.translateSegment();
-      } finally {
-        this.onFinishTranslating();
-      }
-    }
   }
 
   onTextLoaded(textType: TextType): void {
@@ -1176,79 +1011,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._verse = verseRef.verse;
   }
 
-  insertSuggestion(suggestionIndex: number, wordIndex: number, event: Event): void {
-    if (this.target == null || this.target.editor == null || suggestionIndex >= this.suggestions.length) {
-      return;
-    }
-
-    const suggestion = this.suggestions[suggestionIndex];
-    if (wordIndex >= suggestion.words.length) {
-      return;
-    }
-
-    this.target.focus();
-    let range = this.target.editor.getSelection();
-    if (range == null) {
-      return;
-    }
-    range = this.skipInitialWhitespace(this.target.editor, range);
-
-    const delta = new Delta();
-    delta.retain(range.index);
-    if (range.length > 0) {
-      delta.delete(range.length);
-    }
-
-    const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
-    let insertText: string = this.detokenizer.detokenize(words);
-    if (this.translator != null && !this.translator.isLastWordComplete) {
-      const lastWord = this.translator.prefixWordRanges[this.translator.prefixWordRanges.length - 1];
-      insertText = insertText.substring(lastWord.length);
-    }
-    if (this.insertSuggestionEnd !== -1) {
-      insertText = ' ' + insertText;
-    }
-    delta.insert(insertText);
-    this.showSuggestions = false;
-
-    const selectIndex = range.index + insertText.length;
-    this.insertSuggestionEnd = selectIndex;
-    // If the segment is blank, then the selection is after the blank. The blank will be deleted, so we need
-    // to shift end of the inserted suggestion back one.
-    if (this.target.segmentText === '') {
-      this.insertSuggestionEnd--;
-    }
-    const previousContents = this.target.editor.getContents();
-    this.target.editor.updateContents(delta, 'user');
-    const updatedContents = this.target.editor.getContents();
-    this.target.editor.setSelection(selectIndex, 0, 'user');
-
-    if (this.metricsSession != null && !isEqual(updatedContents.ops, previousContents.ops)) {
-      this.metricsSession.onSuggestionAccepted(event);
-    }
-  }
-
   openTranslatorSettings(): void {
     if (this.projectDoc == null || this.projectUserConfigDoc == null) {
       return;
     }
 
-    const dialogRef = this.openMatDialog<TranslatorSettingsDialogComponent, TranslatorSettingsDialogData>(
+    this.openMatDialog<TranslatorSettingsDialogComponent, TranslatorSettingsDialogData>(
       TranslatorSettingsDialogComponent,
       {
         data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );
-    dialogRef
-      .afterClosed()
-      .pipe(first())
-      .subscribe(() => {
-        if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
-          const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-          this.translationSuggester.confidenceThreshold = pcnt / 100;
-        }
-        this.updateSuggestions();
-      });
   }
 
   insertNote(): void {
@@ -1793,50 +1566,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     await this.projectUserConfigDoc.submitJson0Op(op => op.add(puc => puc.noteRefsRead, noteId));
   }
 
-  private setupTranslationEngine(): void {
-    if (this.trainingSub != null) {
-      this.trainingSub.unsubscribe();
-      this.trainingSub = undefined;
-    }
-    this.translator = undefined;
-    this.translationEngine = undefined;
-    if (this.projectDoc?.data == null) {
-      return;
-    }
-    const hasSourceBooks: boolean = this.translationEngineService.checkHasSourceBooks(this.projectDoc.data);
-    if (!this.translationSuggestionsProjectEnabled || !this.hasEditRight || !hasSourceBooks) {
-      return;
-    }
-
-    this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
-    this.trainingSub = this.translationEngine
-      .listenForTrainingStatus()
-      .pipe(
-        tap({
-          complete: async () => {
-            // ensure that any changes to the segment will be trained
-            if (this.target != null && this.target.segment != null) {
-              this.target.segment.acceptChanges();
-            }
-            // re-translate current segment
-            this.onStartTranslating();
-            try {
-              await this.translateSegment();
-            } finally {
-              this.onFinishTranslating();
-            }
-          }
-        }),
-        repeat(),
-        filter(progress => progress.percentCompleted > 0),
-        retry({ delay: () => timer(30000) })
-      )
-      .subscribe();
-    this.interactiveTranslatorFactory = this.translationEngineService.createInteractiveTranslatorFactory(
-      this.projectDoc.id
-    );
-  }
-
   private async changeText(): Promise<void> {
     if (this.projectDoc == null || this.text == null || this.chapter == null) {
       if (this.source != null) this.source.id = undefined;
@@ -1880,12 +1609,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     await this.loadNoteThreadDocs(this.projectDoc.id, this.text.bookNum, this.chapter);
   }
 
-  private onStartTranslating(): void {
-    this.isTranslating = true;
-    this.suggestions = [];
-    this.showSuggestions = this.target != null && this.target.isSelectionAtSegmentEnd;
-  }
-
   private setSegment(selectedSegment?: string, selectedSegmentChecksum?: number): void {
     if (this.target == null || this.text == null) return;
     if (
@@ -1906,154 +1629,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.target.segment.acceptChanges();
       }
     }
-  }
-
-  private async translateSegment(): Promise<void> {
-    this.translator = undefined;
-    if (this.translationEngine == null || this.source == null || !this.onlineStatusService.isOnline) {
-      return;
-    }
-    const sourceSegment = this.source.segmentText;
-    if (sourceSegment.length === 0) {
-      return;
-    }
-
-    let translator: InteractiveTranslator | undefined;
-    if (this.translationSuggestionsEnabled) {
-      translator = await this.interactiveTranslatorFactory?.create(sourceSegment);
-    }
-    if (translator == null) {
-      this.translator = undefined;
-      return;
-    } else if (!translator.isSegmentValid) {
-      this.translator = undefined;
-      if (this.translationSuggestionsEnabled) {
-        this.noticeService.show(this.i18n.translateStatic('editor.verse_too_long_for_suggestions'));
-      }
-      return;
-    }
-    if (sourceSegment === this.source.segmentText) {
-      this.translator = translator;
-    }
-  }
-
-  private onFinishTranslating(): void {
-    this.isTranslating = false;
-    this.updateSuggestions();
-  }
-
-  private updateSuggestions(): void {
-    if (this.target == null || this.target.editor == null || this.target.segment == null) {
-      return;
-    }
-
-    // only bother updating the suggestion if the cursor is at the end of the segment
-    let suggestionsUpdated = false;
-    if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
-      if (this.translator == null) {
-        if (this.suggestions.length > 0) {
-          suggestionsUpdated = true;
-        }
-        this.suggestions = [];
-      } else {
-        const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
-        const text = this.target.editor.getText(
-          this.target.segment.range.index,
-          range.index - this.target.segment.range.index
-        );
-        // Only specify IsLastWordComplete if insertSuggestionEnd is not -1
-        let isLastWordComplete: boolean | undefined;
-        if (this.insertSuggestionEnd !== -1) {
-          isLastWordComplete = true;
-        }
-        this.translator.setPrefix(text, isLastWordComplete);
-        const machineSuggestions = this.translationSuggester.getSuggestions(
-          this.numSuggestions,
-          this.translator.prefixWordRanges.length,
-          this.translator.isLastWordComplete,
-          this.translator.getCurrentResults()
-        );
-        if (machineSuggestions.length === 0) {
-          if (this.suggestions.length > 0) {
-            suggestionsUpdated = true;
-          }
-          this.suggestions = [];
-        } else {
-          const suggestions: Suggestion[] = [];
-          let confidence = 1;
-          for (const machineSuggestion of machineSuggestions) {
-            const words = machineSuggestion.targetWords;
-            // for display purposes, we ensure that the confidence is less than or equal to "better" suggestions
-            confidence = Math.min(confidence, machineSuggestion.confidence);
-            suggestions.push({ words, confidence });
-          }
-          this.suggestions = suggestions;
-          suggestionsUpdated = true;
-          if (this.suggestions.length > 0 && !isEqual(this.lastShownSuggestions, this.suggestions)) {
-            if (this.metricsSession != null) {
-              this.metricsSession.onSuggestionShown();
-            }
-            this.lastShownSuggestions = this.suggestions;
-          }
-        }
-      }
-    }
-    const newShowSuggestionsValue =
-      (this.isTranslating || this.suggestions.length > 0) && this.target.isSelectionAtSegmentEnd;
-    if (this.showSuggestions !== newShowSuggestionsValue) {
-      suggestionsUpdated = true;
-    }
-    this.showSuggestions = newShowSuggestionsValue;
-    if (suggestionsUpdated) {
-      // Trigger detect changes so the suggestion list will update
-      this.changeDetector.detectChanges();
-    }
-  }
-
-  private skipInitialWhitespace(editor: Quill, range: Range): Range {
-    let i: number;
-    for (i = range.index; i < range.index + range.length; i++) {
-      const ch = editor.getText(i, 1);
-      if (ch === '' || !/\s/.test(ch)) {
-        return { index: i, length: range.length - (i - range.index) };
-      }
-    }
-    return { index: i, length: 0 };
-  }
-
-  private async trainSegment(segment: Segment | undefined, sourceProjectRef: string | undefined): Promise<void> {
-    if (segment == null || !this.canTrainSegment(segment)) {
-      return;
-    }
-    if (
-      !this.onlineStatusService.isOnline &&
-      sourceProjectRef != null &&
-      this.projectUserConfigDoc?.data != null &&
-      this.projectUserConfigDoc.data.selectedBookNum != null &&
-      this.projectUserConfigDoc.data.selectedChapterNum != null
-    ) {
-      void this.translationEngineService.storeTrainingSegment(
-        this.projectUserConfigDoc.data.projectRef,
-        sourceProjectRef,
-        this.projectUserConfigDoc.data.selectedBookNum,
-        this.projectUserConfigDoc.data.selectedChapterNum,
-        this.projectUserConfigDoc.data.selectedSegment
-      );
-      return;
-    }
-
-    if (this.translator == null) {
-      return;
-    }
-    await this.translator.approve(true);
-    segment.acceptChanges();
-    this.console.log(
-      'Segment ' + segment.ref + ' of document ' + Canon.bookNumberToId(segment.bookNum) + ' was trained successfully.'
-    );
-  }
-
-  private canTrainSegment(segment: Segment): boolean {
-    return segment.range.length > 0 && segment.text !== '' && segment.isChanged;
   }
 
   private subscribeClickEvents(segments: string[]): void {
@@ -2152,7 +1727,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private async loadProjectUserConfig(bookNum: number, chapterFromUrl?: number): Promise<void> {
     let chapter: number =
       chapterFromUrl ?? this.projectDoc?.data?.texts.find(t => t.bookNum === bookNum)?.chapters[0].number ?? 1;
-    this.loadTranslateSuggesterConfidence();
 
     if (chapterFromUrl == null && this.projectUserConfigDoc?.data != null) {
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
@@ -2176,13 +1750,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadVerses(true);
     await this.updateDraftTabVisibility();
     await this.updateBiblicalTermsTabVisibility();
-  }
-
-  private loadTranslateSuggesterConfidence(): void {
-    if (this.projectUserConfigDoc?.data != null) {
-      const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-      this.translationSuggester.confidenceThreshold = pcnt / 100;
-    }
   }
 
   /**

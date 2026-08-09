@@ -2,7 +2,6 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
@@ -10,17 +9,6 @@ import { MatTooltipHarness } from '@angular/material/tooltip/testing';
 import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Params, provideRouter, Route, Router } from '@angular/router';
-import {
-  createRange,
-  InteractiveTranslatorFactory,
-  LatinWordDetokenizer,
-  LatinWordTokenizer,
-  ProgressStatus,
-  TranslationSources,
-  WordAlignmentMatrix,
-  WordGraph,
-  WordGraphArc
-} from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import userEvent, { UserEvent } from '@testing-library/user-event';
 import { AngularSplitModule } from 'angular-split';
@@ -63,11 +51,10 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { DeltaOperation, StringMap } from 'rich-text';
-import { BehaviorSubject, defer, firstValueFrom, Observable, of, Subject, take } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { BehaviorSubject, firstValueFrom, Observable, of, Subject, take } from 'rxjs';
+import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
-import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -94,11 +81,8 @@ import { PermissionsService } from '../../core/permissions.service';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
-import { TranslationEngineService } from '../../core/translation-engine.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
-import { HttpClient } from '../../machine-api/http-client';
-import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { CopyrightBannerComponent } from '../../shared/copyright-banner/copyright-banner.component';
 import { provideCustomIcons } from '../../shared/custom-icons';
 import {
@@ -118,20 +102,17 @@ import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.compone
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../draft-generation/draft-preview-books/draft-preview-books.component';
-import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorDraftComponent } from './editor-draft/editor-draft.component';
 import { HistoryRevisionFormatPipe } from './editor-history/history-chooser/history-revision-format.pipe';
-import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
+import { EditorComponent } from './editor.component';
 import { LynxInsightEditorObjectsComponent } from './lynx/insights/lynx-insight-editor-objects/lynx-insight-editor-objects.component';
 import { LynxInsightsPanelComponent } from './lynx/insights/lynx-insights-panel/lynx-insights-panel.component';
 import { provideLynxInsights } from './lynx/insights/lynx-insights-providers';
 import { LynxWorkspaceService } from './lynx/insights/lynx-workspace.service';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
-import { SuggestionsComponent } from './suggestions.component';
 import { EditorTabFactoryService } from './tabs/editor-tab-factory.service';
 import { EditorTabMenuService } from './tabs/editor-tab-menu.service';
 import { EditorTabInfo } from './tabs/editor-tabs.types';
-import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -140,9 +121,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
-const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedDraftOptionsService = mock(DraftOptionsService);
 const mockedParatextService = mock(ParatextService);
@@ -159,26 +138,12 @@ const ROUTES: Route[] = [
   { path: 'projects', component: MockComponent }
 ];
 
-class MockConsole {
-  log(val: any): void {
-    if (
-      typeof val !== 'string' ||
-      (!/(Translated|Trained) segment, length: \d+, time: \d+\.\d+ms/.test(val) &&
-        !/Segment \w+ of document \w+ was trained successfully\./.test(val))
-    ) {
-      console.log(val);
-    }
-  }
-}
-
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
     imports: [
-      SuggestionsComponent,
       HistoryRevisionFormatPipe,
       EditorComponent,
       EditorDraftComponent,
-      TrainingProgressComponent,
       BiblicalTermsComponent,
       CopyrightBannerComponent,
       DraftPreviewBooksComponent,
@@ -204,14 +169,11 @@ describe('EditorComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: CONSOLE, useValue: new MockConsole() },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
-      { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
       { provide: ParatextService, useMock: mockedParatextService },
@@ -283,9 +245,7 @@ describe('EditorComponent', () => {
 
   it('shows warning to users in Chrome when translation is Korean, Japanese, or Chinese', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProject({
-      writingSystem: { tag: 'ko' }
-    });
+    env.setupProject({ writingSystem: { tag: 'ko' } });
     env.wait();
 
     expect(env.component.canEdit).toBe(true);
@@ -303,9 +263,7 @@ describe('EditorComponent', () => {
 
   it('does not show warning to users when translation is not Korean, Japanese, or Chinese', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProject({
-      writingSystem: { tag: 'en' }
-    });
+    env.setupProject({ writingSystem: { tag: 'en' } });
     env.wait();
 
     expect(env.component.canEdit).toBe(true);
@@ -317,10 +275,7 @@ describe('EditorComponent', () => {
 
   it('does not show warning to users if they do not have edit permissions on the selected book', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProject({
-      writingSystem: { tag: 'ko' },
-      translateConfig: defaultTranslateConfig
-    });
+    env.setupProject({ writingSystem: { tag: 'ko' } });
     // user03 only has read permissions on Luke 1
     // As the editor is disabled, we do not need to show the writing system warning
     // The no_permission_edit_chapter message will be displayed instead
@@ -420,7 +375,7 @@ describe('EditorComponent', () => {
     }));
   });
 
-  describe('Translation Suggestions enabled', () => {
+  describe('Editing', () => {
     it('start with no previous selection', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -433,6 +388,7 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.invalidWarning).toBeNull();
+
       env.dispose();
     }));
 
@@ -444,12 +400,10 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(2);
       expect(env.component.verse).toBe('1');
       expect(env.component.target!.segmentRef).toEqual('verse_2_1');
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).never();
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(30);
       expect(selection!.length).toBe(0);
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(false);
+
       env.dispose();
     }));
 
@@ -461,14 +415,10 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_2' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
-      expect(env.component.showSuggestions).toBe(false);
 
       resolve!(env.getTextDoc(sourceId));
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(true);
 
       env.dispose();
     }));
@@ -478,10 +428,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(false);
 
-      resetCalls(env.mockedRemoteTranslationEngine);
       const range = env.component.target!.getSegmentRange('verse_1_3');
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
@@ -491,8 +438,6 @@ describe('EditorComponent', () => {
       expect(selection!.index).toBe(range!.index + 1);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_3');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(false);
 
       env.dispose();
     }));
@@ -503,7 +448,6 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
 
-      resetCalls(env.mockedRemoteTranslationEngine);
       const range = env.component.target!.getSegmentRange('verse_1_2');
       env.targetEditor.setSelection(range!.index + 1, 0, 'user');
       env.wait();
@@ -512,9 +456,6 @@ describe('EditorComponent', () => {
       expect(selection!.index).toBe(33);
       expect(selection!.length).toBe(0);
       expect(env.getProjectUserConfigDoc().data!.selectedSegment).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(true);
-      expect(env.component.suggestions[0].words).toEqual(['target']);
 
       env.dispose();
     }));
@@ -606,418 +547,22 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('selection not at end of incomplete segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('');
-
-      const range = env.component.target!.getSegmentRange('verse_1_5');
-      env.targetEditor.setSelection(range!.index, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(false);
-
-      env.dispose();
-    }));
-
-    it('selection at end of incomplete segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('');
-
-      const range = env.component.target!.getSegmentRange('verse_1_5');
-      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(true);
-      expect(env.component.suggestions[0].words).toEqual(['verse', '5']);
-
-      env.dispose();
-    }));
-
-    it('should increment offered suggestion count when inserting suggestion', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('');
-      const range = env.component.target!.getSegmentRange('verse_1_5');
-      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.component.showSuggestions).toBe(true);
-      expect(env.component.suggestions[0].words).toEqual(['verse', '5']);
-      expect(env.component.metricsSession?.metrics.type).toEqual('navigate');
-
-      env.insertSuggestion();
-
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-      expect(env.component.showSuggestions).toBe(false);
-      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
-      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
-      tick(ACTIVE_EDIT_TIMEOUT);
-      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
-      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBe(1);
-      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
-      env.dispose();
-    }));
-
-    it("should not increment accepted suggestion if the content doesn't change", fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('');
-      const range = env.component.target!.getSegmentRange('verse_1_5');
-      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
-      env.wait();
-      env.typeCharacters('verse 5');
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-      expect(env.component.showSuggestions).toBe(true);
-      expect(env.component.suggestions[0].words).toEqual(['5']);
-      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
-      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
-      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBeUndefined();
-
-      env.insertSuggestion();
-
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-      expect(env.component.showSuggestions).toBe(false);
-      tick(ACTIVE_EDIT_TIMEOUT);
-      expect(env.component.metricsSession?.metrics.type).toEqual('edit');
-      expect(env.component.metricsSession?.metrics.suggestionTotalCount).toBe(1);
-      expect(env.component.metricsSession?.metrics.suggestionAcceptedCount).toBeUndefined();
-      env.dispose();
-    }));
-
-    it('should display the verse too long error', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      // Change to the long verse
-      const range = env.component.target!.getSegmentRange('verse_1_6');
-      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
-      env.wait();
-
-      // Verify an error displayed
-      expect(env.component.target!.segmentRef).toBe('verse_1_6');
-      expect(env.component.showSuggestions).toBe(false);
-      verify(mockedNoticeService.show(anything())).once();
-
-      env.dispose();
-    }));
-
-    it('should not display the verse too long error if user has suggestions disabled', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({
-        selectedBookNum: 40,
-        selectedChapterNum: 1,
-        selectedSegment: 'verse_1_5',
-        translationSuggestionsEnabled: false
-      });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(false);
-
-      // Change to the long verse
-      const range = env.component.target!.getSegmentRange('verse_1_6');
-      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
-      env.wait();
-
-      // Verify an error did not display
-      expect(env.component.target!.segmentRef).toBe('verse_1_6');
-      expect(env.component.showSuggestions).toBe(false);
-      verify(mockedNoticeService.show(anything())).never();
-
-      env.dispose();
-    }));
-
-    it('should not call getWordGraph if user has suggestions disabled', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({
-        selectedBookNum: 40,
-        selectedChapterNum: 1,
-        selectedSegment: 'verse_1_5',
-        translationSuggestionsEnabled: false
-      });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(false);
-
-      // Change to the long verse
-      const range = env.component.target!.getSegmentRange('verse_1_6');
-      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
-      env.wait();
-
-      // Verify an error did not display
-      expect(env.component.target!.segmentRef).toBe('verse_1_6');
-      expect(env.component.showSuggestions).toBe(false);
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
-
-      env.dispose();
-    }));
-
-    it('insert suggestion in non-blank segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-      expect(env.component.showSuggestions).toBe(false);
-
-      env.dispose();
-    }));
-
-    it('insert second suggestion in non-blank segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({
-        selectedBookNum: 40,
-        selectedChapterNum: 1,
-        selectedSegment: 'verse_1_5',
-        numSuggestions: 2
-      });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.downArrow();
-      env.insertSuggestion();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, versa 5');
-      expect(env.component.showSuggestions).toBe(false);
-
-      env.dispose();
-    }));
-
-    it('insert space when typing character after inserting a suggestion', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion(1);
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse');
-      expect(env.component.showSuggestions).toBe(true);
-
-      const selectionIndex = env.typeCharacters('5.');
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5.');
-      expect(env.component.showSuggestions).toBe(false);
-      const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(selectionIndex + 1);
-      expect(selection!.length).toBe(0);
-
-      env.dispose();
-    }));
-
-    it('insert space when inserting a suggestion after inserting a previous suggestion', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion(1);
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse');
-      expect(env.component.showSuggestions).toBe(true);
-
-      let selection = env.targetEditor.getSelection();
-      const selectionIndex = selection!.index;
-      env.insertSuggestion(1);
-      expect(env.component.target!.segmentText).toEqual('target: chapter 1, verse 5');
-      expect(env.component.showSuggestions).toBe(false);
-      selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(selectionIndex + 2);
-      expect(selection!.length).toBe(0);
-
-      env.dispose();
-    }));
-
-    it('do not insert space when typing punctuation after inserting a suggestion', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion(1);
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse');
-      expect(env.component.showSuggestions).toBe(true);
-
-      const selectionIndex = env.typeCharacters('.');
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse.');
-      expect(env.component.showSuggestions).toBe(false);
-      const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(selectionIndex);
-      expect(selection!.length).toBe(0);
-
-      env.dispose();
-    }));
-
-    it('train a modified segment after selecting a different segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-
-      const range = env.component.target!.getSegmentRange('verse_1_1');
-      env.targetEditor.setSelection(range!.index, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), 'target: chapter 1, verse 5', true)).once();
-
-      env.dispose();
-    }));
-
-    it('does not train a modified segment after selecting a different segment if offline', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({
-        selectedTask: 'translate',
-        selectedBookNum: 40,
-        selectedChapterNum: 1,
-        selectedSegment: 'verse_1_5',
-        projectRef: 'project01'
-      });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-      env.insertSuggestion();
-      const text = 'target: chapter 1, verse 5';
-      expect(env.component.target!.segmentText).toBe(text);
-      env.onlineStatus = false;
-      const range = env.component.target!.getSegmentRange('verse_1_1');
-      env.targetEditor.setSelection(range!.index, 0, 'user');
-      env.wait();
-      verify(mockedTranslationEngineService.storeTrainingSegment('project01', 'project02', 40, 1, 'verse_1_5')).once();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
-
-      env.dispose();
-    }));
-
-    it('train a modified segment after switching to another text and back', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-
-      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
-      env.wait();
-      expect(env.bookName).toEqual('Mark');
-      expect(env.component.target!.segmentRef).toEqual('verse_1_5');
-      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
-
-      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
-      env.wait();
-      expect(env.bookName).toEqual('Matthew');
-      expect(env.component.target!.segmentRef).toEqual('verse_1_5');
-      const range = env.component.target!.getSegmentRange('verse_1_1');
-      env.targetEditor.setSelection(range!.index, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), 'target: chapter 1, verse 5', true)).once();
-
-      env.dispose();
-    }));
-
-    it('train a modified segment after selecting a segment in a different text', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({
-        selectedTask: 'translate',
-        selectedBookNum: 40,
-        selectedChapterNum: 1,
-        selectedSegment: 'verse_1_5',
-        selectedSegmentChecksum: 0
-      });
-      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('');
-      expect(env.component.showSuggestions).toBe(false);
-
-      const range = env.component.target!.getSegmentRange('verse_1_1');
-      env.targetEditor.setSelection(range!.index, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
-
-      env.dispose();
-    }));
-
-    it('do not train an unmodified segment after selecting a different segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_5');
-      expect(env.component.showSuggestions).toBe(true);
-
-      env.insertSuggestion();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, verse 5');
-
-      const selection = env.targetEditor.getSelection();
-      env.targetEditor.deleteText(selection!.index - 7, 7, 'user');
-      env.wait();
-      expect(env.component.target!.segmentText).toBe('target: chapter 1, ');
-
-      const range = env.component.target!.getSegmentRange('verse_1_1');
-      env.targetEditor.setSelection(range!.index, 0, 'user');
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).never();
-
-      env.dispose();
-    }));
-
-    it('does not build machine project if no source books exists', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
-      env.wait();
-      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
-      env.routeWithParams({ projectId: 'project02', bookId: 'MAT' });
-      env.wait();
-      verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
-      expect().nothing();
-      env.dispose();
-    }));
-
     it('change texts', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
-      resetCalls(env.mockedRemoteTranslationEngine);
       env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       expect(env.bookName).toEqual('Mark');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
-      resetCalls(env.mockedRemoteTranslationEngine);
       env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       env.dispose();
     }));
@@ -1029,23 +574,18 @@ describe('EditorComponent', () => {
         env.wait();
         expect(env.component.chapter).toBe(1);
         expect(env.component.target!.segmentRef).toBe('verse_1_1');
-        verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
-        resetCalls(env.mockedRemoteTranslationEngine);
         env.component.chapter = 2;
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
         const verseText = env.component.target!.getSegmentText('verse_2_1');
         expect(verseText).toBe('target: chapter 2, verse 1.');
         expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-        verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
-        resetCalls(env.mockedRemoteTranslationEngine);
         env.component.chapter = 1;
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
         env.wait();
         expect(env.component.target!.segmentRef).toBe('verse_1_1');
-        verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       });
       env.dispose();
     }));
@@ -1071,87 +611,6 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('training status', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.trainingProgress).toBeNull();
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
-
-      resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).not.toBeNull();
-      expect(env.trainingProgressSpinner).not.toBeNull();
-      env.updateTrainingProgress(1);
-      expect(env.trainingCompleteIcon).not.toBeNull();
-      expect(env.trainingProgressSpinner).toBeNull();
-      env.completeTrainingProgress();
-      expect(env.trainingProgress).not.toBeNull();
-      tick(5000);
-      env.wait();
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      expect(env.trainingProgress).toBeNull();
-      env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).not.toBeNull();
-      expect(env.trainingProgressSpinner).not.toBeNull();
-
-      env.dispose();
-    }));
-
-    it('close training status', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.trainingProgress).toBeNull();
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
-
-      resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).not.toBeNull();
-      expect(env.trainingProgressSpinner).not.toBeNull();
-      env.clickTrainingProgressCloseButton();
-      expect(env.trainingProgress).toBeNull();
-      env.updateTrainingProgress(1);
-      env.completeTrainingProgress();
-      env.wait();
-      verify(mockedNoticeService.show(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-
-      env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).not.toBeNull();
-      expect(env.trainingProgressSpinner).not.toBeNull();
-
-      env.dispose();
-    }));
-
-    it('error in training status', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.trainingProgress).toBeNull();
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
-
-      resetCalls(env.mockedRemoteTranslationEngine);
-      env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).not.toBeNull();
-      expect(env.trainingProgressSpinner).not.toBeNull();
-      env.throwTrainingProgressError();
-      expect(env.trainingProgress).toBeNull();
-
-      tick(30000);
-      env.updateTrainingProgress(0.1);
-      expect(env.trainingProgress).not.toBeNull();
-      expect(env.trainingProgressSpinner).not.toBeNull();
-
-      env.dispose();
-    }));
-
     it('source is missing book/text', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
@@ -1165,8 +624,6 @@ describe('EditorComponent', () => {
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(50);
       expect(selection!.length).toBe(0);
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
-      expect(env.component.showSuggestions).toBe(false);
       env.dispose();
     }));
 
@@ -1313,14 +770,12 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index + 1, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_2');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       // Change user role on the project and run a sync to force remote updates
       env.changeUserRole(projectId, userId, SFProjectRole.Viewer);
       env.setDataInSync(projectId, true, false);
       env.setDataInSync(projectId, false, false);
       env.wait();
-      resetCalls(env.mockedRemoteTranslationEngine);
 
       projectDoc = env.getProjectDoc(projectId);
       expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.Viewer);
@@ -1331,7 +786,6 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index + 1, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_3');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
       env.dispose();
     }));
@@ -1363,7 +817,6 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setupProject({
         translateConfig: {
-          translationSuggestionsEnabled: true,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -1401,8 +854,6 @@ describe('EditorComponent', () => {
       expect(env.component.chapter).toBe(1);
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
-      expect(env.component.showSuggestions).toBe(false);
       const sourceText = env.sourceTextEditorPlaceholder.getAttribute('data-placeholder');
       expect(sourceText).not.toEqual('This book does not exist.');
       expect(env.component.target!.readOnlyEnabled).toBe(true);
@@ -1628,6 +1079,91 @@ describe('EditorComponent', () => {
       const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       const attributes: StringMap = textDoc.data!.ops![5].attributes!;
       expect(Object.keys(attributes)).toEqual(['segment']);
+      env.dispose();
+    }));
+
+    it('translator cannot edit a chapter without edit permission on chapter', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.setCurrentUser('user03');
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.bookName).toEqual('Luke');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.userHasGeneralEditRight).toBe(true);
+      expect(env.component.hasChapterEditPermission).toBe(false);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.isSourceAreaHidden).toBe(false);
+      expect(env.noChapterEditPermissionMessage).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('prevents editing and informs user when text doc is corrupted', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+      expect(env.component.hasEditRight).toBe(true);
+      expect(env.component.canEdit).toBe(false);
+      expect(env.corruptedWarning).not.toBeNull();
+      env.dispose();
+    }));
+
+    it('shows the copyright banner', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ copyrightBanner: 'banner text' });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      expect(env.copyrightBanner).not.toBeNull();
+      env.dispose();
+    }));
+
+    it('sets book and chapter according to route', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MAT', chapter: '2' };
+      const env = new TestEnvironment();
+
+      env.setProjectUserConfig();
+      env.routeWithParams(navigationParams);
+      env.wait();
+
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.chapter).toBe(2);
+
+      env.dispose();
+    }));
+
+    it('source uses font from source project, not target project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      // Set different fonts for target and source projects
+      env.setupProject({ defaultFont: 'Arial' }, 'project01'); // target project
+      env.setupProject({ defaultFont: 'Andika' }, 'project02'); // source project
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1 });
+      env.wait();
+
+      expect(env.component.source).toBeTruthy();
+      expect(env.component.sourceProjectDoc?.data?.defaultFont).toBe('Andika');
+      expect(env.component.projectDoc?.data?.defaultFont).toBe('Arial');
+
+      // Get the source app-text element
+      const sourceTextElement = env.fixture.debugElement.query(By.css('#source-text-area app-text'));
+      expect(sourceTextElement).toBeTruthy();
+
+      // Check that the source has the correct CSS custom property set
+      const sourceStyle = sourceTextElement.nativeElement.style;
+      const projectFontValue = sourceStyle.getPropertyValue('--project-font');
+
+      // The source should use Andika (from project02), not Arial (from project01)
+      expect(projectFontValue).toContain('Andika');
+      expect(projectFontValue).not.toContain('Arial');
+
       env.dispose();
     }));
   });
@@ -3753,256 +3289,7 @@ describe('EditorComponent', () => {
       expect(env.translatorSettingsButton).toBeFalsy();
       env.dispose();
     }));
-
-    it('suggestion-words inherits project font from CSS custom property', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
-      env.wait();
-      expect(env.component.showSuggestions).toBe(true);
-
-      const rootElement = document.documentElement;
-      rootElement.style.setProperty('--project-font', 'Charis SIL');
-      env.fixture.detectChanges();
-      tick();
-
-      const suggestionWords = env.fixture.debugElement.query(By.css('.suggestion-words'));
-      expect(suggestionWords).toBeTruthy();
-      const computedStyle = window.getComputedStyle(suggestionWords.nativeElement);
-      expect(computedStyle.fontFamily).toContain('Charis SIL');
-
-      rootElement.style.removeProperty('--project-font');
-      env.dispose();
-    }));
-
-    it('source uses font from source project, not target project', fakeAsync(() => {
-      const env = new TestEnvironment();
-      // Set different fonts for target and source projects
-      env.setupProject({ defaultFont: 'Arial' }, 'project01'); // target project
-      env.setupProject({ defaultFont: 'Andika' }, 'project02'); // source project
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1 });
-      env.wait();
-
-      expect(env.component.source).toBeTruthy();
-      expect(env.component.sourceProjectDoc?.data?.defaultFont).toBe('Andika');
-      expect(env.component.projectDoc?.data?.defaultFont).toBe('Arial');
-
-      // Get the source app-text element
-      const sourceTextElement = env.fixture.debugElement.query(By.css('#source-text-area app-text'));
-      expect(sourceTextElement).toBeTruthy();
-
-      // Check that the source has the correct CSS custom property set
-      const sourceStyle = sourceTextElement.nativeElement.style;
-      const projectFontValue = sourceStyle.getPropertyValue('--project-font');
-
-      // The source should use Andika (from project02), not Arial (from project01)
-      expect(projectFontValue).toContain('Andika');
-      expect(projectFontValue).not.toContain('Arial');
-
-      env.dispose();
-    }));
   });
-
-  describe('Translation Suggestions disabled', () => {
-    it('start with no previous selection', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setProjectUserConfig();
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-      env.wait();
-      expect(env.bookName).toEqual('Luke');
-      expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      env.dispose();
-    }));
-
-    it('start with previously selected segment', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2, selectedSegment: 'verse_2_1' });
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-      env.wait();
-      expect(env.bookName).toEqual('Luke');
-      expect(env.component.chapter).toBe(2);
-      expect(env.component.verse).toBe('1');
-      expect(env.component.target!.segmentRef).toEqual('verse_2_1');
-      const selection = env.targetEditor.getSelection();
-      expect(selection!.index).toBe(50);
-      expect(selection!.length).toBe(0);
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
-      expect(env.component.showSuggestions).toBe(false);
-      env.dispose();
-    }));
-
-    it('user cannot edit', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setCurrentUser('user02');
-      env.setProjectUserConfig();
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-      env.wait();
-      expect(env.bookName).toEqual('Luke');
-      expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      expect(env.component.canEdit).toBe(false);
-      env.dispose();
-    }));
-
-    it('user can edit a chapter with permission', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setCurrentUser('user03');
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 2 });
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-      env.wait();
-      expect(env.bookName).toEqual('Luke');
-      expect(env.component.chapter).toBe(2);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      expect(env.component.canEdit).toBe(true);
-      env.dispose();
-    }));
-
-    it('translator cannot edit a chapter without edit permission on chapter', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setCurrentUser('user03');
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 1 });
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-      env.wait();
-      expect(env.bookName).toEqual('Luke');
-      expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      expect(env.component.userHasGeneralEditRight).toBe(true);
-      expect(env.component.hasChapterEditPermission).toBe(false);
-      expect(env.component.canEdit).toBe(false);
-      expect(env.isSourceAreaHidden).toBe(false);
-      expect(env.noChapterEditPermissionMessage).toBeTruthy();
-      env.dispose();
-    }));
-
-    it('user has no resource access', fakeAsync(() => {
-      when(mockedSFProjectService.getProfile('resource01')).thenResolve({
-        id: 'resource01',
-        data: createTestProjectProfile()
-      } as SFProjectProfileDoc);
-
-      const env = new TestEnvironment();
-      env.setupProject({
-        translateConfig: {
-          translationSuggestionsEnabled: false,
-          source: {
-            paratextId: 'resource01',
-            name: 'Resource 1',
-            shortName: 'SRC',
-            projectRef: 'resource01',
-            writingSystem: {
-              tag: 'qaa'
-            }
-          }
-        }
-      });
-      env.setCurrentUser('user01');
-      env.setProjectUserConfig();
-      env.routeWithParams({ projectId: 'project01', bookId: 'ACT' });
-      env.wait();
-      verify(mockedSFProjectService.get('resource01')).never();
-      expect(env.bookName).toEqual('Acts');
-      expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      expect(env.component.canEdit).toBe(true);
-      env.dispose();
-    }));
-
-    it('chapter is invalid', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setProjectUserConfig();
-      env.routeWithParams({ projectId: 'project01', bookId: 'MRK' });
-      env.wait();
-      expect(env.bookName).toEqual('Mark');
-      expect(env.component.chapter).toBe(1);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      expect(env.component.canEdit).toBe(false);
-      expect(env.invalidWarning).not.toBeNull();
-      env.dispose();
-    }));
-
-    it('first chapter is missing', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setProjectUserConfig();
-      env.routeWithParams({ projectId: 'project01', bookId: 'ROM' });
-      env.wait();
-      expect(env.bookName).toEqual('Romans');
-      expect(env.component.chapter).toBe(2);
-      expect(env.component.sourceLabel).toEqual('SRC');
-      expect(env.component.targetLabel).toEqual('TRG');
-      expect(env.component.target!.segmentRef).toEqual('');
-      const selection = env.targetEditor.getSelection();
-      expect(selection).toBeNull();
-      expect(env.component.canEdit).toBe(true);
-      env.dispose();
-    }));
-
-    it('prevents editing and informs user when text doc is corrupted', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig });
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.routeWithParams({ projectId: 'project01', bookId: 'LUK' });
-      env.wait();
-      expect(env.component.hasEditRight).toBe(true);
-      expect(env.component.canEdit).toBe(false);
-      expect(env.corruptedWarning).not.toBeNull();
-      env.dispose();
-    }));
-
-    it('shows the copyright banner', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
-      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
-      env.routeWithParams({ projectId: 'project01', bookId: 'MAT' });
-      env.wait();
-      expect(env.copyrightBanner).not.toBeNull();
-      env.dispose();
-    }));
-  });
-
-  it('sets book and chapter according to route', fakeAsync(() => {
-    const navigationParams: Params = { projectId: 'project01', bookId: 'MAT', chapter: '2' };
-    const env = new TestEnvironment();
-
-    env.setProjectUserConfig();
-    env.routeWithParams(navigationParams);
-    env.wait();
-
-    expect(env.bookName).toEqual('Matthew');
-    expect(env.component.chapter).toBe(2);
-
-    env.dispose();
-  }));
 
   describe('tabs', () => {
     describe('blank tab', () => {
@@ -4786,14 +4073,9 @@ describe('EditorComponent', () => {
   });
 });
 
-const defaultTranslateConfig = {
-  translationSuggestionsEnabled: false
-};
-
 class TestEnvironment {
   readonly component: EditorComponent;
   readonly fixture: ComponentFixture<EditorComponent>;
-  readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
   readonly activatedProjectService: ActivatedProjectService;
   readonly router: Router;
   readonly location: Location;
@@ -4815,11 +4097,8 @@ class TestEnvironment {
     user07: SFProjectRole.Viewer
   };
   private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
-  private tokenizer = new LatinWordTokenizer();
-  private detokenizer = new LatinWordDetokenizer();
   private readonly realtimeService: TestRealtimeService;
   private readonly params$: BehaviorSubject<Params>;
-  private trainingProgress$ = new Subject<ProgressStatus>();
   private textInfoPermissions = {
     user01: TextInfoPermission.Write,
     user02: TextInfoPermission.None,
@@ -4841,7 +4120,6 @@ class TestEnvironment {
     isRightToLeft: false,
     userRoles: this.userRolesOnProject,
     translateConfig: {
-      translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
       source: {
         paratextId: 'source01',
@@ -4966,21 +4244,6 @@ class TestEnvironment {
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);
     when(mockedActivatedRoute.snapshot).thenReturn({ queryParams: {} } as any);
-    when(mockedTranslationEngineService.createTranslationEngine('project01')).thenReturn(
-      instance(this.mockedRemoteTranslationEngine)
-    );
-    when(mockedTranslationEngineService.createTranslationEngine('project02')).thenReturn(
-      instance(this.mockedRemoteTranslationEngine)
-    );
-    when(mockedTranslationEngineService.createInteractiveTranslatorFactory(anything())).thenReturn(
-      new InteractiveTranslatorFactory(instance(this.mockedRemoteTranslationEngine), this.tokenizer, this.detokenizer)
-    );
-    when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
-    when(this.mockedRemoteTranslationEngine.getWordGraph(anything())).thenCall(segment =>
-      Promise.resolve(this.createWordGraph(segment))
-    );
-    when(this.mockedRemoteTranslationEngine.trainSegment(anything(), anything(), anything())).thenResolve();
-    when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
@@ -5173,26 +4436,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('app-share-button'));
   }
 
-  get suggestions(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-suggestions'));
-  }
-
-  get trainingProgress(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.training-progress'));
-  }
-
-  get trainingProgressSpinner(): DebugElement {
-    return this.trainingProgress.query(By.css('#training-progress-spinner'));
-  }
-
-  get trainingCompleteIcon(): DebugElement {
-    return this.trainingProgress.query(By.css('#training-complete-icon'));
-  }
-
-  get trainingProgressCloseButton(): DebugElement {
-    return this.trainingProgress.query(By.css('#training-close-button'));
-  }
-
   get targetTextEditor(): HTMLElement {
     return this.fixture.debugElement.query(By.css('#target-text-area .ql-container')).nativeElement;
   }
@@ -5313,10 +4556,6 @@ class TestEnvironment {
     });
     if (data.writingSystem != null) {
       projectProfileData.writingSystem = data.writingSystem as WritingSystem;
-    }
-    if (data.translateConfig?.translationSuggestionsEnabled != null) {
-      projectProfileData.translateConfig.translationSuggestionsEnabled =
-        data.translateConfig.translationSuggestionsEnabled;
     }
     if (data.translateConfig?.preTranslate != null) {
       projectProfileData.translateConfig.preTranslate = data.translateConfig.preTranslate;
@@ -5497,37 +4736,13 @@ class TestEnvironment {
 
   wait(): void {
     this.fixture.detectChanges();
-    tick();
-    this.fixture.detectChanges();
-    tick(UPDATE_SUGGESTIONS_TIMEOUT);
+    tick(100); // Give the editor time to respond
     this.fixture.detectChanges();
     tick();
-    this.fixture.detectChanges();
   }
 
   waitForPresenceTimer(): void {
     tick(PRESENCE_EDITOR_ACTIVE_TIMEOUT);
-  }
-
-  insertSuggestion(i: number = 0): void {
-    const keydownEvent: any = document.createEvent('CustomEvent');
-    if (i === 0) {
-      keydownEvent.key = 'Enter';
-    } else {
-      keydownEvent.key = i.toString();
-      keydownEvent.ctrlKey = true;
-    }
-    keydownEvent.initEvent('keydown', true, true);
-    this.component.target!.editor!.root.dispatchEvent(keydownEvent);
-    this.wait();
-  }
-
-  downArrow(): void {
-    const keydownEvent: any = document.createEvent('CustomEvent');
-    keydownEvent.key = 'ArrowDown';
-    keydownEvent.initEvent('keydown', true, true);
-    this.component.target!.editor!.root.dispatchEvent(keydownEvent);
-    this.wait();
   }
 
   changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
@@ -5537,11 +4752,6 @@ class TestEnvironment {
     projectDoc.submitJson0Op(op => op.set(p => p.userRoles, userRoles), false);
 
     this.wait();
-  }
-
-  clickTrainingProgressCloseButton(): void {
-    this.trainingProgressCloseButton.nativeElement.click();
-    this.fixture.detectChanges();
   }
 
   routeWithParams(params: Params): void {
@@ -5556,26 +4766,6 @@ class TestEnvironment {
     });
 
     this.fixture.detectChanges();
-  }
-
-  throwTrainingProgressError(): void {
-    const trainingProgress$ = this.trainingProgress$;
-    this.trainingProgress$ = new Subject<ProgressStatus>();
-    trainingProgress$.error(new HttpErrorResponse({ status: 404 }));
-    this.fixture.detectChanges();
-  }
-
-  updateTrainingProgress(percentCompleted: number): void {
-    this.trainingProgress$.next({ percentCompleted, message: 'message' });
-    this.fixture.detectChanges();
-  }
-
-  completeTrainingProgress(): void {
-    const trainingProgress$ = this.trainingProgress$;
-    this.trainingProgress$ = new Subject<ProgressStatus>();
-    trainingProgress$.complete();
-    this.fixture.detectChanges();
-    tick();
   }
 
   typeCharacters(str: string, attributes?: StringMap): number {
@@ -5633,7 +4823,6 @@ class TestEnvironment {
 
   dispose(): void {
     this.wait();
-    this.component.metricsSession?.dispose();
     this.waitForPresenceTimer();
   }
 
@@ -5845,9 +5034,6 @@ class TestEnvironment {
   }
 
   private addProjectUserConfig(userConfig: SFProjectUserConfig): void {
-    userConfig.translationSuggestionsEnabled ??= true;
-    userConfig.numSuggestions ??= 1;
-    userConfig.confidenceThreshold ??= 0.2;
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
       id: getSFProjectUserConfigDocId('project01', userConfig.ownerRef),
       data: userConfig
@@ -5860,28 +5046,6 @@ class TestEnvironment {
       type: RichText.type.name,
       data: new Delta()
     });
-  }
-
-  private createWordGraph(segment: string): WordGraph {
-    const segments = Array.from(this.tokenizer.tokenize(segment));
-    const arcs: WordGraphArc[] = [];
-    for (let i = 0; i < segments.length; i++) {
-      let targetWord = segments[i];
-      if (targetWord === 'source') {
-        targetWord = 'target';
-      }
-      const alignment = new WordAlignmentMatrix(1, 1);
-      alignment.set(0, 0, true);
-      arcs.push(
-        new WordGraphArc(i, i + 1, -10, [targetWord], alignment, createRange(i, i + 1), [TranslationSources.Smt], [0.5])
-      );
-      if (targetWord === 'verse') {
-        arcs.push(
-          new WordGraphArc(i, i + 1, -11, ['versa'], alignment, createRange(i, i + 1), [TranslationSources.Smt], [0.4])
-        );
-      }
-    }
-    return new WordGraph(segments, arcs, [segments.length - 1]);
   }
 }
 

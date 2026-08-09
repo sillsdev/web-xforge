@@ -20,7 +20,7 @@ export interface SFProjectUserConfig extends ProjectData {
   confidenceThreshold: number;
   biblicalTermsEnabled?: boolean;
   transliterateBiblicalTerms: boolean;
-  translationSuggestionsEnabled: boolean;
+  translationSuggestionsEnabled?: boolean;
   numSuggestions: number;
   selectedSegment: string;
   selectedSegmentChecksum?: number;

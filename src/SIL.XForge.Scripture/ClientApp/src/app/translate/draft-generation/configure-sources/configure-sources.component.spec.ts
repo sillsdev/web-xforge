@@ -776,7 +776,6 @@ class TestEnvironment {
     sfProject0.translateConfig.source = usersSFResources[0];
     sfProject0.translateConfig.draftConfig.draftingSources = [usersSFProjects[1]];
     sfProject0.translateConfig.draftConfig.trainingSources = [usersSFResources[2], usersSFProjects[2]];
-    sfProject0.translateConfig.translationSuggestionsEnabled = false;
     sfProject0.translateConfig.preTranslate = true;
 
     // Use a promise that resolves after the component is created to simulate the loading of projects

@@ -190,9 +190,6 @@ class TestEnvironment {
 
   constructor() {
     this.setProjectUserConfig({
-      confidenceThreshold: 0.5,
-      translationSuggestionsEnabled: true,
-      numSuggestions: 1,
       transliterateBiblicalTerms: false
     });
 
