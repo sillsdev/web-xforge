@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardTitle } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogConfig } from '@angular/material/dialog';
-import { MatError, MatHint } from '@angular/material/form-field';
+import { MatError } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -63,7 +63,6 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
     MatError,
     MatCheckbox,
     InfoComponent,
-    MatHint,
     MatRadioGroup,
     MatRadioButton,
     TranslocoMarkupComponent,
@@ -73,7 +72,6 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
   ]
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
-  translationSuggestionsEnabled = new FormControl(false);
   sourceParatextId = new FormControl<string | undefined>(undefined);
   biblicalTermsEnabled = new FormControl(false);
   checkingEnabled = new FormControl(false);
@@ -94,7 +92,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   SFProjectRole = SFProjectRole;
 
   form = new FormGroup({
-    translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
     checkingEnabled: this.checkingEnabled,
@@ -158,10 +155,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isLoggedInToParatext(): boolean {
     return this.paratextUsername != null;
-  }
-
-  get isTranslationSuggestionsEnabled(): boolean {
-    return this.translationSuggestionsEnabled.value ?? false;
   }
 
   get isCheckingEnabled(): boolean {
@@ -318,23 +311,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     // Set status and include values for changed form items
     // Sometimes sourceParatextId is null | undefined for both new and previous values. A diff check needs to be made
     // but they also both need to be null when no value is set
-    const sourceProjectChanged: boolean = this.settingChanged(newValue, 'sourceParatextId');
-    if (this.settingChanged(newValue, 'translationSuggestionsEnabled') && this.translationSuggestionsEnabled.enabled) {
-      // Translation suggestions is set to false or is re-enabled
-      this.updateSetting(newValue, 'translationSuggestionsEnabled');
-      return;
-    }
-    // Check if the source project needs to be updated
-    if (sourceProjectChanged) {
+    if (this.settingChanged(newValue, 'sourceParatextId')) {
+      // Check if the source project needs to be updated
       const settings: SFProjectSettings = {
         sourceParatextId:
-          newValue.sourceParatextId != null ? newValue.sourceParatextId : SettingsComponent.projectSettingValueUnset,
-        // Keep this value consistent with the value of the form
-        translationSuggestionsEnabled: this.previousFormValues.translationSuggestionsEnabled
+          newValue.sourceParatextId != null ? newValue.sourceParatextId : SettingsComponent.projectSettingValueUnset
       };
-      if (newValue.sourceParatextId == null) {
-        settings.translationSuggestionsEnabled = false;
-      }
       const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
       this.checkUpdateStatus('sourceParatextId', updateTaskPromise);
       this.previousFormValues = newValue;
@@ -472,7 +454,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
     this.previousFormValues = {
-      translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
@@ -506,10 +487,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private setIndividualControlDisabledStates(): void {
-    if (!this.isLoggedInToParatext && !this.isTranslationSuggestionsEnabled) {
-      this.translationSuggestionsEnabled.disable();
-    }
-
     if (this.projectDoc?.data?.biblicalTermsConfig.errorMessage == null) {
       this.biblicalTermsEnabled.enable({ onlySelf: true });
     } else {
@@ -520,7 +497,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private setAllControlsToInSync(): void {
-    this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);

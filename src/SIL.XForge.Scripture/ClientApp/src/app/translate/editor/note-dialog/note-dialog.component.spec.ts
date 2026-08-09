@@ -761,7 +761,6 @@ class TestEnvironment {
     projectRef: TestEnvironment.PROJECT01,
     ownerRef: 'user01',
     isTargetTextRight: true,
-    translationSuggestionsEnabled: false,
     selectedSegment: 'verse_1_1'
   });
 

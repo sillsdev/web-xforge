@@ -43,7 +43,6 @@ const projectDocWithExistingSources = {
     name: 'Russian Project',
     paratextId: 'project-5',
     translateConfig: {
-      translationSuggestionsEnabled: false,
       preTranslate: true,
       draftConfig: {
         draftingSources: [
