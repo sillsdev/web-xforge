@@ -440,6 +440,17 @@ describe('BiblicalTermsComponent', () => {
     expect(env.offlineMessage.length).toBe(1);
   }));
 
+  it('should show the not found message when offline and the biblical terms are loaded', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '4');
+    env.setupProjectData('en');
+    env.wait();
+    env.onlineStatus = false;
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(0);
+    expect(env.notFoundMessage.length).toBe(1);
+    expect(env.offlineMessage.length).toBe(0);
+  }));
+
   it('should not show the not found message when loading the component', fakeAsync(() => {
     const env = new TestEnvironment(undefined, 1, 1, '4');
     env.wait();
