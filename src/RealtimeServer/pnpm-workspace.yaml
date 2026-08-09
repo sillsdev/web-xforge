@@ -1,3 +1,1 @@
 minimumReleaseAge: 10080 # 7 days
-minimumReleaseAgeExclude:
-  - brace-expansion@5.0.8
