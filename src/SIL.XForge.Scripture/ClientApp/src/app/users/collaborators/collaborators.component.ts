@@ -25,8 +25,10 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { InviteeStatus } from '../../core/models/invitee-status';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
+import { ServalAdminReadOnlyNoticeComponent } from '../../shared/serval-admin-read-only-notice/serval-admin-read-only-notice.component';
 import { ShareControlComponent } from '../../shared/share/share-control.component';
 import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
 
@@ -80,6 +82,7 @@ export enum UserType {
     MatRowDef,
     MatRow,
     MatHint,
+    ServalAdminReadOnlyNoticeComponent,
     ShareControlComponent
   ]
 })
@@ -102,9 +105,20 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
     readonly urls: ExternalUrlService,
+    private readonly permissionsService: PermissionsService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'CollaboratorsComponent');
+  }
+
+  /** Whether the user has the project role required to manage project users. */
+  get hasEditRights(): boolean {
+    return this.projectDoc != null && this.permissionsService.canEditProjectSettings(this.projectDoc);
+  }
+
+  /** Whether the page is read-only because the user is only here by virtue of being a serval admin. */
+  get isServalAdminReadOnly(): boolean {
+    return !this.hasEditRights && this.permissionsService.isServalAdmin;
   }
 
   get isLoading(): boolean {
@@ -247,20 +261,23 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       )
     );
 
-    try {
-      inviteeRows.push(
-        ...(await this.projectService.onlineInvitedUsers(this.projectId)).map(
-          invitee =>
-            ({
-              id: '',
-              user: { email: invitee.email },
-              role: invitee.role,
-              inviteeStatus: invitee
-            }) as Row
-        )
-      );
-    } catch {
-      this.noticeService.show(this.i18n.translateStatic('collaborators.problem_loading_invited_users'));
+    // Only project admins may list invited users; the server rejects the request for anyone else.
+    if (this.hasEditRights) {
+      try {
+        inviteeRows.push(
+          ...(await this.projectService.onlineInvitedUsers(this.projectId)).map(
+            invitee =>
+              ({
+                id: '',
+                user: { email: invitee.email },
+                role: invitee.role,
+                inviteeStatus: invitee
+              }) as Row
+          )
+        );
+      } catch {
+        this.noticeService.show(this.i18n.translateStatic('collaborators.problem_loading_invited_users'));
+      }
     }
 
     this._userRows = this.sortUsers(userRows, otherParatextMemberRows, inviteeRows);

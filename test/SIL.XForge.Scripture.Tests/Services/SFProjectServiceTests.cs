@@ -4952,6 +4952,160 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void GetSyncMetrics_InvalidPageIndex()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.GetSyncMetricsAsync(
+                User01,
+                systemRoles: [SystemRole.User],
+                Project01,
+                pageIndex: -1,
+                pageSize: 10
+            )
+        );
+    }
+
+    [Test]
+    public void GetSyncMetrics_InvalidPageSize()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<FormatException>(() =>
+            env.Service.GetSyncMetricsAsync(
+                User01,
+                systemRoles: [SystemRole.User],
+                Project01,
+                pageIndex: 0,
+                pageSize: 0
+            )
+        );
+    }
+
+    [Test]
+    public void GetSyncMetrics_InvalidProject()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetSyncMetricsAsync(
+                User01,
+                systemRoles: [SystemRole.User],
+                projectId: "invalid_project",
+                pageIndex: 0,
+                pageSize: 10
+            )
+        );
+    }
+
+    [Test]
+    public void GetSyncMetrics_UserForbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GetSyncMetricsAsync(
+                User05,
+                systemRoles: [SystemRole.User],
+                Project01,
+                pageIndex: 0,
+                pageSize: 10
+            )
+        );
+    }
+
+    [Test]
+    public async Task GetSyncMetrics_UserWithEditRightDoesNotSeeErrorDetails()
+    {
+        var env = new TestEnvironment();
+        env.AddSyncMetrics();
+        env.ProjectRights.HasRight(
+                Arg.Is<SFProject>(p => p.Id == Project01),
+                User02,
+                SFProjectDomain.Texts,
+                Operation.Edit
+            )
+            .Returns(true);
+
+        // SUT
+        QueryResults<SyncMetricsDisplay> actual = await env.Service.GetSyncMetricsAsync(
+            User02,
+            systemRoles: [SystemRole.User],
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+        Assert.AreEqual(2, actual.UnpagedCount);
+        Assert.IsTrue(actual.Results.All(r => r.ErrorDetails == null));
+    }
+
+    [Test]
+    public async Task GetSyncMetrics_ServalAdminSeesErrorDetails()
+    {
+        var env = new TestEnvironment();
+        env.AddSyncMetrics();
+
+        // SUT
+        QueryResults<SyncMetricsDisplay> actual = await env.Service.GetSyncMetricsAsync(
+            User06,
+            systemRoles: [SystemRole.ServalAdmin],
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+
+        // Sorted by date queued descending, and only sync metrics for this project are returned
+        Assert.AreEqual(2, actual.UnpagedCount);
+        SyncMetricsDisplay[] results = [.. actual.Results];
+        Assert.AreEqual("syncMetrics02", results[0].Id);
+        Assert.AreEqual(SyncStatus.Failed, results[0].Status);
+        Assert.AreEqual("An error occurred", results[0].ErrorDetails);
+        Assert.AreEqual(User01, results[0].UserRef);
+        Assert.AreEqual("syncMetrics01", results[1].Id);
+    }
+
+    [Test]
+    public async Task GetSyncMetrics_SystemAdminSeesErrorDetails()
+    {
+        var env = new TestEnvironment();
+        env.AddSyncMetrics();
+
+        // SUT
+        QueryResults<SyncMetricsDisplay> actual = await env.Service.GetSyncMetricsAsync(
+            User06,
+            systemRoles: [SystemRole.SystemAdmin],
+            Project01,
+            pageIndex: 0,
+            pageSize: 10
+        );
+        Assert.AreEqual("An error occurred", actual.Results.First().ErrorDetails);
+    }
+
+    [Test]
+    public async Task GetSyncMetrics_Pagination()
+    {
+        var env = new TestEnvironment();
+        env.AddSyncMetrics();
+
+        // SUT
+        QueryResults<SyncMetricsDisplay> actual = await env.Service.GetSyncMetricsAsync(
+            User06,
+            systemRoles: [SystemRole.ServalAdmin],
+            Project01,
+            pageIndex: 1,
+            pageSize: 1
+        );
+        Assert.AreEqual(2, actual.UnpagedCount);
+        Assert.AreEqual(1, actual.Results.Count());
+        Assert.AreEqual("syncMetrics01", actual.Results.First().Id);
+    }
+
+    [Test]
     public async Task SyncUserRoleAsync_DowngradesRole()
     {
         var env = new TestEnvironment();
@@ -6026,6 +6180,7 @@ public class SFProjectServiceTests
                 UserIdsToParatextUsernames.Keys.Select(id => new UserSecret { Id = id })
             );
             var translateMetrics = new MemoryRepository<TranslateMetrics>();
+            SyncMetrics = new MemoryRepository<SyncMetrics>();
             FileSystemService = Substitute.For<IFileSystemService>();
             var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
@@ -6164,6 +6319,7 @@ public class SFProjectServiceTests
                 ParatextService,
                 UserSecrets,
                 translateMetrics,
+                SyncMetrics,
                 Localizer,
                 TransceleratorService,
                 BackgroundJobClient,
@@ -6187,11 +6343,50 @@ public class SFProjectServiceTests
         public IParatextService ParatextService { get; }
         public IStringLocalizer<SharedResource> Localizer { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
+        public MemoryRepository<SyncMetrics> SyncMetrics { get; }
         public ITransceleratorService TransceleratorService { get; set; }
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
         public IGuidService GuidService { get; }
         public IMongoClient MongoClient { get; }
+
+        public void AddSyncMetrics()
+        {
+            SyncMetrics.Add(
+                new SyncMetrics
+                {
+                    Id = "syncMetrics01",
+                    ProjectRef = Project01,
+                    UserRef = User01,
+                    DateQueued = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    DateStarted = new DateTime(2024, 1, 1, 0, 1, 0, DateTimeKind.Utc),
+                    DateFinished = new DateTime(2024, 1, 1, 0, 2, 0, DateTimeKind.Utc),
+                    Status = SyncStatus.Successful,
+                    Log = ["log line"],
+                }
+            );
+            SyncMetrics.Add(
+                new SyncMetrics
+                {
+                    Id = "syncMetrics02",
+                    ProjectRef = Project01,
+                    UserRef = User01,
+                    DateQueued = new DateTime(2024, 2, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Status = SyncStatus.Failed,
+                    ErrorDetails = "An error occurred",
+                }
+            );
+            SyncMetrics.Add(
+                new SyncMetrics
+                {
+                    Id = "syncMetrics03",
+                    ProjectRef = Project02,
+                    UserRef = User02,
+                    DateQueued = new DateTime(2024, 3, 1, 0, 0, 0, DateTimeKind.Utc),
+                    Status = SyncStatus.Successful,
+                }
+            );
+        }
 
         public SFProject GetProject(string id) => RealtimeService.GetRepository<SFProject>().Get(id);
 

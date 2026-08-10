@@ -44,6 +44,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly IRepository<UserSecret> _userSecrets;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<TranslateMetrics> _translateMetrics;
+    private readonly IRepository<SyncMetrics> _syncMetrics;
     private readonly IEmailService _emailService;
     private readonly ISecurityService _securityService;
     private readonly IStringLocalizer<SharedResource> _localizer;
@@ -68,6 +69,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IParatextService paratextService,
         IRepository<UserSecret> userSecrets,
         IRepository<TranslateMetrics> translateMetrics,
+        IRepository<SyncMetrics> syncMetrics,
         IStringLocalizer<SharedResource> localizer,
         ITransceleratorService transceleratorService,
         IBackgroundJobClient backgroundJobClient,
@@ -85,6 +87,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _userSecrets = userSecrets;
         _projectSecrets = projectSecrets;
         _translateMetrics = translateMetrics;
+        _syncMetrics = syncMetrics;
         _emailService = emailService;
         _securityService = securityService;
         _localizer = localizer;
@@ -1002,17 +1005,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         int pageSize = int.MaxValue
     )
     {
-        // Ensure that the page index is valid
-        if (pageIndex < 0)
-        {
-            throw new FormatException($"{nameof(pageIndex)} is not a valid page index.");
-        }
-
-        // Ensure that the page size is valid
-        if (pageSize <= 0)
-        {
-            throw new FormatException($"{nameof(pageSize)} is not a valid page size.");
-        }
+        ValidatePagingParameters(pageIndex, pageSize);
 
         if (projectId is not null)
         {
@@ -1057,6 +1050,80 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             pageIndex,
             pageSize
         );
+    }
+
+    /// <summary>
+    /// Gets the sync history for a project, most recently queued first.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="systemRoles">The current user's system roles.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="pageIndex">The page index.</param>
+    /// <param name="pageSize">The page size.</param>
+    /// <returns>The sync metrics for display in the sync log.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user does not have permission to view the sync log.</exception>
+    /// <exception cref="FormatException">The page index or page size is invalid.</exception>
+    /// <remarks>Error details are only included for serval administrators and system administrators.</remarks>
+    public async Task<QueryResults<SyncMetricsDisplay>> GetSyncMetricsAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        int pageIndex,
+        int pageSize
+    )
+    {
+        ValidatePagingParameters(pageIndex, pageSize);
+
+        SFProject project = await GetProjectAsync(projectId);
+
+        // Anyone who can view the sync page can view the sync log, but only serval administrators
+        // and system administrators can see the error details
+        bool isSiteAdmin = systemRoles.Contains(SystemRole.SystemAdmin) || systemRoles.Contains(SystemRole.ServalAdmin);
+        if (!isSiteAdmin && !_projectRights.HasRight(project, curUserId, SFProjectDomain.Texts, Operation.Edit))
+        {
+            throw new ForbiddenException();
+        }
+
+        bool canSeeErrorDetails = isSiteAdmin;
+
+        IQueryable<SyncMetrics> query = _syncMetrics.Query().Where(m => m.ProjectRef == projectId);
+        var countTask = query.CountAsync();
+
+        // Project in the database query so that the log entries are never retrieved
+        var resultsTask = query
+            .OrderByDescending(m => m.DateQueued)
+            .Skip(pageIndex * pageSize)
+            .Take(pageSize)
+            .Select(m => new SyncMetricsDisplay
+            {
+                Id = m.Id,
+                DateQueued = m.DateQueued,
+                DateStarted = m.DateStarted,
+                DateFinished = m.DateFinished,
+                Status = m.Status,
+                UserRef = m.UserRef,
+                ErrorDetails = canSeeErrorDetails ? m.ErrorDetails : null,
+            })
+            .ToListAsync();
+
+        await Task.WhenAll(countTask, resultsTask);
+
+        return new QueryResults<SyncMetricsDisplay> { Results = resultsTask.Result, UnpagedCount = countTask.Result };
+    }
+
+    /// <exception cref="FormatException">The page index or page size is invalid.</exception>
+    private static void ValidatePagingParameters(int pageIndex, int pageSize)
+    {
+        if (pageIndex < 0)
+        {
+            throw new FormatException($"{nameof(pageIndex)} is not a valid page index.");
+        }
+
+        if (pageSize <= 0)
+        {
+            throw new FormatException($"{nameof(pageSize)} is not a valid page size.");
+        }
     }
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)

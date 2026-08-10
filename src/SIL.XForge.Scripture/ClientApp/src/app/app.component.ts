@@ -211,6 +211,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this._selectedProjectDoc != null &&
       this._selectedProjectDoc.data != null &&
       !this._selectedProjectDoc.data.checkingConfig.checkingEnabled &&
+      this.selectedProjectRole != null &&
       !roleCanAccessTranslate(this.selectedProjectRole)
     );
   }
