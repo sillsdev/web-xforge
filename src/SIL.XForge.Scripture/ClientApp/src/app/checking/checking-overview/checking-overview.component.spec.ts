@@ -29,6 +29,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -60,6 +61,7 @@ const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedUserService = mock(UserService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
+const mockedAuthService = mock(AuthService);
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
@@ -75,7 +77,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService }
+      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
+      { provide: AuthService, useMock: mockedAuthService }
     ]
   }));
 

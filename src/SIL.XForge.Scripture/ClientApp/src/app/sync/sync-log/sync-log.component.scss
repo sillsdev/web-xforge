@@ -1,0 +1,78 @@
+@use 'src/variables' as sfColors;
+
+h2 {
+  margin-block-start: 32px;
+}
+
+.sync-log-entries {
+  display: flex;
+  flex-direction: column;
+}
+
+.sync-log-entry {
+  padding-block: 12px;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.entry-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.entry-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.entry-status {
+  min-width: 80px;
+}
+
+.status-icon.status-successful {
+  color: sfColors.$greenDark;
+}
+
+.status-icon.status-failed {
+  color: sfColors.$red;
+}
+
+.status-icon.status-running {
+  color: sfColors.$orange;
+}
+
+.status-icon.status-queued,
+.status-icon.status-cancelled {
+  color: sfColors.$greyLight;
+}
+
+.error-details-button {
+  white-space: nowrap;
+}
+
+.error-details {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-block-start: 8px;
+
+  pre {
+    flex: 1;
+    margin: 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+app-owner {
+  white-space: nowrap;
+}
+
+.sync-log-label {
+  padding-top: 8px;
+}

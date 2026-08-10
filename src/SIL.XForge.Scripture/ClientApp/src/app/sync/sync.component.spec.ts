@@ -3,10 +3,13 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -18,6 +21,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
@@ -37,6 +41,8 @@ const mockedProjectService = mock(SFProjectService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
+const mockedUserService = mock(UserService);
+const mockedActivatedProjectService = mock(ActivatedProjectService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
@@ -54,6 +60,8 @@ describe('SyncComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
+      { provide: UserService, useMock: mockedUserService },
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -87,6 +95,44 @@ describe('SyncComponent', () => {
 
     expect(env.syncButton.nativeElement.disabled).toBe(false);
     expect(env.offlineMessage).toBeNull();
+  }));
+
+  it('is read-only for a serval admin who is not on the project', fakeAsync(() => {
+    const env = new TestEnvironment({ isServalAdmin: true, isUserOnProject: false, isParatextAccountConnected: false });
+
+    expect(env.servalAdminReadOnlyNotice).not.toBeNull();
+    expect(env.offlineMessage).toBeNull();
+    // The card is shown even though the serval admin is not logged in to Paratext, but the button is disabled
+    expect(env.paratextAccountNotice).toBeNull();
+    expect(env.syncButton.nativeElement.disabled).toBe(true);
+    expect(env.lastSyncDate.textContent).toContain('Last synced on');
+
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync(anything())).never();
+  }));
+
+  it('allows a serval admin to sync a resource they have read access to', fakeAsync(() => {
+    const env = new TestEnvironment({
+      isServalAdmin: true,
+      isResourceProject: true,
+      userRole: SFProjectRole.ParatextObserver
+    });
+
+    expect(env.servalAdminReadOnlyNotice).toBeNull();
+    expect(env.syncButton.nativeElement.disabled).toBe(false);
+
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+  }));
+
+  it('is editable for a serval admin who is also a project admin', fakeAsync(() => {
+    const env = new TestEnvironment({ isServalAdmin: true });
+
+    expect(env.servalAdminReadOnlyNotice).toBeNull();
+    expect(env.syncButton.nativeElement.disabled).toBe(false);
+
+    env.clickElement(env.syncButton);
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
   }));
 
   it('should sync project when the button is clicked', fakeAsync(() => {
@@ -249,6 +295,10 @@ interface SyncComponentTestConstructorArgs {
   isSyncDisabled?: boolean;
   lastSyncWasSuccessful?: boolean;
   lastSyncErrorCode?: number;
+  isServalAdmin?: boolean;
+  isUserOnProject?: boolean;
+  isResourceProject?: boolean;
+  userRole?: SFProjectRole;
 }
 
 class TestEnvironment {
@@ -269,8 +319,20 @@ class TestEnvironment {
     const isSyncDisabled: boolean = args.isSyncDisabled ?? false;
     const lastSyncWasSuccessful: boolean = args.lastSyncWasSuccessful ?? true;
     const lastSyncErrorCode: number = args.lastSyncErrorCode ?? 0;
+    const isServalAdmin: boolean = args.isServalAdmin ?? false;
+    const isUserOnProject: boolean = args.isUserOnProject ?? true;
+    const isResourceProject: boolean = args.isResourceProject ?? false;
+    const userRole: SFProjectRole = args.userRole ?? SFProjectRole.ParatextAdministrator;
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: this.projectId }));
+    when(mockedActivatedProjectService.projectId$).thenReturn(of(this.projectId));
+    when(mockedActivatedProjectService.changes$).thenReturn(of(undefined));
+    when(mockedProjectService.onlineSyncMetrics(anything(), anything(), anything())).thenResolve({
+      results: [],
+      unpagedCount: 0
+    });
+    when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedAuthService.currentUserRoles).thenReturn(isServalAdmin ? [SystemRole.ServalAdmin] : []);
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
     when(mockedProjectService.onlineSync(anything())).thenCall(id => {
@@ -288,6 +350,9 @@ class TestEnvironment {
       id: this.projectId,
       data: createTestProject({
         name: 'Sync Test Project',
+        // A 16 character paratext id identifies the project as a DBL resource
+        ...(isResourceProject ? { paratextId: 'resource90123456' } : {}),
+        userRoles: isUserOnProject ? { user01: userRole } : {},
         sync: {
           queuedCount: isInProgress ? 1 : 0,
           lastSyncSuccessful: lastSyncWasSuccessful,
@@ -351,6 +416,10 @@ class TestEnvironment {
 
   get offlineMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.offline-text');
+  }
+
+  get servalAdminReadOnlyNotice(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#serval-admin-read-only-notice');
   }
 
   set onlineStatus(hasConnection: boolean) {

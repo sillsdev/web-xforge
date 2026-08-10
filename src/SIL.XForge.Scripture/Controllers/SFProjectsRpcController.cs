@@ -770,6 +770,39 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> SyncMetrics(string projectId, int pageIndex, int pageSize)
+    {
+        try
+        {
+            return Ok(await projectService.GetSyncMetricsAsync(UserId, SystemRoles, projectId, pageIndex, pageSize));
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (FormatException fe)
+        {
+            return InvalidParamsError(fe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SyncMetrics" },
+                    { "projectId", projectId },
+                    { "pageIndex", pageIndex.ToString() },
+                    { "pageSize", pageSize.ToString() },
+                }
+            );
+            throw;
+        }
+    }
+
     public IRpcMethodResult RetrievePreTranslationStatus(string projectId)
     {
         try

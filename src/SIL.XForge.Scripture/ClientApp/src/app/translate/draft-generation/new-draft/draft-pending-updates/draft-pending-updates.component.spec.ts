@@ -4,6 +4,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
@@ -445,6 +446,7 @@ class TestEnvironment {
 
     // Use a real PermissionsService so the role/resource permission logic is exercised, not stubbed.
     const permissionsService = new PermissionsService(
+      instance(mock(AuthService)),
       instance(this.mockedUserService),
       instance(this.mockedProjectService)
     );

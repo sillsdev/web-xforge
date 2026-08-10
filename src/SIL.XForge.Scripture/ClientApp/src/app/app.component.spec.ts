@@ -397,6 +397,30 @@ describe('AppComponent', () => {
     verify(mockedDialogService.message(anything())).never();
   }));
 
+  it('does not show the checking disabled message to a serval admin who is not on the project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser('user05');
+    when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+    env.navigate(['/serval-administration', 'project01']);
+    when(mockedLocationService.pathname).thenReturn('/serval-administration/project01');
+    env.init();
+    env.setCheckingEnabled('project01', false);
+
+    expect(env.selectedProjectId).toEqual('project01');
+    expect(env.component.showCheckingDisabled).toBe(false);
+  }));
+
+  it('shows the checking disabled message to a community checker when checking is disabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser('user02');
+    env.navigate(['/projects', 'project01']);
+    env.init();
+    expect(env.component.showCheckingDisabled).toBe(false);
+
+    env.setCheckingEnabled('project01', false);
+    expect(env.component.showCheckingDisabled).toBe(true);
+  }));
+
   it('response to Commenter project role changed', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
@@ -1007,6 +1031,12 @@ class TestEnvironment {
   changeUserRole(projectId: string, userId: string, role: SFProjectRole): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles[userId], role), false);
+    this.wait();
+  }
+
+  setCheckingEnabled(projectId: string, enabled: boolean): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, enabled), false);
     this.wait();
   }
 

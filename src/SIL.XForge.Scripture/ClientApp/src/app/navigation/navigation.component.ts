@@ -21,6 +21,7 @@ import { ResumeCheckingService } from '../checking/checking/resume-checking.serv
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
+import { PermissionsService } from '../core/permissions.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 
 @Component({
@@ -71,8 +72,17 @@ export class NavigationComponent {
     private readonly resumeTranslateService: ResumeTranslateService,
     private readonly router: Router,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly permissionsService: PermissionsService,
     readonly featureFlags: FeatureFlagService
   ) {}
+
+  get isServalAdmin(): boolean {
+    return this.permissionsService.isServalAdmin;
+  }
+
+  get servalAdministrationLink(): string[] {
+    return this.selectedProjectId == null ? [] : ['/serval-administration', this.selectedProjectId];
+  }
 
   get selectedProjectDoc(): SFProjectProfileDoc | undefined {
     return this.activatedProjectService.projectDoc;

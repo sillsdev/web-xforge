@@ -71,6 +71,12 @@
           {{ t("settings") }}
         </a>
       }
+      @if (isServalAdmin && selectedProjectId != null) {
+        <a mat-list-item id="serval-admin-nav-item" [appRouterLink]="servalAdministrationLink">
+          <mat-icon>engineering</mat-icon>
+          {{ t("serval_administration") }}
+        </a>
+      }
     </mat-nav-list>
   }
 </ng-container>

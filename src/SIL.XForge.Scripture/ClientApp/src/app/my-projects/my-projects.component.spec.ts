@@ -10,6 +10,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -36,6 +37,7 @@ const mockedUserService = mock(UserService);
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedParatextService = mock(ParatextService);
 const mockedNoticeService = mock(NoticeService);
+const mockedAuthService = mock(AuthService);
 
 describe('MyProjectsComponent', () => {
   configureTestingModule(() => ({
@@ -52,7 +54,8 @@ describe('MyProjectsComponent', () => {
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: AuthService, useMock: mockedAuthService }
     ]
   }));
 
