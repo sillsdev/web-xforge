@@ -2,9 +2,11 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -15,6 +17,7 @@ import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
 
@@ -24,6 +27,8 @@ describe('NavigationComponent', () => {
   const mockedUsersAuthGuard = mock(UsersAuthGuard);
   const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
   const mockedActivatedProjectService = mock(ActivatedProjectService);
+  const mockedAuthService = mock(AuthService);
+  const mockedProjectService = mock(SFProjectService);
   const mockedUserService = mock(UserService);
   const mockedResumeCheckingService = mock(ResumeCheckingService);
   const mockedResumeTranslateService = mock(ResumeTranslateService);
@@ -41,6 +46,8 @@ describe('NavigationComponent', () => {
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: NmtDraftAuthGuard, useMock: mockedNmtDraftAuthGuard },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: AuthService, useMock: mockedAuthService },
+      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ResumeCheckingService, useMock: mockedResumeCheckingService },
@@ -70,6 +77,7 @@ describe('NavigationComponent', () => {
       when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
       when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canGenerateDraft$);
       when(mockedUserService.currentUserId).thenReturn('user01');
+      when(mockedAuthService.currentUserRoles).thenReturn([]);
       when(mockedRouter.url).thenReturn('/projects/project01');
       when(mockedRouter.createUrlTree(anything(), anything())).thenReturn([] as any);
       when(mockedRouter.serializeUrl(anything())).thenReturn('');
@@ -84,6 +92,10 @@ describe('NavigationComponent', () => {
 
     get adminPagesList(): DebugElement | null {
       return this.fixture.debugElement.query(By.css('#admin-pages-menu-list'));
+    }
+
+    get servalAdminNavItem(): DebugElement | null {
+      return this.fixture.debugElement.query(By.css('#serval-admin-nav-item'));
     }
 
     emitProjectChange(projectDoc: SFProjectProfileDoc | undefined): void {
@@ -154,6 +166,28 @@ describe('NavigationComponent', () => {
     env.emitProjectChange(projectDoc);
     expect(env.adminPagesList).toBeNull();
 
+    flush();
+  }));
+
+  it('shows the serval administration item for serval admins on a project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+    // The guards return true for serval admins, so the admin pages section is shown
+    env.canSync$.next(true);
+    env.emitProjectChange({ id: 'project01' } as SFProjectProfileDoc);
+
+    expect(env.servalAdminNavItem).not.toBeNull();
+    expect(env.component.servalAdministrationLink).toEqual(['/serval-administration', 'project01']);
+    flush();
+  }));
+
+  it('hides the serval administration item for non serval admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.canSync$.next(true);
+    env.emitProjectChange({ id: 'project01' } as SFProjectProfileDoc);
+
+    expect(env.adminPagesList).not.toBeNull();
+    expect(env.servalAdminNavItem).toBeNull();
     flush();
   }));
 

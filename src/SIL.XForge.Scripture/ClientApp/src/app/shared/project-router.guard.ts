@@ -1,14 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanDeactivate, Router, RouterStateSnapshot } from '@angular/router';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { isResource } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
-import { AuthService } from 'xforge-common/auth.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../core/permissions.service';
@@ -46,38 +42,20 @@ export class SettingsAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService
+    private readonly permissionsService: PermissionsService
   ) {
     super(authGuard, projectService);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
-    return (
-      projectDoc.data != null &&
-      projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
-    );
+    return this.permissionsService.canAccessProjectSettings(projectDoc);
   }
 }
 
 @Injectable({
   providedIn: 'root'
 })
-export class UsersAuthGuard extends RouterGuard {
-  constructor(
-    authGuard: AuthGuard,
-    projectService: SFProjectService,
-    private userService: UserService
-  ) {
-    super(authGuard, projectService);
-  }
-
-  check(projectDoc: SFProjectProfileDoc): boolean {
-    return (
-      projectDoc.data != null &&
-      projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator
-    );
-  }
-}
+export class UsersAuthGuard extends SettingsAuthGuard {}
 
 @Injectable({
   providedIn: 'root'
@@ -86,30 +64,13 @@ export class SyncAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private readonly userService: UserService,
-    private readonly authService: AuthService
+    private readonly permissionsService: PermissionsService
   ) {
     super(authGuard, projectService);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
-    if (projectDoc.data == null) return false;
-    return (
-      SF_PROJECT_RIGHTS.hasRight(
-        projectDoc.data,
-        this.userService.currentUserId,
-        SFProjectDomain.Texts,
-        Operation.Edit
-      ) ||
-      (this.authService.currentUserRoles.includes(SystemRole.ServalAdmin) &&
-        isResource(projectDoc.data) &&
-        SF_PROJECT_RIGHTS.hasRight(
-          projectDoc.data,
-          this.userService.currentUserId,
-          SFProjectDomain.Texts,
-          Operation.View
-        ))
-    );
+    return this.permissionsService.canAccessSync(projectDoc);
   }
 }
 

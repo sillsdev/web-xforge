@@ -35,7 +35,9 @@ public static class SFDataAccessServiceCollectionExtensions
             cm => cm.MapIdProperty(sm => sm.Id),
             im =>
                 im.CreateOne(
-                    new CreateIndexModel<SyncMetrics>(Builders<SyncMetrics>.IndexKeys.Ascending(sm => sm.ProjectRef))
+                    new CreateIndexModel<SyncMetrics>(
+                        Builders<SyncMetrics>.IndexKeys.Ascending(sm => sm.ProjectRef).Descending(sm => sm.DateQueued)
+                    )
                 )
         );
         services.AddMongoRepository<OnboardingRequest>(

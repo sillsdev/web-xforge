@@ -22,7 +22,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
@@ -34,6 +33,7 @@ interface Row {
   dialogData: EventMetric;
   eventType: string;
   scope: string;
+  /** The raw ISO timestamp of the event. OwnerComponent localizes it for display. */
   timeStamp: string;
   userId?: string;
   successful: boolean;
@@ -96,7 +96,6 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly authService: AuthService,
     private readonly dialogService: DialogService,
-    private readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private destroyRef: DestroyRef
@@ -173,7 +172,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
         eventType: this.getEventType(eventMetric),
         scope: eventMetric.scope,
         successful: eventMetric.exception == null,
-        timeStamp: this.i18n.formatDate(new Date(eventMetric.timeStamp), { showTimeZone: true }),
+        timeStamp: eventMetric.timeStamp,
         userId: eventMetric.userId
       });
     }
