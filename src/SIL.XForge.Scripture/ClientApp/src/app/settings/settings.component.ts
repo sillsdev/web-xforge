@@ -38,10 +38,12 @@ import { SelectableProject } from '../core/models/selectable-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService } from '../core/paratext.service';
+import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { InfoComponent } from '../shared/info/info.component';
 import { ParatextAccountNoticeComponent } from '../shared/paratext-account-notice/paratext-account-notice.component';
+import { ServalAdminReadOnlyNoticeComponent } from '../shared/serval-admin-read-only-notice/serval-admin-read-only-notice.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -69,7 +71,8 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
     TranslocoMarkupComponent,
     RouterLinkDirective,
     MatCardActions,
-    ParatextAccountNoticeComponent
+    ParatextAccountNoticeComponent,
+    ServalAdminReadOnlyNoticeComponent
   ]
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
@@ -142,6 +145,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     readonly authService: AuthService,
     readonly externalUrls: ExternalUrlService,
     private readonly activatedProjectService: ActivatedProjectService,
+    private readonly permissionsService: PermissionsService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'SettingsComponent');
@@ -194,7 +198,23 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get deleteButtonDisabled(): boolean {
-    return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject || this.isProjectSyncing;
+    return (
+      !this.isAppOnline ||
+      !this.mainSettingsLoaded ||
+      this.isActiveSourceProject ||
+      this.isProjectSyncing ||
+      !this.hasEditRights
+    );
+  }
+
+  /** Whether the user has the project role required to change settings. */
+  get hasEditRights(): boolean {
+    return this.projectDoc != null && this.permissionsService.canEditProjectSettings(this.projectDoc);
+  }
+
+  /** Whether the page is read-only because the user is only here by virtue of being a serval admin. */
+  get isServalAdminReadOnly(): boolean {
+    return !this.hasEditRights && this.permissionsService.isServalAdmin;
   }
 
   ngOnInit(): void {
@@ -210,9 +230,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([isOnline, projectId]) => {
         this.isAppOnline = isOnline;
-        if (isOnline && this.projects == null) {
+        const readOnlySettingsLoaded: boolean = this.mainSettingsLoaded && !this.hasEditRights;
+        if (isOnline && this.projects == null && !readOnlySettingsLoaded) {
           this.loading = true;
 
+          const projectDocPromise = this.projectService
+            .get(projectId)
+            .then(projectDoc => (this.projectDoc = projectDoc));
           const mainSettingsPromise = Promise.all([
             this.projectService
               .onlineIsSourceProject(projectId)
@@ -220,7 +244,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
             firstValueFrom(this.paratextService.getParatextUsername()).then((username: string | undefined) => {
               if (username != null) this.paratextUsername = username;
             }),
-            this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
+            projectDocPromise
           ]).then(() => {
             if (this.projectDoc != null) {
               this.updateSettingsInfo();
@@ -233,6 +257,16 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
               this.updateFormEnabled();
             }
           });
+
+          // Users without an admin role on the project (e.g. serval admins) cannot list Paratext projects and
+          // resources, and must not be prompted to update Paratext credentials, so skip those requests once rights
+          // are known.
+          await projectDocPromise;
+          if (!this.hasEditRights) {
+            await mainSettingsPromise;
+            this.loading = false;
+            return;
+          }
 
           let paratextTokensExpired = false;
           const projectsAndResourcesPromise = Promise.all([
@@ -275,7 +309,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   openDeleteProjectDialog(): void {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    if (this.projectDoc == null || this.projectDoc.data == null || !this.hasEditRights) {
       return;
     }
 
@@ -298,7 +332,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   updateFormEnabled(): void {
-    if (this._isAppOnline && this.mainSettingsLoaded) {
+    if (this._isAppOnline && this.mainSettingsLoaded && this.hasEditRights) {
       this.form.enable();
       this.setIndividualControlDisabledStates();
     } else {

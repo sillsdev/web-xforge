@@ -5,6 +5,7 @@ import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -21,6 +22,7 @@ import { DraftGenerationService } from '../draft-generation.service';
 import { DraftHistoryListComponent } from './draft-history-list.component';
 
 const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedAuthService = mock(AuthService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedI18nService = mock(I18nService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
@@ -37,6 +39,7 @@ describe('DraftHistoryListComponent', () => {
       provideHttpClientTesting(),
       provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },

@@ -11,9 +11,11 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { AuthService } from 'xforge-common/auth.service';
 import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -37,6 +39,7 @@ import { provideQuillRegistrations } from '../../shared/text/quill-editor-regist
 import { CollaboratorsComponent, UserType } from './collaborators.component';
 
 const mockedActivatedProject = mock(ActivatedProjectService);
+const mockedAuthService = mock(AuthService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -50,6 +53,7 @@ describe('CollaboratorsComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       provideTestOnlineStatus(),
       { provide: ActivatedProjectService, useMock: mockedActivatedProject },
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -115,6 +119,24 @@ describe('CollaboratorsComponent', () => {
     expect(env.removeUserItemOnRow(0, UserType.Guest)).toBeTruthy();
     expect(env.cancelInviteItemOnRow(0, UserType.Guest)).toBeFalsy();
     env.cleanup();
+  }));
+
+  it('is read-only for a serval admin who is not on the project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+    when(mockedUserService.currentUserId).thenReturn('serval01');
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.servalAdminReadOnlyNotice).not.toBeNull();
+    expect(env.offlineMessage).toBeNull();
+    // Users are still listed, but without any management controls
+    expect(env.userRowsByCategory(UserType.Paratext).length).toBeGreaterThan(0);
+    expect(env.userRowMoreMenuElement(0, UserType.Paratext)).toBeNull();
+    expect(env.shareControl).toBeNull();
+    verify(mockedProjectService.onlineInvitedUsers(anything())).never();
   }));
 
   it('display paratext users not on project', fakeAsync(() => {
@@ -204,16 +226,10 @@ describe('CollaboratorsComponent', () => {
     ]);
   }));
 
-  it('handle error from invited users query, when user is not on project', fakeAsync(() => {
-    // If an admin user is removed from the project, or loses admin
-    // privileges, while looking at the component, they will run loadUsers
-    // and throw an error calling onlineInvitedUsers.
-    // Handle that error.
-
+  it('does not query invited users when user is not on project', fakeAsync(() => {
+    // If an admin user is removed from the project, or loses admin privileges, while looking at the component, they
+    // will run loadUsers, which must not call onlineInvitedUsers (the server would reject it).
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
-      new CommandError(CommandErrorCode.Other, 'error', null)
-    );
     env.setupProjectData({
       // No user01
       user02: SFProjectRole.ParatextTranslator,
@@ -223,21 +239,34 @@ describe('CollaboratorsComponent', () => {
     expect(() => {
       tick();
     }).not.toThrow();
-    verify(mockedNoticeService.show(anything())).once();
+    verify(mockedProjectService.onlineInvitedUsers(anything())).never();
+    verify(mockedNoticeService.show(anything())).never();
     tick();
   }));
 
-  it('handle error from invited users query, when user is not an admin', fakeAsync(() => {
+  it('does not query invited users when user is not an admin', fakeAsync(() => {
     const env = new TestEnvironment();
-    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
-      new CommandError(CommandErrorCode.Other, 'error', null)
-    );
     env.setupProjectData({
       // user01 is not an admin
       user01: SFProjectRole.CommunityChecker,
       user02: SFProjectRole.ParatextTranslator,
       user03: SFProjectRole.CommunityChecker
     });
+    env.fixture.detectChanges();
+    expect(() => {
+      tick();
+    }).not.toThrow();
+    verify(mockedProjectService.onlineInvitedUsers(anything())).never();
+    verify(mockedNoticeService.show(anything())).never();
+    tick();
+  }));
+
+  it('handles error from invited users query', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenThrow(
+      new CommandError(CommandErrorCode.Other, 'error', null)
+    );
+    env.setupProjectData();
     env.fixture.detectChanges();
     expect(() => {
       tick();
@@ -420,6 +449,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, userId)
     );
     when(mockedUserService.currentUserId).thenReturn('user01');
+    when(mockedAuthService.currentUserRoles).thenReturn([]);
     when(mockedProjectService.get(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, projectId)
     );
@@ -460,6 +490,14 @@ class TestEnvironment {
 
   get offlineMessage(): DebugElement {
     return this.fixture.debugElement.query(By.css('#collaborators-offline-message'));
+  }
+
+  get servalAdminReadOnlyNotice(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#serval-admin-read-only-notice'));
+  }
+
+  get shareControl(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-share-control'));
   }
 
   set onlineStatus(hasConnection: boolean) {

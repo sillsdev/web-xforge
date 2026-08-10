@@ -1,10 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { isResource, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
+import { AuthService } from 'xforge-common/auth.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
@@ -21,9 +23,18 @@ import { SFProjectService } from './sf-project.service';
 @Injectable({ providedIn: 'root' })
 export class PermissionsService {
   constructor(
+    private readonly authService: AuthService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService
   ) {}
+
+  get isServalAdmin(): boolean {
+    return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
+  }
+
+  get isSystemAdmin(): boolean {
+    return this.authService.currentUserRoles.includes(SystemRole.SystemAdmin);
+  }
 
   canAccessCommunityChecking(project: SFProjectProfileDoc, userId?: string): boolean {
     if (project.data == null) return false;
@@ -104,6 +115,48 @@ export class PermissionsService {
     return false;
   }
 
+  /** Whether the user can open the project settings and users pages (serval admins get read-only access). */
+  canAccessProjectSettings(projectDoc: SFProjectProfileDoc): boolean {
+    return projectDoc.data != null && (this.isServalAdmin || this.canEditProjectSettings(projectDoc));
+  }
+
+  /** Whether the user can open the sync page (serval admins get read-only access). */
+  canAccessSync(projectDoc: SFProjectProfileDoc): boolean {
+    return projectDoc.data != null && (this.isServalAdmin || this.canInitiateSync(projectDoc));
+  }
+
+  /** Whether the user has the project role required to edit project settings and manage project users. */
+  canEditProjectSettings(projectDoc: SFProjectProfileDoc, userId?: string): boolean {
+    return this.isProjectAdmin(projectDoc, userId);
+  }
+
+  /** Whether the user can initiate a synchronization of the project. */
+  canInitiateSync(projectDoc: SFProjectProfileDoc, userId?: string): boolean {
+    if (projectDoc.data == null) return false;
+    if (
+      SF_PROJECT_RIGHTS.hasRight(
+        projectDoc.data,
+        userId ?? this.userService.currentUserId,
+        SFProjectDomain.Texts,
+        Operation.Edit
+      )
+    ) {
+      return true;
+    }
+    // The backend allows anyone with any Paratext role to sync a DBL resource, so serval admins can sync resources
+    // they have read access to
+    return (
+      this.isServalAdmin &&
+      isResource(projectDoc.data) &&
+      SF_PROJECT_RIGHTS.hasRight(
+        projectDoc.data,
+        userId ?? this.userService.currentUserId,
+        SFProjectDomain.Texts,
+        Operation.View
+      )
+    );
+  }
+
   canSync(projectDoc: SFProjectProfileDoc, userId?: string): boolean {
     if (projectDoc.data == null) {
       return false;
@@ -122,9 +175,13 @@ export class PermissionsService {
 
   /** Whether the user is allowed to configure drafting sources for the project. */
   canConfigureSources(projectDoc?: SFProjectProfileDoc, userId?: string): boolean {
+    return this.isProjectAdmin(projectDoc, userId);
+  }
+
+  /** Whether the user's role on the project is Paratext administrator. */
+  private isProjectAdmin(projectDoc?: SFProjectProfileDoc, userId?: string): boolean {
     if (projectDoc?.data == null) return false;
-    const role = projectDoc.data.userRoles[userId ?? this.userService.currentUserId];
-    return role === SFProjectRole.ParatextAdministrator;
+    return projectDoc.data.userRoles[userId ?? this.userService.currentUserId] === SFProjectRole.ParatextAdministrator;
   }
 
   canAccessBiblicalTerms(projectDoc: SFProjectProfileDoc): boolean {
