@@ -16,6 +16,22 @@ export interface BuildDto extends ResourceDto {
   executionData?: BuildExecutionData;
 }
 
+// Enum Definition
+enum ServalDiagnosticSeverity {
+  Info = 0,
+  Warn = 1,
+  Error = 2
+}
+
+// Model Interface
+interface ServalBuildDiagnostic {
+  code: string;
+  category: string;
+  message: string;
+  severity: ServalDiagnosticSeverity;
+  data: Record<string, any>;
+}
+
 /** Execution data from a Serval translation build. */
 export interface BuildExecutionData {
   averagePretranslationConfidence?: number;
@@ -23,11 +39,17 @@ export interface BuildExecutionData {
   isTrainFilteredByChapter?: boolean;
   trainCount: number;
   pretranslateCount: number;
+  isTrainFilteredByChapter?: boolean;
+  isPretranslateFilteredByChapter?: boolean;
   resolvedSourceLanguage?: string;
   resolvedTargetLanguage?: string;
   sourceLanguageTag?: string;
   targetLanguageTag?: string;
-  warnings: string[];
+  resolvedSourceLanguage?: string;
+  resolvedTargetLanguage?: string;
+  averagePretranslationConfidence?: number;
+  diagnostics: ServalBuildDiagnostic[];
+  diagnosticsTruncated?: boolean;
 }
 
 /** Additional information about a Serval build. */

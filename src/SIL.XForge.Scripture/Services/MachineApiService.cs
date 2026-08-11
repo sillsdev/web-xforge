@@ -1472,20 +1472,32 @@ public partial class MachineApiService(
             );
         }
 
-        // Serval problems: execution data warnings
+        // Serval problems: execution data warnings for builds earlier than Serval 1.20
+#pragma warning disable CS0612 // Type or member is obsolete
         if (translationBuild.ExecutionData?.Warnings is { Count: > 0 } warnings)
+#pragma warning restore CS0612 // Type or member is obsolete
         {
-            foreach (string warning in warnings)
-            {
-                problems.Add(
-                    new BuildReportProblem
-                    {
-                        Source = BuildReportProblemSource.Serval,
-                        Severity = BuildReportProblemSeverity.Warning,
-                        Message = warning,
-                    }
-                );
-            }
+            problems.AddRange(
+                warnings.Select(w => new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Serval,
+                    Severity = BuildReportProblemSeverity.Warning,
+                    Message = w,
+                })
+            );
+        }
+
+        // Serval: Diagnostic messages for builds from Serval 1.20 and later
+        if (translationBuild.ExecutionData?.Diagnostics is { Count: > 0 } diagnostics)
+        {
+            problems.AddRange(
+                diagnostics.Select(d => new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Serval,
+                    Severity = (BuildReportProblemSeverity)d.Severity,
+                    Message = d.Message,
+                })
+            );
         }
 
         return problems;
@@ -3592,22 +3604,55 @@ public partial class MachineApiService(
                 TranslationEngineId = translationBuild.Engine.Id,
             },
             DeploymentVersion = translationBuild.DeploymentVersion,
-            ExecutionData = translationBuild.ExecutionData is null
-                ? null
-                : new ServalBuildExecutionData
-                {
-                    AveragePretranslationConfidence = translationBuild.ExecutionData.AveragePretranslationConfidence,
-                    IsPretranslateFilteredByChapter = translationBuild.ExecutionData.IsPretranslateFilteredByChapter,
-                    IsTrainFilteredByChapter = translationBuild.ExecutionData.IsTrainFilteredByChapter,
-                    TrainCount = translationBuild.ExecutionData.TrainCount,
-                    PretranslateCount = translationBuild.ExecutionData.PretranslateCount,
-                    ResolvedSourceLanguage = translationBuild.ExecutionData.ResolvedSourceLanguage,
-                    ResolvedTargetLanguage = translationBuild.ExecutionData.ResolvedTargetLanguage,
-                    SourceLanguageTag = translationBuild.ExecutionData.EngineSourceLanguageTag,
-                    TargetLanguageTag = translationBuild.ExecutionData.EngineTargetLanguageTag,
-                    Warnings = [.. translationBuild.ExecutionData.Warnings],
-                },
+            ExecutionData =
+                executionData == null
+                    ? null
+                    : new ServalBuildExecutionData
+                    {
+                        AveragePretranslationConfidence = executionData.AveragePretranslationConfidence,
+                        DiagnosticsTruncated = executionData.DiagnosticsTruncated,
+                        IsPretranslateFilteredByChapter = executionData.IsPretranslateFilteredByChapter,
+                        IsTrainFilteredByChapter = executionData.IsTrainFilteredByChapter,
+                        PretranslateCount = executionData.PretranslateCount,
+                        ResolvedSourceLanguage = executionData.ResolvedSourceLanguage,
+                        ResolvedTargetLanguage = executionData.ResolvedTargetLanguage,
+                        SourceLanguageTag = executionData.EngineSourceLanguageTag,
+                        TargetLanguageTag = executionData.EngineTargetLanguageTag,
+                        TrainCount = executionData.TrainCount,
+                    },
         };
+
+        // Add the legacy warnings to the diagnostic messages
+#pragma warning disable CS0612 // Type or member is obsolete
+        if (executionData?.Warnings is { Count: > 0 } warnings)
+        {
+            buildDto.ExecutionData.Diagnostics.AddRange(
+                warnings.Select(w => new ServalBuildDiagnostic
+                {
+                    Category = "LEGACY",
+                    Code = "LEGACY-0001",
+                    Data = [],
+                    Message = w,
+                    Severity = ServalDiagnosticSeverity.Warn,
+                })
+            );
+        }
+#pragma warning restore CS0612 // Type or member is obsolete
+
+        // Add new diagnostic messages
+        if (executionData?.Diagnostics is { Count: > 0 } diagnostics)
+        {
+            buildDto.ExecutionData.Diagnostics.AddRange(
+                diagnostics.Select(d => new ServalBuildDiagnostic
+                {
+                    Category = d.Category,
+                    Code = d.Code,
+                    Data = new Dictionary<string, object>(d.Data),
+                    Message = d.Message,
+                    Severity = (ServalDiagnosticSeverity)d.Severity,
+                })
+            );
+        }
 
         // Create an initial value for the date requested, based on the object id from Mongo
         // This will be overwritten with the value from the EventMetric, if that exists
