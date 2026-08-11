@@ -50,6 +50,9 @@ public enum BuildReportProblemSource
 /// </summary>
 public enum BuildReportProblemSeverity
 {
+    [EnumMember(Value = "info")]
+    Info,
+
     [EnumMember(Value = "warning")]
     Warning,
 
