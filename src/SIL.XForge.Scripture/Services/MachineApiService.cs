@@ -1008,6 +1008,10 @@ public partial class MachineApiService(
                 cancellationToken
             );
         }
+        catch (TaskCanceledException)
+        {
+            return [];
+        }
         catch (ServalApiException e)
         {
             ProcessServalApiException(e);
@@ -1998,6 +2002,10 @@ public partial class MachineApiService(
                     minRevision,
                     cancellationToken
                 );
+            }
+            catch (TaskCanceledException)
+            {
+                return null;
             }
             catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status204NoContent)
             {
