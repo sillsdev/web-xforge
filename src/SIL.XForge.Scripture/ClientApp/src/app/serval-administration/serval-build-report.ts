@@ -24,9 +24,9 @@ export type BuildReportProblemSource = 'local' | 'serval';
 function isBuildReportProblemSource(value: unknown): value is BuildReportProblemSource {
   return value === 'local' || value === 'serval';
 }
-export type BuildReportProblemSeverity = 'warning' | 'error';
+export type BuildReportProblemSeverity = 'info' | 'warning' | 'error';
 function isBuildReportProblemSeverity(value: unknown): value is BuildReportProblemSeverity {
-  return value === 'warning' || value === 'error';
+  return value === 'info' || value === 'warning' || value === 'error';
 }
 
 export interface BuildReportProblem {
