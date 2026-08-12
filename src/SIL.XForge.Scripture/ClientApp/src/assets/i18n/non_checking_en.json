@@ -315,6 +315,9 @@
       "generate_draft": "Generate Draft"
     }
   },
+  "draft_confidence": {
+    "low_confidence": "Low confidence"
+  },
   "draft_generation_steps": {
     "back": "Back",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",

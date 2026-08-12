@@ -108,13 +108,6 @@ public class MachineApiServiceTests
         DateFinished = DateTimeOffset.UtcNow,
     };
 
-    private static readonly QualityEstimationConfig QualityEstimationConfig = new QualityEstimationConfig
-    {
-        Version = "0.1",
-        Slope = 109.6145,
-        Intercept = -14.0633,
-    };
-
     [Test]
     public async Task ApplyPreTranslationToProjectAsync_BlankUsjFromMongo()
     {
@@ -1526,7 +1519,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
         const string draftGenerationRequestId = "draft-req";
         env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
 
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
@@ -2578,7 +2571,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
 
         // SUT
         BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
@@ -2604,7 +2597,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
 
         // SUT
         BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
@@ -5976,11 +5969,11 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task UpdatePreTranslationTextDocumentsAsync_QualityEstimation()
+    public async Task UpdatePreTranslationTextDocumentsAsync_BuildConfidence()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
         const int bookNum = 1;
         const int chapterNum = 0;
         string textDocumentId = TextDocument.GetDocId(Project01, bookNum, chapter: 1, TextDocument.Draft);
@@ -6015,10 +6008,6 @@ public class MachineApiServiceTests
             Assert.That(draftMetrics.BookConfidences, Has.Count.EqualTo(1));
             Assert.That(draftMetrics.ChapterConfidences, Has.Count.EqualTo(1));
             Assert.That(draftMetrics.VerseConfidences, Has.Count.EqualTo(1));
-            Assert.That(
-                draftMetrics.QualityEstimationConfig,
-                Is.EqualTo(QualityEstimationConfig).UsingPropertiesComparer()
-            );
         }
     }
 
@@ -6944,28 +6933,13 @@ public class MachineApiServiceTests
                 );
         }
 
-        public async Task SetupDraftMetricsAsync(
-            string sfProjectId,
-            string buildId,
-            QualityEstimationConfig qualityEstimationConfig
-        )
+        public async Task SetupDraftMetricsAsync(string sfProjectId, string buildId)
         {
             DraftMetrics.Add(
                 new DraftMetrics
                 {
                     Id = Models.DraftMetrics.GetDocId(sfProjectId, buildId),
-                    QualityEstimationConfig = qualityEstimationConfig,
-                    BookConfidences =
-                    [
-                        new BookConfidence
-                        {
-                            BookNum = 1,
-                            Confidence = 0.6,
-                            Label = "Green",
-                            ProjectedChrF3 = 51.93,
-                            Usability = 0.765,
-                        },
-                    ],
+                    BookConfidences = [new BookConfidence { BookNum = 1, Confidence = 0.6 }],
                     ChapterConfidences =
                     [
                         new ChapterConfidence
@@ -6973,16 +6947,9 @@ public class MachineApiServiceTests
                             BookNum = 1,
                             ChapterNum = 1,
                             Confidence = 0.6,
-                            Label = "Green",
-                            ProjectedChrF3 = 51.93,
-                            Usability = 0.765,
                         },
                     ],
                 }
-            );
-            await Projects.UpdateAsync(
-                p => p.Id == sfProjectId,
-                u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
             );
         }
 
