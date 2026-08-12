@@ -37,6 +37,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { UserService } from 'xforge-common/user.service';
+import { XFValidators } from 'xforge-common/xfvalidators';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
@@ -75,6 +76,9 @@ interface NoteDisplayInfo {
 
 type SaveOption = 'save' | 'resolve';
 
+/** A note must have content, and content that is only whitespace does not count. */
+const NOTE_CONTENT_VALIDATORS = [Validators.required, XFValidators.someNonWhitespace];
+
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 // TODO: Refactor to have a Biblical Term Note Dialog subclass (will require spec.ts refactoring too)
@@ -111,7 +115,7 @@ export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
   notesToDisplay: NoteDisplayInfo[] = [];
   _saveOption: SaveOption = 'save';
-  noteDialogForm: FormGroup = new FormGroup({ comment: new FormControl('', Validators.required) });
+  noteDialogForm: FormGroup = new FormGroup({ comment: new FormControl('', NOTE_CONTENT_VALIDATORS) });
 
   private biblicalTermDoc?: BiblicalTermDoc;
   private isAssignedToOtherUser: boolean = false;
@@ -245,7 +249,7 @@ export class NoteDialogComponent implements OnInit {
     if (option === 'resolve') {
       this.noteDialogForm.controls.comment.clearValidators();
     } else {
-      this.noteDialogForm.controls.comment.setValidators(Validators.required);
+      this.noteDialogForm.controls.comment.setValidators(NOTE_CONTENT_VALIDATORS);
     }
     this.noteDialogForm.updateValueAndValidity();
     this._saveOption = option;
