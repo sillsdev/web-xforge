@@ -58,18 +58,6 @@ export interface DraftUsfmConfig {
   quoteFormat: QuoteFormat;
 }
 
-/**
- * The configuration used for Quality Estimation.
- *
- * NOTE: dateUpdated is nullable here but not in the C# backend, as it will not be in the model sent to the backend.
- */
-export interface QualityEstimationConfig {
-  version: string;
-  slope: number;
-  intercept: number;
-  dateUpdated?: Date;
-}
-
 export interface DraftConfig {
   draftingSources: TranslateSource[];
   trainingSources: TranslateSource[];
@@ -85,7 +73,6 @@ export interface DraftConfig {
   sendEmailOnBuildFinished?: boolean;
   currentScriptureRange?: string;
   draftedScriptureRange?: string;
-  qualityEstimationConfig?: QualityEstimationConfig;
 }
 
 export interface TranslateConfig {
