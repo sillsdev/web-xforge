@@ -89,14 +89,6 @@ public interface ISFProjectService : IProjectService
     Task SetServalConfigAsync(string curUserId, string[] systemRoles, string projectId, string? servalConfig);
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
-    Task SetQualityEstimationConfigAsync(
-        string curUserId,
-        string[] systemRoles,
-        string projectId,
-        QualityEstimationConfig? qualityEstimationConfig
-    );
-
-    [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
     Task SetDraftSourcesAsync(
         string curUserId,
         string[] systemRoles,
