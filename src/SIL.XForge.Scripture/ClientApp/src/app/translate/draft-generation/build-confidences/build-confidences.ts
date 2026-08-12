@@ -10,9 +10,6 @@ export interface BuildConfidences {
 /** The confidence values */
 export interface Confidence {
   confidence: number;
-  label: UsabilityLabel;
-  projectedChrF3: number;
-  usability: number;
 }
 
 export interface BookConfidence extends Confidence {
@@ -21,11 +18,4 @@ export interface BookConfidence extends Confidence {
 
 export interface ChapterConfidence extends BookConfidence {
   chapterNum: number;
-}
-
-/** The usability label */
-export enum UsabilityLabel {
-  Red = 'Red',
-  Yellow = 'Yellow',
-  Green = 'Green'
 }

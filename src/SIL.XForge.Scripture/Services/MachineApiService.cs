@@ -1111,7 +1111,7 @@ public partial class MachineApiService(
                 engineToProject.TryGetValue(
                     translationBuild.Engine.Id,
                     out (string sfProjectId, SFProject? sfProject) project
-                ) && project.sfProject?.TranslateConfig.DraftConfig.QualityEstimationConfig is not null
+                )
             )
             {
                 draftMetricIds.Add($"{project.sfProjectId}:{translationBuild.Id}");
@@ -1224,7 +1224,7 @@ public partial class MachineApiService(
             BuildId = id[1],
             BookConfidences = [.. draftMetrics.BookConfidences.OrderBy(c => c.BookNum)],
             ChapterConfidences = [.. draftMetrics.ChapterConfidences.OrderBy(c => c.BookNum).ThenBy(c => c.ChapterNum)],
-            LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Usability).FirstOrDefault(),
+            LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Confidence).FirstOrDefault(),
         };
     }
 
@@ -3656,13 +3656,11 @@ public partial class MachineApiService(
             throw new ForbiddenException();
         }
 
-        // Only calculate quality estimation if the project is configured for it, and we have not calculated it already
-        bool calculateQualityEstimation = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig != null;
-
         // Retrieve the pre-translation verse confidences from Serval
-        List<VerseConfidence> verseConfidences = calculateQualityEstimation
-            ? [.. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken)]
-            : [];
+        List<VerseConfidence> verseConfidences =
+        [
+            .. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken),
+        ];
 
         // Get the project versification
         ScrVers versification =
@@ -3719,51 +3717,40 @@ public partial class MachineApiService(
         }
 
         // Generate the draft metrics containing the confidence scores
-        if (calculateQualityEstimation)
+
+        // Use a dummy slope/intercept as we only want the per chapter/book confidence values
+        ChrF3QualityEstimator estimator = new ChrF3QualityEstimator(0.0, 0.0);
+        (
+            List<ScriptureSegmentUsability> _, // We do not require segment level confidence values
+            List<ScriptureChapterUsability> usabilityChapters,
+            List<ScriptureBookUsability> usabilityBooks
+        ) = estimator.EstimateQuality(
+            verseConfidences.Select(vc => (new ScriptureRef(vc.ToVerseRef()), vc.Confidence))
+        );
+        var entity = new DraftMetrics
         {
-            ChrF3QualityEstimator estimator = new ChrF3QualityEstimator(
-                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Slope,
-                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Intercept
-            );
-            (
-                List<ScriptureSegmentUsability> _, // We do not require segment level confidence values
-                List<ScriptureChapterUsability> usabilityChapters,
-                List<ScriptureBookUsability> usabilityBooks
-            ) = estimator.EstimateQuality(
-                verseConfidences.Select(vc => (new ScriptureRef(vc.ToVerseRef()), vc.Confidence))
-            );
-            var entity = new DraftMetrics
-            {
-                Id = DraftMetrics.GetDocId(sfProjectId, buildId),
-                BookConfidences =
-                [
-                    .. usabilityBooks.Select(b => new BookConfidence
-                    {
-                        BookNum = Canon.BookIdToNumber(b.Book),
-                        Confidence = b.Confidence,
-                        Label = b.Label.ToString(),
-                        ProjectedChrF3 = b.ProjectedChrF3,
-                        Usability = b.Usability,
-                    }),
-                ],
-                ChapterConfidences =
-                [
-                    .. usabilityChapters.Select(c => new ChapterConfidence
-                    {
-                        BookNum = Canon.BookIdToNumber(c.Book),
-                        ChapterNum = c.Chapter,
-                        Confidence = c.Confidence,
-                        Label = c.Label.ToString(),
-                        ProjectedChrF3 = c.ProjectedChrF3,
-                        Usability = c.Usability,
-                    }),
-                ],
-                QualityEstimationConfig = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig,
-                VerseConfidences = verseConfidences,
-                DateUpdated = DateTime.UtcNow,
-            };
-            await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
-        }
+            Id = DraftMetrics.GetDocId(sfProjectId, buildId),
+            BookConfidences =
+            [
+                .. usabilityBooks.Select(b => new BookConfidence
+                {
+                    BookNum = Canon.BookIdToNumber(b.Book),
+                    Confidence = b.Confidence,
+                }),
+            ],
+            ChapterConfidences =
+            [
+                .. usabilityChapters.Select(c => new ChapterConfidence
+                {
+                    BookNum = Canon.BookIdToNumber(c.Book),
+                    ChapterNum = c.Chapter,
+                    Confidence = c.Confidence,
+                }),
+            ],
+            VerseConfidences = verseConfidences,
+            DateUpdated = DateTime.UtcNow,
+        };
+        await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
     }
 
     /// <summary>
