@@ -36,7 +36,8 @@ public class DraftMetrics : IIdentifiable
     /// <summary>
     /// Gets or sets the quality estimation configuration for this draft.
     /// </summary>
-    public required QualityEstimationConfig QualityEstimationConfig { get; set; }
+    [Obsolete("Quality Estimation is no longer calculated")]
+    public QualityEstimationConfig? QualityEstimationConfig { get; set; }
 
     /// <summary>
     /// The confidence scores for every verse in the draft.
@@ -65,9 +66,15 @@ public class VerseConfidence : VerseRefData
 public class ConfidenceScore
 {
     public required double Confidence { get; set; }
-    public required string Label { get; set; }
-    public required double ProjectedChrF3 { get; set; }
-    public required double Usability { get; set; }
+
+    [Obsolete("Quality Estimation is no longer calculated")]
+    public string? Label { get; set; }
+
+    [Obsolete("Quality Estimation is no longer calculated")]
+    public double? ProjectedChrF3 { get; set; }
+
+    [Obsolete("Quality Estimation is no longer calculated")]
+    public double? Usability { get; set; }
 }
 
 public class BookConfidence : ConfidenceScore

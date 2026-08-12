@@ -336,105 +336,6 @@ describe('ServalProjectComponent', () => {
         expect(env.statusError(env.servalConfigStatus)).not.toBeNull();
       }));
     });
-
-    describe('quality estimation configuration', () => {
-      it('should change quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).once();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should clear the quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment({
-          preTranslate: true,
-          draftConfig: { qualityEstimationConfig: { version: '0.1', slope: 109.6145, intercept: -14.0633 } }
-        });
-        expect(env.qualityEstimationConfigTextArea.value).toBe(
-          '{"version":"0.1","slope":109.6145,"intercept":-14.0633}'
-        );
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).once();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should not update an unchanged quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment({
-          preTranslate: true,
-          draftConfig: { qualityEstimationConfig: { version: '0.1', slope: 109.6145, intercept: -14.0633 } }
-        });
-        expect(env.qualityEstimationConfigTextArea.value).toBe(
-          '{"version":"0.1","slope":109.6145,"intercept":-14.0633}'
-        );
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-      }));
-
-      it('should not update an unchanged empty quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-      }));
-
-      it('should not update a non-JSON value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusError(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('test');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusError(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should not update an invalid value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusError(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{"prop": "value"}');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusError(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should notify of a backend error', fakeAsync(() => {
-        const env = new TestEnvironment();
-        when(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).thenReject(
-          new CommandError(CommandErrorCode.InternalError, 'error')
-        );
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusError(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).once();
-        expect(env.statusError(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-    });
   });
 
   class TestEnvironment {
@@ -489,8 +390,7 @@ describe('ServalProjectComponent', () => {
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
               lastSelectedTranslationScriptureRanges:
                 args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined,
-              servalConfig: args.draftConfig?.servalConfig ?? undefined,
-              qualityEstimationConfig: args.draftConfig?.qualityEstimationConfig ?? undefined
+              servalConfig: args.draftConfig?.servalConfig ?? undefined
             },
             preTranslate: args.preTranslate,
             source: {
@@ -518,7 +418,6 @@ describe('ServalProjectComponent', () => {
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
       when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
-      when(mockSFProjectService.onlineSetQualityEstimationConfig(this.mockProjectId, anything())).thenResolve();
       const trainingData: TrainingData[] = [
         {
           fileUrl: 'file-url',
@@ -563,18 +462,6 @@ describe('ServalProjectComponent', () => {
       return this.fixture.nativeElement.querySelector('.training-data-table td button');
     }
 
-    get qualityEstimationConfigStatus(): DebugElement {
-      return this.fixture.debugElement.query(By.css('#quality-estimation-config-status'));
-    }
-
-    get qualityEstimationConfigTextArea(): HTMLTextAreaElement {
-      return this.fixture.nativeElement.querySelector('#quality-estimation-config') as HTMLTextAreaElement;
-    }
-
-    get saveQualityEstimationConfigButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('#save-quality-estimation-config');
-    }
-
     get saveServalConfigButton(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('#save-serval-config');
     }
@@ -614,14 +501,6 @@ describe('ServalProjectComponent', () => {
 
     getTranslationBookNames(node: HTMLElement): string {
       return node.querySelector('.translation-range')?.textContent ?? '';
-    }
-
-    setQualityEstimationConfigValue(value: string): void {
-      this.qualityEstimationConfigTextArea.value = value;
-      this.qualityEstimationConfigTextArea.dispatchEvent(new Event('input'));
-      this.fixture.detectChanges();
-      tick();
-      this.fixture.detectChanges();
     }
 
     setServalConfigValue(value: string): void {

@@ -9,18 +9,12 @@ import { encodeRsv } from './rsv';
 
 interface BookConfidenceRow {
   Book: string;
-  'Projected chrF3': string;
-  Usability: string;
-  Label: string;
   Confidence: string;
 }
 
 interface ChapterConfidenceRow {
   Book: string;
   Chapter: string;
-  'Projected chrF3': string;
-  Usability: string;
-  Label: string;
   Confidence: string;
 }
 
@@ -79,23 +73,16 @@ export class BuildConfidencesExportService extends BaseExportService {
 
   private createRsvRows(rows: (BookConfidence | ChapterConfidence)[]): string[][] {
     if (this.isChapterConfidenceArray(rows)) {
-      const headers: string[] = ['Book', 'Chapter', 'Projected chrF3', 'Usability', 'Label', 'Confidence'];
+      const headers: string[] = ['Book', 'Chapter', 'Confidence'];
       const dataRows: string[][] = rows.map(row => [
         Canon.bookNumberToId(row.bookNum),
         row.chapterNum.toString(),
-        row.projectedChrF3.toString(),
-        row.usability.toString(),
-        row.label ?? null
+        row.confidence.toString()
       ]);
       return [headers, ...dataRows];
     } else {
-      const headers: string[] = ['Book', 'Projected chrF3', 'Usability', 'Label', 'Confidence'];
-      const dataRows: string[][] = rows.map(row => [
-        Canon.bookNumberToId(row.bookNum),
-        row.projectedChrF3.toString(),
-        row.usability.toString(),
-        row.label ?? null
-      ]);
+      const headers: string[] = ['Book', 'Confidence'];
+      const dataRows: string[][] = rows.map(row => [Canon.bookNumberToId(row.bookNum), row.confidence.toString()]);
       return [headers, ...dataRows];
     }
   }
@@ -120,7 +107,7 @@ export class BuildConfidencesExportService extends BaseExportService {
   }
 
   private getFileNamePrefix(rows: (BookConfidence | ChapterConfidence)[], filenamePrefix: string | undefined): string {
-    return filenamePrefix ?? (this.isChapterConfidenceArray(rows) ? 'usability_chapters' : 'usability_books');
+    return filenamePrefix ?? (this.isChapterConfidenceArray(rows) ? 'confidence_chapters' : 'confidence_books');
   }
 
   private getSpreadsheetRows(
@@ -130,17 +117,11 @@ export class BuildConfidencesExportService extends BaseExportService {
       return rows.map(row => ({
         Book: Canon.bookNumberToId(row.bookNum),
         Chapter: row.chapterNum.toString(),
-        'Projected chrF3': row.projectedChrF3.toFixed(3),
-        Usability: row.usability.toFixed(3),
-        Label: row.label,
         Confidence: row.confidence.toFixed(3)
       }));
     } else {
       return rows.map(row => ({
         Book: Canon.bookNumberToId(row.bookNum),
-        'Projected chrF3': row.projectedChrF3.toFixed(3),
-        Usability: row.usability.toFixed(3),
-        Label: row.label,
         Confidence: row.confidence.toFixed(3)
       }));
     }

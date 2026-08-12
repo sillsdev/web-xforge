@@ -1169,6 +1169,25 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data?.translateConfig?.draftConfig?.currentScriptureRange).not.toBeDefined();
     });
   });
+
+  describe('version 29', () => {
+    it('removes qualityEstimationConfig from draftConfig', async () => {
+      const env = new TestEnvironment(28);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: {
+          draftConfig: { qualityEstimationConfig: { version: '0.1', slope: 109.6145, intercept: -14.0633 } }
+        }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.qualityEstimationConfig).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.qualityEstimationConfig).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {
