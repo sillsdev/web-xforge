@@ -2,40 +2,23 @@
   <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
     <h1>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h1>
     @if (canCreateQuestion) {
-      <ng-container class="primary-actions">
-        @if (showImportButton) {
-          <button mat-button type="button" (click)="importDialog()" id="import-btn">
-            <mat-icon>file_upload</mat-icon>
-            {{ t("import") }}
-          </button>
-          @if (allQuestionsCount > 0) {
-            <button mat-button type="button" (click)="downloadQuestionsCsv()" id="export-btn">
-              <mat-icon>download</mat-icon>
-              {{ t("export") }}
-            </button>
-          }
-        }
-        @if (!isLoadingData) {
-          <button
-            class="add-question-button hide-lt-sm"
-            mat-flat-button
-            type="button"
-            color="secondary"
-            (click)="questionDialog()"
-          >
-            <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
-          </button>
-          <button
-            class="add-question-button hide-gt-sm"
-            mat-mini-fab
-            type="button"
-            color="primary"
-            (click)="questionDialog()"
-          >
-            <mat-icon class="mirror-rtl">post_add</mat-icon>
+      @if (showImportButton) {
+        <button mat-button type="button" (click)="importDialog()" id="import-btn">
+          <mat-icon>file_upload</mat-icon>
+          {{ t("import") }}
+        </button>
+        @if (allQuestionsCount > 0) {
+          <button mat-button type="button" (click)="downloadQuestionsCsv()" id="export-btn">
+            <mat-icon>download</mat-icon>
+            {{ t("export") }}
           </button>
         }
-      </ng-container>
+      }
+      @if (!isLoadingData) {
+        <button class="add-question-button" mat-flat-button type="button" color="secondary" (click)="questionDialog()">
+          <mat-icon class="mirror-rtl">post_add</mat-icon> <span>{{ t("add_question") }}</span>
+        </button>
+      }
     } @else {
       <div id="overall-progress-chart">
         <app-donut-chart
@@ -202,12 +185,22 @@
 
   @if (showNoQuestionsMessage) {
     <div class="reviewer-panels flex" id="no-questions-label">
-      <p>
-        {{ t("no_questions") }}
-        @if (canCreateQuestion) {
-          <span [innerHtml]="i18n.translateAndInsertTags('checking_overview.click_add_question')"></span>
-        }
-      </p>
+      @if (canCreateQuestion) {
+        <div class="empty-state">
+          <h3>{{ t("no_questions_yet") }}</h3>
+          <p
+            [innerHtml]="
+              i18n.translateAndInsertTags('checking_overview.add_or_import_questions', {
+                import: t('import'),
+                addQuestion: t('add_question')
+              })
+            "
+          ></p>
+          <a [href]="urls.addingQuestions" target="_blank">{{ t("learn_about_adding_questions") }}</a>
+        </div>
+      } @else {
+        <p>{{ t("no_questions") }}</p>
+      }
     </div>
   }
 

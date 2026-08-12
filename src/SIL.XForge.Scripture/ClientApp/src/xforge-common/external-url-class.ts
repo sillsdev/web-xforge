@@ -31,6 +31,10 @@ export class ExternalUrls {
     return this.helps + '/preparing-for-ai-drafting';
   }
 
+  get addingQuestions(): string {
+    return this.helps + '/adding-questions';
+  }
+
   get transceleratorImportHelpPage(): string {
     return this.helps + '/adding-questions#1850d745ac9e8003815fc894b8baaeb7';
   }

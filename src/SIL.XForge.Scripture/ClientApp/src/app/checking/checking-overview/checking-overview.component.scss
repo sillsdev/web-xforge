@@ -37,11 +37,6 @@
   width: 260px;
 }
 
-.add-question-button.hide-gt-sm {
-  padding-inline-start: 1px;
-  z-index: 1;
-}
-
 .mat-expansion-panel-header {
   padding-inline-end: 0;
   &[aria-disabled='true'] {
@@ -118,6 +113,19 @@ app-donut-chart {
   text-align: center;
   justify-content: center;
   color: #666;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-block: 24px;
+
+  h3,
+  p {
+    margin: 0;
+  }
 }
 
 .reviewer-panels {

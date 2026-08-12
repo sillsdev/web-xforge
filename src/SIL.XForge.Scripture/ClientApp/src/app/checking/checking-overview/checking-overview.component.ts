@@ -26,6 +26,7 @@ import { map, startWith, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { DonutChartComponent } from 'xforge-common/donut-chart/donut-chart.component';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -103,7 +104,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly questionDialogService: QuestionDialogService,
     private readonly permissions: PermissionsService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly l10nNumberPipe: L10nNumberPipe
+    private readonly l10nNumberPipe: L10nNumberPipe,
+    readonly urls: ExternalUrlService
   ) {
     super(noticeService, 'CheckingOverviewComponent');
   }
