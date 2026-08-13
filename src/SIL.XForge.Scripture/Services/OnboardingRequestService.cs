@@ -77,8 +77,14 @@ public class OnboardingRequestService(
         };
     }
 
-    public async Task<List<OnboardingRequest>> GetAllRequestsAsync() =>
-        await onboardingRequestRepository.Query().OrderByDescending(r => r.Submission.Timestamp).ToListAsync();
+    public async Task<List<OnboardingRequestSummary>> GetAllRequestsAsync()
+    {
+        List<OnboardingRequest> requests = await onboardingRequestRepository
+            .Query()
+            .OrderByDescending(r => r.Submission.Timestamp)
+            .ToListAsync();
+        return [.. requests.Select(OnboardingRequestSummary.FromRequest)];
+    }
 
     public async Task<OnboardingRequest> GetRequestByIdAsync(string requestId) =>
         await onboardingRequestRepository.Query().FirstOrDefaultAsync(r => r.Id == requestId);

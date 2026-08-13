@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using SIL.XForge.Controllers;
@@ -112,7 +111,8 @@ public class OnboardingRequestRpcController(
     }
 
     /// <summary>
-    /// Gets all onboarding requests. Only accessible to Serval admins.
+    /// Gets summaries of all onboarding requests, containing only the fields the onboarding requests list page
+    /// needs. Only accessible to Serval admins.
     /// </summary>
     public async Task<IRpcMethodResult> GetAllRequests()
     {
@@ -124,7 +124,7 @@ public class OnboardingRequestRpcController(
                 return ForbiddenError();
             }
 
-            List<OnboardingRequest> requests = await onboardingRequestService.GetAllRequestsAsync();
+            List<OnboardingRequestSummary> requests = await onboardingRequestService.GetAllRequestsAsync();
             return Ok(requests);
         }
         catch (ForbiddenException)
