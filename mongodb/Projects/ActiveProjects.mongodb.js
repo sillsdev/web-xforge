@@ -2,20 +2,19 @@ use('xforge');
 
 const fs = require('fs');
 
+// List active projects during period.
 // Example usage, where CONNECTION can be empty for local or "ssh scriptureforge-foo" for a remote:
 /*
   export CONNECTION="" &&
     export MONGO_PORT="27017" &&
     export PERIOD_START="2026-04-01" &&
-    export PERIOD_END="2026-07-01" &&
-    export TEST_PROJECTS="$(cat "${SF_REPO}"/mongodb/Projects/determine-project-metadata.py |
-      ${CONNECTION} python3 |
-      "${SF_REPO}"/mongodb/Projects/annotate-test-project-reasons.py --values)" &&
+    export   PERIOD_END="2026-07-01" &&
+    export PROJECT_METADATA="$(mktemp)" &&
+    cat "${SF_REPO}"/mongodb/Projects/determine-project-metadata.py | ${CONNECTION} python3 > "${PROJECT_METADATA}" &&
     mongosh --port "${MONGO_PORT}" --file "${SF_REPO}"/mongodb/Projects/ActiveProjects.mongodb.js
 */
-// PERIOD_START is inclusive. PERIOD_END is exclusive (as its time is 00:00). Start and End are in UTC. TEST_PROJECTS is
-// a white-space delimited list of PT project ids to exclude as test projects. ${CONNECTION} is purposefully un-quoted.
-// PERIOD_START, PERIOD_END, and TEST_PROJECTS are required.
+// PERIOD_START is inclusive. PERIOD_END is exclusive. Start and End are in UTC. PROJECT_METADATA is a path to a JSON
+// file with Visibility metadata. All three are required. ${CONNECTION} is intentionally un-quoted.
 
 // This script determines whether each currently-existing SF project is "active" during the specified period. Projects
 // that were active, but are now deleted, will not be considered due to technical limitations to do this well.
@@ -40,8 +39,9 @@ const fs = require('fs');
 //
 // However, projects are excluded if they are:
 //
-//   - listed in TEST_PROJECTS, or
-//   - DBL resources
+//   - DBL resources,
+//   - marked as test projects by Visibility, or
+//   - deemed test projects based on their name
 //
 // Projects that are merely used as the source of another project, but without meaningful activity of their own, should
 // not be considered active. For this reason, Sync is not counted as activity, nor are text edits not attributable to a
@@ -52,8 +52,8 @@ const fs = require('fs');
 // excluded. Projects merely used as a source are not included, since there needs to be activity. Projects no longer in
 // SF DB will not be reported.
 //
-// A count of projects deleted during the period is also provided by looking for DeleteProjectAsync events. Test
-// projects will likely be included in this, unless TEST_PROJECTS includes data on non-existent projects.
+// A count of projects deleted during the period is also provided by looking for DeleteProjectAsync events. Resources
+// are not included in this count. Few if any test projects will be included in this count.
 //
 // Unfortunately, this script will produce different results over time, even for the same reporting period, depending on
 // what projects currently exist in the SF DB. Re-running it later for the same period will report fewer new projects
@@ -103,12 +103,47 @@ function readPeriod() {
   return { periodStart, periodEnd, draftGenerationLookbackStart };
 }
 
-function readTestProjectParatextIds() {
-  const paratextIds = new Set((process.env.TEST_PROJECTS ?? '').split(/\s+/).filter(Boolean));
-  if (paratextIds.size === 0) {
-    throw new Error('TEST_PROJECTS is required, as a white-space delimited list of PT project ids to exclude');
+// Paratext project Visibility settings, as determine-project-metadata.py emits them, keyed by PT project id:
+// Map<paratextId, visibility>.
+//
+// Visibility comes from project repo Settings.xml files rather than from the DB since older projects do not have
+// visibility set in the DB.
+function readProjectMetadata() {
+  const fileName = process.env.PROJECT_METADATA;
+  // (Not using `foo?.trim()` because mongosh has trouble with it.)
+  const trimmed = fileName == null ? '' : fileName.trim();
+  if (!trimmed) {
+    throw new Error(
+      'PROJECT_METADATA is required: the path to a local file holding the JSON output of ' +
+        'determine-project-metadata.py'
+    );
   }
-  return paratextIds;
+
+  let contents;
+  try {
+    contents = fs.readFileSync(trimmed, 'utf8');
+  } catch (error) {
+    throw new Error(`PROJECT_METADATA file "${trimmed}" could not be read: ${error.message}`);
+  }
+
+  let entries;
+  try {
+    entries = JSON.parse(contents);
+  } catch (error) {
+    throw new Error(`PROJECT_METADATA file "${trimmed}" is not valid JSON: ${error.message}`);
+  }
+  if (!Array.isArray(entries) || entries.length === 0) {
+    throw new Error(`PROJECT_METADATA file "${trimmed}" should be a non-empty JSON array of project metadata`);
+  }
+
+  const visibilityByParatextId = new Map();
+  for (const entry of entries) {
+    if (entry != null && entry.guid) visibilityByParatextId.set(entry.guid, entry.visibility);
+  }
+  if (visibilityByParatextId.size === 0) {
+    throw new Error(`PROJECT_METADATA file "${trimmed}" has no entries with a guid`);
+  }
+  return visibilityByParatextId;
 }
 
 function dateLabel(date) {
@@ -143,7 +178,7 @@ function userOpsInPeriodMatch(period) {
 }
 
 function fetchProjects() {
-  return db.sf_projects.find({}, { paratextId: 1 }).toArray();
+  return db.sf_projects.find({}, { paratextId: 1, name: 1 }).toArray();
 }
 
 // Project ids with at least one op in `collectionName` during the period.
@@ -230,27 +265,66 @@ function fetchDeletedProjectParatextIdsInPeriod(period) {
 
 // --- Classification ---
 
-// Returns the reason a project is excluded from being counted as active ('resource' | 'test'), or null if it
-// isn't excluded.
-function exclusionReasonForParatextId(paratextId, testProjectParatextIds) {
-  if (!paratextId) return null;
-  if (testProjectParatextIds.has(paratextId)) return 'test';
-  if (paratextId.length === DBL_RESOURCE_ID_LENGTH) return 'resource';
+// This section regards identifying projects as active, test projects, etc.
+
+// Continuations that mean the "test" just matched is really a Testament-like word. Written out with explicit character
+// classes rather than relying on a case-insensitive flag, because the second pattern below must stay case-sensitive on
+// its leading capital T while still rejecting these continuations in any case.
+const NOT_A_TEST_CONTINUATION = '(?![Aa][Mm][Ee][Nn][Tt]|[Aa][Mm][Aa][Nn](?![\\p{L}\\p{N}_])|[Mm][Ee][Nn][Tt])';
+
+// Names that say a project is a test project, like "My Test Project" or "Back translation zzTEST", without
+// catching a real project like "New Testament Revised Edition" or "The Protestant Bible".
+//
+// These are two patterns rather than one because they need different case sensitivity.
+const TEST_NAME_PATTERNS = [
+  // "test" standing as its own word, in any case: Test, TEST, Testing, test.
+  new RegExp(`(?<![a-zA-Z])test${NOT_A_TEST_CONTINUATION}`, 'iu'),
+  // "TEST" glued onto the end of a preceding word, as in zzTESTAB or FooBazTest. Deliberately case-sensitive on the
+  // capital T: that capital is the only signal that a new word starts here, since there is no space to make a word
+  // boundary. Ordinary lowercase like "attest" keeps its t lowercase and so never matches.
+  new RegExp(`(?<=[a-z])T[Ee][Ss][Tt]${NOT_A_TEST_CONTINUATION}`, 'u')
+];
+
+// Why a project looks like a test project, as a comma-separated list of reasons, or null if it doesn't look like one.
+function computeReasonIsTest(visibility, fullName) {
+  const name = fullName || '';
+  const reasons = [];
+  if (visibility === 'Test') reasons.push('projectSetting');
+  if (TEST_NAME_PATTERNS.some(pattern => pattern.test(name))) reasons.push('testName');
+  // Deliberately plain substring checks. Examining production project names turned up no unwanted matches.
+  if (name.toLowerCase().includes('demo')) reasons.push('demoName');
+  if (name.toLowerCase().includes('sample')) reasons.push('sampleName');
+  return reasons.length > 0 ? reasons.join(',') : null;
+}
+
+// Returns the reason a project is excluded from being counted as active ('resource' | 'test'), or null if it isn't
+// excluded.
+function exclusionReasonForParatextId(paratextId, visibilityByParatextId, projectName) {
+  if (isResourceParatextId(paratextId)) return 'resource';
+  if (computeReasonIsTest(visibilityByParatextId.get(paratextId), projectName) != null) return 'test';
   return null;
 }
 
+function isResourceParatextId(paratextId) {
+  return paratextId != null && paratextId.length === DBL_RESOURCE_ID_LENGTH;
+}
+
 function classifyProjects(period, projects, options) {
-  const { activityProjectIds, draftGenerationLookbackProjectIds, testProjectParatextIds } = options;
+  const { activityProjectIds, draftGenerationLookbackProjectIds, visibilityByParatextId } = options;
   let activeCount = 0;
   let withUserActivity = 0;
   let withRecentDraftingOnly = 0;
   let inactiveCount = 0;
   let newProjectCount = 0;
+  let withoutMetadataCount = 0;
   const countByExclusionReason = new Map();
 
   for (const project of projects) {
     const id = project._id.toString();
-    const exclusionReason = exclusionReasonForParatextId(project.paratextId, testProjectParatextIds);
+    if (!isResourceParatextId(project.paratextId) && !visibilityByParatextId.has(project.paratextId)) {
+      withoutMetadataCount++;
+    }
+    const exclusionReason = exclusionReasonForParatextId(project.paratextId, visibilityByParatextId, project.name);
     if (exclusionReason) {
       countByExclusionReason.set(exclusionReason, (countByExclusionReason.get(exclusionReason) ?? 0) + 1);
       continue;
@@ -275,6 +349,7 @@ function classifyProjects(period, projects, options) {
     withUserActivity,
     withRecentDraftingOnly,
     newProjectCount,
+    withoutMetadataCount,
     countByExclusionReason
   };
 }
@@ -288,11 +363,17 @@ function buildSummaryContent(period, totalProjectCount, classification, deletedP
     withUserActivity,
     withRecentDraftingOnly,
     newProjectCount,
+    withoutMetadataCount,
     countByExclusionReason
   } = classification;
 
   const excludedCount = [...countByExclusionReason.values()].reduce((sum, count) => sum + count, 0);
-  const reasonSummary = [...countByExclusionReason.entries()].map(([reason, count]) => `${count} ${reason}`).join(', ');
+  // Sorted by reason, so the line reads the same way from one run to the next. Insertion order would
+  // otherwise depend on which excluded project happened to come first in the project list.
+  const reasonSummary = [...countByExclusionReason.entries()]
+    .sort(([reasonA], [reasonB]) => reasonA.localeCompare(reasonB))
+    .map(([reason, count]) => `${count} ${reason}`)
+    .join(', ');
 
   return (
     [
@@ -304,7 +385,9 @@ function buildSummaryContent(period, totalProjectCount, classification, deletedP
       `There were ${inactiveCount} inactive projects.`,
       `There were ${newProjectCount} projects that were created at SF during the period.`,
       `Excluded ${excludedCount} of ${totalProjectCount} total projects from the above. ${reasonSummary}`,
-      `There were ${deletedProjectCount} projects that were deleted at SF during the period, which does not include resources but likely includes most test projects.`,
+      `${withoutMetadataCount} ${withoutMetadataCount === 1 ? 'project had' : 'projects had'} no entry in the ` +
+        'project metadata, and so were not judged by a Visibility setting.',
+      `There were ${deletedProjectCount} projects that were deleted at SF during the period, which does not include resources, but would include test projects.`,
       `This report was generated on ${dateLabel(new Date())}. Only projects still in the SF DB at this time are included in the count of new or active projects.`
     ].join('\n\n') + '\n'
   );
@@ -331,7 +414,7 @@ function main() {
   const period = readPeriod();
   console.log(`Generating a report from ${period.periodStart} until ${period.periodEnd}.`);
 
-  const testProjectParatextIds = readTestProjectParatextIds();
+  const visibilityByParatextId = readProjectMetadata();
   const fileName = summaryFileName(period);
   assertFileDoesNotExist(fileName);
 
@@ -342,14 +425,17 @@ function main() {
   const classification = classifyProjects(period, projects, {
     activityProjectIds,
     draftGenerationLookbackProjectIds,
-    testProjectParatextIds
+    visibilityByParatextId
   });
 
   // Counted separately from classifyProjects, which walks the projects that still exist - by
   // definition none of these do.
   const deletedParatextIds = [...fetchDeletedProjectParatextIdsInPeriod(period).values()];
   const deletedProjectCount = deletedParatextIds.filter(
-    paratextId => exclusionReasonForParatextId(paratextId, testProjectParatextIds) == null
+    // We can see if a PT project ID is for a resource (which may or may not make sense to look for when looking for
+    // deleted projects). Also checking for whether a PT project ID was found to have Visibility of Test is merely done
+    // just in case; as normally a deleted project will not leave behind a PT repo from which to learn its Visibility.
+    paratextId => exclusionReasonForParatextId(paratextId, visibilityByParatextId) == null
   ).length;
 
   writeSummary(fileName, buildSummaryContent(period, projects.length, classification, deletedProjectCount));
