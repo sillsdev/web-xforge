@@ -347,7 +347,7 @@ export class DraftOnboardingFormComponent extends DataLoadingComponent implement
     if ((await this.onboardingRequestService.getOpenOnboardingRequest(this.activatedProject.projectId)) == null) {
       return false;
     } else {
-      await this.dialogService.message('draft_sources.request_already_submitted', undefined, true);
+      await this.dialogService.message('draft_sources.request_already_submitted', undefined, { disableClose: true });
       this.cancel();
       return true;
     }

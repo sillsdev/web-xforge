@@ -204,7 +204,7 @@ export class DraftGenerationStepsComponent implements OnInit {
             await this.dialogService.message(
               'draft_generation_steps.remote_changes',
               'draft_generation_steps.remote_changes_start_over',
-              true
+              { disableClose: true }
             );
             this.cancel.emit();
           }
