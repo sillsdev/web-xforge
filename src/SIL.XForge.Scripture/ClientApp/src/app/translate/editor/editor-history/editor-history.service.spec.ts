@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Delta } from 'quill';
-import { mock, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { EditorHistoryService } from './editor-history.service';
@@ -40,18 +40,29 @@ describe('EditorHistoryService', () => {
       expect(service.formatTimestamp('')).toBe('Invalid Date');
     });
 
-    it('should return abbrev month and day (like "Jan 5") if timestamp is within the last 26 weeks', () => {
-      const now = new Date();
-      const timestamp = new Date(now.getTime() - 7 * MILLISECONDS_IN_A_DAY).toISOString(); // 1 week ago
-      const result = service.formatTimestamp(timestamp);
-      expect(result).toMatch(/[a-z]{3} \d{1,2}/i);
+    it('should format the date with the I18nService', () => {
+      when(i18nMock.formatDate(anything(), anything())).thenReturn('Apr 22, 2026');
+      const timestamp = new Date().toISOString();
+      expect(service.formatTimestamp(timestamp)).toBe('Apr 22, 2026');
+      verify(i18nMock.formatDate(deepEqual(new Date(timestamp)), deepEqual({ showTime: false }))).once();
     });
 
-    it('should return mm/dd/yy if timestamp is more than 26 weeks ago', () => {
-      const now = new Date();
-      const timestamp = new Date(now.getTime() - 7 * MILLISECONDS_IN_A_DAY * 40).toISOString(); // 40 weeks ago
-      const result = service.formatTimestamp(timestamp);
-      expect(result).toMatch(/\d{1,2}\/\d{1,2}\/\d{2}/);
+    it('should include the time when requested', () => {
+      when(i18nMock.formatDate(anything(), anything())).thenReturn('Apr 22, 2026, 3:04 PM');
+      const timestamp = new Date().toISOString();
+      expect(service.formatTimestamp(timestamp, true)).toBe('Apr 22, 2026, 3:04 PM');
+      verify(i18nMock.formatDate(deepEqual(new Date(timestamp)), deepEqual({ showTime: true }))).once();
+    });
+
+    it('should use the same format regardless of how old the timestamp is', () => {
+      // A project can have revisions spanning several years, so recent and old revisions must be formatted the same
+      // way. Formatting recent revisions differently (and without the year) made the dates ambiguous.
+      when(i18nMock.formatDate(anything(), anything())).thenReturn('formatted date');
+      const recent = new Date(Date.now() - MILLISECONDS_IN_A_DAY).toISOString(); // 1 day ago
+      const old = new Date(Date.now() - MILLISECONDS_IN_A_DAY * 700).toISOString(); // almost 2 years ago
+      expect(service.formatTimestamp(recent)).toBe('formatted date');
+      expect(service.formatTimestamp(old)).toBe('formatted date');
+      verify(i18nMock.formatDate(anything(), deepEqual({ showTime: false }))).twice();
     });
   });
 
