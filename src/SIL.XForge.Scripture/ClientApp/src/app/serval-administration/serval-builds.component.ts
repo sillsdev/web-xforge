@@ -372,7 +372,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       row.durationMs != null ? this.formatDurationHours(row.durationMs) : undefined;
     const servalCreated: Date | undefined = row.report.timeline.servalCreated;
     const createdDisplay: string | undefined =
-      servalCreated != null ? this.i18n.formatDate(servalCreated, { showTimeZone: true }) : undefined;
+      servalCreated != null ? this.i18n.formatDate(servalCreated, { showTime: true, showTimeZone: true }) : undefined;
 
     const buildsCreatedSince: number = this.rows.filter(other => {
       if (other.report.project?.sfProjectId !== sfProjectId) return false;

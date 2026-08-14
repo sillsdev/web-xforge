@@ -2,7 +2,7 @@
   @for (
     line of i18n.interpolateVariables("translate_overview.translation_suggestions_will_be_removed", {
       email: issueEmail,
-      date: i18n.formatDate(smtRetirementDate, { showTime: false })
+      date: i18n.formatDate(smtRetirementDate, { showTime: false, showTimeZone: false })
     });
     track $index
   ) {

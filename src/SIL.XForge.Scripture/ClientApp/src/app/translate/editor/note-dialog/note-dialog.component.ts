@@ -487,7 +487,7 @@ export class NoteDialogComponent implements OnInit {
    * @returns The formatted creation date as a string.
    */
   private getNoteDateCreated(note: Note): string {
-    return this.i18n.formatDate(new Date(note.dateCreated));
+    return this.i18n.formatDate(new Date(note.dateCreated), { showTime: true, showTimeZone: false });
   }
 
   /**

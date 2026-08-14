@@ -270,7 +270,8 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
     const eventBasedDuration = job.duration != null ? this.formatDurationInHours(job.duration) : undefined;
 
     // Format start time if available
-    const startTime = job.startTime != null ? this.i18n.formatDate(job.startTime, { showTimeZone: true }) : undefined;
+    const startTime =
+      job.startTime != null ? this.i18n.formatDate(job.startTime, { showTime: true, showTimeZone: true }) : undefined;
 
     // Collect all events that were used to create this job
     const events = [job.startEvent, job.buildEvent, job.finishEvent, job.cancelEvent]
@@ -758,7 +759,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
 
       const duration = job.duration ? this.formatDurationInHours(job.duration) : undefined;
       const durationTooltip = job.finishTime
-        ? `Finished: ${this.i18n.formatDate(job.finishTime, { showTimeZone: true })}`
+        ? `Finished: ${this.i18n.formatDate(job.finishTime, { showTime: true, showTimeZone: true })}`
         : undefined;
 
       rows.push({
@@ -766,7 +767,9 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
         projectId: job.projectId,
         projectName: projectDeleted ? `${job.projectId} [deleted]` : (projectName ?? job.projectId),
         projectDeleted,
-        startTimeStamp: job.startTime ? this.i18n.formatDate(job.startTime, { showTimeZone: true }) : 'N/A',
+        startTimeStamp: job.startTime
+          ? this.i18n.formatDate(job.startTime, { showTime: true, showTimeZone: true })
+          : 'N/A',
         duration,
         durationTooltip,
         status: this.getStatusDisplay(job.status),
