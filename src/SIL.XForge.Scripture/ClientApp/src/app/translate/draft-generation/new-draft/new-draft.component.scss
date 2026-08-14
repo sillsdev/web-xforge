@@ -117,6 +117,9 @@ app-copyright-banner {
 
 .card-header {
   display: flex;
+  // On narrow screens the heading and the action button don't fit side by side, so let the button drop onto its
+  // own line instead of being pushed outside the card.
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
   gap: 1em;
@@ -126,8 +129,16 @@ app-copyright-banner {
   }
 }
 
+.card-header-text {
+  // The heading needs this much room before it's worth keeping the action button beside it.
+  flex-basis: 20em;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+
 .card-header-action {
-  flex-shrink: 0;
+  // Once on its own line the button is free to wrap its label, so even a long translation stays inside the card.
+  max-width: 100%;
 }
 
 .draft-books-list {
