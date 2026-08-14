@@ -1447,6 +1447,61 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_MultipleNewChapters_AddedBetweenChapters()
+    {
+        // Applying a draft can create several consecutive chapters that were previously missing from the
+        // Paratext project (e.g. chapters 2-5 when only 1 and 6 had content). They must be inserted in
+        // order, before the next existing chapter.
+        List<ChapterDelta> chapterDeltas = [];
+        for (int i = 1; i <= 6; i++)
+        {
+            chapterDeltas.Add(
+                new ChapterDelta(
+                    i,
+                    1,
+                    true,
+                    Delta
+                        .New()
+                        .InsertChapter(i.ToString())
+                        .InsertVerse("1")
+                        .InsertText($"Chapter {i} verse 1.", $"verse_{i}_1")
+                        .InsertPara("p")
+                )
+            );
+        }
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+
+        XDocument original = Usx(
+            "PHM",
+            Chapter("1"),
+            Para("p", Verse("1"), "Chapter 1 verse 1."),
+            Chapter("6"),
+            Para("p", Verse("1"), "Chapter 6 verse 1.")
+        );
+
+        XDocument expected = Usx(
+            "PHM",
+            Chapter("1"),
+            Para("p", Verse("1"), "Chapter 1 verse 1."),
+            Chapter("2"),
+            Para("p", Verse("1"), "Chapter 2 verse 1."),
+            Chapter("3"),
+            Para("p", Verse("1"), "Chapter 3 verse 1."),
+            Chapter("4"),
+            Para("p", Verse("1"), "Chapter 4 verse 1."),
+            Chapter("5"),
+            Para("p", Verse("1"), "Chapter 5 verse 1."),
+            Chapter("6"),
+            Para("p", Verse("1"), "Chapter 6 verse 1.")
+        );
+
+        // SUT
+        XDocument newUsxDoc = mapper.ToUsx(original, chapterDeltas);
+        Assert.That(newUsxDoc.ToString(), Is.EqualTo(expected.ToString()));
+    }
+
+    [Test]
     public void ToUsx_FirstChapterMissing()
     {
         ChapterDelta[] chapterDeltas =
