@@ -630,9 +630,10 @@ public partial class DeltaUsxMapper(
                         chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
                         while (chapterDelta.Number < curChapter)
                         {
-                            // Add new chapters in our deltas to the usx doc
+                            // Add new chapters in our deltas to the usx doc, in order, before the
+                            // current chapter
                             if (chapterDelta.IsValid)
-                                curNode.AddAfterSelf(ProcessDelta(chapterDelta.Delta));
+                                curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
                             curChapterDeltaIndex++;
                             chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
                         }
