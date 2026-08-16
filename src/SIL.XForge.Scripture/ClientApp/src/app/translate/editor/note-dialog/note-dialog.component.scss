@@ -38,6 +38,8 @@ h1 {
     font-family: var(--project-font);
     font-size: 0.9em;
     flex: 1;
+    // Break long unbreakable runs (URLs, or scripts without word spaces) rather than overflow
+    overflow-wrap: anywhere;
     .segment-text {
       padding-top: 6px;
       border-top: 2px solid var(--sf-note-dialog-reference-text-color);
@@ -53,6 +55,10 @@ h1 {
     flex-wrap: wrap;
     .content {
       flex: 1 1 100%;
+      // A URL (or a script without word spaces) has no break opportunity, so without this the note
+      // text is laid out wider than the dialog. The note is `row-reverse` in LTR, so the overflow
+      // spills past the start edge where it is clipped and cannot be scrolled to.
+      overflow-wrap: anywhere;
     }
     &:first-child {
       padding-top: 10px;
