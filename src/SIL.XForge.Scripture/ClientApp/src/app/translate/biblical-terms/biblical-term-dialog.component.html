@@ -2,7 +2,7 @@
   <h1 mat-dialog-title>{{ t(canEdit() ? "edit_renderings" : "view_renderings") }}</h1>
   <mat-dialog-content>
     <div id="definition">{{ definition }}</div>
-    <mat-form-field [formGroup]="form" appearance="outline">
+    <mat-form-field [formGroup]="form" appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ t("renderings") }}</mat-label>
       <textarea
         appAutofocus
