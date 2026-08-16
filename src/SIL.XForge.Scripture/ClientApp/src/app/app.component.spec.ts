@@ -328,6 +328,23 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
+  it('leaves a deleted project even if the dialog is not dismissed', fakeAsync(() => {
+    // Otherwise the project's components stay alive behind the dialog and keep polling for a deleted project.
+    const env = new TestEnvironment();
+    when(mockedDialogService.message(anything())).thenReturn(new Promise<void>(() => {}));
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    // SUT
+    env.deleteProject('project01', false);
+    tick();
+    env.fixture.detectChanges();
+    tick();
+    expect(env.location.path()).toEqual('/projects');
+    verify(mockedDialogService.message(anything())).once();
+  }));
+
   it('response to remote project deletion when no project selected', fakeAsync(() => {
     // If we are at the My Projects list at /projects, and a project is deleted, we should still be at the /projects
     // page. Note that one difference between some other project being deleted, vs the _current_ project being deleted,
