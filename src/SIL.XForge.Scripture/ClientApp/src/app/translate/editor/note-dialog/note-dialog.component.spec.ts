@@ -337,6 +337,14 @@ describe('NoteDialogComponent', () => {
     expect(env.noteInputElement).toBeTruthy();
   }));
 
+  it('does not save note if textarea only contains whitespace', fakeAsync(() => {
+    env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1') });
+    env.enterNoteContent(' \n\t ');
+    env.submit();
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.dialogResult).toBeFalsy();
+  }));
+
   it('does not show text area for users without write permissions', fakeAsync(() => {
     const verseRef = new VerseRef('MAT 1:3');
     env = new TestEnvironment({ currentUserId: 'user02', verseRef });
