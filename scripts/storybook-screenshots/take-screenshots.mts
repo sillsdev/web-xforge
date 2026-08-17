@@ -185,6 +185,14 @@ async function screenshotStory(
         );
       });
 
+      // Wait for web fonts (Roboto and Material Icons, loaded from Google Fonts in
+      // preview-head.html) to finish loading, so the screenshot is not taken while text is
+      // still rendered in a fallback font. Note that fonts.ready also resolves when a font
+      // request fails, so this guards against slow loads, not against a font CDN outage.
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+      });
+
       // Check whether this story has opted out of snapshots (chromatic: { disableSnapshot: true }).
       if (storyParams?.chromatic?.disableSnapshot === true) {
         return { storyId, success: true, skipped: true, maxDiffPixels: null };
