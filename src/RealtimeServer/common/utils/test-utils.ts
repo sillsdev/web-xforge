@@ -4,6 +4,9 @@ import { RealtimeServer, XF_ROLE_CLAIM, XF_USER_ID_CLAIM } from '../realtime-ser
 import { Json0OpBuilder } from './json0-op-builder';
 import { docCreate, docDelete, docFetch, docSubmitJson0Op, docSubmitOp } from './sharedb-utils';
 
+/**
+ * Connects with a user's own session, somewhat like a frontend client. For unit tests.
+ */
 export function clientConnect(server: RealtimeServer, userId: string, role: SystemRole = SystemRole.User): Connection {
   return server.connect(undefined, { user: { [XF_USER_ID_CLAIM]: userId, [XF_ROLE_CLAIM]: role } });
 }
