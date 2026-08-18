@@ -47,12 +47,12 @@
             }
             @if (hasLowConfidence(entry)) {
               @if (booksWithLowConfidence(entry) > 1) {
-                <app-notice type="error">{{
-                  t("low_quality_books", { number: booksWithLowConfidence(entry) })
+                <app-notice type="error" data-test-id="low-confidence-books">{{
+                  t("low_confidence_books", { number: booksWithLowConfidence(entry) })
                 }}</app-notice>
               } @else {
-                <app-notice type="error">{{
-                  t("low_quality_book", { book: lowConfidenceBookName(entry) })
+                <app-notice type="error" data-test-id="low-confidence-book">{{
+                  t("low_confidence_book", { book: lowConfidenceBookName(entry) })
                 }}</app-notice>
               }
             }
