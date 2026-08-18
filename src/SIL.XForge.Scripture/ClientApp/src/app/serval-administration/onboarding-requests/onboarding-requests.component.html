@@ -13,6 +13,7 @@
       <div class="date-range-controls">
         <app-date-range-picker
           [showReset]="true"
+          [startWithEmptyRange]="true"
           (dateRangeChange)="onDateFilterChange($event)"
         ></app-date-range-picker>
       </div>

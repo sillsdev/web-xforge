@@ -119,13 +119,13 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   assignedUserIds: Set<string> = new Set();
   projectNames: Map<string, string> = new Map();
   filterOptions = filterOptions;
-  dateFrom: Date | null = null;
-  dateTo: Date | null = null;
 
   resolutionOptions = ONBOARDING_REQUEST_RESOLUTION_OPTIONS;
   existingAssigneeIds: string[] = [];
   searchControl: FormControl<string> = new FormControl('', { nonNullable: true });
   private currentSearchQueryParam: string | null = null;
+  private dateFrom: Date | null = null;
+  private dateTo: Date | null = null;
 
   value: number | null = null;
 
@@ -261,9 +261,14 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     );
   }
 
-  onDateFilterChange(dateRange: NormalizedDateRange): void {
-    this.dateFrom = dateRange.start;
-    this.dateTo = dateRange.end;
+  onDateFilterChange(dateRange: NormalizedDateRange | null): void {
+    if (dateRange == null) {
+      this.dateFrom = null;
+      this.dateTo = null;
+    } else {
+      this.dateFrom = dateRange.start;
+      this.dateTo = dateRange.end;
+    }
     this.filterRequests();
   }
 
