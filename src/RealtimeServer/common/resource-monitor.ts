@@ -7,7 +7,9 @@ import { Connection } from 'sharedb/lib/client';
 import { Duplex } from 'stream';
 import v8 from 'v8';
 import vm from 'vm';
+import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
+import { resolveXdgDataPath } from './utils/xdg-data-path';
 
 function sizeof(obj: unknown): number {
   if (obj == null) return 0;
@@ -33,6 +35,12 @@ export interface ConnectionInfo {
   reportBatchId: string;
   triggerType: ReportTriggerType;
   timestamp: string;
+  /**
+   * The ShareDB Connection's id, which is the same value as the agent's clientId, and so the same value that the
+   * activity log reports as connectionEstablished.clientId and on the op entries. ShareDB sets Connection.id from the
+   * init message the server sends back, and that message carries agent.clientId, so the two always agree. This is
+   * therefore the key for joining these reports to the activity log. See rts-diagnostics.md.
+   */
   id: string;
   kind: ConnectionKind;
   owner: string | undefined;
@@ -237,6 +245,18 @@ export class ResourceMonitor {
     void this.record('periodic');
   }
 
+  /**
+   * Begins monitoring a connection, so that it is reported in connection-info.csv and connection-collection-info.csv.
+   *
+   * Note that this is not called for every connection, so those two files are not a
+   * complete list. Only index.ts for connections made for dotnet ('interop'), and
+   * RealtimeServer's constructor for defaultConnection ('default'), make connections that are included here. Connections made elsewhere, such as those
+   * QuestionService and NoteThreadService make while cleaning up references, are absent from those files entirely.
+   *
+   * agent-info.csv does cover every connection, because monitorAgent below is called from RealtimeServer.listen, which
+   * every connection goes through. So agent-info.csv is the file to use when asking "what connections existed"; the
+   * connection files answer "what were the interop and default connections holding". See rts-diagnostics.md.
+   */
   public startMonitoringConnection(connection: Connection, metadata?: ConnectionMonitorMetadata): void {
     if (this.connections.has(connection)) return;
     this.connections.add(connection);
@@ -253,6 +273,14 @@ export class ResourceMonitor {
     this.connectionStates.delete(connection);
   }
 
+  /**
+   * Begins monitoring an agent, so that it is reported in agent-info.csv.
+   *
+   * Unlike startMonitoringConnection above, this is called from RealtimeServer.listen, which every connection goes
+   * through, so agent-info.csv covers them all - frontend clients, dotnet, defaultConnection and the doc services
+   * alike. The exception is that listen only calls this when data validation is enabled, so agents are not monitored
+   * during a migration run.
+   */
   public monitorAgent(agent: ShareDB.Agent, stream: Duplex): void {
     if (this.agents.has(agent)) return;
     this.agents.add(agent);
@@ -331,6 +359,10 @@ export class ResourceMonitor {
     await this.recordConnectionDiagnostics(reportBatchId, triggerType);
     await this.recordAgentDiagnostics(reportBatchId, triggerType);
     await this.recordPubSubDiagnostics(reportBatchId, triggerType);
+    ActivityLogger.instance.log('resourceReportGenerated', {
+      reportBatchId: reportBatchId,
+      triggerType: triggerType
+    });
   }
 
   private async recordConnectionDiagnostics(reportBatchId: string, triggerType: ReportTriggerType): Promise<void> {
@@ -539,23 +571,6 @@ export class ResourceMonitor {
   }
 
   private getOutputDir(): string {
-    const requestedPath: string | undefined = process.env['SF_RESOURCE_REPORTS_PATH'];
-    if (this.isStringPopulated(requestedPath)) return requestedPath;
-
-    const reportDirName: string = 'sf-resource-reports';
-
-    let xdgDataDir: string | undefined = process.env['XDG_DATA_HOME'];
-    if (this.isStringPopulated(xdgDataDir)) return path.join(xdgDataDir, reportDirName);
-
-    const home: string | undefined = process.env['HOME'];
-    if (this.isStringPopulated(home)) {
-      xdgDataDir = path.join(home, '.local', 'share');
-      return path.join(xdgDataDir, reportDirName);
-    }
-    return path.join(process.cwd(), reportDirName);
-  }
-
-  private isStringPopulated(value: string | undefined): value is string {
-    return value != null && value !== '';
+    return resolveXdgDataPath('SF_RESOURCE_REPORTS_PATH', 'sf-resource-reports');
   }
 }

@@ -3,6 +3,7 @@ import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { Doc, Op } from 'sharedb/lib/client';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
 import { MetadataDB } from './metadata-db';
 import { Migration } from './migration';
@@ -10,6 +11,7 @@ import { Project } from './models/project';
 import { User, USERS_COLLECTION } from './models/user';
 import { createTestUser } from './models/user-test-data';
 import { RealtimeServer, submitMigrationOp } from './realtime-server';
+import { ConnectionInternal } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { ProjectService } from './services/project-service';
 import { UserService } from './services/user-service';
@@ -18,6 +20,16 @@ import { docFetch, docSubmitOp } from './utils/sharedb-utils';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from './utils/test-utils';
 
 const PROJECTS_COLLECTION = 'projects';
+
+/** An ActivityLogger.log call captured by TestEnvironment.captureActivityLog. */
+interface LoggedActivity {
+  event: string;
+  details: Record<string, unknown>;
+}
+
+afterEach(() => {
+  jest.restoreAllMocks();
+});
 
 describe('RealtimeServer', () => {
   it('migrates docs when schema version does not exist', async () => {
@@ -548,6 +560,103 @@ describe('RealtimeServer', () => {
     verify(env.mockedProjectService.createIndexes(env.mongo)).once();
     verify(env.mockedUserService.createIndexes(env.mongo)).once();
   });
+
+  describe('activity logging', () => {
+    it('reports the interop handle that a connection was made for', () => {
+      const env = new TestEnvironment();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      env.server.connectAsServer('user01', 7);
+      const entry: LoggedActivity | undefined = logged.find(item => item.event === 'connectionEstablished');
+      expect(entry!.details['interopHandle']).toBe(7);
+    });
+
+    it('identifies an op the same way when it is submitted and when it is committed', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [
+        {
+          p: ['userPermissions', 'abc123'],
+          oi: 'admin'
+        }
+      ]);
+      const connectionId: string = (userConn as unknown as ConnectionInternal).id;
+      const submitted: LoggedActivity | undefined = logged.find(item => item.event === 'opSubmitted');
+      const committed: LoggedActivity | undefined = logged.find(item => item.event === 'opCommitted');
+      expect(submitted!.details['srcClientId']).toBe(connectionId);
+      expect(typeof submitted!.details['opSeq']).toBe('number');
+      expect(committed!.details['srcClientId']).toBe(submitted!.details['srcClientId']);
+      expect(committed!.details['opSeq']).toBe(submitted!.details['opSeq']);
+    });
+
+    it('reports which connection submitted an op, so that ops join to connectionEstablished', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [
+        {
+          p: ['userPermissions', 'abc123'],
+          oi: 'admin'
+        }
+      ]);
+      // srcClientId cannot be relied on for this: it is the op's source, which for a client that reconnected is the
+      // id from its previous session rather than the id this connection was logged as.
+      const established: LoggedActivity | undefined = logged.find(item => item.event === 'connectionEstablished');
+      const submitted: LoggedActivity | undefined = logged.find(item => item.event === 'opSubmitted');
+      expect(submitted!.details['clientId']).toBe(established!.details['clientId']);
+    });
+
+    it('reports the version an op was submitted against, and the version it committed as', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [
+        {
+          p: ['userPermissions', 'abc123'],
+          oi: 'admin'
+        }
+      ]);
+      const submitted: LoggedActivity | undefined = logged.find(item => item.event === 'opSubmitted');
+      const committed: LoggedActivity | undefined = logged.find(item => item.event === 'opCommitted');
+      expect(committed!.details['version']).toBe((submitted!.details['version'] as number) + 1);
+    });
+
+    it('identifies an op that fails validation', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await expect(
+        submitOp(userConn, PROJECTS_COLLECTION, 'project01', [
+          {
+            p: ['this_property_does_not_exist'],
+            oi: 'invalid data'
+          }
+        ])
+      ).rejects.toThrow();
+      const connectionId: string = (userConn as unknown as ConnectionInternal).id;
+      const failed: LoggedActivity | undefined = logged.find(item => item.event === 'opValidationFailed');
+      expect(failed!.details['srcClientId']).toBe(connectionId);
+      expect(typeof failed!.details['opSeq']).toBe('number');
+    });
+
+    it('does not report an interop handle for a connection made without one', () => {
+      const env = new TestEnvironment();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      env.server.connectAsServer('user01');
+      const entry: LoggedActivity | undefined = logged.find(item => item.event === 'connectionEstablished');
+      expect(entry!.details['interopHandle']).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {
@@ -663,6 +772,17 @@ class TestEnvironment {
       rolePermissions: {},
       userPermissions: {}
     });
+  }
+
+  /** Collect what is passed to ActivityLogger, rather than writing it to a log file. */
+  captureActivityLog(): LoggedActivity[] {
+    const logged: LoggedActivity[] = [];
+    jest
+      .spyOn(ActivityLogger.instance, 'log')
+      .mockImplementation((event: string, details: Record<string, unknown> = {}) => {
+        logged.push({ event: event, details: details });
+      });
+    return logged;
   }
 
   async migrateDoc(collection: string, id: string, version: number, ops: Op[]): Promise<void> {
