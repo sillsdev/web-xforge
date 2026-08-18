@@ -121,10 +121,10 @@
                   <mat-icon class="problem-badge" [matTooltip]="problemsBadgeTooltip(row)">warning</mat-icon>
                 }
               </div>
-              @if (row.report.buildConfidences?.lowestConfidence < 0.42) {
-                <!-- TODO: Use diagnostic message rather than calculation -->
-                <app-display-confidence [lowConfidence]="true" [showText]="false"></app-display-confidence>
-              }
+              <app-display-confidence
+                [lowConfidence]="hasLowConfidence(row)"
+                [showText]="false"
+              ></app-display-confidence>
             </div>
           </td>
         </ng-container>
@@ -644,8 +644,7 @@
                               track bookConfidence.bookNum
                             ) {
                               <div class="book-confidence">
-                                @if (bookConfidence.confidence < 0.42) {
-                                  <!-- TODO: Use diagnostic message rather than calculation -->
+                                @if (hasLowConfidence(row, getBookId(bookConfidence))) {
                                   <div class="detail-keyvalue">
                                     <span class="detail-key">
                                       {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
