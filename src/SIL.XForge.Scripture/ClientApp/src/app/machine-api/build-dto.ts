@@ -17,7 +17,7 @@ export interface BuildDto extends ResourceDto {
 }
 
 // Enum Definition
-enum ServalDiagnosticSeverity {
+export enum ServalDiagnosticSeverity {
   Info = 0,
   Warn = 1,
   Error = 2
@@ -31,7 +31,7 @@ export enum ServalDiagnosticCode {
 }
 
 // Model Interface
-interface ServalBuildDiagnostic {
+export interface ServalBuildDiagnostic {
   code: string;
   category: string;
   message: string;
