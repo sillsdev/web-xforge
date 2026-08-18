@@ -999,7 +999,7 @@ public partial class MachineApiService(
                 cancellationToken
             );
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
             return [];
         }
@@ -1481,21 +1481,6 @@ public partial class MachineApiService(
             );
         }
 
-        // Serval problems: execution data warnings for builds earlier than Serval 1.20
-#pragma warning disable CS0612 // Type or member is obsolete
-        if (translationBuild.ExecutionData?.Warnings is { Count: > 0 } warnings)
-#pragma warning restore CS0612 // Type or member is obsolete
-        {
-            problems.AddRange(
-                warnings.Select(w => new BuildReportProblem
-                {
-                    Source = BuildReportProblemSource.Serval,
-                    Severity = BuildReportProblemSeverity.Warning,
-                    Message = w,
-                })
-            );
-        }
-
         // Serval: Diagnostic messages for builds from Serval 1.20 and later
         if (translationBuild.ExecutionData?.Diagnostics is { Count: > 0 } diagnostics)
         {
@@ -1505,6 +1490,21 @@ public partial class MachineApiService(
                     Source = BuildReportProblemSource.Serval,
                     Severity = (BuildReportProblemSeverity)d.Severity,
                     Message = d.Message,
+                })
+            );
+        }
+#pragma warning disable CS0612 // Type or member is obsolete
+        else if (translationBuild.ExecutionData?.Warnings is { Count: > 0 } warnings)
+#pragma warning restore CS0612 // Type or member is obsolete
+        {
+            // Serval problems: execution data warnings for builds earlier than Serval 1.20.
+            // These are only to be added if no diagnostic messages are present.
+            problems.AddRange(
+                warnings.Select(w => new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Serval,
+                    Severity = BuildReportProblemSeverity.Warning,
+                    Message = w,
                 })
             );
         }
@@ -3823,23 +3823,6 @@ public partial class MachineApiService(
                     },
         };
 
-        // Add the legacy warnings to the diagnostic messages
-#pragma warning disable CS0612 // Type or member is obsolete
-        if (executionData?.Warnings is { Count: > 0 } warnings)
-        {
-            buildDto.ExecutionData.Diagnostics.AddRange(
-                warnings.Select(w => new ServalBuildDiagnostic
-                {
-                    Category = "LEGACY",
-                    Code = "LEGACY-0001",
-                    Data = [],
-                    Message = w,
-                    Severity = ServalDiagnosticSeverity.Warn,
-                })
-            );
-        }
-#pragma warning restore CS0612 // Type or member is obsolete
-
         // Add new diagnostic messages
         if (executionData?.Diagnostics is { Count: > 0 } diagnostics)
         {
@@ -3851,6 +3834,22 @@ public partial class MachineApiService(
                     Data = new Dictionary<string, object>(d.Data),
                     Message = d.Message,
                     Severity = (ServalDiagnosticSeverity)d.Severity,
+                })
+            );
+        }
+#pragma warning disable CS0612 // Type or member is obsolete
+        else if (executionData?.Warnings is { Count: > 0 } warnings)
+#pragma warning restore CS0612 // Type or member is obsolete
+        {
+            // Add the legacy warnings to the diagnostic messages, if there were no diagnostic messages
+            buildDto.ExecutionData.Diagnostics.AddRange(
+                warnings.Select(w => new ServalBuildDiagnostic
+                {
+                    Category = "LEGACY",
+                    Code = "LEGACY-0001",
+                    Data = [],
+                    Message = w,
+                    Severity = ServalDiagnosticSeverity.Warn,
                 })
             );
         }

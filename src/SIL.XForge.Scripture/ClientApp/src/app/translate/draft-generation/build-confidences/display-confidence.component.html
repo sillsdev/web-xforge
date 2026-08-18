@@ -1,10 +1,12 @@
 <ng-container *transloco="let t; read: 'draft_confidence'">
   @if (lowConfidence) {
-    <div class="confidence red">
-      <mat-icon [matTooltip]="t('low_confidence')">error</mat-icon>
-      @if (showText) {
+    @if (showText) {
+      <div class="confidence red">
+        <mat-icon [matTooltip]="t('low_confidence')">warning</mat-icon>
         <span>{{ t("low_confidence") }}</span>
-      }
-    </div>
+      </div>
+    } @else {
+      <mat-icon [matTooltip]="t('low_confidence')" class="red">warning</mat-icon>
+    }
   }
 </ng-container>
