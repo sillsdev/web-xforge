@@ -63,7 +63,7 @@
           }}</app-notice>
         }
         @if (draftHasLowConfidence && !(needsConnection || showBookSelection)) {
-          <app-notice type="error">{{ t("low_quality_book", { book: bookNameWithLowConfidence }) }}</app-notice>
+          <app-notice type="error">{{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}</app-notice>
         }
       </form>
 
@@ -168,7 +168,7 @@
             }
           }
           @if (draftHasLowConfidence && !showBookSelection) {
-            <app-notice type="error">{{ t("low_quality_book", { book: bookNameWithLowConfidence }) }}</app-notice>
+            <app-notice type="error">{{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}</app-notice>
           }
           <div class="button-strip">
             <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
@@ -206,9 +206,11 @@
         </div>
 
         @if (selectedBooksWithLowConfidence === 1) {
-          <app-notice type="error">{{ t("low_quality_book", { book: bookNameWithLowConfidence }) }}</app-notice>
+          <app-notice type="error">{{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}</app-notice>
         } @else if (selectedBooksWithLowConfidence > 1) {
-          <app-notice type="error">{{ t("low_quality_books", { number: selectedBooksWithLowConfidence }) }}</app-notice>
+          <app-notice type="error">{{
+            t("low_confidence_books", { number: selectedBooksWithLowConfidence })
+          }}</app-notice>
         }
 
         <div class="button-strip">

@@ -28,7 +28,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticCode } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
@@ -393,6 +393,60 @@ describe('EditorDraftComponent', () => {
     verify(mockDraftHandlingService.getBookDraft(anything(), anything())).twice();
     expect(component.draftCheckState).toEqual('draft-present');
     expect(component.draftText.editor!.getContents().ops).toEqual(draftDelta.ops);
+    flush();
+  }));
+
+  it('should show the low confidence warning if selected revision has low confidence', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+      of([
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[0].timestamp },
+          executionData: {
+            diagnostics: [
+              { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'EXO' } } as Partial<ServalBuildDiagnostic>
+            ]
+          }
+        } as BuildDto,
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[1].timestamp },
+          executionData: {
+            diagnostics: [
+              { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'GEN' } } as Partial<ServalBuildDiagnostic>
+            ]
+          }
+        } as BuildDto
+      ])
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.hasLowConfidence).toBeFalse();
+
+    // SUT 1
+    // Select the second item in the dropdown
+    component.onSelectionChanged({ value: draftHistory[1] } as MatSelectChange);
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.hasLowConfidence).toBeTrue();
+
+    // SUT 2
+    // Select the first item in the dropdown again
+    component.onSelectionChanged({ value: draftHistory[0] } as MatSelectChange);
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.hasLowConfidence).toBeFalse();
     flush();
   }));
 

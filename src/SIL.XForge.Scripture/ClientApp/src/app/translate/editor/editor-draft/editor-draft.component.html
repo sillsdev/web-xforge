@@ -70,7 +70,7 @@
     }
     @if (hasLowConfidence) {
       <app-notice type="error">
-        {{ "editor_draft_tab.low_quality_book" | transloco: { book: this.getLocalizedBook() } }}
+        {{ "editor_draft_tab.low_confidence_book" | transloco: { book: this.getLocalizedBook() } }}
       </app-notice>
     }
   } @else {
