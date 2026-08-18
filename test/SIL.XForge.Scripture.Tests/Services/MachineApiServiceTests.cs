@@ -1515,6 +1515,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(draftGenerationRequestId, report.DraftGenerationRequestId);
         Assert.NotZero(report.BuildConfidences!.BookConfidences.Count);
         Assert.NotZero(report.BuildConfidences!.ChapterConfidences.Count);
+        Assert.NotZero(report.BuildConfidences!.VerseConfidences.Count);
     }
 
     [Test]
@@ -2479,6 +2480,7 @@ public class MachineApiServiceTests
             Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
             Assert.That(actual?.BookConfidences, Is.Not.Empty);
             Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.VerseConfidences, Is.Not.Empty);
             Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
     }
@@ -2505,6 +2507,7 @@ public class MachineApiServiceTests
             Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
             Assert.That(actual?.BookConfidences, Is.Not.Empty);
             Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.VerseConfidences, Is.Not.Empty);
             Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
     }
@@ -6239,6 +6242,17 @@ public class MachineApiServiceTests
                         {
                             BookNum = 1,
                             ChapterNum = 1,
+                            Confidence = 0.6,
+                        },
+                    ],
+                    VerseConfidences =
+                    [
+                        new VerseConfidence
+                        {
+                            BookNum = 1,
+                            ChapterNum = 1,
+                            Verse = "1",
+                            VerseNum = 1,
                             Confidence = 0.6,
                         },
                     ],

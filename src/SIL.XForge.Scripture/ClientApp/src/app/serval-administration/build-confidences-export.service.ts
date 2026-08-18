@@ -2,7 +2,11 @@ import { Injectable } from '@angular/core';
 import { Canon } from '@sillsdev/scripture';
 import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
-import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
+import {
+  BookConfidence,
+  ChapterConfidence,
+  VerseConfidence
+} from '../translate/draft-generation/build-confidences/build-confidences';
 import { BaseExportService } from './base-export-service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { encodeRsv } from './rsv';
@@ -18,6 +22,13 @@ interface ChapterConfidenceRow {
   Confidence: string;
 }
 
+interface VerseConfidenceRow {
+  Book: string;
+  Chapter: string;
+  Verse: string;
+  Confidence: string;
+}
+
 /**
  * Service for exporting draft jobs data to CSV and RSV formats.
  * Handles the transformation of table rows to spreadsheet format and file generation.
@@ -30,7 +41,7 @@ export class BuildConfidencesExportService extends BaseExportService {
    * Export the build confidences data as a CSV file.
    */
   exportCsv(
-    rows: (BookConfidence | ChapterConfidence)[],
+    rows: (BookConfidence | ChapterConfidence | VerseConfidence)[],
     dateRangeForFilename: NormalizedDateRange | undefined,
     filenamePrefix: string | undefined = undefined
   ): void {
@@ -41,7 +52,7 @@ export class BuildConfidencesExportService extends BaseExportService {
    * Export the build confidences data as a TSV file.
    */
   exportTsv(
-    rows: BookConfidence[] | ChapterConfidence[],
+    rows: BookConfidence[] | ChapterConfidence[] | VerseConfidence[],
     dateRangeForFilename: NormalizedDateRange | undefined,
     filenamePrefix: string | undefined = undefined
   ): void {
@@ -52,7 +63,7 @@ export class BuildConfidencesExportService extends BaseExportService {
    * Export the build confidences data as an RSV (Rows of String Values) file.
    */
   exportRsv(
-    rows: (BookConfidence | ChapterConfidence)[],
+    rows: (BookConfidence | ChapterConfidence | VerseConfidence)[],
     dateRangeForFilename: NormalizedDateRange | undefined,
     filenamePrefix: string | undefined = undefined
   ): void {
@@ -71,31 +82,44 @@ export class BuildConfidencesExportService extends BaseExportService {
     saveAs(blob, filename);
   }
 
-  private createRsvRows(rows: (BookConfidence | ChapterConfidence)[]): string[][] {
-    if (this.isChapterConfidenceArray(rows)) {
+  private createRsvRows(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[]): string[][] {
+    if (this.isVerseConfidenceArray(rows)) {
+      const headers: string[] = ['Book', 'Chapter', 'Verse', 'Confidence'];
+      const dataRows: string[][] = rows.map(row => [
+        Canon.bookNumberToId(row.bookNum),
+        row.chapterNum.toString(),
+        row.verse ?? row.verseNum.toString(),
+        row.confidence.toFixed(3).toString()
+      ]);
+      return [headers, ...dataRows];
+    } else if (this.isChapterConfidenceArray(rows)) {
       const headers: string[] = ['Book', 'Chapter', 'Confidence'];
       const dataRows: string[][] = rows.map(row => [
         Canon.bookNumberToId(row.bookNum),
         row.chapterNum.toString(),
-        row.confidence.toString()
+        row.confidence.toFixed(3).toString()
       ]);
       return [headers, ...dataRows];
     } else {
       const headers: string[] = ['Book', 'Confidence'];
-      const dataRows: string[][] = rows.map(row => [Canon.bookNumberToId(row.bookNum), row.confidence.toString()]);
+      const dataRows: string[][] = rows.map(row => [
+        Canon.bookNumberToId(row.bookNum),
+        row.confidence.toFixed(3).toString()
+      ]);
       return [headers, ...dataRows];
     }
   }
 
   private exportSeparatedValues(
-    rows: (BookConfidence | ChapterConfidence)[],
+    rows: (BookConfidence | ChapterConfidence | VerseConfidence)[],
     dateRangeForFilename: NormalizedDateRange | undefined,
     filenamePrefix: string | undefined,
     extension: string,
     delimiter: string,
     mimeType: string
   ): void {
-    const spreadsheetRows: (BookConfidenceRow | ChapterConfidenceRow)[] = this.getSpreadsheetRows(rows);
+    const spreadsheetRows: (BookConfidenceRow | ChapterConfidenceRow | VerseConfidence)[] =
+      this.getSpreadsheetRows(rows);
     const separatedValues: string = Papa.unparse(spreadsheetRows, { delimiter: delimiter });
     const filename: string = this.getExportFilename(
       dateRangeForFilename,
@@ -106,14 +130,31 @@ export class BuildConfidencesExportService extends BaseExportService {
     saveAs(blob, filename);
   }
 
-  private getFileNamePrefix(rows: (BookConfidence | ChapterConfidence)[], filenamePrefix: string | undefined): string {
-    return filenamePrefix ?? (this.isChapterConfidenceArray(rows) ? 'confidence_chapters' : 'confidence_books');
+  private getFileNamePrefix(
+    rows: (BookConfidence | ChapterConfidence | VerseConfidence)[],
+    filenamePrefix: string | undefined
+  ): string {
+    return (
+      filenamePrefix ??
+      (this.isVerseConfidenceArray(rows)
+        ? 'confidence_verses'
+        : this.isChapterConfidenceArray(rows)
+          ? 'confidence_chapters'
+          : 'confidence_books')
+    );
   }
 
   private getSpreadsheetRows(
-    rows: BookConfidence[] | ChapterConfidence[]
-  ): (BookConfidenceRow | ChapterConfidenceRow)[] {
-    if (this.isChapterConfidenceArray(rows)) {
+    rows: BookConfidence[] | ChapterConfidence[] | VerseConfidence[]
+  ): (BookConfidenceRow | ChapterConfidenceRow | VerseConfidenceRow)[] {
+    if (this.isVerseConfidenceArray(rows)) {
+      return rows.map(row => ({
+        Book: Canon.bookNumberToId(row.bookNum),
+        Chapter: row.chapterNum.toString(),
+        Verse: row.verse ?? row.verseNum.toString(),
+        Confidence: row.confidence.toFixed(3)
+      }));
+    } else if (this.isChapterConfidenceArray(rows)) {
       return rows.map(row => ({
         Book: Canon.bookNumberToId(row.bookNum),
         Chapter: row.chapterNum.toString(),
@@ -129,5 +170,11 @@ export class BuildConfidencesExportService extends BaseExportService {
 
   private isChapterConfidenceArray(rows: (BookConfidence | ChapterConfidence)[]): rows is ChapterConfidence[] {
     return rows.length > 0 && 'chapterNum' in rows[0];
+  }
+
+  private isVerseConfidenceArray(
+    rows: (BookConfidence | ChapterConfidence | VerseConfidence)[]
+  ): rows is VerseConfidence[] {
+    return rows.length > 0 && 'verseNum' in rows[0];
   }
 }

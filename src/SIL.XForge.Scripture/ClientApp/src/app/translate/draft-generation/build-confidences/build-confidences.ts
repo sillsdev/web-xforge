@@ -1,9 +1,12 @@
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+
 /** The build confidences DTO */
 export interface BuildConfidences {
   projectId: string;
   buildId: string;
   bookConfidences: BookConfidence[];
   chapterConfidences: ChapterConfidence[];
+  verseConfidences: VerseConfidence[];
   lowestConfidence?: Confidence;
 }
 
@@ -19,3 +22,5 @@ export interface BookConfidence extends Confidence {
 export interface ChapterConfidence extends BookConfidence {
   chapterNum: number;
 }
+
+export interface VerseConfidence extends VerseRefData, Confidence {}

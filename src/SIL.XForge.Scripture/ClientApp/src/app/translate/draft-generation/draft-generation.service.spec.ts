@@ -52,7 +52,8 @@ describe('DraftGenerationService', () => {
     projectId,
     buildId,
     bookConfidences: [],
-    chapterConfidences: []
+    chapterConfidences: [],
+    verseConfidences: []
   };
   const buildConfig: BuildConfig = {
     projectId,
