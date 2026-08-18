@@ -9,14 +9,14 @@ export default meta;
 
 type Story = StoryObj<DisplayConfidenceComponent>;
 
-export const NotLowQuality: Story = {
+export const NotLowConfidence: Story = {
   args: { lowConfidence: false, showText: true }
 };
 
-export const LowQualityWithIconAndText: Story = {
+export const LowConfidenceWithIconAndText: Story = {
   args: { lowConfidence: true, showText: true }
 };
 
-export const LowQualityIconOnly: Story = {
+export const LowConfidenceIconOnly: Story = {
   args: { lowConfidence: true, showText: false }
 };

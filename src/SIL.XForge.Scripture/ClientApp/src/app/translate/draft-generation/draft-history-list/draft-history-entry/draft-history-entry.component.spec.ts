@@ -17,7 +17,12 @@ import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { BuildDto } from '../../../../machine-api/build-dto';
+import {
+  BuildDto,
+  BuildExecutionData,
+  ServalDiagnosticCode,
+  ServalDiagnosticSeverity
+} from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { DraftGenerationService } from '../../draft-generation.service';
 import { DraftOptionsService, FORMATTING_OPTIONS_SUPPORTED_DATE } from '../../draft-options.service';
@@ -562,6 +567,75 @@ describe('DraftHistoryEntryComponent', () => {
     });
   });
 
+  describe('low confidence', () => {
+    it('should not show the low confidence warning if no books low confidence', fakeAsync(() => {
+      const entry = getStandardBuildDto({ executionData: {} });
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).toBeNull();
+    }));
+
+    it('should show the single book low confidence warning if one book has low confidence', fakeAsync(() => {
+      const entry = getStandardBuildDto({
+        executionData: {
+          diagnostics: [
+            {
+              code: ServalDiagnosticCode.LowConfidence,
+              category: '',
+              message: '',
+              data: { bookId: 'GEN' },
+              severity: ServalDiagnosticSeverity.Warn
+            }
+          ]
+        }
+      });
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).not.toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).toBeNull();
+    }));
+
+    it('should show the multiple book low confidence warning if more than one book has low confidence', fakeAsync(() => {
+      const entry = getStandardBuildDto({
+        executionData: {
+          diagnostics: [
+            {
+              code: ServalDiagnosticCode.LowConfidence,
+              category: '',
+              message: '',
+              data: { bookId: 'GEN' },
+              severity: ServalDiagnosticSeverity.Warn
+            },
+            {
+              code: ServalDiagnosticCode.LowConfidence,
+              category: '',
+              message: '',
+              data: { bookId: 'EXO' },
+              severity: ServalDiagnosticSeverity.Warn
+            }
+          ]
+        }
+      });
+
+      // SUT
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).toBeNull();
+      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).not.toBeNull();
+    }));
+  });
+
   describe('formatDate', () => {
     it('should handle undefined values', () => {
       expect(component.formatDate(undefined)).toBe('');
@@ -584,7 +658,8 @@ describe('DraftHistoryEntryComponent', () => {
     trainingBooks = ['EXO'],
     translateBooks = ['GEN'],
     trainingDataFiles = ['file01'],
-    servalVersion
+    servalVersion,
+    executionData
   }: {
     user?: string;
     date?: string;
@@ -592,6 +667,7 @@ describe('DraftHistoryEntryComponent', () => {
     translateBooks?: string[];
     trainingDataFiles?: string[];
     servalVersion?: string;
+    executionData?: Partial<BuildExecutionData>;
   }): BuildDto {
     const userDoc = {
       id: 'sf-user-id',
@@ -632,7 +708,8 @@ describe('DraftHistoryEntryComponent', () => {
         translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }],
         trainingDataFileIds: trainingDataFiles
       },
-      deploymentVersion: servalVersion
+      deploymentVersion: servalVersion,
+      executionData: executionData
     } as BuildDto;
 
     return entry;

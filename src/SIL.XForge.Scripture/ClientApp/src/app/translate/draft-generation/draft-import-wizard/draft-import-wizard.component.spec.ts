@@ -25,7 +25,7 @@ import { ParatextService } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
-import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticCode } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import { DraftNotificationService } from '../draft-notification.service';
@@ -164,7 +164,7 @@ describe('DraftImportWizardComponent', () => {
 
   it('applies a single book draft to projects that are already connected which do not have the books', fakeAsync(() => {
     // Configure draft to be just one book
-    configureDraftForOneBook();
+    configureDraft('GEN', false);
 
     // Setup test environment
     const env = new TestEnvironment();
@@ -188,7 +188,7 @@ describe('DraftImportWizardComponent', () => {
 
   it('applies a single book draft to projects that are already connected which have the books', fakeAsync(() => {
     // Configure draft to be just one book
-    configureDraftForOneBook();
+    configureDraft('GEN', false);
 
     // Setup test environment
     const env = new TestEnvironment();
@@ -216,7 +216,7 @@ describe('DraftImportWizardComponent', () => {
 
   it('applies only the drafted chapters for a partial-book draft', fakeAsync(() => {
     // The build drafted only Genesis 30-32, not the whole book.
-    configurePartialDraft('GEN30-32');
+    configureDraft('GEN30-32', false);
 
     const env = new TestEnvironment();
     env.wait();
@@ -242,7 +242,7 @@ describe('DraftImportWizardComponent', () => {
 
   it('scopes the overwrite confirmation to the drafted chapters', fakeAsync(() => {
     // The build drafted Genesis 1-3; project04 has existing text in Genesis 1 only.
-    configurePartialDraft('GEN1-3');
+    configureDraft('GEN1-3', false);
 
     const env = new TestEnvironment();
     env.wait();
@@ -288,6 +288,67 @@ describe('DraftImportWizardComponent', () => {
     expect(env.component.selectedParatextProject).toBeUndefined();
     expect(env.component.projectSelectionForm.valid).toBe(false);
     env.component.close();
+  }));
+
+  it('Shows the low confidence warning for a draft of a single book', fakeAsync(() => {
+    // Configure draft to be just one book with low confidence
+    configureDraft('GEN', true);
+
+    // Setup test environment
+    const env = new TestEnvironment();
+    env.wait();
+
+    // Step 1
+    env.selectProject('paratext04');
+    expect(env.lowConfidenceWarning).not.toBeUndefined();
+    env.clickNextButton(1);
+
+    // Step 5
+    env.clickOverwriteCheckbox();
+    env.clickNextButton(5);
+
+    // Step 6
+    env.importDraft();
+    env.clickNextButton(6);
+
+    // Step 7
+    env.clickNextButton(7, 'skip');
+
+    // Close the dialog and verify it closed
+    env.clickNextButton(7, 'done');
+    verify(mockMatDialogRef.close(true)).once();
+  }));
+
+  it('Shows the low confidence warning for a draft of a multiple books', fakeAsync(() => {
+    // Configure draft to be just one book with low confidence
+    configureDraft('GEN;EXO', true);
+
+    // Setup test environment
+    const env = new TestEnvironment();
+    env.wait();
+
+    // Step 1
+    env.selectProject('paratext04');
+    env.clickNextButton(1);
+
+    // Step 4
+    expect(env.lowConfidenceWarning).not.toBeUndefined();
+    env.clickNextButton(4);
+
+    // Step 5
+    env.clickOverwriteCheckbox();
+    env.clickNextButton(5);
+
+    // Step 6
+    env.importDraft();
+    env.clickNextButton(6);
+
+    // Step 7
+    env.clickNextButton(7, 'skip');
+
+    // Close the dialog and verify it closed
+    env.clickNextButton(7, 'done');
+    verify(mockMatDialogRef.close(true)).once();
   }));
 });
 
@@ -441,6 +502,10 @@ class TestEnvironment {
     this.wait();
   }
 
+  lowConfidenceWarning(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector(`[data-test-id="low-confidence-warning"]`);
+  }
+
   selectProject(paratextId: string): void {
     const projectSelect: DebugElement = this.fixture.debugElement.query(By.css('app-project-select'));
 
@@ -474,24 +539,23 @@ class TestEnvironment {
   }
 }
 
-function configureDraftForOneBook(): void {
-  // Configure draft to be just one book
-  const buildDto: BuildDto = {
-    additionalInfo: {
-      dateFinished: '2026-01-14T15:16:17.18+00:00',
-      translationScriptureRanges: [{ projectId: 'P01', scriptureRange: 'GEN' }]
-    }
-  } as BuildDto;
-  TestBed.overrideProvider(MAT_DIALOG_DATA, { useValue: buildDto });
-}
-
-function configurePartialDraft(scriptureRange: string): void {
-  // Configure the draft as a partial-book range (e.g. specific chapters of a book)
+function configureDraft(scriptureRange: string, hasLowConfidence: boolean): void {
   const buildDto: BuildDto = {
     additionalInfo: {
       dateFinished: '2026-01-14T15:16:17.18+00:00',
       translationScriptureRanges: [{ projectId: 'P01', scriptureRange }]
-    }
+    },
+    executionData: hasLowConfidence
+      ? {
+          diagnostics: scriptureRange.split(';').map(
+            bookId =>
+              ({
+                code: ServalDiagnosticCode.LowConfidence,
+                data: { bookId }
+              }) as Partial<ServalBuildDiagnostic>
+          )
+        }
+      : undefined
   } as BuildDto;
   TestBed.overrideProvider(MAT_DIALOG_DATA, { useValue: buildDto });
 }
