@@ -725,6 +725,35 @@
                               <span class="export-item-label"> Export Chapter Confidence RSV </span>
                             </button>
                           </mat-menu>
+                          <div class="export-button-group">
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-csv-button"
+                              (click)="exportCsv(row.report.buildConfidences.verseConfidences)"
+                            >
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence CSV </span>
+                            </button>
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-menu-button"
+                              [matMenuTriggerFor]="exportVerseMenu"
+                            >
+                              <mat-icon>arrow_drop_down</mat-icon>
+                            </button>
+                          </div>
+                          <mat-menu #exportVerseMenu="matMenu" xPosition="before">
+                            <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.verseConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence TSV </span>
+                            </button>
+                            <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.verseConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence RSV </span>
+                            </button>
+                          </mat-menu>
                         } @else {
                           <div class="detail-keyvalue">
                             <span class="detail-key">Configured</span>
