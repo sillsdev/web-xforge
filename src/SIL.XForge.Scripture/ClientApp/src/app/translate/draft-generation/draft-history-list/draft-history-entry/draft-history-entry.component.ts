@@ -32,17 +32,18 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { BuildDto } from '../../../../machine-api/build-dto';
+import { BuildDto, ServalDiagnosticCode } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../../../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../../../shared/scripture-range-display';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
+import { DisplayConfidenceComponent } from '../../build-confidences/display-confidence.component';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
-import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../../draft-utils';
+import { DraftSourcesAsTranslateSourceArrays, hasLowConfidence, projectToDraftSources } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -77,6 +78,7 @@ interface SourceInfo {
   selector: 'app-draft-history-entry',
   imports: [
     NgClass,
+    DisplayConfidenceComponent,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,
@@ -392,6 +394,25 @@ export class DraftHistoryEntryComponent {
       disableClose: false,
       panelClass: 'use-application-text-color'
     });
+  }
+
+  protected hasLowConfidence(build: BuildDto): boolean {
+    return hasLowConfidence(build);
+  }
+
+  protected booksWithLowConfidence(build: BuildDto): number {
+    return build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0;
+  }
+
+  protected lowConfidenceBookName(build: BuildDto): string {
+    const bookId: string | undefined = build?.executionData?.diagnostics?.find(
+      d => d.code === ServalDiagnosticCode.LowConfidence
+    )?.data?.bookId;
+    if (bookId != null) {
+      return this.i18n.localizeBook(bookId);
+    } else {
+      return this.i18n.translateStatic('draft_history_entry.one_book');
+    }
   }
 
   private async getProjectSourceInfo(

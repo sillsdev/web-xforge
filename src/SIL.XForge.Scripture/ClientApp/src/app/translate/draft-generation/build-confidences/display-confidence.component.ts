@@ -11,8 +11,6 @@ import { TranslocoModule } from '@ngneat/transloco';
 })
 /**
  * Displays the confidence value in an human-friendly format.
- *
- * NOTE: This component is not yet localized as it is only used by the Serval Builds tab, and is not yet finalized.
  */
 export class DisplayConfidenceComponent {
   @Input() showText: boolean | undefined;

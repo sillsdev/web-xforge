@@ -61,6 +61,7 @@ import {
 } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
@@ -341,6 +342,10 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     } else {
       this.buildConfidencesExportService.exportTsv(rows, this.dateRange$.value);
     }
+  }
+
+  protected hasLowConfidence(row: ServalBuildRow | undefined, bookId: string | undefined = undefined): boolean {
+    return hasLowConfidence(row?.report.build, bookId);
   }
 
   private createSpreadsheetData(): {

@@ -48,6 +48,9 @@ mat-panel-description {
   align-items: center;
   gap: 4px;
   white-space: nowrap;
+  app-display-confidence {
+    margin-inline-end: 16px;
+  }
 }
 
 .expand-icon {

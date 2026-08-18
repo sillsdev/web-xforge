@@ -56,6 +56,7 @@ import { DraftGenerationService } from '../../draft-generation/draft-generation.
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-generation/draft-preview-books/draft-preview-books.component';
+import { hasLowConfidence } from '../../draft-generation/draft-utils';
 import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/history-revision-format.pipe';
 
 @Component({
@@ -125,9 +126,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
   private draftDelta?: Delta;
   private targetDelta?: Delta;
-  private _latestPreTranslationBuild: BuildDto | undefined;
-  private readonly notifyBuildProgressHandler = (projectId: string): void =>
-    this.refreshLastPreTranslationBuild(projectId);
+  private builds: BuildDto[] = [];
+  private readonly notifyBuildProgressHandler = (projectId: string): void => this.refreshBuildHistory(projectId);
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
@@ -191,8 +191,38 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     return this.targetProject != null && this.bookNum != null && this.chapter != null && this.draftDelta?.ops != null;
   }
 
+  get hasLowConfidence(): boolean {
+    if (this.selectedRevision == null) {
+      return false;
+    }
+
+    const revisionTime = new Date(this.selectedRevision.timestamp).getTime();
+    const build = this.builds.reduce<BuildDto | undefined>((latest, current) => {
+      const finished = current.additionalInfo?.dateFinished;
+      if (finished == null || current.state !== BuildStates.Completed) {
+        return latest;
+      }
+
+      const currentTime = new Date(finished).getTime();
+
+      if (currentTime > revisionTime) {
+        return latest;
+      }
+
+      if (latest == null) {
+        return current;
+      }
+
+      const latestTime = new Date(latest.additionalInfo!.dateFinished!).getTime();
+
+      return currentTime > latestTime ? current : latest;
+    }, undefined);
+
+    return hasLowConfidence(build, this.bookId);
+  }
+
   get isLatestBuildCompleted(): boolean {
-    return this._latestPreTranslationBuild?.state === BuildStates.Completed;
+    return this.builds.length === 0 ? false : this.builds[this.builds.length - 1].state === BuildStates.Completed;
   }
 
   get isSelectedDraftLatest(): boolean {
@@ -339,7 +369,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           return isOnline && this.doesLatestCompletedHaveDraft;
         })
       )
-      .subscribe(([_, projectDoc]) => this.refreshLastPreTranslationBuild(projectDoc!.id));
+      .subscribe(([_, projectDoc]) => this.refreshBuildHistory(projectDoc!.id));
   }
 
   navigateToFormatting(): void {
@@ -376,11 +406,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     }
   }
 
-  private refreshLastPreTranslationBuild(projectId: string): void {
+  private refreshBuildHistory(projectId: string): void {
     this.draftGenerationService
-      .getLastPreTranslationBuild(projectId)
+      .getBuildHistory(projectId)
       .pipe(quietTakeUntilDestroyed(this.destroyRef), take(1))
-      .subscribe((build: BuildDto | undefined) => (this._latestPreTranslationBuild = build));
+      .subscribe((builds: BuildDto[] | undefined) => (this.builds = builds ?? []));
   }
 
   private setInitialState(): void {
@@ -430,6 +460,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     }
 
     return this.i18n.localizeBookChapter(this.bookNum, this.chapter);
+  }
+
+  protected getLocalizedBook(): string {
+    if (this.bookNum == null) {
+      return '';
+    }
+
+    return this.i18n.localizeBook(this.bookNum);
   }
 
   private getTargetOps(): Observable<DeltaOperation[]> {
