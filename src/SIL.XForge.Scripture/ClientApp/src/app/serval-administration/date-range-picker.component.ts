@@ -63,6 +63,9 @@ export class DateRangePickerComponent implements OnInit {
   /** When the date range is not the default, highlight the control and show a reset button. */
   @Input() showReset: boolean = false;
 
+  /** When true, initialize the control with null as the selected default range. */
+  @Input() startWithEmptyRange: boolean = false;
+
   /** Maximum selectable date (today) */
   readonly maxSelectableDate: Date;
 
@@ -78,7 +81,7 @@ export class DateRangePickerComponent implements OnInit {
   private readonly defaultDaysBack = 14;
 
   /** Event emitted when the date range changes with a valid normalized range */
-  @Output() dateRangeChange = new EventEmitter<NormalizedDateRange>();
+  @Output() dateRangeChange = new EventEmitter<NormalizedDateRange | undefined>();
 
   /** Whether current range is equal to the initial default range. */
   isDefaultRange: boolean = true;
@@ -112,26 +115,32 @@ export class DateRangePickerComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Set initial range
-    const initialEndDate = new Date(this.maxSelectableDate);
-    const initialStartDate = new Date(this.maxSelectableDate);
-    initialStartDate.setDate(initialStartDate.getDate() - this.defaultDaysBack);
+    if (this.startWithEmptyRange) {
+      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
+      this.defaultRange = undefined;
+      this.isDefaultRange = true;
+    } else {
+      // Set initial range
+      const initialEndDate = new Date(this.maxSelectableDate);
+      const initialStartDate = new Date(this.maxSelectableDate);
+      initialStartDate.setDate(initialStartDate.getDate() - this.defaultDaysBack);
 
-    const normalizedStart = this.beginningOfTheDayOf(initialStartDate);
-    const normalizedEnd = this.endOfTheDayOf(initialEndDate);
+      const normalizedStart = this.beginningOfTheDayOf(initialStartDate);
+      const normalizedEnd = this.endOfTheDayOf(initialEndDate);
 
-    this.dateRangeForm.setValue({ start: normalizedStart, end: normalizedEnd }, { emitEvent: false });
-    this.defaultRange = {
-      start: new Date(normalizedStart),
-      end: new Date(normalizedEnd)
-    };
-    this.isDefaultRange = true;
+      this.dateRangeForm.setValue({ start: normalizedStart, end: normalizedEnd }, { emitEvent: false });
+      this.defaultRange = {
+        start: new Date(normalizedStart),
+        end: new Date(normalizedEnd)
+      };
+      this.isDefaultRange = true;
 
-    // Tell parent of the initial range.
-    this.dateRangeChange.emit({
-      start: new Date(normalizedStart),
-      end: new Date(normalizedEnd)
-    });
+      // Tell parent of the initial range.
+      this.dateRangeChange.emit({
+        start: new Date(normalizedStart),
+        end: new Date(normalizedEnd)
+      });
+    }
 
     // Update format hint based on current locale
     this.updateLocaleSensitiveSettings(this.i18nService.localeCode);
@@ -158,7 +167,10 @@ export class DateRangePickerComponent implements OnInit {
   }
 
   protected resetToDefaultDateRange(): void {
-    if (this.defaultRange == null) return;
+    if (this.defaultRange == null) {
+      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: true });
+      return;
+    }
 
     this.dateRangeForm.setValue(
       {
@@ -176,9 +188,12 @@ export class DateRangePickerComponent implements OnInit {
    * end date undefined). It is also called while typing into the input controls.
    */
   private emitNormalizedIfValid(inputRange: { start: Date | null | undefined; end: Date | null | undefined }): void {
-    // Don't do anything if we lack a start or end value.
-    if (inputRange.start == null) return;
-    if (inputRange.end == null) return;
+    if (inputRange.start == null && inputRange.end == null) {
+      this.isDefaultRange = this.defaultRange == null;
+      this.dateRangeChange.emit();
+      return;
+    }
+    if (inputRange.start == null || inputRange.end == null) return;
 
     // Normalize the dates.
     const normalizedStart: Date = this.beginningOfTheDayOf(inputRange.start);

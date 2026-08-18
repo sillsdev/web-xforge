@@ -275,7 +275,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       });
   }
 
-  protected onDateRangeChange(range: NormalizedDateRange): void {
+  protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
     this.dateRange$.next(range);
   }
 
