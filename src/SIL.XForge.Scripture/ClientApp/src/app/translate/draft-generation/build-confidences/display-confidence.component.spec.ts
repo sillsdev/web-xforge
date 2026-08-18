@@ -11,20 +11,20 @@ describe('DisplayConfidenceComponent', () => {
 
   it('low confidence with icon and text', () => {
     const env = new TestEnvironment(true, true);
-    expect(env.icon()).not.toBeNull();
-    expect(env.text()).not.toBeNull();
+    expect(env.icon).not.toBeNull();
+    expect(env.text).not.toBeNull();
   });
 
   it('low confidence icon only', () => {
     const env = new TestEnvironment(true, false);
-    expect(env.icon()).not.toBeNull();
-    expect(env.text()).toBeNull();
+    expect(env.icon).not.toBeNull();
+    expect(env.text).toBeNull();
   });
 
   it('not low confidence', () => {
     const env = new TestEnvironment(false, true);
-    expect(env.icon()).toBeNull();
-    expect(env.text()).toBeNull();
+    expect(env.icon).toBeNull();
+    expect(env.text).toBeNull();
   });
 
   /** Provides helpers for constructing test data for DisplayConfidenceComponent tests. */
@@ -40,11 +40,11 @@ describe('DisplayConfidenceComponent', () => {
       this.fixture.detectChanges();
     }
 
-    icon(): DebugElement {
+    get icon(): DebugElement {
       return this.fixture.debugElement.query(By.css('mat-icon'));
     }
 
-    text(): DebugElement {
+    get text(): DebugElement {
       return this.fixture.debugElement.query(By.css('span'));
     }
   }

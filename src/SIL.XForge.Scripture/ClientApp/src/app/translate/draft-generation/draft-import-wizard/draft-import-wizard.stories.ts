@@ -48,6 +48,9 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
   @ViewChild(DraftImportWizardComponent) component!: DraftImportWizardComponent;
   @Input() online: boolean = false;
   @Input() canEditProject: boolean = true;
+  @Input() draftHasLowConfidence: boolean = false;
+  @Input() bookNameWithLowConfidence: string = 'Genesis';
+  @Input() selectedBooksWithLowConfidence: number = 0;
   @Input() importComplete: boolean = false;
   @Input() importStepTriggered: boolean = false;
   @Input() isConnecting: boolean = false;
@@ -83,6 +86,9 @@ class DraftImportWizardWrapperComponent implements AfterViewInit, OnChanges {
     setTimeout(() => {
       // Set the story specific arguments
       this.component.canEditProject = this.canEditProject;
+      this.component.draftHasLowConfidence = this.draftHasLowConfidence;
+      this.component.bookNameWithLowConfidence = this.bookNameWithLowConfidence;
+      this.component.selectedBooksWithLowConfidence = this.selectedBooksWithLowConfidence;
       this.component.importComplete = this.importComplete;
       this.component.importStepTriggered = this.importStepTriggered;
       this.component.isConnecting = this.isConnecting;
@@ -124,6 +130,9 @@ interface DraftImportWizardComponentState {
   online: boolean;
   step: number;
   canEditProject: boolean;
+  draftHasLowConfidence: boolean;
+  bookNameWithLowConfidence: string;
+  selectedBooksWithLowConfidence: number;
   importComplete: boolean;
   importStepTriggered: boolean;
   isConnecting: boolean;
@@ -150,6 +159,9 @@ const defaultArgs: DraftImportWizardComponentState = {
   online: true,
   step: 0,
   canEditProject: true,
+  draftHasLowConfidence: false,
+  bookNameWithLowConfidence: 'Genesis',
+  selectedBooksWithLowConfidence: 0,
   importComplete: false,
   importStepTriggered: false,
   isConnecting: false,
