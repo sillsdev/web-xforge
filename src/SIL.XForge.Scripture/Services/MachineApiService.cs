@@ -1224,6 +1224,13 @@ public partial class MachineApiService(
             BuildId = id[1],
             BookConfidences = [.. draftMetrics.BookConfidences.OrderBy(c => c.BookNum)],
             ChapterConfidences = [.. draftMetrics.ChapterConfidences.OrderBy(c => c.BookNum).ThenBy(c => c.ChapterNum)],
+            VerseConfidences =
+            [
+                .. draftMetrics
+                    .VerseConfidences.OrderBy(c => c.BookNum)
+                    .ThenBy(c => c.ChapterNum)
+                    .ThenBy(v => v.VerseNum),
+            ],
             LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Confidence).FirstOrDefault(),
         };
     }
