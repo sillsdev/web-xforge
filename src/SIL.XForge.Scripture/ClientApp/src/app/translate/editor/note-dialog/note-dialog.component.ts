@@ -241,7 +241,8 @@ export class NoteDialogComponent implements OnInit {
     return (
       this.canInsertNote &&
       this.threadDoc.canUserResolveThread(this.userService.currentUserId, userRole, this.noteTags) &&
-      this.threadDataId != null
+      this.threadDataId != null &&
+      !this.isThreadResolved
     );
   }
 
@@ -261,6 +262,12 @@ export class NoteDialogComponent implements OnInit {
 
   get currentNoteContent(): string {
     return this.noteDialogForm.controls.comment.value ?? '';
+  }
+
+  /** Whether the thread is already resolved, whether that was done in Scripture Forge or in Paratext. */
+  private get isThreadResolved(): boolean {
+    const status: NoteStatus | undefined = this.threadDoc?.data?.status;
+    return status === NoteStatus.Resolved || status === NoteStatus.Done;
   }
 
   private get defaultNoteTagId(): number | undefined {
