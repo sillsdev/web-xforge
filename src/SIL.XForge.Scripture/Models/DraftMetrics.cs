@@ -110,7 +110,12 @@ public class BuildConfidences
     /// <summary>
     /// Gets or sets the confidence scores for every chapter in the build.
     /// </summary>
-    public required List<ChapterConfidence> ChapterConfidences { get; init; }
+    public required ICollection<ChapterConfidence> ChapterConfidences { get; init; }
+
+    /// <summary>
+    /// Gets or sets the confidence scores for every verse in the build.
+    /// </summary>
+    public required ICollection<VerseConfidence> VerseConfidences { get; init; }
 
     /// <summary>
     /// Gets or sets the lowest confidence score.
