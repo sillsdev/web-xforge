@@ -6,8 +6,10 @@ import ShareDB from 'sharedb';
 import MongoMilestoneDB from 'sharedb-milestone-mongo';
 import ShareDBMongo from 'sharedb-mongo';
 import { Connection, Doc, OTType } from 'sharedb/lib/client';
+import { ActivityLogger } from './activity-logger';
 import './diagnostics';
 import { ExceptionReporter } from './exception-reporter';
+import { InteropCallback, InteropCallContext, withActivityLogging } from './interop-activity-logging';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
 import { ResourceMonitor } from './resource-monitor';
@@ -16,8 +18,6 @@ import { WebSocketStreamListener } from './web-socket-stream-listener';
 
 ShareDB.types.register(RichText.type);
 ShareDB.types.register(OTJson0.type);
-
-type InteropCallback = (err?: any, ret?: any) => void;
 
 interface Snapshot {
   version: number;
@@ -48,6 +48,7 @@ let server: RealtimeServer | undefined;
 let streamListener: WebSocketStreamListener | undefined;
 let secureStreamListener: WebSocketStreamListener | undefined;
 const connections = new Map<number, Connection>();
+/** Identifier for a connection from dotnet. */
 let connectionIndex = 0;
 let running = false;
 
@@ -119,6 +120,13 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     }
     running = true;
     console.log('Realtime Server started.');
+    ActivityLogger.instance.log('serverStarted', {
+      siteId: options.siteId,
+      migrationsDisabled: options.migrationsDisabled,
+      dataValidationDisabled: options.dataValidationDisabled,
+      port: options.port,
+      securePort: options.securePort
+    });
   } catch (err) {
     stopServer();
     throw err;
@@ -141,6 +149,7 @@ function stopServer(): void {
   if (running) {
     running = false;
     console.log('Realtime Server stopped.');
+    ActivityLogger.instance.log('serverStopped', {});
   }
 }
 
@@ -162,39 +171,46 @@ function getDoc(handle: number, collection: string, id: string): Doc | undefined
   return undefined;
 }
 
-export = {
-  start: (callback: InteropCallback, options: RealtimeServerOptions): void => {
+// Here we define the API for the dotnet process to use from RealtimeServer.cs. See also realtime-server.ts
+// RealtimeServer.
+export = withActivityLogging({
+  start: (callback: InteropCallback, _context: InteropCallContext, options: RealtimeServerOptions): void => {
     startServer(options)
       .then(() => callback(undefined, {}))
       .catch(err => callback(err));
   },
 
-  stop: (callback: InteropCallback): void => {
+  stop: (callback: InteropCallback, _context: InteropCallContext): void => {
     stopServer();
     callback(undefined, {});
   },
 
-  isServerRunning: (callback: InteropCallback): void => {
+  isServerRunning: (callback: InteropCallback, _context: InteropCallContext): void => {
     callback(undefined, !(server == null));
   },
 
-  connect: (callback: InteropCallback, userId?: string): void => {
+  connect: (callback: InteropCallback, context: InteropCallContext, userId?: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
     }
-    const connection = server.connectAsServer(userId);
-    connection.on('error', err => console.log(err));
     const index = connectionIndex++;
+    const connection = server.connectAsServer(userId, index);
+    connection.on('error', err => console.log(err));
     connections.set(index, connection);
     ResourceMonitor.instance.startMonitoringConnection(connection, {
       kind: 'interop',
       owner: userId
     });
+    ActivityLogger.instance.log('interopConnect', {
+      callId: context.callId,
+      handle: index,
+      userId: userId
+    });
     callback(undefined, index);
   },
 
-  disconnect: (callback: InteropCallback, handle: number): void => {
+  disconnect: (callback: InteropCallback, context: InteropCallContext, handle: number): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -204,11 +220,13 @@ export = {
       ResourceMonitor.instance.stopMonitoringConnection(conn);
     }
     connections.delete(handle);
+    ActivityLogger.instance.log('interopDisconnect', { callId: context.callId, handle: handle });
     callback(undefined, {});
   },
 
   createDoc: (
     callback: InteropCallback,
+    context: InteropCallContext,
     handle: number,
     collection: string,
     id: string,
@@ -234,11 +252,25 @@ export = {
       if (source != null) {
         doc.submitSource = false;
       }
+      ActivityLogger.instance.log('interopCreateDoc', {
+        callId: context.callId,
+        handle: handle,
+        collection: collection,
+        docId: id,
+        typeName: typeName,
+        source: source
+      });
       callback(err, createSnapshot(doc));
     });
   },
 
-  fetchDoc: (callback: InteropCallback, handle: number, collection: string, id: string): void => {
+  fetchDoc: (
+    callback: InteropCallback,
+    context: InteropCallContext,
+    handle: number,
+    collection: string,
+    id: string
+  ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -248,10 +280,24 @@ export = {
       callback(new Error('Connection not found.'));
       return;
     }
-    doc.fetch(err => callback(err, createSnapshot(doc)));
+    doc.fetch(err => {
+      ActivityLogger.instance.log('interopFetchDoc', {
+        callId: context.callId,
+        handle: handle,
+        collection: collection,
+        docId: id
+      });
+      callback(err, createSnapshot(doc));
+    });
   },
 
-  fetchDocs: (callback: InteropCallback, handle: number, collection: string, ids: string[]): void => {
+  fetchDocs: (
+    callback: InteropCallback,
+    context: InteropCallContext,
+    handle: number,
+    collection: string,
+    ids: string[]
+  ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -267,12 +313,23 @@ export = {
     const query = { _id: { $in: ids } };
     conn.createFetchQuery(collection, query, {}, (err, results) => {
       void ResourceMonitor.instance.endFetchOperation(operationId, results, err);
+      ActivityLogger.instance.log('interopFetchDocs', {
+        callId: context.callId,
+        // The id ResourceMonitor recorded this fetch under, so that this entry can be tied to the row in
+        // fetch-info.csv reporting what the fetch cost, without having to match on time.
+        operationId: operationId,
+        handle: handle,
+        collection: collection,
+        requestedIdsCount: ids.length,
+        returnedDocsCount: results?.length ?? 0
+      });
       callback(err, createSnapshots(results));
     });
   },
 
   fetchSnapshotByTimestamp: (
     callback: InteropCallback,
+    context: InteropCallContext,
     handle: number,
     collection: string,
     id: string,
@@ -287,11 +344,21 @@ export = {
       callback(new Error('Connection not found.'));
       return;
     }
-    conn.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => callback(err, snapshot));
+    conn.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => {
+      ActivityLogger.instance.log('interopFetchSnapshotByTimestamp', {
+        callId: context.callId,
+        handle: handle,
+        collection: collection,
+        docId: id,
+        requestedTimestamp: timestamp
+      });
+      callback(err, snapshot);
+    });
   },
 
   fetchSnapshotsByTimestamp: (
     callback: InteropCallback,
+    _context: InteropCallContext,
     handle: number,
     collection: string,
     ids: string[],
@@ -321,16 +388,25 @@ export = {
     );
   },
 
-  getOps: (callback: InteropCallback, collection: string, id: string): void => {
+  getOps: (callback: InteropCallback, context: InteropCallContext, collection: string, id: string): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
     }
-    server.db.getOps(collection, id, 0, null, { metadata: true }, (err, ops) => callback(err, ops));
+    server.db.getOps(collection, id, 0, null, { metadata: true }, (err, ops) => {
+      ActivityLogger.instance.log('interopGetOps', {
+        callId: context.callId,
+        collection: collection,
+        docId: id,
+        opsCount: ops?.length ?? 0
+      });
+      callback(err, ops);
+    });
   },
 
   submitOp: (
     callback: InteropCallback,
+    context: InteropCallContext,
     handle: number,
     collection: string,
     id: string,
@@ -355,11 +431,25 @@ export = {
       if (source != null) {
         doc.submitSource = false;
       }
+      ActivityLogger.instance.log('interopSubmitOp', {
+        callId: context.callId,
+        handle: handle,
+        collection: collection,
+        docId: id,
+        opsCount: ops.length,
+        source: source
+      });
       callback(err, createSnapshot(doc));
     });
   },
 
-  deleteDoc: (callback: InteropCallback, handle: number, collection: string, id: string): void => {
+  deleteDoc: (
+    callback: InteropCallback,
+    context: InteropCallContext,
+    handle: number,
+    collection: string,
+    id: string
+  ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
       return;
@@ -369,10 +459,24 @@ export = {
       callback(new Error('Connection not found.'));
       return;
     }
-    doc.del({}, err => callback(err, {}));
+    doc.del({}, err => {
+      ActivityLogger.instance.log('interopDeleteDoc', {
+        callId: context.callId,
+        handle: handle,
+        collection: collection,
+        docId: id
+      });
+      callback(err, {});
+    });
   },
 
-  applyOp: (callback: InteropCallback, typeName: string, data: any, ops: ShareDB.Op[]): void => {
+  applyOp: (
+    callback: InteropCallback,
+    _context: InteropCallContext,
+    typeName: string,
+    data: any,
+    ops: ShareDB.Op[]
+  ): void => {
     const type = ShareDB.types.map[typeName];
     if (ops != null && type.normalize != null) {
       ops = type.normalize(ops);
@@ -383,6 +487,7 @@ export = {
 
   replaceDoc: (
     callback: InteropCallback,
+    context: InteropCallContext,
     handle: number,
     collection: string,
     id: string,
@@ -428,10 +533,26 @@ export = {
         if (source != null) {
           doc.submitSource = false;
         }
+        ActivityLogger.instance.log('interopReplaceDoc', {
+          callId: context.callId,
+          handle: handle,
+          collection: collection,
+          docId: id,
+          hasOps: true,
+          source: source
+        });
         callback(err, createSnapshot(doc));
       });
     } else {
+      ActivityLogger.instance.log('interopReplaceDoc', {
+        callId: context.callId,
+        handle: handle,
+        collection: collection,
+        docId: id,
+        hasOps: false,
+        source: source
+      });
       callback(null, createSnapshot(doc));
     }
   }
-};
+});
