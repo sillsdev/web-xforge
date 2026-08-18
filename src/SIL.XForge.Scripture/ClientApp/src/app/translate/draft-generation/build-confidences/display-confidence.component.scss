@@ -2,8 +2,8 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
 
-  &.red {
-    color: var(--sf-build-confidence-red-color);
-  }
+.red {
+  color: var(--sf-build-confidence-red-color);
 }
