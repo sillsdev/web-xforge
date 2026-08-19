@@ -80,7 +80,7 @@
         <form [formGroup]="noteDialogForm">
           <mat-form-field class="full-width" appearance="outline">
             <mat-label>{{ t("your_comment") }}</mat-label>
-            <textarea matInput formControlName="comment"></textarea>
+            <textarea matInput formControlName="comment" cdkFocusInitial></textarea>
             <mat-error>{{ t("required") }}</mat-error>
           </mat-form-field>
         </form>
