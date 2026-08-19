@@ -330,6 +330,12 @@ describe('NoteDialogComponent', () => {
     expect(env.flagIcon).toEqual('/assets/icons/TagIcons/' + SF_TAG_ICON + '.png');
   }));
 
+  it('focuses the comment textarea when the thread already has notes', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.notes.length).toBeGreaterThan(0);
+    expect(document.activeElement).toBe(env.noteInputElement.nativeElement);
+  }));
+
   it('does not save note if textarea is empty', fakeAsync(() => {
     env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1') });
     expect(env.noteInputElement).toBeTruthy();
