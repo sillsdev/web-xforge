@@ -283,7 +283,11 @@ export = {
       return;
     }
     const conn = connections.get(handle);
-    conn?.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => callback(err, snapshot));
+    if (conn == null) {
+      callback(new Error('Connection not found.'));
+      return;
+    }
+    conn.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => callback(err, snapshot));
   },
 
   fetchSnapshotsByTimestamp: (
