@@ -459,9 +459,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     const chapterDrafts: Map<string, DeltaOperation[]> = await this.draftHandlingService.getBookDraft(textDocId, {
       timestamp: timestampAsDate
     });
-    console.log(chapterDrafts);
     this.chaptersUpdated.emit(Array.from(chapterDrafts.keys()).map(chapterNumStr => +chapterNumStr));
-    // this.chaptersUpdated.emit([1, 2]);
     return chapterDrafts.get(chapterNum) ?? [];
   }
 }

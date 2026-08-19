@@ -78,7 +78,7 @@ class HostEditorDraftComponent {
   }
 }
 
-fdescribe('EditorDraftComponent', () => {
+describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<HostEditorDraftComponent>;
   let component: EditorDraftComponent;
   let hostComponent: HostEditorDraftComponent;
