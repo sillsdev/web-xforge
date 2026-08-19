@@ -3,6 +3,7 @@ import { NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -15,9 +16,14 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  configureTestingModule,
+  getAudioBlob,
+  getTestTranslocoModule
+} from 'xforge-common/test-utils';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { AudioPlayer } from '../audio/audio-player';
+import { AudioPlayer, AudioStatus } from '../audio/audio-player';
 import { createMockMediaStream } from '../test-utils';
 import {
   AudioRecorderDialogComponent,
@@ -130,6 +136,17 @@ describe('AudioRecorderDialogComponent', () => {
     expect(result.audio.url).toContain('blob:');
   });
 
+  it('pauses audio that is already playing when the dialog is opened', async () => {
+    const playingAudio: AudioPlayer = await TestEnvironment.playAudio();
+    expect(playingAudio.isPlaying).toBe(true);
+
+    const env = new TestEnvironment();
+    await env.waitForRecorder(100);
+
+    expect(playingAudio.isPlaying).toBe(false);
+    playingAudio.dispose();
+  });
+
   it('saves after recording and processing if manual save is not required', async () => {
     const env = new TestEnvironment(false);
     const promiseForResult: Promise<AudioRecorderDialogResult> = firstValueFrom(env.dialogRef.afterClosed());
@@ -146,6 +163,17 @@ describe('AudioRecorderDialogComponent', () => {
 });
 
 class TestEnvironment {
+  /** Starts playing some audio, e.g. to stand in for the chapter audio in community checking. */
+  static async playAudio(): Promise<AudioPlayer> {
+    const ngZone: NgZone = TestBed.inject(NgZone);
+    const onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+    const audio = new AudioPlayer(URL.createObjectURL(getAudioBlob()), onlineStatusService);
+    await firstValueFrom(audio.status$.pipe(filter(status => status === AudioStatus.Available)));
+    audio.play();
+    await new Promise(resolve => ngZone.runOutsideAngular(() => setTimeout(resolve, 500)));
+    return audio;
+  }
+
   rejectUserMedia = false;
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly component: AudioRecorderDialogComponent;
