@@ -3,9 +3,9 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
+import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
-import { provideTestRealtime } from '../../../xforge-common/test-realtime-providers';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import {
   OnboardingRequest,
