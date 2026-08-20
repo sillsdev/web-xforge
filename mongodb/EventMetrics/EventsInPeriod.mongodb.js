@@ -77,7 +77,7 @@ const MAX_FILE_NAME_ATTEMPTS = 1000;
 // Flag 'wx' fails rather than truncating, which
 // covers a file appearing between the existence check and the write as well.
 function writeToNewFile(baseName, extension, content) {
-  for (let attempt = 0; attempt <= MAX_FILE_NAME_ATTEMPTS; attempt++) {
+  for (let attempt = 0; attempt < MAX_FILE_NAME_ATTEMPTS; attempt++) {
     const fileName = attempt === 0 ? `${baseName}.${extension}` : `${baseName}_${attempt}.${extension}`;
     if (fs.existsSync(fileName)) continue;
     try {
