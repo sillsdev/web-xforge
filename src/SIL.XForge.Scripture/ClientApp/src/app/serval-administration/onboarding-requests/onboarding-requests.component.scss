@@ -25,6 +25,27 @@
   margin: 16px 0;
 }
 
+.filter-controls {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.date-range-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.identifier-search-group {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .export-button-group {
   display: flex;
 

@@ -255,7 +255,7 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   }
 
   /** Handle date range changes from the date range picker component */
-  onDateRangeChange(range: NormalizedDateRange): void {
+  onDateRangeChange(range: NormalizedDateRange | undefined): void {
     this.currentDateRange = range;
     this.dateRange$.next(range);
   }

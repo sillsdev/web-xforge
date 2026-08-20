@@ -19,6 +19,37 @@ describe('DateRangePickerComponent', () => {
     expect(formValue.start!.getTime()).toBeLessThan(formValue.end!.getTime());
   });
 
+  it('can initiate with an empty range when set', () => {
+    const env = new TestEnvironment({ startWithEmptyRange: true });
+    env.component.showReset = true;
+    const emitSpy = spyOn(env.component.dateRangeChange, 'emit');
+    env.fixture.detectChanges();
+
+    const initialFormValue = env.component.dateRangeForm.value;
+    expect(initialFormValue.start).toBeNull();
+    expect(initialFormValue.end).toBeNull();
+    expect(emitSpy).not.toHaveBeenCalled();
+    expect(env.component.isDefaultRange).toBe(true);
+
+    const endDate = new Date(env.component.maxSelectableDate);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 1);
+
+    env.component.dateRangeForm.setValue({ start: startDate, end: endDate });
+    env.fixture.detectChanges();
+    // The range has been updated
+    expect(emitSpy).toHaveBeenCalled();
+    expect(env.component.isDefaultRange).toBe(false);
+
+    // Clear the range
+    expect(env.component.showReset).toBe(true);
+    const clearButton = env.fixture.nativeElement.querySelector('#reset-button');
+    clearButton.click();
+    env.fixture.detectChanges();
+    expect(env.component.dateRangeForm.value).toEqual({ start: null, end: null });
+    expect(env.component.isDefaultRange).toBe(true);
+  });
+
   it('should disable future dates', () => {
     const env = new TestEnvironment();
     const today = new Date();
@@ -63,7 +94,11 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<DateRangePickerComponent>;
   readonly component: DateRangePickerComponent;
 
-  constructor() {
+  constructor({
+    startWithEmptyRange = false
+  }: {
+    startWithEmptyRange?: boolean;
+  } = {}) {
     const initialLocale: Locale = {
       canonicalTag: 'en-US',
       direction: 'ltr',
@@ -87,6 +122,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(DateRangePickerComponent);
     this.component = this.fixture.componentInstance;
+    this.component.startWithEmptyRange = startWithEmptyRange;
     this.fixture.detectChanges();
   }
 }

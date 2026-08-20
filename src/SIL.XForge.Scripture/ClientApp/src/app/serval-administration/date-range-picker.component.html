@@ -5,7 +5,14 @@
     <input matEndDate matInput formControlName="end" [max]="maxSelectableDate" placeholder="End date" />
   </mat-date-range-input>
   @if (showReset && !isDefaultRange) {
-    <button matIconButton matSuffix type="button" (click)="resetToDefaultDateRange()" aria-label="Reset date range">
+    <button
+      matIconButton
+      matSuffix
+      type="button"
+      (click)="resetToDefaultDateRange()"
+      id="reset-button"
+      aria-label="Reset date range"
+    >
       <mat-icon>close</mat-icon>
     </button>
   }
