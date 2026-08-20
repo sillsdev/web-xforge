@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace SIL.XForge.Scripture.Models;
@@ -5,6 +6,7 @@ namespace SIL.XForge.Scripture.Models;
 /// <summary>
 /// Serval Corpus Data.
 /// </summary>
+[Obsolete("Legacy corpora are no longer supported. Deprecated August 2026")]
 public class ServalCorpus
 {
     /// <summary>
@@ -39,9 +41,6 @@ public class ServalCorpus
     /// <value>
     /// <c>true</c> if we are uploading a Paratext zip file; otherwise, <c>false</c> if this corpus is for translation.
     /// </value>
-    /// <remarks>
-    /// This is only for use with Pre-translation - not with SMT.
-    /// </remarks>
     public bool UploadParatextZipFile { get; set; }
 
     /// <summary>
