@@ -2,39 +2,24 @@ import { Injectable } from '@angular/core';
 import { Delta } from 'quill';
 import { I18nService } from 'xforge-common/i18n.service';
 
-const MILLISECONDS_IN_A_DAY = 24 * 60 * 60 * 1000;
-
 @Injectable({
   providedIn: 'root'
 })
 export class EditorHistoryService {
   constructor(private readonly i18n: I18nService) {}
 
-  formatTimestamp(timestamp: string | null | undefined, forceLong: boolean = false): string {
-    if (timestamp != null) {
-      const date = new Date(timestamp);
-      const now = new Date();
-      const weeksAgo26 = new Date(now.getTime() - MILLISECONDS_IN_A_DAY * 7 * 26);
-
-      let options: Intl.DateTimeFormatOptions;
-
-      // If the date is within the last 26 weeks (6 months) show month and day like 'Jan 5'
-      if (!forceLong && date > weeksAgo26) {
-        options = {
-          month: 'short',
-          day: 'numeric'
-        };
-      } else {
-        // If the date is more than 26 weeks ago, or long date is forced, show month, day, and year (mm/dd/yy)
-        options = {
-          dateStyle: 'short'
-        };
-      }
-
-      return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
+  /**
+   * Formats a revision timestamp the same way as everywhere else revisions are shown (i.e. the history and draft
+   * selectors), so that dates always appear in the locale's format and always include the year.
+   * @param timestamp The timestamp to format.
+   * @param showTime Whether to include the time of day, as well as the date.
+   */
+  formatTimestamp(timestamp: string | null | undefined, showTime: boolean = false): string {
+    if (timestamp == null || timestamp === '') {
+      return 'Invalid Date';
     }
 
-    return 'Invalid Date';
+    return this.i18n.formatDate(new Date(timestamp), { showTime });
   }
 
   processDiff(deltaA: Delta, deltaB: Delta): Delta {
