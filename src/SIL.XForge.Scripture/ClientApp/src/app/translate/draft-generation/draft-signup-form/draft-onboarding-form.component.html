@@ -13,7 +13,7 @@
               <mat-label>{{ t("name_label") }}</mat-label>
               <input matInput formControlName="name" [placeholder]="t('name_placeholder')" />
               @if (signupForm.controls.name.hasError("required")) {
-                <mat-error>{{ t("name_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
             </mat-form-field>
 
@@ -21,7 +21,7 @@
               <mat-label>{{ t("email_label") }}</mat-label>
               <input matInput type="email" formControlName="email" [placeholder]="t('email_placeholder')" />
               @if (signupForm.controls.email.hasError("required")) {
-                <mat-error>{{ t("email_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
               @if (signupForm.controls.email.hasError("email")) {
                 <mat-error>{{ t("email_invalid") }}</mat-error>
@@ -32,7 +32,7 @@
               <mat-label>{{ t("organization_label") }}</mat-label>
               <input matInput formControlName="organization" [placeholder]="t('organization_placeholder')" />
               @if (signupForm.controls.organization.hasError("required")) {
-                <mat-error>{{ t("organization_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
             </mat-form-field>
 
@@ -46,7 +46,7 @@
                 }
               </mat-select>
               @if (signupForm.controls.partnerOrganization.hasError("required")) {
-                <mat-error>{{ t("partner_organization_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
             </mat-form-field>
             @if (showFieldManagerField) {
@@ -54,7 +54,7 @@
                 <mat-label>{{ t("field_manager_label") }}</mat-label>
                 <input matInput formControlName="fieldManager" [placeholder]="t('field_manager_placeholder')" />
                 @if (signupForm.controls.fieldManager.hasError("required")) {
-                  <mat-error>{{ t("field_manager_required") }}</mat-error>
+                  <mat-error>{{ t("required") }}</mat-error>
                 }
               </mat-form-field>
             }
@@ -78,6 +78,9 @@
                   formControlName="translationLanguageName"
                   [placeholder]="t('translation_language_name_placeholder')"
                 />
+                @if (signupForm.controls.translationLanguageName.hasError("required")) {
+                  <mat-error>{{ t("required") }}</mat-error>
+                }
               </mat-form-field>
             </div>
 
@@ -89,6 +92,9 @@
                   formControlName="translationLanguageIsoCode"
                   [placeholder]="t('translation_language_iso_placeholder')"
                 />
+                @if (signupForm.controls.translationLanguageIsoCode.hasError("required")) {
+                  <mat-error>{{ t("required") }}</mat-error>
+                }
               </mat-form-field>
             </div>
 
@@ -105,7 +111,7 @@
                 [projectId]="currentProjectId"
               ></app-book-multi-select>
               @if (showCompletedBooksRequiredError) {
-                <mat-error>{{ t("completed_books_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
             </div>
           </mat-card-content>
@@ -171,7 +177,7 @@
                 (bookSelect)="onSubmittedBooksSelect($event)"
               ></app-book-multi-select>
               @if (showPlannedBooksRequiredError) {
-                <mat-error>{{ t("planned_books_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
             </div>
           </mat-card-content>
@@ -191,7 +197,7 @@
                 <mat-option value="Written (Up-to-Date)">{{ t("bt_written_uptodate") }}</mat-option>
               </mat-select>
               @if (signupForm.controls.backTranslationStage.hasError("required")) {
-                <mat-error>{{ t("bt_stage_required") }}</mat-error>
+                <mat-error>{{ t("required") }}</mat-error>
               }
             </mat-form-field>
 
@@ -215,6 +221,9 @@
                     formControlName="backTranslationLanguageName"
                     [placeholder]="t('bt_language_name_placeholder')"
                   />
+                  @if (signupForm.controls.backTranslationLanguageName.hasError("required")) {
+                    <mat-error>{{ t("required") }}</mat-error>
+                  }
                 </mat-form-field>
               </div>
 
@@ -226,6 +235,9 @@
                     formControlName="backTranslationLanguageIsoCode"
                     [placeholder]="t('bt_language_iso_placeholder')"
                   />
+                  @if (signupForm.controls.backTranslationLanguageIsoCode.hasError("required")) {
+                    <mat-error>{{ t("required") }}</mat-error>
+                  }
                 </mat-form-field>
               </div>
             }
