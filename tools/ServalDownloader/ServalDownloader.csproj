@@ -22,7 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.10" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
-    <PackageReference Include="Serval.Client" Version="1.18.0" />
+    <PackageReference Include="Serval.Client" Version="1.20.0" />
   </ItemGroup>
 
 </Project>

@@ -1238,41 +1238,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
-    public async Task SetQualityEstimationConfigAsync(
-        string curUserId,
-        string[] systemRoles,
-        string projectId,
-        QualityEstimationConfig? qualityEstimationConfig
-    )
-    {
-        if (!systemRoles.Contains(SystemRole.ServalAdmin))
-            throw new ForbiddenException();
-
-        if ((qualityEstimationConfig?.Version ?? "0.1") != "0.1")
-            throw new InvalidOperationException("Unsupported version number");
-
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
-        if (qualityEstimationConfig is null)
-        {
-            await projectDoc.SubmitJson0OpAsync(op =>
-                op.Unset(p => p.TranslateConfig.DraftConfig.QualityEstimationConfig)
-            );
-        }
-        else
-        {
-            await projectDoc.SubmitJson0OpAsync(op =>
-                op.Set(
-                    p => p.TranslateConfig.DraftConfig.QualityEstimationConfig,
-                    qualityEstimationConfig with
-                    {
-                        DateUpdated = DateTime.UtcNow,
-                    }
-                )
-            );
-        }
-    }
-
     public async Task SetDraftSourcesAsync(
         string curUserId,
         string[] systemRoles,

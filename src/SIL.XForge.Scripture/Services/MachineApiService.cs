@@ -999,6 +999,10 @@ public partial class MachineApiService(
                 cancellationToken
             );
         }
+        catch (OperationCanceledException)
+        {
+            return [];
+        }
         catch (ServalApiException e)
         {
             ProcessServalApiException(e);
@@ -1107,7 +1111,7 @@ public partial class MachineApiService(
                 engineToProject.TryGetValue(
                     translationBuild.Engine.Id,
                     out (string sfProjectId, SFProject? sfProject) project
-                ) && project.sfProject?.TranslateConfig.DraftConfig.QualityEstimationConfig is not null
+                )
             )
             {
                 draftMetricIds.Add($"{project.sfProjectId}:{translationBuild.Id}");
@@ -1220,7 +1224,14 @@ public partial class MachineApiService(
             BuildId = id[1],
             BookConfidences = [.. draftMetrics.BookConfidences.OrderBy(c => c.BookNum)],
             ChapterConfidences = [.. draftMetrics.ChapterConfidences.OrderBy(c => c.BookNum).ThenBy(c => c.ChapterNum)],
-            LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Usability).FirstOrDefault(),
+            VerseConfidences =
+            [
+                .. draftMetrics
+                    .VerseConfidences.OrderBy(c => c.BookNum)
+                    .ThenBy(c => c.ChapterNum)
+                    .ThenBy(v => v.VerseNum),
+            ],
+            LowestConfidence = draftMetrics.BookConfidences.OrderBy(b => b.Confidence).FirstOrDefault(),
         };
     }
 
@@ -1470,20 +1481,32 @@ public partial class MachineApiService(
             );
         }
 
-        // Serval problems: execution data warnings
-        if (translationBuild.ExecutionData?.Warnings is { Count: > 0 } warnings)
+        // Serval: Diagnostic messages for builds from Serval 1.20 and later
+        if (translationBuild.ExecutionData?.Diagnostics is { Count: > 0 } diagnostics)
         {
-            foreach (string warning in warnings)
-            {
-                problems.Add(
-                    new BuildReportProblem
-                    {
-                        Source = BuildReportProblemSource.Serval,
-                        Severity = BuildReportProblemSeverity.Warning,
-                        Message = warning,
-                    }
-                );
-            }
+            problems.AddRange(
+                diagnostics.Select(d => new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Serval,
+                    Severity = (BuildReportProblemSeverity)d.Severity,
+                    Message = d.Message,
+                })
+            );
+        }
+#pragma warning disable CS0612 // Type or member is obsolete
+        else if (translationBuild.ExecutionData?.Warnings is { Count: > 0 } warnings)
+#pragma warning restore CS0612 // Type or member is obsolete
+        {
+            // Serval problems: execution data warnings for builds earlier than Serval 1.20.
+            // These are only to be added if no diagnostic messages are present.
+            problems.AddRange(
+                warnings.Select(w => new BuildReportProblem
+                {
+                    Source = BuildReportProblemSource.Serval,
+                    Severity = BuildReportProblemSeverity.Warning,
+                    Message = w,
+                })
+            );
         }
 
         return problems;
@@ -1985,6 +2008,10 @@ public partial class MachineApiService(
                     minRevision,
                     cancellationToken
                 );
+            }
+            catch (TaskCanceledException)
+            {
+                return null;
             }
             catch (ServalApiException e) when (preTranslate && e.StatusCode == StatusCodes.Status204NoContent)
             {
@@ -3636,13 +3663,11 @@ public partial class MachineApiService(
             throw new ForbiddenException();
         }
 
-        // Only calculate quality estimation if the project is configured for it, and we have not calculated it already
-        bool calculateQualityEstimation = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig != null;
-
         // Retrieve the pre-translation verse confidences from Serval
-        List<VerseConfidence> verseConfidences = calculateQualityEstimation
-            ? [.. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken)]
-            : [];
+        List<VerseConfidence> verseConfidences =
+        [
+            .. await preTranslationService.GetVerseConfidencesAsync(sfProjectId, cancellationToken),
+        ];
 
         // Get the project versification
         ScrVers versification =
@@ -3699,51 +3724,40 @@ public partial class MachineApiService(
         }
 
         // Generate the draft metrics containing the confidence scores
-        if (calculateQualityEstimation)
+
+        // Use a dummy slope/intercept as we only want the per chapter/book confidence values
+        ChrF3QualityEstimator estimator = new ChrF3QualityEstimator(0.0, 0.0);
+        (
+            List<ScriptureSegmentUsability> _, // We do not require segment level confidence values
+            List<ScriptureChapterUsability> usabilityChapters,
+            List<ScriptureBookUsability> usabilityBooks
+        ) = estimator.EstimateQuality(
+            verseConfidences.Select(vc => (new ScriptureRef(vc.ToVerseRef()), vc.Confidence))
+        );
+        var entity = new DraftMetrics
         {
-            ChrF3QualityEstimator estimator = new ChrF3QualityEstimator(
-                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Slope,
-                projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig.Intercept
-            );
-            (
-                List<ScriptureSegmentUsability> _, // We do not require segment level confidence values
-                List<ScriptureChapterUsability> usabilityChapters,
-                List<ScriptureBookUsability> usabilityBooks
-            ) = estimator.EstimateQuality(
-                verseConfidences.Select(vc => (new ScriptureRef(vc.ToVerseRef()), vc.Confidence))
-            );
-            var entity = new DraftMetrics
-            {
-                Id = DraftMetrics.GetDocId(sfProjectId, buildId),
-                BookConfidences =
-                [
-                    .. usabilityBooks.Select(b => new BookConfidence
-                    {
-                        BookNum = Canon.BookIdToNumber(b.Book),
-                        Confidence = b.Confidence,
-                        Label = b.Label.ToString(),
-                        ProjectedChrF3 = b.ProjectedChrF3,
-                        Usability = b.Usability,
-                    }),
-                ],
-                ChapterConfidences =
-                [
-                    .. usabilityChapters.Select(c => new ChapterConfidence
-                    {
-                        BookNum = Canon.BookIdToNumber(c.Book),
-                        ChapterNum = c.Chapter,
-                        Confidence = c.Confidence,
-                        Label = c.Label.ToString(),
-                        ProjectedChrF3 = c.ProjectedChrF3,
-                        Usability = c.Usability,
-                    }),
-                ],
-                QualityEstimationConfig = projectDoc.Data.TranslateConfig.DraftConfig.QualityEstimationConfig,
-                VerseConfidences = verseConfidences,
-                DateUpdated = DateTime.UtcNow,
-            };
-            await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
-        }
+            Id = DraftMetrics.GetDocId(sfProjectId, buildId),
+            BookConfidences =
+            [
+                .. usabilityBooks.Select(b => new BookConfidence
+                {
+                    BookNum = Canon.BookIdToNumber(b.Book),
+                    Confidence = b.Confidence,
+                }),
+            ],
+            ChapterConfidences =
+            [
+                .. usabilityChapters.Select(c => new ChapterConfidence
+                {
+                    BookNum = Canon.BookIdToNumber(c.Book),
+                    ChapterNum = c.Chapter,
+                    Confidence = c.Confidence,
+                }),
+            ],
+            VerseConfidences = verseConfidences,
+            DateUpdated = DateTime.UtcNow,
+        };
+        await draftMetrics.ReplaceAsync(entity, upsert: true, cancellationToken);
     }
 
     /// <summary>
@@ -3800,9 +3814,45 @@ public partial class MachineApiService(
                         PretranslateCount = executionData.PretranslateCount,
                         SourceLanguageTag = executionData.EngineSourceLanguageTag,
                         TargetLanguageTag = executionData.EngineTargetLanguageTag,
-                        Warnings = [.. executionData.Warnings],
+                        IsTrainFilteredByChapter = executionData.IsTrainFilteredByChapter,
+                        IsPretranslateFilteredByChapter = executionData.IsPretranslateFilteredByChapter,
+                        ResolvedSourceLanguage = executionData.ResolvedSourceLanguage,
+                        ResolvedTargetLanguage = executionData.ResolvedTargetLanguage,
+                        AveragePretranslationConfidence = executionData.AveragePretranslationConfidence,
+                        DiagnosticsTruncated = executionData.DiagnosticsTruncated,
                     },
         };
+
+        // Add new diagnostic messages
+        if (executionData?.Diagnostics is { Count: > 0 } diagnostics)
+        {
+            buildDto.ExecutionData.Diagnostics.AddRange(
+                diagnostics.Select(d => new ServalBuildDiagnostic
+                {
+                    Category = d.Category,
+                    Code = d.Code,
+                    Data = new Dictionary<string, object>(d.Data),
+                    Message = d.Message,
+                    Severity = (ServalDiagnosticSeverity)d.Severity,
+                })
+            );
+        }
+#pragma warning disable CS0612 // Type or member is obsolete
+        else if (executionData?.Warnings is { Count: > 0 } warnings)
+#pragma warning restore CS0612 // Type or member is obsolete
+        {
+            // Add the legacy warnings to the diagnostic messages, if there were no diagnostic messages
+            buildDto.ExecutionData.Diagnostics.AddRange(
+                warnings.Select(w => new ServalBuildDiagnostic
+                {
+                    Category = "LEGACY",
+                    Code = "LEGACY-0001",
+                    Data = [],
+                    Message = w,
+                    Severity = ServalDiagnosticSeverity.Warn,
+                })
+            );
+        }
 
         // Create an initial value for the date requested, based on the object id from Mongo
         // This will be overwritten with the value from the EventMetric, if that exists
