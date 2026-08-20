@@ -11,10 +11,16 @@
       gtag("js", new Date());
     </script>
 
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet" />
+    <!-- preconnect must come before the stylesheet links it applies to, or it saves nothing -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet" />
+    <!-- display=swap: render text in the fallback font while Roboto downloads. Without it Google
+         Fonts serves font-display:auto, which hides text for up to 3s per unicode-range subset, so
+         on a slow connection newly shown text (e.g. a menu that lists names in another script) can
+         appear blank. Deliberately not applied to the icon font above: blocking is preferable there
+         because the fallback renders ligature names ("more_vert") instead of icons. -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500&display=swap" rel="stylesheet" />
     <meta charset="utf-8" />
     <title>Loading…</title>
     <base href="/" />

@@ -212,7 +212,14 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       throw new Error('projectId, bookNum, or chapter is null');
     }
 
-    this.textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
+    const textDocId = new TextDocId(this.projectId, this.bookNum, this.chapter, 'target');
+    if (this.textDocId != null && textDocId.toString() !== this.textDocId.toString()) {
+      // Clear the previously viewed chapter's draft immediately, so it cannot be applied to this chapter while this
+      // chapter's own draft is still loading
+      this.draftDelta = undefined;
+      this.targetDelta = undefined;
+    }
+    this.textDocId = textDocId;
     this.inputChanged$.next(this.textDocId);
   }
 
@@ -283,6 +290,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       )
       .subscribe(async ({ targetOps, textDocId, timestamp }) => {
         const draftOps: DeltaOperation[] = await this.getChapterDraftOps(textDocId, timestamp);
+        // The user may have navigated to another chapter while this draft was being fetched, in which case the result
+        // must not be kept as the current chapter's draft. The current chapter's own fetch is either in flight or
+        // complete, so nothing is lost by discarding this one.
+        if (this.textDocId == null || textDocId.toString() !== this.textDocId.toString()) {
+          return;
+        }
         // Look for verses that contain text. If these are present, this is a non-empty draft
         if (!this.draftHandlingService.opsHaveContent(draftOps)) {
           // If there are previous draft revisions, we should still show the selector to choose them

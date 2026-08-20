@@ -29,6 +29,7 @@ import {
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { audioRecordingMimeType, objectId } from 'xforge-common/utils';
 import { SingleButtonAudioPlayerComponent } from '../../checking/checking/single-button-audio-player/single-button-audio-player.component';
+import { AudioPlayer } from '../audio/audio-player';
 
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
@@ -102,6 +103,9 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
     private readonly destroyRef: DestroyRef,
     private readonly i18n: I18nService
   ) {
+    // Stop any audio that is playing before the microphone is opened
+    AudioPlayer.pauseCurrentlyPlayingAudio();
+
     this.showCountdown = data?.countdown ?? false;
     this._requireSave = data?.requireSave ?? false;
     if (data?.audio != null) {
@@ -199,6 +203,8 @@ export class AudioRecorderDialogComponent implements ControlValueAccessor, OnIni
   }
 
   startRecording(mediaStream?: MediaStream): void {
+    // Pause playback in case the last take is still being played
+    AudioPlayer.pauseCurrentlyPlayingAudio();
     if (this.mediaDevicesUnsupported) {
       this.audio = { status: 'denied' };
       this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });

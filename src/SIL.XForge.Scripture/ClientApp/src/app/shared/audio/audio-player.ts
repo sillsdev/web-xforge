@@ -26,6 +26,14 @@ export class AudioPlayer extends SubscriptionDisposable {
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
   readonly timeUpdated$: Subject<void> = new Subject<void>();
 
+  /**
+   * Pauses the audio that is currently playing, if any. Only one audio plays at a time, so this should silence anything
+   * playing.
+   */
+  static pauseCurrentlyPlayingAudio(): void {
+    AudioPlayer.lastPlayedAudio?.pause();
+  }
+
   constructor(
     source: string,
     private readonly onlineStatusService: OnlineStatusService

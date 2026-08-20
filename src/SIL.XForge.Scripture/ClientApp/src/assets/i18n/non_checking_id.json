@@ -162,7 +162,7 @@
   "draft_apply_progress-dialog": {
     "add_draft_to_book": "Menambahkan konsep ke {{ bookName }}",
     "close": "Tutup",
-    "failed_to_apply_chapters": "Failed to apply these chapters:",
+    "failed_to_apply_chapters": "Gagal menerapkan pasal:",
     "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
     "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
     "some_chapters_not_applied": "Konsep dari satu atau beberapa pasal tidak dapat diterapkan ke {{ bookName }}",
@@ -971,11 +971,12 @@
     "drag_and_drop_files": "Seret dan jatuhkan berkas data pelatihan di sini",
     "drag_and_drop_or_browse": "ATAU",
     "filename_already_exists": "Berkas sudah ada dengan nama ini.",
+    "invalid_format": "Your file needs to have two columns, and every row must have a value in both columns. Please fill in any empty cells and try again.",
     "skip_first_row": "Melewati baris pertama berkas data",
     "no_training_data_file_uploaded": "Tidak ada file data pelatihan yang diunggah",
     "no_upload_offline": "Data pelatihan tidak dapat diunggah tanpa terhubung ke internet.",
     "save": "Simpan",
-    "upload_failed": "Your file needs to have two columns, and every row must have a value in both columns. Please fill in any empty cells and try again.",
+    "upload_failed": "File data pelatihan tidak dapat diunggah. Silakan coba lagi atau gunakan file lain.",
     "upload_training_data": "Unggah Data Pelatihan",
     "uploading": "Mengunggah..."
   },

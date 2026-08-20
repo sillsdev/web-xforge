@@ -1,4 +1,6 @@
 # This workflow will do a clean install of node dependencies, and then check lint and prettier formatting.
+# It also runs the C# checks that the pre-commit hook applies (see .lintstagedrc.yml), so that code which was
+# committed without the hook running is still caught.
 # See: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
 name: Lint and Prettier
@@ -51,3 +53,34 @@ jobs:
         run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci)) && pnpm run lint
       - name: Angular Frontend Prettier format check
         run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run prettier:ci
+
+  csharp:
+    name: C# Lint and Format
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dotnet_version: ["10.0.x"]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
+          cache: true
+          cache-dependency-path: src/SIL.XForge.Scripture/packages.lock.json
+      - name: "Deps: dotnet tools"
+        run: dotnet tool restore
+      - name: "Deps: Backend nuget"
+        run: dotnet restore xForge.slnx
+      # These are the same checks that .lintstagedrc.yml applies to staged *.cs files, but in verify mode and
+      # across the whole solution instead of only the files being committed.
+      - name: C# analyzers check
+        run: dotnet format analyzers --verify-no-changes --no-restore xForge.slnx
+      - name: C# code style check
+        run: dotnet format style --verify-no-changes --no-restore xForge.slnx
+      - name: C# CSharpier format check
+        run: dotnet csharpier check .
