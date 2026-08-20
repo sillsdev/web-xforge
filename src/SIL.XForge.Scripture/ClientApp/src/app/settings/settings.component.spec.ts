@@ -8,6 +8,7 @@ import { ActivatedRoute, provideRouter, Route } from '@angular/router';
 import { cloneDeep, merge } from 'lodash-es';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -147,6 +148,47 @@ describe('SettingsComponent', () => {
       expect(env.offlineMessage).toBeNull();
       expect(env.deleteProjectButton.disabled).toBe(false);
       expect(env.component.form.enabled).toBe(true);
+    }));
+
+    it('is read-only for a serval admin who is not on the project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      when(mockedUserService.currentUserId).thenReturn('serval01');
+      env.setupProject();
+      env.wait();
+
+      expect(env.component.form.disabled).toBe(true);
+      expect(env.servalAdminReadOnlyNotice).not.toBeNull();
+      expect(env.offlineMessage).toBeNull();
+      expect(env.deleteProjectButton.disabled).toBe(true);
+      verify(mockedParatextService.getProjects()).never();
+      verify(mockedParatextService.getResources()).never();
+      verify(mockedAuthService.requestParatextCredentialUpdate()).never();
+    }));
+
+    it('does not let a read-only serval admin change the source text', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      when(mockedUserService.currentUserId).thenReturn('serval01');
+      env.setupProject();
+      env.wait();
+
+      // The project select does not implement setDisabledState, so disabling the form does not disable it. It must be
+      // disabled explicitly, or the user could clear the source text and trigger an update the backend will reject.
+      expect(env.basedOnSelectComponent.isDisabled).toBe(true);
+      expect(env.inputElement(env.basedOnSelect).disabled).toBe(true);
+    }));
+
+    it('is editable for a serval admin who is also a project admin', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      env.setupProject();
+      env.wait();
+
+      expect(env.component.form.enabled).toBe(true);
+      expect(env.servalAdminReadOnlyNotice).toBeNull();
+      verify(mockedParatextService.getProjects()).once();
+      verify(mockedParatextService.getResources()).once();
     }));
 
     it('enables form even when projects and resources fail to load', fakeAsync(() => {
@@ -764,6 +806,7 @@ class TestEnvironment {
   constructor(hasConnection: boolean = true, isSource: boolean = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedAuthService.currentUserRoles).thenReturn([]);
+    when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedFeatureFlagService.showDeveloperTools).thenReturn(createTestFeatureFlag(false));
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
@@ -911,6 +954,10 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.offline-text');
   }
 
+  get servalAdminReadOnlyNotice(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('#serval-admin-read-only-notice');
+  }
+
   get basedOnSelectErrorMessage(): HTMLElement {
     return this.fixture.nativeElement.querySelector('.tool-setting-field + mat-error');
   }
@@ -1029,6 +1076,7 @@ class TestEnvironment {
   }
 
   testProject: SFProject = createTestProject({
+    userRoles: { user01: SFProjectRole.ParatextAdministrator },
     translateConfig: {
       source: {
         paratextId: 'paratextId01',

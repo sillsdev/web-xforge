@@ -33,7 +33,6 @@ const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedRouter = mock(Router);
-const mockedPermissionsService = mock(PermissionsService);
 const mockedResumeCheckingService = mock(ResumeCheckingService);
 const mockedResumeTranslateService = mock(ResumeTranslateService);
 let testActivatedProjectService: ActivatedProjectService;
@@ -54,6 +53,7 @@ function setUpMocks(args: StoryState): void {
   });
 
   when(mockedAuthService.isLoggedIn).thenResolve(true);
+  when(mockedAuthService.currentUserRoles).thenReturn([]);
   when(mockedUserService.currentUserId).thenReturn(userId);
   when(onlineStatusService.isOnline).thenReturn(args.online);
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
@@ -134,10 +134,8 @@ const meta: Meta = {
             provide: ResumeTranslateService,
             useValue: instance(mockedResumeTranslateService)
           },
-          {
-            provide: PermissionsService,
-            useValue: instance(mockedPermissionsService)
-          },
+          // Use a real PermissionsService so the role permission logic the guards rely on is exercised
+          { provide: PermissionsService, useClass: PermissionsService },
           {
             provide: ActivatedProjectService,
             useValue: testActivatedProjectService

@@ -2,7 +2,6 @@ import ShareDB from 'sharedb';
 import { ConnectSession } from '../../common/connect-session';
 import { MigrationConstructor } from '../../common/migration';
 import { Operation } from '../../common/models/project-rights';
-import { SystemRole } from '../../common/models/system-role';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { RealtimeServer } from '../../common/realtime-server';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
@@ -596,7 +595,7 @@ export class SFProjectService extends ProjectService<SFProject> {
   }
 
   protected allowRead(docId: string, doc: SFProject, session: ConnectSession): boolean {
-    if (session.isServer || session.roles.includes(SystemRole.SystemAdmin) || Object.keys(doc).length === 0) {
+    if (this.hasUnrestrictedReadAccess(doc, session)) {
       return true;
     }
     if (this.hasRight(session.userId, doc, Operation.View)) {

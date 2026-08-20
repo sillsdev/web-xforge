@@ -3,6 +3,8 @@
     <h1 id="title" class="h2">{{ t("synchronize_project", { projectName: projectName }) }}</h1>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_synchronize") }} </span>
+    } @else if (isServalAdminReadOnly) {
+      <app-serval-admin-read-only-notice />
     }
     @if (syncDisabled) {
       <span id="sync-disabled-message" [innerHTML]="syncDisabledMessage"> </span>
@@ -17,17 +19,17 @@
     }
     <mat-card class="sync-card">
       <div class="card-content">
-        @if (showParatextLogin && isAppOnline) {
+        @if (showParatextLogin && isAppOnline && !isServalAdminReadOnly) {
           <app-paratext-account-notice id="paratext-account-not-connected" />
         }
-        @if (isLoggedIntoParatext || isLoadingData || !isAppOnline) {
+        @if (isLoggedIntoParatext || isLoadingData || !isAppOnline || isServalAdminReadOnly) {
           @if (!syncActive) {
             <button
               mat-flat-button
               color="primary"
               type="button"
               (click)="syncProject()"
-              [disabled]="isLoadingData || !isAppOnline || syncDisabled"
+              [disabled]="isLoadingData || !isAppOnline || syncDisabled || !canInitiateSync"
               id="btn-sync"
             >
               <mat-icon>sync</mat-icon>
@@ -40,7 +42,7 @@
               mat-button
               type="button"
               (click)="cancelSync()"
-              [disabled]="isLoadingData || !isAppOnline || syncDisabled"
+              [disabled]="isLoadingData || !isAppOnline || syncDisabled || !canInitiateSync"
               id="btn-cancel-sync"
             >
               {{ t("cancel") }}
@@ -53,5 +55,8 @@
         }
       </div>
     </mat-card>
+    @if (canSeeSyncLog) {
+      <app-sync-log></app-sync-log>
+    }
   </div>
 </ng-container>

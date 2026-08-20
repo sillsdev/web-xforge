@@ -65,16 +65,21 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
   };
 
   protected allowRead(_docId: string, doc: T, session: ConnectSession): boolean {
-    if (
-      session.isServer ||
-      session.roles.includes(SystemRole.ServalAdmin) ||
-      session.roles.includes(SystemRole.SystemAdmin) ||
-      Object.keys(doc).length === 0
-    ) {
+    if (this.hasUnrestrictedReadAccess(doc, session)) {
       return true;
     }
 
     return doc.userRoles != null && session.userId in doc.userRoles;
+  }
+
+  /** Whether the session may read any project doc regardless of project membership. */
+  protected hasUnrestrictedReadAccess(doc: T, session: ConnectSession): boolean {
+    return (
+      session.isServer ||
+      session.roles.includes(SystemRole.ServalAdmin) ||
+      session.roles.includes(SystemRole.SystemAdmin) ||
+      Object.keys(doc).length === 0
+    );
   }
 
   protected allowUpdate(_docId: string, _oldDoc: T, newDoc: T, ops: any, session: ConnectSession): boolean {

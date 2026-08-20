@@ -1,3 +1,4 @@
+import { Type } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -9,7 +10,7 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { DraftNavigationAuthGuard, SyncAuthGuard } from './project-router.guard';
+import { DraftNavigationAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './project-router.guard';
 
 const mockedAuthGuard = mock(AuthGuard);
 const mockedAuthService = mock(AuthService);
@@ -49,7 +50,7 @@ describe('SyncAuthGuard', () => {
 
   it('administrators can access sync', async () => {
     // navigate away
-    const env = new SyncAuthGuardTestEnvironment(false);
+    const env = new GuardTestEnvironment(SyncAuthGuard, false);
     expect(
       env.service.check({
         data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextAdministrator } })
@@ -59,7 +60,7 @@ describe('SyncAuthGuard', () => {
 
   it('translators can access sync', async () => {
     // navigate away
-    const env = new SyncAuthGuardTestEnvironment(false);
+    const env = new GuardTestEnvironment(SyncAuthGuard, false);
     expect(
       env.service.check({
         data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextTranslator } })
@@ -69,7 +70,7 @@ describe('SyncAuthGuard', () => {
 
   it('consultants cannot access sync', async () => {
     // navigate away
-    const env = new SyncAuthGuardTestEnvironment(false);
+    const env = new GuardTestEnvironment(SyncAuthGuard, false);
     expect(
       env.service.check({
         data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextConsultant } })
@@ -77,9 +78,8 @@ describe('SyncAuthGuard', () => {
     ).toBe(false);
   });
 
-  it('serval administrators can sync resources they have read access to', async () => {
-    // navigate away
-    const env = new SyncAuthGuardTestEnvironment(true);
+  it('serval administrators can access sync on resources they have read access to', async () => {
+    const env = new GuardTestEnvironment(SyncAuthGuard, true);
     expect(
       env.service.check({
         data: createTestProjectProfile({
@@ -90,18 +90,56 @@ describe('SyncAuthGuard', () => {
     ).toBe(true);
   });
 
-  it('serval administrators cannot sync projects they have read access to', async () => {
-    // navigate away
-    const env = new SyncAuthGuardTestEnvironment(true);
+  it('serval administrators can access sync on projects they are not a member of', async () => {
+    const env = new GuardTestEnvironment(SyncAuthGuard, true);
     expect(
       env.service.check({
-        data: createTestProjectProfile({
-          userRoles: { user01: SFProjectRole.ParatextObserver }
-        })
+        data: createTestProjectProfile({ userRoles: {} })
       } as SFProjectProfileDoc)
-    ).toBe(false);
+    ).toBe(true);
   });
 });
+
+// SettingsAuthGuard and UsersAuthGuard share the same access rule
+for (const guardType of [SettingsAuthGuard, UsersAuthGuard]) {
+  describe(guardType.name, () => {
+    configureTestingModule(() => ({
+      providers: [
+        { provide: AuthGuard, useMock: mockedAuthGuard },
+        { provide: AuthService, useMock: mockedAuthService },
+        { provide: SFProjectService, useMock: mockedProjectService },
+        { provide: UserService, useMock: mockedUserService }
+      ]
+    }));
+
+    it('administrators can access', async () => {
+      const env = new GuardTestEnvironment(guardType, false);
+      expect(
+        env.service.check({
+          data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextAdministrator } })
+        } as SFProjectProfileDoc)
+      ).toBe(true);
+    });
+
+    it('translators cannot access', async () => {
+      const env = new GuardTestEnvironment(guardType, false);
+      expect(
+        env.service.check({
+          data: createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextTranslator } })
+        } as SFProjectProfileDoc)
+      ).toBe(false);
+    });
+
+    it('serval administrators can access on projects they are not a member of', async () => {
+      const env = new GuardTestEnvironment(guardType, true);
+      expect(
+        env.service.check({
+          data: createTestProjectProfile({ userRoles: {} })
+        } as SFProjectProfileDoc)
+      ).toBe(true);
+    });
+  });
+}
 
 class DraftNavigationTestEnvironment {
   service: DraftNavigationAuthGuard;
@@ -110,15 +148,11 @@ class DraftNavigationTestEnvironment {
   }
 }
 
-class SyncAuthGuardTestEnvironment {
-  service: SyncAuthGuard;
-  constructor(servalAdmin: boolean) {
-    this.service = TestBed.inject(SyncAuthGuard);
+class GuardTestEnvironment<T> {
+  service: T;
+  constructor(guardType: Type<T>, servalAdmin: boolean) {
+    this.service = TestBed.inject(guardType);
     when(mockedUserService.currentUserId).thenReturn('user01');
-    if (servalAdmin) {
-      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-    } else {
-      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.User]);
-    }
+    when(mockedAuthService.currentUserRoles).thenReturn(servalAdmin ? [SystemRole.ServalAdmin] : [SystemRole.User]);
   }
 }

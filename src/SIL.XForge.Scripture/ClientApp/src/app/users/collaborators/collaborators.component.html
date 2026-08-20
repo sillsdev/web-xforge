@@ -2,6 +2,8 @@
   <div class="invite-user">
     @if (!isAppOnline) {
       <p id="collaborators-offline-message" class="offline-text">{{ t("connect_network_to_manage_users") }}</p>
+    } @else if (isServalAdminReadOnly) {
+      <app-serval-admin-read-only-notice />
     }
     <app-notice icon="live_help">
       <div class="help-message">
@@ -88,7 +90,7 @@
                 </ng-container>
                 <ng-container matColumnDef="more">
                   <td mat-cell *matCellDef="let userRow">
-                    @if (!userRow.paratextMemberNotConnected) {
+                    @if (!userRow.paratextMemberNotConnected && hasEditRights) {
                       <button mat-icon-button class="user-more-menu" [matMenuTriggerFor]="userOptions">
                         <mat-icon>more_vert</mat-icon>
                       </button>
@@ -135,6 +137,8 @@
         }
       </div>
     }
-    <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
+    @if (hasEditRights) {
+      <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
+    }
   </div>
 </ng-container>

@@ -45,6 +45,15 @@ describe('SFProjectService', () => {
     await expect(fetchDoc(conn, env.collection, 'project01')).resolves.not.toThrow();
   });
 
+  it('allows serval admin user to see project', async () => {
+    const env = new TestEnvironment();
+    expect(env.paratextUsers.find(u => u.sfUserId === 'serval_admin')).toBeUndefined();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'serval_admin', SystemRole.ServalAdmin);
+    await expect(fetchDoc(conn, env.collection, 'project01')).resolves.not.toThrow();
+  });
+
   it('does not allow non-member to view profile', async () => {
     const env = new TestEnvironment();
     await env.createData();

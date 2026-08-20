@@ -15,6 +15,7 @@ import {
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
@@ -27,6 +28,7 @@ import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-do
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ProjectComponent } from './project.component';
 
+const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
@@ -38,6 +40,7 @@ describe('ProjectComponent', () => {
   configureTestingModule(() => ({
     providers: [
       provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
