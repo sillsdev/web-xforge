@@ -111,6 +111,16 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync(anything())).never();
   }));
 
+  it('shows the sync log to serval admins', fakeAsync(() => {
+    const env = new TestEnvironment({ isServalAdmin: true });
+    expect(env.syncLog).not.toBeNull();
+  }));
+
+  it('does not show the sync log to project admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.syncLog).toBeNull();
+  }));
+
   it('allows a serval admin to sync a resource they have read access to', fakeAsync(() => {
     const env = new TestEnvironment({
       isServalAdmin: true,
@@ -420,6 +430,10 @@ class TestEnvironment {
 
   get servalAdminReadOnlyNotice(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#serval-admin-read-only-notice');
+  }
+
+  get syncLog(): HTMLElement {
+    return this.fixture.nativeElement.querySelector('app-sync-log');
   }
 
   set onlineStatus(hasConnection: boolean) {

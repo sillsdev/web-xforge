@@ -46,7 +46,8 @@ interface Row {
 
 /**
  * Shows the sync history of the project on the sync page. Serval and system administrators can additionally expand
- * the error details of failed syncs.
+ * the error details of failed syncs. For now the log is only shown to serval and system administrators, but it may
+ * be opened up to project members in the future.
  */
 @Component({
   selector: 'app-sync-log',

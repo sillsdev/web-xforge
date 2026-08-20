@@ -90,6 +90,12 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     return !this.canInitiateSync && this.permissionsService.isServalAdmin;
   }
 
+  /** For now the sync log is only shown to serval and system administrators, but it may be opened up to project
+   * members in the future. */
+  get canSeeSyncLog(): boolean {
+    return this.permissionsService.isServalAdmin || this.permissionsService.isSystemAdmin;
+  }
+
   get isLoggedIntoParatext(): boolean {
     return this.paratextUsername != null && this.paratextUsername.length > 0;
   }

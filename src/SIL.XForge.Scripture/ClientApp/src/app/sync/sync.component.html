@@ -55,6 +55,8 @@
         }
       </div>
     </mat-card>
-    <app-sync-log></app-sync-log>
+    @if (canSeeSyncLog) {
+      <app-sync-log></app-sync-log>
+    }
   </div>
 </ng-container>
