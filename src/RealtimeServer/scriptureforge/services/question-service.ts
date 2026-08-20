@@ -260,7 +260,7 @@ export class QuestionService extends SFProjectDataService<Question> {
   ): Promise<void> {
     const parts = docId.split(':');
     const projectId = parts[0];
-    const conn = this.server!.connect(userId);
+    const conn = this.server!.connectAsServer(userId);
     const query = await createFetchQuery(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, { projectRef: projectId });
     const promises: Promise<boolean>[] = [];
     for (const doc of query.results) {

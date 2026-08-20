@@ -183,7 +183,7 @@ export = {
       callback(new Error('Server not started.'));
       return;
     }
-    const connection = server.connect(userId);
+    const connection = server.connectAsServer(userId);
     connection.on('error', err => console.log(err));
     const index = connectionIndex++;
     connections.set(index, connection);
