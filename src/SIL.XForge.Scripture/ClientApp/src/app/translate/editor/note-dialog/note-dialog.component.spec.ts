@@ -569,6 +569,19 @@ describe('NoteDialogComponent', () => {
     expect(env.dialogResult).toEqual(undefined);
   }));
 
+  it('hides save options trigger when the thread is already resolved', fakeAsync(() => {
+    // a thread resolved in Paratext, or in SF, comes back with the resolved status
+    for (const status of [NoteStatus.Resolved, NoteStatus.Done]) {
+      const noteThread: NoteThread = TestEnvironment.getNoteThread();
+      noteThread.status = status;
+      env = new TestEnvironment({ noteThread });
+      expect(env.saveButton.nativeElement.textContent).toEqual('Save');
+      expect(env.saveOptionsButton).withContext(status).toBeNull();
+      env.closeDialog();
+      expect(env.dialogResult).toEqual(undefined);
+    }
+  }));
+
   it('show notes in correct date order', fakeAsync(() => {
     const noteThread = TestEnvironment.getNoteThread();
     const currentTime = new Date('2023-03-14T23:00:00Z').getTime();
