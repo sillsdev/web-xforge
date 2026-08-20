@@ -8,16 +8,22 @@ export const PARTNER_ORGANIZATION_OPTIONS = ['Bolshoi Group', 'Seed Company', 'n
 /** A valid partner organization selection from the onboarding form. */
 export type PartnerOrganization = (typeof PARTNER_ORGANIZATION_OPTIONS)[number];
 
-export interface OnboardingRequestFormData {
+/**
+ * The subset of onboarding request form data returned by getAllRequests. Only what the onboarding requests
+ * list page and its spreadsheet export use, to keep the response payload small.
+ */
+export interface OnboardingRequestFormDataSummary {
   name: string;
   email: string;
+  translationLanguageName: string;
+  translationLanguageIsoCode: string;
+}
+
+export interface OnboardingRequestFormData extends OnboardingRequestFormDataSummary {
   organization: string;
   partnerOrganization: PartnerOrganization;
   /** The field manager contact. Currently collected when partnerOrganization is "Seed Company". */
   fieldManager?: string;
-
-  translationLanguageName: string;
-  translationLanguageIsoCode: string;
 
   completedBooks: number[];
   nextBooksToDraft: number[];
@@ -35,8 +41,25 @@ export interface OnboardingRequestFormData {
   additionalComments?: string;
 }
 
-export interface OnboardingRequest {
+/**
+ * The subset of an onboarding request returned by getAllRequests. Only what the onboarding requests list
+ * page and its spreadsheet export use, to keep the response payload small (notably excluding comments and
+ * most form data). A full OnboardingRequest is assignable wherever a summary is expected.
+ */
+export interface OnboardingRequestSummary {
   id: string;
+  submission: {
+    projectId: string;
+    userId: string;
+    timestamp: string;
+    formData: OnboardingRequestFormDataSummary;
+  };
+  assigneeId: string;
+  status: OnboardingRequestStatusOption;
+  resolution: OnboardingRequestResolutionKey;
+}
+
+export interface OnboardingRequest extends OnboardingRequestSummary {
   submittedAt: string;
   submittedBy: { name: string; email: string };
   submission: {
@@ -45,9 +68,6 @@ export interface OnboardingRequest {
     timestamp: string;
     formData: OnboardingRequestFormData;
   };
-  assigneeId: string;
-  status: OnboardingRequestStatusOption;
-  resolution: OnboardingRequestResolutionKey;
   comments: OnboardingRequestComment[];
 }
 
@@ -125,9 +145,9 @@ export class OnboardingRequestService {
     return (await this.onlineInvoke<OnboardingRequest>('getRequestById', { requestId }))!;
   }
 
-  /** Gets all onboarding requests (Serval admin only). */
-  async getAllRequests(): Promise<OnboardingRequest[]> {
-    return (await this.onlineInvoke<OnboardingRequest[]>('getAllRequests'))!;
+  /** Gets summaries of all onboarding requests (Serval admin only). */
+  async getAllRequests(): Promise<OnboardingRequestSummary[]> {
+    return (await this.onlineInvoke<OnboardingRequestSummary[]>('getAllRequests'))!;
   }
 
   /** Sets the assignee for an onboarding request (Serval admin only). */

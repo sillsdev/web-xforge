@@ -22,15 +22,15 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import {
   ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
-  OnboardingRequest,
   OnboardingRequestResolutionKey,
-  OnboardingRequestService
+  OnboardingRequestService,
+  OnboardingRequestSummary
 } from '../../translate/draft-generation/onboarding-request.service';
 import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
 import { ServalAdministrationService } from '../serval-administration.service';
 import { OnboardingRequestsExportService } from './onboarding-requests-export.service';
 
-type RequestFilterFunction = (request: OnboardingRequest, currentUserId: string | undefined) => boolean;
+type RequestFilterFunction = (request: OnboardingRequestSummary, currentUserId: string | undefined) => boolean;
 
 interface FilterOption {
   name: string;
@@ -40,32 +40,34 @@ interface FilterOption {
 const filterOptions = {
   newAndMyActiveRequests: {
     name: 'New + My Active Requests',
-    filter: (request: OnboardingRequest, currentUserId: string | undefined) =>
+    filter: (request: OnboardingRequestSummary, currentUserId: string | undefined) =>
       request.status === 'new' || (request.assigneeId === currentUserId && request.status === 'in_progress')
   },
   new: {
     name: 'New',
-    filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'new'
+    filter: (request: OnboardingRequestSummary, _currentUserId: string | undefined) => request.status === 'new'
   },
   mine: {
     name: 'Mine',
-    filter: (request: OnboardingRequest, currentUserId: string | undefined) => request.assigneeId === currentUserId
+    filter: (request: OnboardingRequestSummary, currentUserId: string | undefined) =>
+      request.assigneeId === currentUserId
   },
   in_progress: {
     name: 'In Progress',
-    filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'in_progress'
+    filter: (request: OnboardingRequestSummary, _currentUserId: string | undefined) => request.status === 'in_progress'
   },
   outsources: {
     name: 'Outsourced',
-    filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.resolution === 'outsourced'
+    filter: (request: OnboardingRequestSummary, _currentUserId: string | undefined) =>
+      request.resolution === 'outsourced'
   },
   completed: {
     name: 'Completed',
-    filter: (request: OnboardingRequest, _currentUserId: string | undefined) => request.status === 'completed'
+    filter: (request: OnboardingRequestSummary, _currentUserId: string | undefined) => request.status === 'completed'
   },
   all: {
     name: 'All',
-    filter: (_request: OnboardingRequest, _currentUserId: string | undefined) => true
+    filter: (_request: OnboardingRequestSummary, _currentUserId: string | undefined) => true
   }
 } as const satisfies Record<string, FilterOption>;
 
@@ -101,8 +103,8 @@ type FilterName = keyof typeof filterOptions;
   ]
 })
 export class OnboardingRequestsComponent extends DataLoadingComponent implements OnInit {
-  requests: OnboardingRequest[] = [];
-  filteredRequests: OnboardingRequest[] = [];
+  requests: OnboardingRequestSummary[] = [];
+  filteredRequests: OnboardingRequestSummary[] = [];
   displayedColumns: string[] = ['status', 'project', 'languageCode', 'user', 'email', 'assignee', 'resolution'];
   currentUserId?: string;
   assignedUserIds: Set<string> = new Set();
@@ -217,7 +219,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
    * Handles assignee change for a request.
    * Calls the backend to persist the change and updates local state with the response.
    */
-  async onAssigneeChange(request: OnboardingRequest, newAssigneeId: string): Promise<void> {
+  async onAssigneeChange(request: OnboardingRequestSummary, newAssigneeId: string): Promise<void> {
     try {
       // Call backend to persist the assignee and status change
       const updatedRequest = await this.onboardingRequestService.setAssignee(request.id, newAssigneeId);
@@ -243,7 +245,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
    * Calls the backend to persist the change and updates local state with the response.
    */
   async onResolutionChange(
-    request: OnboardingRequest,
+    request: OnboardingRequestSummary,
     newResolution: OnboardingRequestResolutionKey | null
   ): Promise<void> {
     try {

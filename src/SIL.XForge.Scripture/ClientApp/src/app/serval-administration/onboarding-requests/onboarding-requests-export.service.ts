@@ -4,8 +4,8 @@ import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString } from '../../../type-utils';
 import { parseDate } from '../../shared/utils';
 import {
-  OnboardingRequest,
-  OnboardingRequestService
+  OnboardingRequestService,
+  OnboardingRequestSummary
 } from '../../translate/draft-generation/onboarding-request.service';
 import { ServalAdministrationService } from '../serval-administration.service';
 
@@ -40,12 +40,12 @@ export class OnboardingRequestsExportService {
   ) {}
 
   /** Builds a comma-separated values (CSV) string for the given onboarding requests. */
-  createCsv(requests: OnboardingRequest[]): Promise<string> {
+  createCsv(requests: OnboardingRequestSummary[]): Promise<string> {
     return this.createSeparatedValues(requests, ',');
   }
 
   /** Builds a tab-separated values (TSV) string for the given onboarding requests. */
-  createTsv(requests: OnboardingRequest[]): Promise<string> {
+  createTsv(requests: OnboardingRequestSummary[]): Promise<string> {
     return this.createSeparatedValues(requests, '\t');
   }
 
@@ -71,7 +71,7 @@ export class OnboardingRequestsExportService {
     });
   }
 
-  private async createSeparatedValues(requests: OnboardingRequest[], delimiter: string): Promise<string> {
+  private async createSeparatedValues(requests: OnboardingRequestSummary[], delimiter: string): Promise<string> {
     const assigneeNames = await this.lookupAssigneeNames(requests);
 
     const spreadsheetRows: OnboardingRequestSpreadsheetRow[] = await Promise.all(
@@ -87,7 +87,7 @@ export class OnboardingRequestsExportService {
   }
 
   private async createSpreadsheetRow(
-    request: OnboardingRequest,
+    request: OnboardingRequestSummary,
     assigneeNames: Map<string, string>
   ): Promise<OnboardingRequestSpreadsheetRow> {
     const sfProjectId = request.submission.projectId;
@@ -108,7 +108,7 @@ export class OnboardingRequestsExportService {
   }
 
   /** Resolves the display name for each unique populated SF assignee user ID. */
-  private async lookupAssigneeNames(requests: OnboardingRequest[]): Promise<Map<string, string>> {
+  private async lookupAssigneeNames(requests: OnboardingRequestSummary[]): Promise<Map<string, string>> {
     const assigneeIds = [...new Set(requests.map(request => request.assigneeId).filter(isPopulatedString))];
     const entries = await Promise.all(
       assigneeIds.map(async assigneeId => {

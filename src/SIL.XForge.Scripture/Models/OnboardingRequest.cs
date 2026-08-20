@@ -62,6 +62,95 @@ public class OnboardingRequest : IIdentifiable
 }
 
 /// <summary>
+/// A trimmed-down projection of <see cref="OnboardingRequest"/> containing only the fields the onboarding
+/// requests list page (and its spreadsheet export) uses. Returned by GetAllRequests instead of the full
+/// request so the response stays small; comments and most form fields are excluded.
+/// </summary>
+public class OnboardingRequestSummary
+{
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The subset of the submission data needed by the list page.
+    /// </summary>
+    public OnboardingSubmissionSummary Submission { get; set; } = new OnboardingSubmissionSummary();
+
+    /// <summary>
+    /// The ID of the user assigned to handle this request. Empty string means unassigned.
+    /// </summary>
+    public string AssigneeId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The resolution of this request. See <see cref="OnboardingRequest.Resolution"/>.
+    /// </summary>
+    public string Resolution { get; set; }
+
+    /// <summary>
+    /// The status of this request. See <see cref="OnboardingRequest.Status"/>.
+    /// </summary>
+    public string Status { get; set; }
+
+    public static OnboardingRequestSummary FromRequest(OnboardingRequest request) =>
+        new OnboardingRequestSummary
+        {
+            Id = request.Id,
+            Submission = new OnboardingSubmissionSummary
+            {
+                ProjectId = request.Submission.ProjectId,
+                UserId = request.Submission.UserId,
+                Timestamp = request.Submission.Timestamp,
+                FormData = new OnboardingRequestFormDataSummary
+                {
+                    Name = request.Submission.FormData.Name,
+                    Email = request.Submission.FormData.Email,
+                    TranslationLanguageName = request.Submission.FormData.TranslationLanguageName,
+                    TranslationLanguageIsoCode = request.Submission.FormData.TranslationLanguageIsoCode,
+                },
+            },
+            AssigneeId = request.AssigneeId,
+            Resolution = request.Resolution,
+            Status = request.Status,
+        };
+}
+
+/// <summary>
+/// The subset of <see cref="OnboardingSubmission"/> used by the onboarding requests list page.
+/// </summary>
+public class OnboardingSubmissionSummary
+{
+    /// <summary>
+    /// The ID of the project this onboarding request is for.
+    /// </summary>
+    public string ProjectId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The ID of the user who submitted this onboarding request.
+    /// </summary>
+    public string UserId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The timestamp when this onboarding request was submitted.
+    /// </summary>
+    public DateTime Timestamp { get; set; }
+
+    /// <summary>
+    /// The subset of the form data needed by the list page.
+    /// </summary>
+    public OnboardingRequestFormDataSummary FormData { get; set; } = new OnboardingRequestFormDataSummary();
+}
+
+/// <summary>
+/// The subset of <see cref="OnboardingRequestFormData"/> used by the onboarding requests list page.
+/// </summary>
+public class OnboardingRequestFormDataSummary
+{
+    public string Name { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string TranslationLanguageName { get; set; } = string.Empty;
+    public string TranslationLanguageIsoCode { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// The submission data for a onboarding request.
 /// Contains the project ID, user ID, timestamp, and all form data.
 /// </summary>

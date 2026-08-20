@@ -20,7 +20,7 @@ public interface IOnboardingRequestService
 
     Task<object> GetOpenOnboardingRequestAsync(string projectId);
 
-    Task<List<OnboardingRequest>> GetAllRequestsAsync();
+    Task<List<OnboardingRequestSummary>> GetAllRequestsAsync();
 
     Task<OnboardingRequest> GetRequestByIdAsync(string requestId);
 
