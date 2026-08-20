@@ -12,8 +12,7 @@ const fs = require('fs');
     export   DATE_END="2026-02-01" &&
     mongosh --port "${MONGO_PORT}" --file "${SF_REPO}"/mongodb/EventMetrics/EventsInPeriod.mongodb.js
 */
-// DATE_START is inclusive and DATE_END is exclusive. Both are in UTC, and may be written either as a
-// date ("2025-12-31") or as a date and time ending in Z ("2025-12-31T13:57:00Z"). Both are required.
+// DATE_START is inclusive and DATE_END is exclusive. Both are in UTC. Both are required.
 //
 // The resulting records can be different when queried from different times, because a retried Sync reuses the original
 // sync_metrics doc, and with the same dateQueued time.
@@ -21,15 +20,8 @@ const fs = require('fs');
 // --- The period ---
 
 const DATE_LENGTH = 'YYYY-MM-DD'.length;
-
-// Where the seconds end in an ISO 8601 string such as "2025-12-31T13:57:00.000Z" - that is,
-// everything before the milliseconds.
-const ISO_SECONDS_END = 'YYYY-MM-DDTHH:MM:SS'.length;
-
-// A date on its own, or a date and time ending in Z.
-const DATE_TIME_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:T\d{2}:\d{2}:\d{2}Z)?$/;
-
-const DATE_EXAMPLES = '"2025-12-31" or "2025-12-31T13:57:00Z"';
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DATE_EXAMPLE = '"2025-12-31"';
 
 // DATE_START and DATE_END are both required, with no defaults, and are validated here - before any
 // query runs.
@@ -37,22 +29,20 @@ function readRequiredDate(variableName) {
   const value = process.env[variableName];
   // (Not using `foo?.trim()` because mongosh has trouble with it.)
   const trimmed = value == null ? '' : value.trim();
-  if (!trimmed) throw new Error(`${variableName} is required (for example ${DATE_EXAMPLES})`);
-  const match = DATE_TIME_PATTERN.exec(trimmed);
-  if (match == null) {
-    throw new Error(`${variableName} is not a valid UTC datetime: "${trimmed}". Give it as ${DATE_EXAMPLES}.`);
+  if (!trimmed) throw new Error(`${variableName} is required (for example ${DATE_EXAMPLE})`);
+  if (!DATE_PATTERN.test(trimmed)) {
+    throw new Error(`${variableName} is not a valid UTC date: "${trimmed}". Give it as ${DATE_EXAMPLE}.`);
   }
   const date = new Date(trimmed);
   if (isNaN(date.getTime())) {
-    throw new Error(`${variableName} is not a real UTC datetime: "${trimmed}". Give it as ${DATE_EXAMPLES}.`);
+    throw new Error(`${variableName} is not a real UTC date: "${trimmed}". Give it as ${DATE_EXAMPLE}.`);
   }
   // The day of the month is the one field the constructor does not reject when it is impossible: it
-  // rolls the excess over into the next month, reading "2026-02-30" as 2 March. An hour of 24, which
-  // ISO 8601 allows for the following midnight, rolls the day the same way. Comparing the day arrived
-  // at against the day asked for catches both. Reject impossible dates that are probably typos.
+  // rolls the excess over into the next month, reading "2026-02-30" as 2 March. Comparing the day
+  // arrived at against the day asked for catches that. Reject impossible dates that are probably typos.
   const dayArrivedAt = date.toISOString().slice(0, DATE_LENGTH);
-  if (dayArrivedAt !== match[1]) {
-    throw new Error(`${variableName} is not a real UTC datetime: "${trimmed}" would mean ${date.toISOString()}.`);
+  if (dayArrivedAt !== trimmed) {
+    throw new Error(`${variableName} is not accepted: "${trimmed}" would mean ${dayArrivedAt}.`);
   }
   return date;
 }
@@ -69,16 +59,9 @@ console.log(`Collecting events from ${dateStart.toISOString()} until before ${da
 
 // --- Output file ---
 
-// The time part of an ISO 8601 string at midnight UTC.
-const ISO_MIDNIGHT = 'T00:00:00.000Z';
-
-// How the period is written into the output file name: just the date when it begins at midnight UTC,
-// and the full datetime otherwise, as in "2025-12-31T135700Z".
+// How the period is written into the output file name.
 function periodLabel(date) {
-  const iso = date.toISOString();
-  if (iso.endsWith(ISO_MIDNIGHT)) return iso.slice(0, DATE_LENGTH);
-  // Remove milliseconds, and the colons from the time - a colon is not a legal character in some filesystems.
-  return iso.slice(0, ISO_SECONDS_END).replaceAll(':', '') + 'Z';
+  return date.toISOString().slice(0, DATE_LENGTH);
 }
 
 const fileNameBase = `events_${periodLabel(dateStart)}_${periodLabel(dateEnd)}`;
