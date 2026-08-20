@@ -325,7 +325,7 @@ export class RealtimeServer extends ShareDB {
 
               // If we still have no property schema, this is an invalid path
               if (propertySchema === undefined) {
-                failValidation(`Invalid path for operation: ${JSON.stringify(op)}`);
+                failValidation(`Invalid path for operation: ${JSON.stringify(op.p)}`);
                 return;
               }
 
@@ -398,7 +398,7 @@ export class RealtimeServer extends ShareDB {
               }
 
               if (!validData) {
-                failValidation(`Invalid operation data: ${JSON.stringify(op)}`);
+                failValidation(`Invalid operation data with path: ${JSON.stringify(op.p)}`);
                 return;
               }
             } else {
