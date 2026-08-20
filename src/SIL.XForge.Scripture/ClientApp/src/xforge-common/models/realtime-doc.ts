@@ -33,6 +33,7 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   private subscribedState: boolean = false;
   private subscribeQueryCount: number = 0;
   private loadOfflineDataPromise?: Promise<void>;
+  private reconcileOfflineDataPromise?: Promise<void>;
 
   constructor(
     protected readonly realtimeService: RealtimeService,
@@ -68,6 +69,14 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
 
   get subscriberCount(): number {
     return this.subscribeQueryCount;
+  }
+
+  /**
+   * Whether this doc has local changes that the server has not yet acknowledged. This includes an
+   * op that is currently in flight.
+   */
+  get hasPendingOps(): boolean {
+    return this.adapter.pendingOps.length > 0;
   }
 
   get collection(): string {
@@ -171,6 +180,19 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
   }
 
   /**
+   * Re-reads this doc from the server and updates (or removes, if the doc was deleted) its copy in
+   * the offline store. This is used when the doc is found to have changed on the server while this
+   * client was not subscribed to it, which the client is not otherwise notified about — see
+   * doc/offline-query-membership.md. Concurrent calls share a single server round trip.
+   */
+  reconcileOfflineData(): Promise<void> {
+    this.reconcileOfflineDataPromise ??= this.reconcileWithServer().finally(
+      () => (this.reconcileOfflineDataPromise = undefined)
+    );
+    return this.reconcileOfflineDataPromise;
+  }
+
+  /**
    * Unsubscribes and destroys this realtime data model.
    *
    * @returns {Promise<void>} Resolves when the data has been successfully disposed.
@@ -269,6 +291,24 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
       await promise;
     }
     await this.onSubscribe();
+  }
+
+  private async reconcileWithServer(): Promise<void> {
+    try {
+      await this.adapter.fetch();
+    } catch {
+      // The fetch failed (e.g. offline, or this user is no longer permitted to read the doc).
+      // Leave the offline copy as-is; query membership already excludes the doc.
+      return;
+    }
+    if (this.adapter.type == null) {
+      // The doc no longer exists on the server.
+      await this.onDelete();
+      this.localDelete$.next();
+    } else {
+      // Force the update, since the doc may no longer be in any subscribed query.
+      await this.updateOfflineData(true);
+    }
   }
 
   private async checkExists(): Promise<void> {
