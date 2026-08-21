@@ -50,7 +50,7 @@
     "deuterocanon": "Deuterokanonika",
     "new_testament": "Perjanjian Baru",
     "old_testament": "Perjanjian Lama",
-    "book_progress": "{{ percent }}% sudah diterjemahkan"
+    "book_progress": "{{ percent }} sudah diterjemahkan"
   },
   "checking": {
     "add_question": "Tambah pertanyaan"

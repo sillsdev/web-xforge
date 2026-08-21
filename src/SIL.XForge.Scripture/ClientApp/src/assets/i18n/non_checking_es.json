@@ -50,7 +50,7 @@
     "deuterocanon": "Deuterocanónico",
     "new_testament": "Nuevo Testamento",
     "old_testament": "Antiguo Testamento",
-    "book_progress": "‎{{ percent }}% traducido"
+    "book_progress": "‎{{ percent }} traducido"
   },
   "checking": {
     "add_question": "Agregar pregunta"
@@ -189,7 +189,7 @@
     "draft_is_ready": "Su borrador está listo",
     "draft_syncing": "Inicialización del borrador",
     "draft_syncing_detail": "Tu proyecto está siendo sincronizado antes de poner en cola el borrador.",
-    "draft_percent_complete": "{{ percent }}% completado",
+    "draft_percent_complete": "{{ percent }} completado",
     "draft_queued_detail_multiple": "La generación del borrador de traducción es el número {{ count }} en la cola, y comenzará una vez que el servidor haya terminado con otros proyectos. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_detail": "La generación del borrador de traducción se ha puesto en cola y comenzará una vez que el servidor haya terminado con otro proyecto. Por favor, vuelva a comprobarlo más tarde.",
     "draft_queued_header": "Borrador en cola",
