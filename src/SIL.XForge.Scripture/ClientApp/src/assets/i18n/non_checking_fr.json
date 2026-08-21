@@ -189,7 +189,7 @@
     "draft_is_ready": "Votre ébauche est prête",
     "draft_syncing": "Initialisation d'une ébauche",
     "draft_syncing_detail": "Votre projet est en cours de synchronisation avant de mettre en file d'attente l'ébauche.",
-    "draft_percent_complete": "{{ percent }}% complet",
+    "draft_percent_complete": "{{ percent }} complet",
     "draft_queued_detail_multiple": "La génération de l'ébauche de traduction est numéro {{ count }} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_detail": "La génération de l'ébauche de traduction est numéro {} dans la file d’attente, et commencera dès que le serveur sera terminé avec d’autres projets. Veuillez revenir plus tard.",
     "draft_queued_header": "Ébauche en attente",
