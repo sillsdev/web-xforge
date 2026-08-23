@@ -394,7 +394,7 @@ export class RealtimeServer extends ShareDB {
       done();
     });
 
-    this.defaultConnection = this.connect();
+    this.defaultConnection = this.connectAsServer();
 
     if (!this.dataValidationDisabled) {
       ResourceMonitor.instance.setPubSub((this as any).pubsub);
@@ -418,26 +418,37 @@ export class RealtimeServer extends ShareDB {
     }
   }
 
-  connect(userId?: string): Connection;
-  connect(connection?: Connection, req?: any): Connection;
-  connect(connectionOrUserId?: Connection | string, req?: any): Connection {
-    let connection: Connection;
-    if (connectionOrUserId instanceof Connection) {
-      connection = connectionOrUserId;
-    } else {
-      // Temporary socket that is used in constructing the Connection, but quickly replaced with a new socket in ShareDB
-      // backend.js connect().
-      const tmpSocket = {
-        close: () => {
-          // do nothing
-        }
-      } as WebSocket;
-      connection = new MigrationConnection(tmpSocket);
-      if (connectionOrUserId != null) {
-        req = { userId: connectionOrUserId };
-      }
+  /**
+   * Creates a connection, described by `req`. `req` is later examined by `setConnectSession`, to produce a trusted
+   * server session with or without user ID, or a user session limited by JWT claims (for unit tests).
+   */
+  connect(connection?: Connection, req?: any): Connection {
+    if (connection != null) {
+      // Our application does not make any calls to this method with a defined Connection.
+      console.log(`Warning: realtime-server.ts RealtimeServer.connect unexpectedly received a connection argument.`);
+      return super.connect(connection, req);
     }
-    return super.connect(connection, req);
+
+    // Temporary socket that is used in constructing the Connection, but quickly replaced with a new socket in ShareDB
+    // backend.js connect().
+    const tmpSocket = {
+      close: () => {
+        // do nothing
+      }
+    } as WebSocket;
+    const migrationConnection = new MigrationConnection(tmpSocket);
+    return super.connect(migrationConnection, req);
+  }
+
+  /**
+   * Creates a connection that is trusted as the server, optionally acting for a user (but not limited by their
+   * permissions).
+   *
+   * Dotnet requests, this.defaultConnection, and other places in RealtimeServer reach this.
+   */
+  connectAsServer(onBehalfOfUserId?: string): Connection {
+    if (onBehalfOfUserId == null) return this.connect();
+    else return this.connect(undefined, { userId: onBehalfOfUserId });
   }
 
   listen(stream: any, req?: any): ShareDB.Agent {

@@ -525,7 +525,7 @@ describe('RealtimeServer', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const userConn = env.server.connect('user01');
+    const userConn = env.server.connectAsServer('user01');
     await submitOp(userConn, USERS_COLLECTION, 'user01', [
       {
         p: ['this_property_does_not_exist'],

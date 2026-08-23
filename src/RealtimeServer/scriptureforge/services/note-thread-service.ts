@@ -251,7 +251,7 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     }
     const parts: string[] = docId.split(':');
     const projectId: string = parts[0];
-    const conn: Connection = this.server.connect(userId);
+    const conn: Connection = this.server.connectAsServer(userId);
     const pucDocs: Doc[] = (await createFetchQuery(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, { projectRef: projectId }))
       .results;
     const promises: Promise<boolean>[] = [];
