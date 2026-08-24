@@ -1,6 +1,7 @@
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { User } from '@bugsnag/js';
 import { cloneDeep } from 'lodash-es';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -8,6 +9,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -20,6 +22,7 @@ import { RESOURCE_IDENTIFIER_LENGTH } from './paratext.service';
 import { PermissionsService } from './permissions.service';
 import { SFProjectService } from './sf-project.service';
 
+const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedProjectService = mock(SFProjectService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
@@ -27,6 +30,7 @@ describe('PermissionsService', () => {
   configureTestingModule(() => ({
     providers: [
       provideTestRealtime(SF_TYPE_REGISTRY),
+      { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: SFProjectService, useMock: mockedProjectService }
     ]
@@ -161,6 +165,42 @@ describe('PermissionsService', () => {
     expect(await env.service.userHasParatextRoleOnProject('project01')).toBe(false);
     verify(mockedProjectService.getProfile('project01')).twice();
   }));
+
+  describe('canInitiateSync', () => {
+    it('allows serval admins to sync resources they have read access to', () => {
+      const env = new TestEnvironment();
+      env.setProjectType('resource');
+      env.setCurrentUser(SFProjectRole.ParatextObserver);
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      expect(env.service.canInitiateSync(env.projectDoc)).toBe(true);
+    });
+
+    it('does not allow serval admins to sync non-resource projects they have read access to', () => {
+      const env = new TestEnvironment();
+      env.setProjectType('project');
+      env.setCurrentUser(SFProjectRole.ParatextObserver);
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      expect(env.service.canInitiateSync(env.projectDoc)).toBe(false);
+    });
+
+    it('does not allow non-serval-admins with only read access to sync resources', () => {
+      const env = new TestEnvironment();
+      env.setProjectType('resource');
+      env.setCurrentUser(SFProjectRole.ParatextObserver);
+      when(mockedAuthService.currentUserRoles).thenReturn([]);
+      expect(env.service.canInitiateSync(env.projectDoc)).toBe(false);
+    });
+  });
+
+  describe('canAccessSync and canAccessProjectSettings', () => {
+    it('do not admit serval admins when the project doc has no data', () => {
+      const env = new TestEnvironment();
+      when(mockedAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
+      when(mockedProjectDoc.data).thenReturn(undefined);
+      expect(env.service.canAccessSync(env.projectDoc)).toBe(false);
+      expect(env.service.canAccessProjectSettings(env.projectDoc)).toBe(false);
+    });
+  });
 
   describe('canSync', () => {
     it('returns false when projectDoc.data is undefined', fakeAsync(() => {

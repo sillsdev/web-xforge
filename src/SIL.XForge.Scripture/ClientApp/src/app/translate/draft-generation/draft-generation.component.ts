@@ -37,7 +37,6 @@ import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
-import { ServalProjectComponent } from '../../serval-administration/serval-project.component';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
@@ -86,7 +85,6 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     L10nPercentPipe,
     DraftGenerationStepsComponent,
     DraftInformationComponent,
-    ServalProjectComponent,
     DraftHistoryListComponent
   ]
 })
@@ -438,10 +436,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   isDraftFaulted(job?: BuildDto): boolean {
     return job?.state === BuildStates.Faulted;
-  }
-
-  isServalAdmin(): boolean {
-    return this.authService.currentUserRoles.includes(SystemRole.ServalAdmin);
   }
 
   canShowAdditionalInfo(job?: BuildDto): boolean {

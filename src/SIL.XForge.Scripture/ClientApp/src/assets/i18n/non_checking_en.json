@@ -951,6 +951,19 @@
     "sync_user_permissions_failure_message": "The last user to synchronize this project no longer has permission to sync. Please contact the project administrator.",
     "user_permissions_failure_dialog_message": "You no longer have permission to synchronize this project with Paratext. Please contact the project administrator."
   },
+  "sync_log": {
+    "initiated_by": "Initiated by",
+    "no_syncs": "This project has not been synchronized yet.",
+    "offline": "Connect to the internet to see the sync history.",
+    "show_more": "Show more",
+    "status": "Status",
+    "status_cancelled": "Cancelled",
+    "status_failed": "Failed",
+    "status_queued": "Queued",
+    "status_running": "Running",
+    "status_successful": "Successful",
+    "sync_history": "Sync history"
+  },
   "tab_group_header": {
     "no_tabs_available": "No tabs available."
   },

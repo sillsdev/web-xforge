@@ -1,0 +1,47 @@
+<ng-container *transloco="let t; read: 'sync_log'">
+  <h2>{{ t("sync_history") }}</h2>
+  @if (!isOnline) {
+    <div class="sync-log-label" id="sync-log-offline">{{ t("offline") }}</div>
+  } @else if (isLoading) {
+    <!-- Show nothing while loading -->
+  } @else if (rows.length === 0) {
+    <div class="sync-log-label" id="sync-log-empty">{{ t("no_syncs") }}</div>
+  } @else {
+    <div class="sync-log-entries">
+      @for (row of rows; track row.syncMetrics.id) {
+        @let showErrorDetails = canSeeErrorDetails && row.syncMetrics.errorDetails != null;
+        <div class="sync-log-entry" [attr.data-status]="row.syncMetrics.status">
+          <div class="entry-summary">
+            <mat-icon class="status-icon" [class]="'status-' + row.syncMetrics.status.toLowerCase()">
+              {{ row.statusIcon }}
+            </mat-icon>
+            <div class="entry-details">
+              <span class="entry-status">{{ t(row.statusKey) }}</span>
+              <app-owner
+                [ownerRef]="row.userRef"
+                [includeAvatar]="true"
+                [layoutStacked]="false"
+                [dateTime]="row.dateTime"
+              ></app-owner>
+            </div>
+            @if (showErrorDetails) {
+              <button mat-stroked-button class="error-details-button" (click)="toggleErrorDetails(row.syncMetrics.id)">
+                <mat-icon>{{ isErrorExpanded(row.syncMetrics.id) ? "expand_less" : "expand_more" }}</mat-icon>
+                Error details
+              </button>
+            }
+          </div>
+          @if (showErrorDetails && isErrorExpanded(row.syncMetrics.id)) {
+            <div class="error-details">
+              <app-copy [value]="row.syncMetrics.errorDetails"></app-copy>
+              <pre class="sync-error-details">{{ row.syncMetrics.errorDetails }}</pre>
+            </div>
+          }
+        </div>
+      }
+    </div>
+    @if (canShowMore) {
+      <button mat-button id="sync-log-show-more" (click)="showMore()">{{ t("show_more") }}</button>
+    }
+  }
+</ng-container>

@@ -3,6 +3,8 @@
     <h1>{{ t("settings") }}</h1>
     @if (!isAppOnline) {
       <span class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
+    } @else if (isServalAdminReadOnly) {
+      <app-serval-admin-read-only-notice />
     }
     <div>
       <form [formGroup]="form">
@@ -11,7 +13,7 @@
           <mat-card-content>
             <mat-card-title>{{ t("translate") }}</mat-card-title>
             <div class="tool-setting">
-              @if (!isLoadingData && !isLoggedInToParatext && isAppOnline) {
+              @if (!isLoadingData && !isLoggedInToParatext && isAppOnline && !isServalAdminReadOnly) {
                 <app-paratext-account-notice id="paratext-account-not-connected" />
               }
               @if (mainSettingsLoaded) {
@@ -25,7 +27,9 @@
                     [resources]="resources"
                     [nonSelectableProjects]="nonSelectableProjects"
                     [hiddenParatextIds]="projectParatextId ? [projectParatextId] : []"
-                    [isDisabled]="!isAppOnline || isLoadingData || (projectLoadingFailed && resourceLoadingFailed)"
+                    [isDisabled]="
+                      !isAppOnline || isLoadingData || !hasEditRights || (projectLoadingFailed && resourceLoadingFailed)
+                    "
                   ></app-project-select>
                   <app-write-status
                     [state]="getControlState('sourceParatextId')"

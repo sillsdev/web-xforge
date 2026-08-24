@@ -20,9 +20,12 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
+import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { ParatextAccountNoticeComponent } from '../shared/paratext-account-notice/paratext-account-notice.component';
+import { ServalAdminReadOnlyNoticeComponent } from '../shared/serval-admin-read-only-notice/serval-admin-read-only-notice.component';
+import { SyncLogComponent } from './sync-log/sync-log.component';
 import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 /** Reports as to whether a given project is actively syncing right now. */
 export function isSFProjectSyncing(project: SFProjectProfile): boolean {
@@ -41,9 +44,11 @@ enum SyncErrorCodes {
     TranslocoModule,
     NoticeComponent,
     ParatextAccountNoticeComponent,
+    ServalAdminReadOnlyNoticeComponent,
     MatCard,
     MatButton,
     MatIcon,
+    SyncLogComponent,
     SyncProgressComponent,
     MatHint,
     MatTooltip
@@ -69,9 +74,26 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
     private readonly authService: AuthService,
+    private readonly permissionsService: PermissionsService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'SyncComponent');
+  }
+
+  /** Whether the user can initiate a synchronization of the project. */
+  get canInitiateSync(): boolean {
+    return this.projectDoc != null && this.permissionsService.canInitiateSync(this.projectDoc);
+  }
+
+  /** Whether the page is read-only because the user is only here by virtue of being a serval admin. */
+  get isServalAdminReadOnly(): boolean {
+    return !this.canInitiateSync && this.permissionsService.isServalAdmin;
+  }
+
+  /** For now the sync log is only shown to serval and system administrators, but it may be opened up to project
+   * members in the future. */
+  get canSeeSyncLog(): boolean {
+    return this.permissionsService.isServalAdmin || this.permissionsService.isSystemAdmin;
   }
 
   get isLoggedIntoParatext(): boolean {
@@ -200,7 +222,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   syncProject(): void {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || !this.canInitiateSync) {
       return;
     }
     this._syncActive = true;
@@ -215,7 +237,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   cancelSync(): void {
-    if (this.projectDoc == null) {
+    if (this.projectDoc == null || !this.canInitiateSync) {
       return;
     }
     void this.projectService.onlineCancelSync(this.projectDoc.id);

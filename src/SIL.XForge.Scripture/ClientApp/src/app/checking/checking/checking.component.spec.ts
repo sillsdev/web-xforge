@@ -50,6 +50,7 @@ import {
   verify,
   when
 } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
@@ -110,6 +111,7 @@ const mockedDialogService = mock(DialogService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 const mockedFileService = mock(FileService);
+const mockedAuthService = mock(AuthService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -182,6 +184,7 @@ describe('CheckingComponent', () => {
       { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
       { provide: FileService, useMock: mockedFileService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
+      { provide: AuthService, useMock: mockedAuthService },
       provideNoopAnimations()
     ]
   }));
