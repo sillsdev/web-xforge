@@ -335,15 +335,11 @@ export class ConfigureSourcesComponent extends DataLoadingComponent implements O
         this.i18n.translate('draft_sources.stay_on_page')
       );
       if (confirmed) {
+        // Remove from the local cache any files that were not uploaded
         const addedFiles = this.availableTrainingFiles.filter(selected => !this.savedTrainingFiles?.includes(selected));
-        addedFiles.forEach(f =>
-          this.fileService.deleteFile(
-            FileType.TrainingData,
-            this.activatedProjectService.projectId!,
-            TrainingDataDoc.COLLECTION,
-            f.dataId,
-            f.ownerRef
-          )
+        addedFiles.forEach(
+          async f =>
+            await this.fileService.findOrUpdateCache(FileType.TrainingData, TrainingDataDoc.COLLECTION, f.dataId)
         );
       }
 
