@@ -231,10 +231,19 @@ public partial class MachineApiService(
                     IUsj usj;
                     if (textDocument.IsLoaded)
                     {
+                        DateTime latestTimestampForRevision = await LatestTimestampForRevisionAsync(
+                            curUserId,
+                            project,
+                            bookNum,
+                            chapterNum,
+                            isServalAdmin: false,
+                            timestamp,
+                            cancellationToken
+                        );
                         // Retrieve the snapshot if it exists, or use the latest available if none
                         Snapshot<TextDocument> snapshot = await connection.FetchSnapshotAsync<TextDocument>(
                             id,
-                            timestamp
+                            latestTimestampForRevision
                         );
                         usj = snapshot.Data ?? textDocument.Data;
                     }
@@ -2751,7 +2760,7 @@ public partial class MachineApiService(
 
         DateTime latestTimestampForRevision = await LatestTimestampForRevisionAsync(
             curUserId,
-            sfProjectId,
+            project,
             bookNum,
             chapterNum,
             isServalAdmin,
@@ -3950,7 +3959,7 @@ public partial class MachineApiService(
     /// Retrieves the latest timestamp for the revision corresponding to the specified timestamp.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="project">The Scripture Forge project.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number.</param>
     /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
@@ -3960,7 +3969,7 @@ public partial class MachineApiService(
     /// <remarks>This function is internal so it can be unit tests.</remarks>
     internal async Task<DateTime> LatestTimestampForRevisionAsync(
         string curUserId,
-        string sfProjectId,
+        SFProject project,
         int bookNum,
         int chapterNum,
         bool isServalAdmin,
@@ -3968,17 +3977,9 @@ public partial class MachineApiService(
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission
-        SFProject project = await EnsureProjectPermissionAsync(
-            curUserId,
-            sfProjectId,
-            isServalAdmin,
-            cancellationToken
-        );
-
         IReadOnlyList<ServalBuildDto> builds = await GetBuildsAsync(
             curUserId,
-            sfProjectId,
+            project.Id,
             preTranslate: true,
             isServalAdmin,
             cancellationToken

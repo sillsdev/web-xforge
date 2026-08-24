@@ -116,6 +116,7 @@ import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component
 import { XmlUtils } from '../../shared/utils';
 import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftNotificationService } from '../draft-generation/draft-notification.service';
 import { DraftOptionsService } from '../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../draft-generation/draft-preview-books/draft-preview-books.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
@@ -144,6 +145,7 @@ const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedHttpClient = mock(HttpClient);
 const mockedDraftGenerationService = mock(DraftGenerationService);
+const mockedDraftNotificationService = mock(DraftNotificationService);
 const mockedDraftOptionsService = mock(DraftOptionsService);
 const mockedParatextService = mock(ParatextService);
 const mockedPermissionsService = mock(PermissionsService);
@@ -213,6 +215,7 @@ describe('EditorComponent', () => {
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
+      { provide: DraftNotificationService, useMock: mockedDraftNotificationService },
       { provide: DraftOptionsService, useMock: mockedDraftOptionsService },
       { provide: ParatextService, useMock: mockedParatextService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
