@@ -4762,6 +4762,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         DateTime buildRequested = timestamp.AddHours(1);
+        var project = env.Projects.Get(Project01);
         var build = new ServalBuildDto
         {
             State = MachineApiService.BuildStateCompleted,
@@ -4776,7 +4777,7 @@ public class MachineApiServiceTests
         // SUT
         DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
             User01,
-            Project01,
+            project,
             bookNum: 2,
             chapterNum: 1,
             isServalAdmin: true,
@@ -4792,6 +4793,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         DateTime buildRequested = timestamp.AddHours(-1);
+        var project = env.Projects.Get(Project01);
         var build = new ServalBuildDto
         {
             State = MachineApiService.BuildStateCompleted,
@@ -4806,7 +4808,7 @@ public class MachineApiServiceTests
         // SUT
         DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
             User01,
-            Project01,
+            project,
             bookNum: 2,
             chapterNum: 1,
             isServalAdmin: true,
@@ -4822,6 +4824,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         DateTime buildRequested = timestamp.AddHours(-1);
+        var project = env.Projects.Get(Project01);
         var build = new ServalBuildDto
         {
             State = MachineApiService.BuildStateFinishing,
@@ -4836,7 +4839,7 @@ public class MachineApiServiceTests
         // SUT
         DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
             User01,
-            Project01,
+            project,
             bookNum: 2,
             chapterNum: 1,
             isServalAdmin: true,
@@ -4852,6 +4855,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         DateTime buildRequested = timestamp.AddHours(-1);
+        var project = env.Projects.Get(Project01);
         var build = new ServalBuildDto
         {
             State = MachineApiService.BuildStateFinishing,
@@ -4866,7 +4870,7 @@ public class MachineApiServiceTests
         // SUT
         DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
             User01,
-            Project01,
+            project,
             bookNum: 2,
             chapterNum: 1,
             isServalAdmin: true,
@@ -4881,6 +4885,7 @@ public class MachineApiServiceTests
     {
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
+        var project = env.Projects.Get(Project01);
         env.Service.Configure()
             .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([]));
@@ -4888,7 +4893,7 @@ public class MachineApiServiceTests
         // SUT
         DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
             User01,
-            Project01,
+            project,
             bookNum: 2,
             chapterNum: 1,
             isServalAdmin: true,

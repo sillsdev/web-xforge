@@ -37,7 +37,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -48,12 +47,18 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { Revision } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
+import {
+  DraftApplyState,
+  DraftApplyStatus
+} from '../../draft-generation/draft-import-wizard/draft-import-wizard.component';
+import { DraftNotificationService } from '../../draft-generation/draft-notification.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-generation/draft-preview-books/draft-preview-books.component';
 import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/history-revision-format.pipe';
@@ -92,7 +97,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   @ViewChild(TextComponent) draftText!: TextComponent;
 
   inputChanged$ = new BehaviorSubject<TextDocId | undefined>(this.textDocId);
-  draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-empty' = 'draft-unknown';
+  draftCheckState: 'draft-unknown' | 'draft-present' | 'draft-empty' | 'draft-applying' = 'draft-unknown';
   selectedRevision: Revision | undefined;
   generateDraftUrl?: string;
   targetProject?: SFProjectProfile;
@@ -100,6 +105,10 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   canSelectDraft = false;
   isDraftApplied = false;
   userAppliedDraft = false;
+
+  private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
+    this.updateDraftApplyState(projectId, draftApplyState);
+  };
 
   private selectedRevisionSubject = new BehaviorSubject<Revision | undefined>(undefined);
   private selectedRevision$ = this.selectedRevisionSubject.asObservable();
@@ -135,14 +144,15 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly dialogService: DialogService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftHandlingService: DraftHandlingService,
-    readonly fontService: FontService,
+    private readonly draftNotificationService: DraftNotificationService,
+    private readonly draftOptionsService: DraftOptionsService,
+    private readonly errorReportingService: ErrorReportingService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     readonly onlineStatusService: OnlineStatusService,
     private readonly noticeService: NoticeService,
-    private errorReportingService: ErrorReportingService,
     private readonly router: Router,
-    private readonly draftOptionsService: DraftOptionsService,
+    private readonly textDocService: TextDocService,
     projectNotificationService: ProjectNotificationService
   ) {
     this.activatedProjectService.projectId$
@@ -156,10 +166,15 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
         projectNotificationService.setNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
       });
 
+    this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
+      // Stop the Project SignalR connection when the component is destroyed
       await projectNotificationService.stop();
       projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
+
+      // Stop the Draft SignalR connection when the component is destroyed
+      await draftNotificationService.stop();
+      this.draftNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }
 
@@ -349,8 +364,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   async applyDraft(): Promise<void> {
-    if (this.draftDelta == null) {
-      throw new Error('No draft ops to apply.');
+    if (this.draftDelta == null || this.textDocId == null || this.selectedRevision == null) {
+      throw new Error('No draft to apply.');
     }
 
     // Warn before overwriting existing text
@@ -361,10 +376,18 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       }
     }
 
+    // Subscribe to SignalR updates
+    await this.draftNotificationService.start();
+    await this.draftNotificationService.subscribeToProject(this.textDocId.projectId);
+
     try {
-      await this.draftHandlingService.applyChapterDraftAsync(this.textDocId!, this.draftDelta);
-      this.isDraftApplied = true;
-      this.userAppliedDraft = true;
+      await this.projectService.onlineApplyPreTranslationToProject(
+        this.textDocId.projectId,
+        Canon.bookNumberToId(this.textDocId.bookNum) + ' ' + this.textDocId.chapterNum,
+        this.textDocId.projectId,
+        new Date(this.selectedRevision.timestamp)
+      );
+      this.draftCheckState = 'draft-applying';
     } catch (err) {
       this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
       if (!isNetworkError(err)) {
@@ -373,6 +396,29 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
           ErrorReportingService.normalizeError(err)
         );
       }
+    }
+  }
+
+  /**
+   * Handler for SignalR notifications when applying a draft.
+   *
+   * @param projectId The project identifier.
+   * @param draftApplyState The draft apply state from the backend.
+   */
+  updateDraftApplyState(projectId: string, draftApplyState: DraftApplyState): void {
+    if (projectId !== this.textDocId?.projectId) return;
+    if (
+      (draftApplyState.status === DraftApplyStatus.Failed || draftApplyState.status === DraftApplyStatus.Successful) &&
+      draftApplyState.bookNum === 0 &&
+      draftApplyState.chapterNum === 0
+    ) {
+      this.draftCheckState = 'draft-present';
+      this.isDraftApplied = true;
+      this.userAppliedDraft = true;
+      void this.textDocService.notifyChanges(this.textDocId);
+    } else {
+      // Ensure that the UI reflects that a draft is being applied
+      this.draftCheckState = 'draft-applying';
     }
   }
 
