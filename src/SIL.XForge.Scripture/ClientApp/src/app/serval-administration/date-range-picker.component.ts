@@ -188,8 +188,8 @@ export class DateRangePickerComponent implements OnInit {
    * end date undefined). It is also called while typing into the input controls.
    */
   private emitNormalizedIfValid(inputRange: { start: Date | null | undefined; end: Date | null | undefined }): void {
-    if (inputRange.start == null && inputRange.end == null) {
-      this.isDefaultRange = this.defaultRange == null;
+    if (inputRange.start == null && inputRange.end == null && this.defaultRange == null) {
+      this.isDefaultRange = true;
       this.dateRangeChange.emit();
       return;
     }
