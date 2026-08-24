@@ -15,7 +15,7 @@ import { SFProjectService } from './sf-project.service';
   providedIn: 'root'
 })
 export class TextDocService {
-  private localSystemTextDocChangesMap = new Map<string, Subject<TextData>>();
+  private localSystemTextDocChangesMap = new Map<string, Subject<TextData | undefined>>();
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -46,6 +46,17 @@ export class TextDocService {
   }
 
   /**
+   * Notifies any TextViewModels that the document has undergone major changes.
+   *
+   * @param {TextDocId} textDocId The id for text doc.
+   */
+  async notifyChanges(textDocId: TextDocId): Promise<void> {
+    const textDoc = await this.projectService.getText(textDocId);
+    if (textDoc.data?.ops == null) return;
+    this.getLocalSystemChangesInternal$(textDocId).next(undefined);
+  }
+
+  /**
    * Determines if the current user can edit the specified chapter.
    *
    * @param {SFProjectProfile | undefined} project The project.
@@ -72,7 +83,7 @@ export class TextDocService {
   ): boolean {
     return (
       this.userHasGeneralEditRight(project) &&
-      this.hasChapterEditPermission(project, bookNum, chapterNum) &&
+      this.hasChapterEditPermission(project, bookNum, chapterNum) === true &&
       this.isDataInSync(project) &&
       !this.isEditingDisabled(project)
     );
@@ -151,15 +162,16 @@ export class TextDocService {
    * @param {SFProjectProfile | undefined} project The project.
    * @param {number | undefined} bookNum The book number.
    * @param {number | undefined} chapterNum The chapter number.
-   * @returns {boolean} A value indicating whether the user can edit the chapter.
+   * @returns {boolean | undefined} A value indicating whether the user can edit the chapter.
+   *                                An undefined value means that the chapter is not in IndexedDB yet.
    */
   hasChapterEditPermission(
     project: SFProjectProfile | undefined,
     bookNum: number | undefined,
     chapterNum: number | undefined
-  ): boolean {
+  ): boolean | undefined {
     const text: TextInfo | undefined = project?.texts.find(t => t.bookNum === bookNum);
-    return this.hasChapterEditPermissionForText(text, chapterNum) ?? false;
+    return this.hasChapterEditPermissionForText(text, chapterNum);
   }
 
   /**
@@ -188,16 +200,16 @@ export class TextDocService {
    * @param {TextDocId} textDocId The id for text doc to listen to.
    * @returns {Observable<TextData>} An observable that emits the diff ops.
    */
-  getLocalSystemChanges$(textDocId: TextDocId): Observable<TextData> {
+  getLocalSystemChanges$(textDocId: TextDocId): Observable<TextData | undefined> {
     return this.getLocalSystemChangesInternal$(textDocId).asObservable();
   }
 
-  private getLocalSystemChangesInternal$(textDocId: TextDocId): Subject<TextData> {
+  private getLocalSystemChangesInternal$(textDocId: TextDocId): Subject<TextData | undefined> {
     const key: string = textDocId.toString();
-    let subject: Subject<TextData> | undefined = this.localSystemTextDocChangesMap.get(key);
+    let subject: Subject<TextData | undefined> | undefined = this.localSystemTextDocChangesMap.get(key);
 
     if (subject == null) {
-      subject = new Subject<TextData>();
+      subject = new Subject<TextData | undefined>();
       this.localSystemTextDocChangesMap.set(key, subject);
     }
 

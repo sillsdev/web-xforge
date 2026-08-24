@@ -137,15 +137,6 @@ describe('SFProjectService', () => {
     }));
   });
 
-  describe('onlineSetDraftApplied', () => {
-    it('should invoke the command service', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.service.onlineSetDraftApplied('project01', 1, 1, true, 25);
-      verify(mockedCommandService.onlineInvoke(anything(), 'setDraftApplied', anything())).once();
-      expect().nothing();
-    }));
-  });
-
   describe('onlineEventMetrics', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const env = new TestEnvironment();

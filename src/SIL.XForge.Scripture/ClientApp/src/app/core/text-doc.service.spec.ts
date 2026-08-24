@@ -46,7 +46,7 @@ describe('TextDocService', () => {
     const diff: Delta = origDelta.diff(newDelta);
 
     env.textDocService.getLocalSystemChanges$(env.textDocId).subscribe(emittedDiff => {
-      expect(emittedDiff.ops).toEqual(diff.ops);
+      expect(emittedDiff?.ops).toEqual(diff.ops);
     });
 
     env.textDocService.overwrite(env.textDocId, newDelta, 'Editor');
@@ -346,13 +346,13 @@ describe('TextDocService', () => {
   });
 
   describe('hasChapterEditPermission', () => {
-    it('should return false if the project not have the book', () => {
+    it('should return undefined if the project does not have the book', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({ texts: [] });
 
       // SUT
-      const actual: boolean = env.textDocService.hasChapterEditPermission(project, 1, 1);
-      expect(actual).toBe(false);
+      const actual: boolean | undefined = env.textDocService.hasChapterEditPermission(project, 1, 1);
+      expect(actual).toBeUndefined();
     });
 
     it('should return false if the user not have the permission', () => {
@@ -360,8 +360,8 @@ describe('TextDocService', () => {
       const project = createTestProjectProfile({ texts: [{ bookNum: 1, chapters: [{ number: 1 }] }] });
 
       // SUT
-      const actual: boolean = env.textDocService.hasChapterEditPermission(project, 1, 1);
-      expect(actual).toBe(false);
+      const actual: boolean | undefined = env.textDocService.hasChapterEditPermission(project, 1, 1);
+      expect(actual).toBeFalse();
     });
 
     it('should return true if the user has the write permission', () => {
@@ -376,8 +376,8 @@ describe('TextDocService', () => {
       });
 
       // SUT
-      const actual: boolean = env.textDocService.hasChapterEditPermission(project, 1, 1);
-      expect(actual).toBe(true);
+      const actual: boolean | undefined = env.textDocService.hasChapterEditPermission(project, 1, 1);
+      expect(actual).toBeTrue();
     });
   });
 
