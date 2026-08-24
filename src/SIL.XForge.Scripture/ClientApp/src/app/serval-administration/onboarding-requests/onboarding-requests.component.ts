@@ -252,14 +252,14 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
   filterRequests(): void {
     const filterOption = this.filterOptions[this._activeFilter];
     const filterFunction = filterOption?.filter;
-    let requestsMatchingFilterOption: OnboardingRequest[] = [];
+    let requestsMatchingFilterOption: OnboardingRequestSummary[] = [];
     if (filterFunction) {
       requestsMatchingFilterOption = this.requests.filter(request =>
         filterFunction(request, this.userService.currentUserId)
       );
     }
     this.filteredRequests = requestsMatchingFilterOption.filter(
-      request => this.isWithinSelectedDateRange(request) && this.applyFilter(request)
+      request => this.isWithinSelectedDateRange(request) && this.matchesSearch(request)
     );
   }
 
@@ -278,7 +278,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     this.searchControl.setValue('');
   }
 
-  private applyFilter(request: OnboardingRequest): boolean {
+  private matchesSearch(request: OnboardingRequestSummary): boolean {
     const normalizedSearchTerm: string = this.normalizeSearchTerm(this.searchControl.value);
     if (!isPopulatedString(normalizedSearchTerm)) {
       return true;
@@ -287,7 +287,7 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     return this.searchableData(request).some(data => data.includes(normalizedSearchTerm));
   }
 
-  private searchableData(request: OnboardingRequest): string[] {
+  private searchableData(request: OnboardingRequestSummary): string[] {
     return [
       this.getProjectName(request.submission.projectId),
       request.submission.formData.name,
@@ -317,10 +317,11 @@ export class OnboardingRequestsComponent extends DataLoadingComponent implements
     });
   }
 
-  private isWithinSelectedDateRange(request: OnboardingRequest): boolean {
+  private isWithinSelectedDateRange(request: OnboardingRequestSummary): boolean {
     const requestDate: Date | undefined = parseDate(request.submission.timestamp);
     if (requestDate == null) {
-      return false;
+      // In the unlikely event that requestDate is invalid, only include it if no date range is set
+      return this.dateFrom == null && this.dateTo == null;
     }
 
     if (this.dateFrom != null) {

@@ -43,10 +43,28 @@ describe('DateRangePickerComponent', () => {
 
     // Clear the range
     expect(env.component.showReset).toBe(true);
-    const clearButton = env.fixture.nativeElement.querySelector('#reset-button');
+    const clearButton = env.fixture.nativeElement.querySelector('[data-test-id="reset-button"]');
     clearButton.click();
     env.fixture.detectChanges();
     expect(env.component.dateRangeForm.value).toEqual({ start: null, end: null });
+    expect(env.component.isDefaultRange).toBe(true);
+  });
+
+  it('should not emit undefined for a range if the default is defined', () => {
+    const env = new TestEnvironment({ startWithEmptyRange: false });
+    env.component.showReset = true;
+    const emitSpy = spyOn(env.component.dateRangeChange, 'emit');
+    env.fixture.detectChanges();
+
+    const initialFormValue = env.component.dateRangeForm.value;
+    expect(initialFormValue.start).not.toBeNull();
+    expect(initialFormValue.end).not.toBeNull();
+    expect(emitSpy).not.toHaveBeenCalled();
+    expect(env.component.isDefaultRange).toBe(true);
+    env.component.dateRangeForm.setValue({ start: null, end: null });
+    env.fixture.detectChanges();
+    // If the default range is defined, the date range picker should not consider a null range as valid
+    expect(emitSpy).not.toHaveBeenCalled();
     expect(env.component.isDefaultRange).toBe(true);
   });
 
