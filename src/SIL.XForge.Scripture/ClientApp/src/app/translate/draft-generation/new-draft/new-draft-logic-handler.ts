@@ -587,6 +587,20 @@ export class NewDraftLogicHandler {
       availableTargetTrainingScriptureRange.books.has(bookId)
     );
     this.selectTargetTrainingBooks(availableTargetBooks);
+
+    // A training source added since the last draft has no saved entry, so the restore loop above leaves it with
+    // nothing selected. Pair it with the restored target training books, producing the same state as if the user had
+    // selected those target books by hand (the component auto-pairs source books on a manual target selection). A
+    // source whose saved selection was deliberately empty is indistinguishable from a new source (empty selections
+    // are not saved with the build), so it is auto-paired too.
+    const restoredTargetBooks = new Set(availableTargetBooks);
+    for (const [projectId, availableBooks] of Object.entries(this.availableTrainingSourceBooks)) {
+      if (projectId in selectedTrainingSourceBooksByProjectId) continue;
+      this.selectTrainingSourceBooks(
+        projectId,
+        availableBooks.filter(bookId => restoredTargetBooks.has(bookId))
+      );
+    }
   }
 
   /**
