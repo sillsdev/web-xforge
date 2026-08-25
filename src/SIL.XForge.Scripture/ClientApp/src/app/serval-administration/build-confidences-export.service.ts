@@ -89,7 +89,7 @@ export class BuildConfidencesExportService extends BaseExportService {
         Canon.bookNumberToId(row.bookNum),
         row.chapterNum.toString(),
         row.verse ?? row.verseNum.toString(),
-        row.confidence.toFixed(3).toString()
+        row.confidence.toFixed(4).toString()
       ]);
       return [headers, ...dataRows];
     } else if (this.isChapterConfidenceArray(rows)) {
@@ -97,14 +97,14 @@ export class BuildConfidencesExportService extends BaseExportService {
       const dataRows: string[][] = rows.map(row => [
         Canon.bookNumberToId(row.bookNum),
         row.chapterNum.toString(),
-        row.confidence.toFixed(3).toString()
+        row.confidence.toFixed(4).toString()
       ]);
       return [headers, ...dataRows];
     } else {
       const headers: string[] = ['Book', 'Confidence'];
       const dataRows: string[][] = rows.map(row => [
         Canon.bookNumberToId(row.bookNum),
-        row.confidence.toFixed(3).toString()
+        row.confidence.toFixed(4).toString()
       ]);
       return [headers, ...dataRows];
     }
@@ -152,18 +152,18 @@ export class BuildConfidencesExportService extends BaseExportService {
         Book: Canon.bookNumberToId(row.bookNum),
         Chapter: row.chapterNum.toString(),
         Verse: row.verse ?? row.verseNum.toString(),
-        Confidence: row.confidence.toFixed(3)
+        Confidence: row.confidence.toFixed(4)
       }));
     } else if (this.isChapterConfidenceArray(rows)) {
       return rows.map(row => ({
         Book: Canon.bookNumberToId(row.bookNum),
         Chapter: row.chapterNum.toString(),
-        Confidence: row.confidence.toFixed(3)
+        Confidence: row.confidence.toFixed(4)
       }));
     } else {
       return rows.map(row => ({
         Book: Canon.bookNumberToId(row.bookNum),
-        Confidence: row.confidence.toFixed(3)
+        Confidence: row.confidence.toFixed(4)
       }));
     }
   }
