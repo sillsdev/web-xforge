@@ -4037,10 +4037,12 @@ public partial class MachineApiService(
                 b.State == BuildStateCompleted
                 && (
                     b.AdditionalInfo?.TranslationScriptureRanges.Any(r =>
-                        scriptureRangeParser
-                            .GetChapters(r.ScriptureRange)
-                            .TryGetValue(Canon.BookNumberToId(bookNum), out List<int> chapters)
-                        && (chapters.Count == 0 || chapters.Contains(chapterNum) || chapterNum == 0)
+                        scriptureRangeParser.TryGetChapters(
+                            r.ScriptureRange,
+                            out Dictionary<string, List<int>> chapters
+                        )
+                        && chapters.TryGetValue(Canon.BookNumberToId(bookNum), out List<int> bookChapters)
+                        && (bookChapters.Count == 0 || bookChapters.Contains(chapterNum) || chapterNum == 0)
                     )
                     ?? false
                 )
