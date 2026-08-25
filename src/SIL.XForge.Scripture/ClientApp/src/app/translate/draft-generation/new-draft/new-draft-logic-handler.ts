@@ -333,13 +333,13 @@ export class NewDraftLogicHandler {
   private hasVisitedTrainingBooksInputMode = false;
   setInputMode(newMode: 'draft_books' | 'training_books'): void {
     const priorMode = this.inputMode;
-    // Switch the mode first so that loadPreviouslySelectedTrainingBooks() can use the normal training-book selection
+    // Switch the mode first so that selectInitialTrainingBooks() can use the normal training-book selection
     // path (e.g. selectTargetTrainingBooks), which requires being in training_books mode.
     this.inputMode = newMode;
     if (priorMode === 'draft_books' && newMode === 'training_books') {
       this.limitAvailableTrainingRangeBasedOnSelectedDraftingRange();
       if (!this.hasVisitedTrainingBooksInputMode) {
-        this.loadPreviouslySelectedTrainingBooks();
+        this.selectInitialTrainingBooks();
         this.hasVisitedTrainingBooksInputMode = true;
       }
     }
@@ -539,77 +539,81 @@ export class NewDraftLogicHandler {
     this.status$.next('abort');
   }
 
-  private loadPreviouslySelectedTrainingBooks(): void {
+  /**
+   * Selects the initial training books when the user first enters the training step. The target training books are
+   * chosen first. Each configured training source then either gets its saved selection back or is paired with the
+   * chosen target books. The target books come from the first of these that applies:
+   *
+   * 1. The saved entry for the target project itself. Any chapter detail in the entry is ignored, and chapter
+   *    defaults are recomputed from the project's current state.
+   * 2. The union of the saved source selections. The app did not always save an entry for the target project, so a
+   *    project whose last draft predates that only has source entries, and the target books must be inferred from
+   *    them.
+   * 3. Books in the target that appear fully translated, per getCompleteBookIds, and are not being drafted. This is
+   *    the first-draft case, where nothing is saved yet. The bar for "fully translated" is high because the
+   *    selection is saved and reused, and a wrong pick quietly degrades every future draft.
+   */
+  private selectInitialTrainingBooks(): void {
     const draftConfig = this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig;
     if (draftConfig == null) throw new Error('Draft config not found in project data');
     const targetProjectId = this.activatedProjectService.projectId;
     const lastSelectedTrainingScriptureRanges = draftConfig.lastSelectedTrainingScriptureRanges ?? [];
 
-    // On a project's first draft there is nothing to restore; auto-select a default instead.
-    if (lastSelectedTrainingScriptureRanges.length === 0) {
-      this.autoSelectTrainingBooks();
-      return;
-    }
-
-    // Restore the previously selected books for each training source, ignoring the target project's own entry (handled
-    // separately below). Only keep books that are still available for training in that source.
-    const selectedTrainingSourceBooksByProjectId: { [key: string]: string[] } = {};
+    // Read the saved selection for each training source, dropping books no longer available for training in that
+    // source. Nothing is selected yet. This runs before the target books are chosen because in the case of no saved
+    // target book selection the target books are infered from the source books (see doc comment above). The target
+    // project's own entry is not a source selection and is read later.
+    const savedSourceSelections = new Map<string, string[]>();
     for (const sourceScriptureRange of lastSelectedTrainingScriptureRanges) {
       if (sourceScriptureRange.projectId === targetProjectId) continue;
       const previouslySelectedBooks = scriptureRangeToBookListWithoutChapterDetail(
         new VerboseScriptureRange(sourceScriptureRange.scriptureRange)
       );
       const booksAvailableForTraining = this.availableTrainingSourceBooks[sourceScriptureRange.projectId] ?? [];
-      selectedTrainingSourceBooksByProjectId[sourceScriptureRange.projectId] = previouslySelectedBooks.filter(bookId =>
-        booksAvailableForTraining.includes(bookId)
+      savedSourceSelections.set(
+        sourceScriptureRange.projectId,
+        previouslySelectedBooks.filter(bookId => booksAvailableForTraining.includes(bookId))
       );
     }
-    this.selectedTrainingSourceBooks = selectedTrainingSourceBooksByProjectId;
 
-    // Determine the previously selected target training books. Prefer the target project's own saved entry (looked up
-    // by project ID); its chapter detail is ignored so that chapter defaults are re-derived from current project
-    // state. Older draft configs predate saving a target entry, so when none exists fall back to inferring it from
-    // the union of the selected source training books (the previous behavior).
+    // Choose the target training books. See the method comment for the three cases.
     const savedTargetTrainingRange = lastSelectedTrainingScriptureRanges.find(
       range => range.projectId === targetProjectId
     );
-    const previouslySelectedTargetBooks =
-      savedTargetTrainingRange != null
-        ? scriptureRangeToBookListWithoutChapterDetail(
-            new VerboseScriptureRange(savedTargetTrainingRange.scriptureRange)
-          )
-        : Array.from(new Set(Object.values(selectedTrainingSourceBooksByProjectId).flat()));
+    let targetBooks: string[];
+    if (savedTargetTrainingRange != null) {
+      targetBooks = scriptureRangeToBookListWithoutChapterDetail(
+        new VerboseScriptureRange(savedTargetTrainingRange.scriptureRange)
+      );
+    } else if (lastSelectedTrainingScriptureRanges.length > 0) {
+      targetBooks = Array.from(new Set([...savedSourceSelections.values()].flat()));
+    } else {
+      targetBooks = Array.from(this.availableTargetTrainingScriptureRange.books.keys()).filter(
+        bookId => this.completeTargetBookIds.has(bookId) && !this.selectedDraftingScriptureRange.books.has(bookId)
+      );
+    }
 
-    // Run the books through the normal book-selection path so chapter defaults match a manual selection. Filter to
-    // books still available for target training first, since selectTargetTrainingBooks requires available books.
-    const availableTargetTrainingScriptureRange = this.availableTargetTrainingScriptureRange;
-    const availableTargetBooks = previouslySelectedTargetBooks.filter(bookId =>
-      availableTargetTrainingScriptureRange.books.has(bookId)
+    // Select the books through the normal selection path so chapter defaults match a manual selection. Books no
+    // longer available for target training are dropped first, since selectTargetTrainingBooks throws on them.
+    const availableTargetBooks = targetBooks.filter(bookId =>
+      this.availableTargetTrainingScriptureRange.books.has(bookId)
     );
     this.selectTargetTrainingBooks(availableTargetBooks);
-  }
 
-  /**
-   * Auto-selects training books on a project's first draft. Picks only books that appear fully translated (see
-   * getCompleteBookIds) and are not being drafted, then pairs each with its source books. Uses a high bar because the
-   * selection is persisted and reused and a wrong pick silently degrades future drafts.
-   */
-  private autoSelectTrainingBooks(): void {
-    const availableTargetTrainingRange = this.availableTargetTrainingScriptureRange;
-    const draftedBooks = this.selectedDraftingScriptureRange.books;
-    const booksToAutoSelect = Array.from(availableTargetTrainingRange.books.keys()).filter(
-      bookId => this.completeTargetBookIds.has(bookId) && !draftedBooks.has(bookId)
-    );
+    // Restore each source's saved selection, or pair the source with the target books when it has no saved entry.
+    const targetBookSet = new Set(availableTargetBooks);
+    for (const [projectId, availableBooks] of Object.entries(this.availableTrainingSourceBooks)) {
+      const bookIds = savedSourceSelections.get(projectId) ?? availableBooks;
+      this.selectTrainingSourceBooks(
+        projectId,
+        bookIds.filter(bookId => targetBookSet.has(bookId))
+      );
+    }
 
-    this.selectTargetTrainingBooks(booksToAutoSelect);
-
-    // Pair each auto-selected book with matching source books, same as a manual selection would.
-    const autoSelected = new Set(booksToAutoSelect);
-    this.selectedTrainingSourceBooks = mapValues(this.availableTrainingSourceBooks, bookIds =>
-      bookIds.filter(bookId => autoSelected.has(bookId))
-    );
-
-    this.trainingBooksWereAutoSelected = booksToAutoSelect.length > 0;
+    // Show the "review the pre-selected books" notice only when the target books came from case 3. In the other
+    // cases the selection is the user's own prior choice, which needs no review prompt.
+    this.trainingBooksWereAutoSelected =
+      lastSelectedTrainingScriptureRanges.length === 0 && availableTargetBooks.length > 0;
   }
 
   /** Clears the auto-selected notice once the user has deselected all target training books. */
