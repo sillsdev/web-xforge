@@ -9,7 +9,7 @@ import v8 from 'v8';
 import vm from 'vm';
 import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
-import { resolveXdgDataPath } from './utils/xdg-data-path';
+import { resolveLogPath } from './utils/utils';
 
 function sizeof(obj: unknown): number {
   if (obj == null) return 0;
@@ -571,6 +571,6 @@ export class ResourceMonitor {
   }
 
   private getOutputDir(): string {
-    return resolveXdgDataPath('SF_RESOURCE_REPORTS_PATH', 'sf-resource-reports');
+    return resolveLogPath('SF_RESOURCE_REPORTS_PATH', 'sf-resource-reports');
   }
 }

@@ -1,6 +1,6 @@
 import { appendFile, mkdir } from 'fs/promises';
 import * as path from 'path';
-import { resolveXdgDataPath } from './utils/xdg-data-path';
+import { resolveLogPath } from './utils/utils';
 
 /**
  * Controls how much RealtimeServer activity is logged.
@@ -134,6 +134,6 @@ export class ActivityLogger {
   }
 
   private determineLogPath(): string {
-    return resolveXdgDataPath('SF_RTS_LOG_PATH', path.join(DEFAULT_LOG_DIR_NAME, DEFAULT_LOG_FILE_NAME));
+    return resolveLogPath('SF_RTS_LOG_PATH', path.join(DEFAULT_LOG_DIR_NAME, DEFAULT_LOG_FILE_NAME));
   }
 }
