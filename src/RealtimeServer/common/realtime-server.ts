@@ -195,10 +195,7 @@ export class RealtimeServer extends ShareDB {
     });
 
     // Unlike 'commit', 'afterWrite' fires once the op has actually been persisted, so this is where we log
-    // opCommitted rather than in the 'commit' hook above. Note that ShareDB clears context.op.m after a successful
-    // commit, so the source is read from context.extra instead - but only for the same collections the 'commit'
-    // hook above actually attaches it to; for other collections it's read but never persisted, so it must not be
-    // reported here either, or the log would claim a source was recorded when it wasn't.
+    // opCommitted rather than in the 'commit' hook above.
     this.use('afterWrite', (context, callback) => {
       ActivityLogger.instance.log('opCommitted', {
         collection: context.collection,
@@ -208,7 +205,7 @@ export class RealtimeServer extends ShareDB {
         opSeq: context.op.seq,
         version: context.snapshot?.v,
         saveMilestoneSnapshot: context.saveMilestoneSnapshot,
-        source: this.resolvePersistedSource(context.collection, context.extra)
+        source: typeof context.extra?.source === 'string' ? context.extra.source : undefined
       });
       callback();
     });
@@ -648,20 +645,5 @@ export class RealtimeServer extends ShareDB {
       roles: session.roles,
       isServer: session.isServer
     });
-  }
-
-  /**
-   * Mirrors the collection check in the 'commit' hook above, which is the only place that actually attaches
-   * extra.source onto the persisted op (as op.m.source) - and only for 'texts'/'text_documents'. Used so the
-   * opCommitted log's source field reflects what was actually persisted, not just what the client requested.
-   */
-  private resolvePersistedSource(collection: string, extra: any): string | undefined {
-    switch (collection) {
-      case 'texts':
-      case 'text_documents':
-        return typeof extra?.source === 'string' ? extra.source : undefined;
-      default:
-        return undefined;
-    }
   }
 }

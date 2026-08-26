@@ -648,6 +648,46 @@ describe('RealtimeServer', () => {
       expect(typeof failed!.details['opSeq']).toBe('number');
     });
 
+    it('reports the op source for a collection that does not record it on the op', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // Only text collections keep the source in op metadata, but the source describes where any op came from. A
+      // Paratext sync attributes its note thread and biblical term ops this way, and those are worth attributing
+      // because a sync creates them in bulk.
+      await submitOp(
+        userConn,
+        PROJECTS_COLLECTION,
+        'project01',
+        [
+          {
+            p: ['userPermissions', 'abc123'],
+            oi: 'admin'
+          }
+        ],
+        'someSource'
+      );
+      const committed: LoggedActivity | undefined = logged.find(item => item.event === 'opCommitted');
+      expect(committed!.details['source']).toBe('someSource');
+    });
+
+    it('does not report an op source when none was submitted', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [
+        {
+          p: ['userPermissions', 'abc123'],
+          oi: 'admin'
+        }
+      ]);
+      const committed: LoggedActivity | undefined = logged.find(item => item.event === 'opCommitted');
+      expect(committed!.details['source']).toBeUndefined();
+    });
+
     it('does not report an interop handle for a connection made without one', () => {
       const env = new TestEnvironment();
       const logged: LoggedActivity[] = env.captureActivityLog();
