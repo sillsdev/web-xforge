@@ -9,7 +9,7 @@ import * as path from 'path';
  * resolved path directly.
  * @param fallbackName Directory or file name joined onto the XDG_DATA_HOME/HOME/cwd fallback locations.
  */
-export function resolveXdgDataPath(overrideEnvVarName: string, fallbackName: string): string {
+export function resolveLogPath(overrideEnvVarName: string, fallbackName: string): string {
   const requestedPath: string | undefined = process.env[overrideEnvVarName];
   if (isStringPopulated(requestedPath)) return requestedPath;
 
