@@ -580,6 +580,80 @@ describe('NewDraftLogicHandler', () => {
       });
     });
 
+    it('auto-pairs a training source added since the last draft with the restored target training books', async () => {
+      // The last draft was generated with only training-source-1; training-source-2 was configured afterward, so it
+      // has no saved entry. It must be auto-paired with the restored target books rather than left unselected.
+      const testState = {
+        ...teamWithTwoTrainingSources,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK' },
+          { projectId: 'testProjectId', scriptureRange: 'MAT;MRK' }
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16');
+      expect(env.selectedTrainingSourceBooks).toEqual({
+        'training-source-1-id': ['MAT', 'MRK'],
+        'training-source-2-id': ['MAT', 'MRK']
+      });
+      // The target books are the user's own remembered selection, not a completeness-based pre-selection, so the
+      // "books that appear to be complete have been pre-selected" notice must not show.
+      expect(env.logicHandler.trainingBooksWereAutoSelected).toBe(false);
+    });
+
+    it('auto-pairs every training source when the training sources were replaced since the last draft', async () => {
+      // The saved source entry references a project that is no longer a training source; the replacement source has
+      // no saved entry. The target selection is still restored, and the new source is paired with it.
+      const testState = {
+        ...teamStartingToTranslateGenesis,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'removed-training-source-id', scriptureRange: 'MAT;MRK;LUK;JHN' },
+          { projectId: 'testProjectId', scriptureRange: 'MAT;MRK;LUK;JHN' }
+        ]
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16;LUK1-24;JHN1-21');
+      expect(env.selectedTrainingSourceBooks).toEqual({
+        'removed-training-source-id': [],
+        'training-source-1-id': ['MAT', 'MRK', 'LUK', 'JHN']
+      });
+    });
+
+    it('does not auto-pair books the added source lacks or that are unavailable for target training', async () => {
+      const testState = {
+        ...teamWithTwoTrainingSources,
+        previouslySelectedTrainingScriptureRanges: [
+          { projectId: 'training-source-1-id', scriptureRange: 'MAT;MRK;LUK' },
+          { projectId: 'testProjectId', scriptureRange: 'MAT;MRK;LUK' }
+        ],
+        trainingSourcesBooksChapters: {
+          'training-source-1-id': FULL_CANON_SCRIPTURE_RANGE,
+          // The added source lacks MRK, so MRK cannot be paired in it
+          'training-source-2-id': allBooksExcept(['MRK'])
+        }
+      };
+      const env = new TestEnvironment(testState);
+      await env.waitForInit();
+
+      // LUK is being drafted, so it is unavailable for training and must not be paired in any source
+      env.logicHandler.selectDraftingBooks(['LUK']);
+      env.logicHandler.setInputMode('training_books');
+
+      expect(env.selectedTargetTrainingScriptureRange).toBe('MAT1-28;MRK1-16');
+      expect(env.selectedTrainingSourceBooks).toEqual({
+        'training-source-1-id': ['MAT', 'MRK'],
+        'training-source-2-id': ['MAT']
+      });
+    });
+
     it("restores the target training selection from the target project's own saved entry, not from the training sources", async () => {
       const testState = {
         ...teamStartingToTranslateGenesis,
