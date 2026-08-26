@@ -7,6 +7,9 @@ jest.mock('fs/promises', () => ({
   appendFile: (...args: [string, string, unknown]) => mockFsPromises.appendFile(...args)
 }));
 
+let mockHomedir: string = '';
+jest.mock('os', () => ({ ...jest.requireActual('os'), homedir: () => mockHomedir }));
+
 // TestEnvironment sets these directly on real process.env. Restore after each test.
 const ENV_VAR_NAMES = ['SF_RTS_LOG_LEVEL', 'SF_RTS_LOG_PATH', 'XDG_DATA_HOME', 'HOME'] as const;
 let originalEnvValues: Record<string, string | undefined>;
@@ -24,6 +27,7 @@ afterEach(() => {
     if (originalValue === undefined) delete process.env[name];
     else process.env[name] = originalValue;
   }
+  mockHomedir = '';
 });
 
 describe('ActivityLogger', () => {
@@ -101,7 +105,7 @@ describe('ActivityLogger', () => {
         SF_RTS_LOG_LEVEL: 'all',
         SF_RTS_LOG_PATH: logPath,
         XDG_DATA_HOME: `${path.sep}xdg-data-home`,
-        HOME: `${path.sep}home`
+        homedir: `${path.sep}home`
       });
       // SUT
       env.logger.log('someEvent');
@@ -115,7 +119,7 @@ describe('ActivityLogger', () => {
         SF_RTS_LOG_LEVEL: 'all',
         SF_RTS_LOG_PATH: null,
         XDG_DATA_HOME: xdgDataHome,
-        HOME: `${path.sep}home`
+        homedir: `${path.sep}home`
       });
       const expectedPath: string = path.join(xdgDataHome, 'sf-rts-activity-log', 'realtimeserver-log.jsonl');
       // SUT
@@ -124,12 +128,12 @@ describe('ActivityLogger', () => {
       TestEnvironment.expectWritePath(expectedPath);
     });
 
-    it('uses HOME when SF_RTS_LOG_PATH and XDG_DATA_HOME are unset', async () => {
+    it('uses the home directory when SF_RTS_LOG_PATH and XDG_DATA_HOME are unset', async () => {
       const env = new TestEnvironment({
         SF_RTS_LOG_LEVEL: 'all',
         SF_RTS_LOG_PATH: null,
         XDG_DATA_HOME: null,
-        HOME: `${path.sep}home`
+        homedir: `${path.sep}home`
       });
       const expectedPath: string = path.join(
         `${path.sep}home`,
@@ -144,12 +148,12 @@ describe('ActivityLogger', () => {
       TestEnvironment.expectWritePath(expectedPath);
     });
 
-    it('uses cwd when SF_RTS_LOG_PATH, XDG_DATA_HOME, and HOME are unset', async () => {
+    it('uses cwd when SF_RTS_LOG_PATH and XDG_DATA_HOME are unset and there is no home directory', async () => {
       const env = new TestEnvironment({
         SF_RTS_LOG_LEVEL: 'all',
         SF_RTS_LOG_PATH: null,
         XDG_DATA_HOME: null,
-        HOME: null
+        homedir: null
       });
       const expectedPath: string = path.join(process.cwd(), 'sf-rts-activity-log', 'realtimeserver-log.jsonl');
       // SUT
@@ -178,7 +182,6 @@ class MockFsPromises {
   }
 }
 
-/** Sets up the environment variables that ActivityLogger reads, and a fresh logger and fs mock, for one test. */
 class TestEnvironment {
   public readonly logger: ActivityLogger;
 
@@ -186,17 +189,20 @@ class TestEnvironment {
     SF_RTS_LOG_LEVEL,
     SF_RTS_LOG_PATH = null,
     XDG_DATA_HOME = null,
-    HOME = null
+    HOME = null,
+    homedir = null
   }: {
     SF_RTS_LOG_LEVEL: string | null;
     SF_RTS_LOG_PATH?: string | null;
     XDG_DATA_HOME?: string | null;
     HOME?: string | null;
+    homedir?: string | null;
   }) {
     TestEnvironment.setEnvVar('SF_RTS_LOG_LEVEL', SF_RTS_LOG_LEVEL);
     TestEnvironment.setEnvVar('SF_RTS_LOG_PATH', SF_RTS_LOG_PATH);
     TestEnvironment.setEnvVar('XDG_DATA_HOME', XDG_DATA_HOME);
     TestEnvironment.setEnvVar('HOME', HOME);
+    mockHomedir = homedir ?? '';
 
     // Recreate mock
     mockFsPromises = new MockFsPromises();
