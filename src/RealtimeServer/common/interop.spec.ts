@@ -1,10 +1,5 @@
 import { ActivityLogger } from './activity-logger';
-import {
-  ExternalInteropMethod,
-  InteropCallback,
-  InteropCallContext,
-  withActivityLogging
-} from './interop-activity-logging';
+import { ExternalInteropMethod, InteropCallback, InteropCallContext, withActivityLogging } from './interop';
 
 /** An ActivityLogger.log call captured by TestEnvironment. */
 interface LoggedActivity {

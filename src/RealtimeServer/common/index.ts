@@ -9,7 +9,7 @@ import { Connection, Doc, OTType } from 'sharedb/lib/client';
 import { ActivityLogger } from './activity-logger';
 import './diagnostics';
 import { ExceptionReporter } from './exception-reporter';
-import { InteropCallback, InteropCallContext, withActivityLogging } from './interop-activity-logging';
+import { InteropCallback, InteropCallContext, withActivityLogging } from './interop';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
 import { ResourceMonitor } from './resource-monitor';
