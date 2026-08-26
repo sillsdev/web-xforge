@@ -11,6 +11,26 @@ jest.mock('fs/promises', () => ({
 let mockHomedir: string = '';
 jest.mock('os', () => ({ ...jest.requireActual('os'), homedir: () => mockHomedir }));
 
+// TestEnvironment sets these directly on real process.env. Restore after each test.
+const ENV_VAR_NAMES = ['SF_RESOURCE_REPORTS_PATH', 'XDG_DATA_HOME'] as const;
+let originalEnvValues: Record<string, string | undefined>;
+
+beforeEach(() => {
+  originalEnvValues = {};
+  for (const name of ENV_VAR_NAMES) {
+    originalEnvValues[name] = process.env[name];
+  }
+});
+
+afterEach(() => {
+  for (const name of ENV_VAR_NAMES) {
+    const originalValue: string | undefined = originalEnvValues[name];
+    if (originalValue === undefined) delete process.env[name];
+    else process.env[name] = originalValue;
+  }
+  mockHomedir = '';
+});
+
 describe('ResourceMonitor', () => {
   describe('getOutputDir', () => {
     function expectWriteCallsForBaseDir(expectedDir: string): void {
