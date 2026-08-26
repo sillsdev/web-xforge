@@ -55,7 +55,7 @@ public class OnboardingRequestService(
         return request.Id;
     }
 
-    public async Task<object> GetOpenOnboardingRequestAsync(string projectId)
+    public async Task<object> GetOpenOnboardingRequestAsync(string projectId, string userId)
     {
         OnboardingRequest existingRequest = await onboardingRequestRepository
             .Query()
@@ -74,6 +74,11 @@ public class OnboardingRequestService(
             submittedAt = existingRequest.Submission.Timestamp,
             submittedBy = new { name = submittingUser.Name, email = submittingUser.Email },
             status = existingRequest.Status,
+            // The address the team's response will be sent to. Only disclosed to the user who submitted the
+            // request, so other project members are not shown someone else's email address.
+            contactEmail = existingRequest.Submission.UserId == userId
+                ? existingRequest.Submission.FormData.Email
+                : null,
         };
     }
 

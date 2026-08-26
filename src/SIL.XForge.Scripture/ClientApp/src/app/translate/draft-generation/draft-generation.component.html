@@ -146,6 +146,14 @@
                   })
                 }}
               </p>
+              @if (onboardingRequest.contactEmail != null) {
+                <p class="signup-response-email">
+                  <transloco
+                    key="draft_generation.signup_response_will_be_emailed"
+                    [params]="{ email: onboardingRequest.contactEmail }"
+                  ></transloco>
+                </p>
+              }
               @if (onboardingRequestAged(onboardingRequest)) {
                 <p>
                   @for (

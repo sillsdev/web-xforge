@@ -9,6 +9,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -84,6 +85,7 @@ describe('DraftGenerationComponent', () => {
         providers: [
           provideRouter([]),
           provideTestOnlineStatus(),
+          defaultTranslocoMarkupTranspilers(),
           { provide: AuthService, useValue: mockAuthService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
@@ -231,6 +233,10 @@ describe('DraftGenerationComponent', () => {
 
     get preGenerationStepper(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-generation-steps');
+    }
+
+    get signupResponseEmail(): HTMLElement | null {
+      return (this.fixture.nativeElement as HTMLElement).querySelector('.signup-response-email');
     }
 
     getElementByTestId(testId: string): HTMLElement | null {
@@ -792,6 +798,42 @@ describe('DraftGenerationComponent', () => {
       env.fixture.detectChanges();
       expect(env.component.isBackTranslation).toBe(false);
       expect(env.getElementByTestId('approval-needed')).toBeNull();
+    });
+
+    it('should tell the submitter which email address the response will be sent to', () => {
+      const env = new TestEnvironment();
+      env.component.isBackTranslation = false;
+      env.component.isTargetLanguageSupported = true;
+      env.component.isPreTranslationApproved = false;
+      env.component.onboardingRequest = {
+        submittedAt: new Date().toISOString(),
+        submittedBy: { name: 'User One', email: 'account@example.com' },
+        status: 'new',
+        contactEmail: 'contact@example.com'
+      };
+      env.fixture.detectChanges();
+      const responseEmail = env.signupResponseEmail;
+      expect(responseEmail).not.toBeNull();
+      expect(responseEmail!.textContent).toContain('contact@example.com');
+      const emailElement = responseEmail!.querySelector('b')!;
+      expect(emailElement.textContent).toBe('contact@example.com');
+      expect(getComputedStyle(emailElement).fontWeight).toBe('500');
+    });
+
+    it('should not show a response email address to users other than the submitter', () => {
+      const env = new TestEnvironment();
+      env.component.isBackTranslation = false;
+      env.component.isTargetLanguageSupported = true;
+      env.component.isPreTranslationApproved = false;
+      env.component.onboardingRequest = {
+        submittedAt: new Date().toISOString(),
+        submittedBy: { name: 'User One', email: 'account@example.com' },
+        status: 'new',
+        contactEmail: null
+      };
+      env.fixture.detectChanges();
+      expect(env.getElementByTestId('approval-needed')).not.toBeNull();
+      expect(env.signupResponseEmail).toBeNull();
     });
 
     it('should not show "approval needed" info alert when project is in back translation mode', () => {

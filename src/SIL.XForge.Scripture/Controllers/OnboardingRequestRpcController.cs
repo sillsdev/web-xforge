@@ -93,7 +93,7 @@ public class OnboardingRequestRpcController(
                 return ForbiddenError();
             }
 
-            object result = await onboardingRequestService.GetOpenOnboardingRequestAsync(projectId);
+            object result = await onboardingRequestService.GetOpenOnboardingRequestAsync(projectId, UserId);
             return Ok(result);
         }
         catch (Exception)
