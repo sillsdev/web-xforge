@@ -375,22 +375,10 @@ describe('ConfigureSourcesComponent', () => {
       tick();
 
       verify(
-        mockedFileService.deleteFile(
-          FileType.TrainingData,
-          env.activatedProjectDoc.id,
-          TrainingDataDoc.COLLECTION,
-          newFile.dataId,
-          newFile.ownerRef
-        )
+        mockedFileService.findOrUpdateCache(FileType.TrainingData, TrainingDataDoc.COLLECTION, newFile.dataId)
       ).once();
       verify(
-        mockedFileService.deleteFile(
-          FileType.TrainingData,
-          env.activatedProjectDoc.id,
-          TrainingDataDoc.COLLECTION,
-          savedFile.dataId,
-          savedFile.ownerRef
-        )
+        mockedFileService.findOrUpdateCache(FileType.TrainingData, TrainingDataDoc.COLLECTION, savedFile.dataId)
       ).never();
       verify(mockTrainingDataService.createTrainingDataAsync(anything())).never();
       verify(mockTrainingDataService.deleteTrainingDataAsync(anything())).never();
