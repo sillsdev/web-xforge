@@ -604,10 +604,18 @@ public class ParatextSyncRunnerTests
         Assert.That(env.ContainsText("project02", "LUK", 1), Is.True);
         Assert.That(env.ContainsText("project02", "LUK", 2), Is.True);
 
-        Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
-        Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
+        // The questions for the removed book are archived rather than deleted, so they are not lost if the book
+        // is restored in Paratext
+        Assert.That(env.ContainsQuestion("MRK", 1), Is.True);
+        Assert.That(env.ContainsQuestion("MRK", 2), Is.True);
+        Assert.That(env.GetQuestion("MRK", 1).IsArchived, Is.True);
+        Assert.That(env.GetQuestion("MRK", 1).DateArchived, Is.Not.Null);
+        Assert.That(env.GetQuestion("MRK", 2).IsArchived, Is.True);
+        Assert.That(env.GetQuestion("MRK", 2).DateArchived, Is.Not.Null);
         Assert.That(env.ContainsQuestion("MAT", 1), Is.True);
         Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
+        Assert.That(env.GetQuestion("MAT", 1).IsArchived, Is.False);
+        Assert.That(env.GetQuestion("MAT", 2).IsArchived, Is.False);
 
         Assert.That(env.ContainsNote(2), Is.False);
         env.VerifyProjectSync(true);
@@ -621,7 +629,7 @@ public class ParatextSyncRunnerTests
             Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
         );
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
-        Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 0)));
+        Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
         syncMetrics = env.GetSyncMetrics("project02");
         Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 1, updated: 1)));
         Assert.That(syncMetrics.TextDocs, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 2, updated: 0)));
@@ -630,7 +638,7 @@ public class ParatextSyncRunnerTests
             Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
         );
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
-        Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 2, updated: 0)));
+        Assert.That(syncMetrics.Questions, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
     }
 
     [Test]
