@@ -4353,7 +4353,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide source draft preview tab when switching to chapter with no draft', fakeAsync(() => {
+      it('should not hide source draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
@@ -4368,7 +4368,7 @@ describe('EditorComponent', () => {
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
-        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(sourceTabGroup?.tabs[1]).toBeDefined();
         expect(env.component.chapter).toBe(2);
 
         env.dispose();
@@ -4387,7 +4387,7 @@ describe('EditorComponent', () => {
         env.dispose();
       }));
 
-      it('should hide the target draft preview tab when switching to chapter with no draft', fakeAsync(() => {
+      it('should not hide the target draft preview tab when switching to chapter with no draft', fakeAsync(() => {
         const env = new TestEnvironment();
         when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
         when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
@@ -4402,7 +4402,7 @@ describe('EditorComponent', () => {
         env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
         env.wait();
 
-        expect(sourceTabGroup?.tabs[1]).toBeUndefined();
+        expect(sourceTabGroup?.tabs[1]).toBeDefined();
         expect(env.component.chapter).toBe(2);
 
         env.dispose();
@@ -4451,6 +4451,43 @@ describe('EditorComponent', () => {
           expect(tabs.find(tab => tab.type === 'draft')?.isSelected).toBe(false);
           env.dispose();
         });
+      }));
+
+      it('should keep the draft tab open when switching chapters', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          texts: [
+            {
+              bookNum: 40,
+              chapters: [
+                { number: 1, draftApplied: false },
+                { number: 2, draftApplied: true }
+              ]
+            }
+          ]
+        });
+        env.wait();
+        when(mockedPermissionsService.canAccessDrafts(anything(), anything())).thenReturn(true);
+        when(mockedSFProjectService.hasDraft(anything(), anything(), anything())).thenReturn(true);
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+
+        let sourceTabGroup = env.component.tabState.getTabGroup('source');
+        const draftTab = sourceTabGroup?.tabs.find(tab => tab.type === 'draft');
+        expect(draftTab).toBeDefined();
+        const draftTabIndexBefore = sourceTabGroup?.tabs.indexOf(draftTab!);
+
+        // Matthew 2 has the draft applied but the tab should remain open
+        env.routeWithParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.wait();
+
+        sourceTabGroup = env.component.tabState.getTabGroup('source');
+        const draftTabAfter = sourceTabGroup?.tabs.find(tab => tab.type === 'draft');
+        expect(draftTabAfter).toBeDefined();
+        const draftTabIndexAfter = sourceTabGroup?.tabs.indexOf(draftTabAfter!);
+        expect(draftTabIndexBefore).toBe(draftTabIndexAfter);
+
+        env.dispose();
       }));
 
       it('should not throw exception on remote change when source is undefined', fakeAsync(() => {
