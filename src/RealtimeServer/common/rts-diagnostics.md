@@ -1,5 +1,7 @@
 # RealtimeServer diagnostics: activity log and resource reports
 
+_Maintenance note: This document is primarily to instruct AI when it performs log analysis. It does not need kept up to date with changes in RealtimeServer. It can easily be updated by AI when doing an analysis._
+
 RealtimeServer is able to produce resource usage reports as well as activity logs. This document describes how to correlate the information in these reports.
 
 The two outputs answer different halves of one question. The activity log says **what the server was doing**; the
