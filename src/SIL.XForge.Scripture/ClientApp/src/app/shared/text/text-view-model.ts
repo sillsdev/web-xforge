@@ -900,6 +900,11 @@ export class TextViewModel implements OnDestroy, LynxTextModelConverter {
 
         // remove from the retain op the number of embedded elements contained in its content
         (cloneOp.retain as number) -= embedsInRange;
+        if ((cloneOp.retain as number) < 1) {
+          // The retain only covered embedded elements, which do not exist in the text doc. A zero-length retain is
+          // not a valid op, and causes the ops that follow it to be applied at the wrong position in the text doc.
+          cloneOp = undefined;
+        }
       } else if (cloneOp.delete != null) {
         const embedsInRange: number = this.getEmbedsInEditorRange(curIndex, cloneOp.delete);
         curIndex += cloneOp.delete;
