@@ -10,14 +10,22 @@ import { Migration } from './migration';
 import { Project } from './models/project';
 import { User, USERS_COLLECTION } from './models/user';
 import { createTestUser } from './models/user-test-data';
-import { RealtimeServer, submitMigrationOp } from './realtime-server';
-import { ConnectionInternal } from './resource-monitor';
+import { identifiersInClientRequest, RealtimeServer, submitMigrationOp } from './realtime-server';
+import { ConnectionInternal, ResourceMonitor, sizeof } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { ProjectService } from './services/project-service';
 import { UserService } from './services/user-service';
 import { Json0OpBuilder } from './utils/json0-op-builder';
-import { docFetch, docSubmitOp } from './utils/sharedb-utils';
-import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from './utils/test-utils';
+import { createFetchQuery, docFetch, docSubmitOp } from './utils/sharedb-utils';
+import {
+  allowAll,
+  clientConnect,
+  createDoc,
+  fetchDoc,
+  flushPromises,
+  submitJson0Op,
+  submitOp
+} from './utils/test-utils';
 
 const PROJECTS_COLLECTION = 'projects';
 
@@ -121,7 +129,7 @@ describe('RealtimeServer', () => {
     await env.createData();
     let session: ConnectSession;
     env.server.use('submit', (context, callback) => {
-      session = context.agent.connectSession as ConnectSession;
+      session = context.agent?.connectSession as ConnectSession;
       callback();
     });
 
@@ -135,9 +143,9 @@ describe('RealtimeServer', () => {
   it('gets correct project when new project added', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    let session: ConnectSession;
+    let session: ConnectSession | undefined;
     env.server.use('submit', (context, callback) => {
-      session = context.agent.connectSession;
+      session = context.agent?.connectSession;
       callback();
     });
 
@@ -212,6 +220,17 @@ describe('RealtimeServer', () => {
         }
       ])
     ).rejects.toThrow('Invalid path for operation');
+  });
+
+  it('reports the path of an op it rejects, and not what the op was writing', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const userConn = clientConnect(env.server, 'user01');
+    const payload = 'a value from the user document';
+    // SUT
+    const submitting: Promise<void> = submitOp(userConn, USERS_COLLECTION, 'user01', [{ p: [0], oi: payload }]);
+    await expect(submitting).rejects.toThrow('Invalid path for operation');
+    await expect(submitting).rejects.not.toThrow(payload);
   });
 
   it('data validation allows valid boolean values', async () => {
@@ -696,6 +715,199 @@ describe('RealtimeServer', () => {
       const entry: LoggedActivity | undefined = logged.find(item => item.event === 'connectionEstablished');
       expect(entry!.details['interopHandle']).toBeUndefined();
     });
+
+    it('reports a doc request a client makes, naming the connection it came in on', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await fetchDoc(userConn, USERS_COLLECTION, 'user01');
+      const request: LoggedActivity | undefined = logged.find(
+        item => item.event === 'clientRequest' && item.details['action'] === 'f'
+      );
+      const established: LoggedActivity | undefined = logged.find(item => item.event === 'connectionEstablished');
+      expect(request!.details['collection']).toBe(USERS_COLLECTION);
+      expect(request!.details['docId']).toBe('user01');
+      expect(request!.details['clientId']).toBe(established!.details['clientId']);
+    });
+
+    it('reports a query a client makes', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await createFetchQuery(userConn, PROJECTS_COLLECTION, {});
+      const request: LoggedActivity | undefined = logged.find(
+        item => item.event === 'clientRequest' && item.details['action'] === 'qf'
+      );
+      expect(request!.details['collection']).toBe(PROJECTS_COLLECTION);
+      // The query itself is not reported, only that one was made, since a query can name arbitrary values.
+      expect(request!.details['query']).toBeUndefined();
+    });
+
+    it('names a request identifier according to what the request is', () => {
+      // SUT
+      expect(identifiersInClientRequest({ a: 'op', seq: 7 })).toEqual({ opSeq: 7 });
+      expect(identifiersInClientRequest({ a: 'qf', id: 'query1' })).toEqual({ queryId: 'query1' });
+      expect(identifiersInClientRequest({ a: 'hs', id: 'earlierId' })).toEqual({ srcClientId: 'earlierId' });
+      expect(identifiersInClientRequest({ a: 'hs', id: null })).toEqual({ srcClientId: undefined });
+      // A presence update has an id and a sequence number of its own, which mean neither of the above. Don't
+      // incorrectly report them as an op sequence or a query id.
+      expect(identifiersInClientRequest({ a: 'p', id: 'presence1', ch: 'texts:abc' })).toEqual({});
+      expect(identifiersInClientRequest({ a: 'ps', seq: 1, ch: 'texts:abc' })).toEqual({});
+      expect(identifiersInClientRequest({ a: 'pu', seq: 2, ch: 'texts:abc' })).toEqual({});
+    });
+
+    it('reports what a connection was holding when it goes away', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      const doc: Doc = userConn.get(USERS_COLLECTION, 'user01');
+      await new Promise<void>((resolve, reject) => doc.subscribe(err => (err == null ? resolve() : reject(err))));
+      // SUT
+      userConn.close();
+      await flushPromises();
+      const entry: LoggedActivity | undefined = logged.find(item => item.event === 'agentDisconnected');
+      expect(entry!.details['subscribedDocsCount']).toBe(1);
+      expect(entry!.details['subscribedCollectionsCount']).toBe(1);
+      expect(entry!.details['subscribedQueriesCount']).toBe(0);
+      expect(entry!.details['subscribedPresencesCount']).toBe(0);
+    });
+
+    it('measures what a read returned, for reads the interop fetch tracking does not cover', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const reads: { collection: string; docsCount: number; docsBytes: number }[] = [];
+      jest
+        .spyOn(ResourceMonitor.instance, 'recordSnapshotRead')
+        .mockImplementation((_clientId, collection, _snapshotType, snapshots) => {
+          reads.push({
+            collection: collection,
+            docsCount: snapshots.length,
+            docsBytes: snapshots.reduce((sum: number, snapshot: { data?: unknown }) => sum + sizeof(snapshot.data), 0)
+          });
+        });
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await fetchDoc(userConn, USERS_COLLECTION, 'user01');
+      const read = reads.find(entry => entry.collection === USERS_COLLECTION);
+      expect(read!.docsCount).toBe(1);
+      expect(read!.docsBytes).toBeGreaterThan(0);
+    });
+
+    it('measures the ops loaded from the database and sent to a client', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const loaded: { collection: string; docId: string; op: unknown }[] = [];
+      jest.spyOn(ResourceMonitor.instance, 'recordOpLoaded').mockImplementation((_clientId, collection, docId, op) => {
+        loaded.push({ collection: collection, docId: docId, op: op });
+      });
+      const watcher = clientConnect(env.server, 'user01');
+      const watched: Doc = watcher.get(PROJECTS_COLLECTION, 'project01');
+      await new Promise<void>((resolve, reject) => watched.subscribe(err => (err == null ? resolve() : reject(err))));
+      const editor = clientConnect(env.server, 'user01');
+      // SUT. The op is loaded and sent on to the connection watching the doc.
+      await submitOp(editor, PROJECTS_COLLECTION, 'project01', [{ p: ['userPermissions', 'abc123'], oi: 'admin' }]);
+      await flushPromises();
+      expect(loaded.length).toBeGreaterThan(0);
+      expect(loaded[0].collection).toBe(PROJECTS_COLLECTION);
+      // Which document the ops came from, so that a connection loading a great deal from one document can be told
+      // from one loading a little from many.
+      expect(loaded[0].docId).toBe('project01');
+      expect(loaded[0].op).toBeDefined();
+    });
+
+    it('reports the ops consumed to rebuild a document at an earlier version', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const userConn = clientConnect(env.server, 'user01');
+      await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [{ p: ['userPermissions', 'abc123'], oi: 'admin' }]);
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      await new Promise<void>((resolve, reject) =>
+        userConn.fetchSnapshot(PROJECTS_COLLECTION, 'project01', 1, err => (err == null ? resolve() : reject(err)))
+      );
+      const rebuilds: LoggedActivity[] = logged.filter(item => item.event === 'snapshotRebuiltFromOps');
+      expect(rebuilds.length).toBe(1);
+      expect(rebuilds[0].details['docId']).toBe('project01');
+      expect(rebuilds[0].details['opsCount']).toBe(1);
+      expect(rebuilds[0].details['opsBytes']).toBeGreaterThan(0);
+    });
+
+    it('reports a subscribed query being re-polled, which the query middleware never sees', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const polled: { collection: string; pollType: string }[] = [];
+      jest
+        .spyOn(ResourceMonitor.instance, 'recordQueryPolled')
+        .mockImplementation((_clientId, collection, pollType) => {
+          polled.push({ collection: collection, pollType: pollType });
+        });
+      const watcher = clientConnect(env.server, 'user01');
+      await new Promise<void>((resolve, reject) =>
+        watcher.createSubscribeQuery(PROJECTS_COLLECTION, {}, {}, err => (err == null ? resolve() : reject(err)))
+      );
+      const editor = clientConnect(env.server, 'user01');
+      // SUT. Changing a document the query might match makes ShareDB poll the subscription again.
+      await submitOp(editor, PROJECTS_COLLECTION, 'project01', [{ p: ['userPermissions', 'abc123'], oi: 'admin' }]);
+      await flushPromises();
+      expect(polled.length).toBeGreaterThan(0);
+      expect(polled[0].collection).toBe(PROJECTS_COLLECTION);
+    });
+
+    it('measures a query being run against the database', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const queries: string[] = [];
+      jest.spyOn(ResourceMonitor.instance, 'recordQueryRun').mockImplementation((_clientId, collection) => {
+        queries.push(collection);
+      });
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await createFetchQuery(userConn, PROJECTS_COLLECTION, {});
+      expect(queries).toContain(PROJECTS_COLLECTION);
+    });
+
+    it('reports a handshake', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      clientConnect(env.server, 'user01');
+      // The handshake is sent over the stream rather than as part of connecting, so it has not arrived yet.
+      await flushPromises();
+      const handshakes: LoggedActivity[] = logged.filter(
+        item => item.event === 'clientRequest' && item.details['action'] === 'hs'
+      );
+      // A connection sends this more than once, so the count is not asserted, only that it is reported.
+      expect(handshakes.length).toBeGreaterThan(0);
+      // Absent because this connection is new and so has no earlier id it is asking to keep.
+      expect(handshakes[0].details['srcClientId']).toBeUndefined();
+    });
+
+    it('reports an op as received, as well as when it is submitted and committed', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [{ p: ['userPermissions', 'abc123'], oi: 'admin' }]);
+      const received: LoggedActivity | undefined = logged.find(
+        item => item.event === 'clientRequest' && item.details['action'] === 'op'
+      );
+      const submitted: LoggedActivity | undefined = logged.find(item => item.event === 'opSubmitted');
+      const committed: LoggedActivity | undefined = logged.find(item => item.event === 'opCommitted');
+      expect(received!.details['collection']).toBe(PROJECTS_COLLECTION);
+      expect(received!.details['docId']).toBe('project01');
+      // The three entries for one op are lined up by the connection and the op's sequence number.
+      expect(received!.details['clientId']).toBe(submitted!.details['clientId']);
+      expect(received!.details['opSeq']).toBe(submitted!.details['opSeq']);
+      expect(received!.details['clientId']).toBe(committed!.details['clientId']);
+      expect(received!.details['opSeq']).toBe(committed!.details['opSeq']);
+    });
   });
 });
 
@@ -817,6 +1029,7 @@ class TestEnvironment {
   /** Collect what is passed to ActivityLogger, rather than writing it to a log file. */
   captureActivityLog(): LoggedActivity[] {
     const logged: LoggedActivity[] = [];
+    jest.spyOn(ActivityLogger.instance, 'enabled', 'get').mockReturnValue(true);
     jest
       .spyOn(ActivityLogger.instance, 'log')
       .mockImplementation((event: string, details: Record<string, unknown> = {}) => {

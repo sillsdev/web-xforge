@@ -86,6 +86,7 @@ Follow all rules in [code-rules.md](code-rules.md) in addition to the below.
   8. public static and instance methods
   9. non-public static and instance methods
 - If an object literal is intended to match a specific type, enforce the type at the point the object literal is created by using one of these patterns: (1) assign it to a typed variable (`const x: SomeType = { ... }`); (2) apply `satisfies` (`const x = { ... } satisfies SomeType`); or (3) return it from a function or callback with an explicit return type (without first assigning it to an untyped variable). This helps flag extra properties that are no longer in the intended type.
+- TypeScript bypasses type checking when spreading excess properties onto an object. For example, with `interface Animal { name: string; legs?: number; }`, writing `const dog: Animal = { name: 'Fido', ...{ limbs: 4 } };` will give `dog` the `limbs` property. (And yet subsequently writing `dog.limbs` is a compile-time error.) Don't spread properties onto an object that aren't type-checked as valid properties for that type without good justification. Use `satisfies Partial<>` to type-check the spread. For example, `const dog: Animal = { name: 'Fido', ...({ limbs: 4 } satisfies Partial<Animal>) };` fails to compile and catches the mistake (`limbs` should be `legs`).
 
 ## Angular templates
 

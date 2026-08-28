@@ -20,7 +20,7 @@ const DEFAULT_LOG_LEVEL: RtsLogLevel = 'none';
 const DEFAULT_LOG_DIR_NAME = 'sf-rts-activity-log';
 const DEFAULT_LOG_FILE_NAME = 'realtimeserver-log.jsonl';
 // If disk writes can't keep up with log() calls past this limit, new entries are dropped.
-const MAX_QUEUED_ENTRIES = 10_000;
+export const MAX_QUEUED_ENTRIES = 10_000;
 
 /**
  * A single entry describing something the RealtimeServer did. Every entry shares a timestamp and an event name;
@@ -31,6 +31,8 @@ export interface ActivityLogEntry {
   event: string;
   /** Which RealtimeServer process wrote the entry. Processes and restarts share one log file. */
   pid: number;
+  /** Whatever else describes this particular event. What these are depends entirely on the event. */
+  [detail: string]: unknown;
 }
 
 /**
@@ -41,7 +43,8 @@ export class ActivityLogger {
   private static _instance: ActivityLogger | undefined;
   private readonly logLevel: RtsLogLevel;
   private readonly logPath: string;
-  private readonly pendingEntries: ActivityLogEntry[] = [];
+  /** Log entries waiting to be written. */
+  private readonly pendingLines: string[] = [];
   private isFlushing = false;
   private droppedEntryCount = 0;
   private directoryEnsured = false;
@@ -81,19 +84,26 @@ export class ActivityLogger {
    * Queues an entry to be written and, if a write isn't already in progress, starts one.
    */
   private enqueue(entry: ActivityLogEntry): void {
-    if (this.pendingEntries.length >= MAX_QUEUED_ENTRIES) {
+    let line: string;
+    try {
+      line = JSON.stringify(entry) + '\n';
+    } catch {
       this.droppedEntryCount++;
       return;
     }
-    this.pendingEntries.push(entry);
-    // If a flush is already running, it will pick up the pending entry.
+    if (this.pendingLines.length >= MAX_QUEUED_ENTRIES) {
+      this.droppedEntryCount++;
+    } else {
+      this.pendingLines.push(line);
+    }
+    // Started even when the line was dropped: writing may have been failing, and this is what tries it again.
     if (!this.isFlushing) {
       void this.flushQueue();
     }
   }
 
   /**
-   * Write pendingEntries to disk. May write more than once if more entries come in while running.
+   * Write pending log entries to disk. May write more than once if more entries come in while running.
    */
   private async flushQueue(): Promise<void> {
     this.isFlushing = true;
@@ -103,19 +113,12 @@ export class ActivityLogger {
         await mkdir(dirPath, { recursive: true });
         this.directoryEnsured = true;
       }
-      while (this.pendingEntries.length > 0) {
-        const batchSize: number = this.pendingEntries.length;
-        const lines: string = this.pendingEntries
-          .slice(0, batchSize)
-          .map(batchEntry => JSON.stringify(batchEntry) + '\n')
-          .join('');
-        await appendFile(this.logPath, lines, { flag: 'a' });
+      while (this.pendingLines.length > 0 || this.droppedEntryCount > 0) {
+        this.queueDroppedEntriesNotice();
+        const batchSize: number = this.pendingLines.length;
+        await appendFile(this.logPath, this.pendingLines.slice(0, batchSize).join(''), { flag: 'a' });
         // Only remove the batch after a successful write without throwing.
-        this.pendingEntries.splice(0, batchSize);
-      }
-      if (this.droppedEntryCount > 0) {
-        console.error(`ActivityLogger dropped ${this.droppedEntryCount} entries because its write queue was full.`);
-        this.droppedEntryCount = 0;
+        this.pendingLines.splice(0, batchSize);
       }
     } catch (error) {
       // Ignore rather than throw. Don't cause a problem to RealtimeServer.
@@ -123,6 +126,22 @@ export class ActivityLogger {
     } finally {
       this.isFlushing = false;
     }
+  }
+
+  /**
+   * If entries have been dropped, queue an entry saying so. It goes into the same queue as everything else so that a
+   * failed write is retried rather than losing the record that entries were lost.
+   */
+  private queueDroppedEntriesNotice(): void {
+    if (this.droppedEntryCount === 0) return;
+    const notice: ActivityLogEntry = {
+      timestamp: new Date().toISOString(),
+      event: 'logEntriesDropped',
+      pid: process.pid,
+      droppedCount: this.droppedEntryCount
+    };
+    this.pendingLines.push(JSON.stringify(notice) + '\n');
+    this.droppedEntryCount = 0;
   }
 
   private determineLogLevel(): RtsLogLevel {
