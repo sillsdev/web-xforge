@@ -18,7 +18,7 @@ public interface IOnboardingRequestService
         Uri siteRoot
     );
 
-    Task<object> GetOpenOnboardingRequestAsync(string projectId);
+    Task<object> GetOpenOnboardingRequestAsync(string projectId, string userId);
 
     Task<List<OnboardingRequestSummary>> GetAllRequestsAsync();
 

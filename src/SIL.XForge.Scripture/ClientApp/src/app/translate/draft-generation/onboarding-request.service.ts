@@ -71,6 +71,21 @@ export interface OnboardingRequest extends OnboardingRequestSummary {
   comments: OnboardingRequestComment[];
 }
 
+/**
+ * The subset of an open onboarding request returned by getOpenOnboardingRequest. Only what the draft
+ * generation page needs to tell users a request has already been submitted for the project.
+ */
+export interface OpenOnboardingRequest {
+  submittedAt: string;
+  submittedBy: { name: string; email: string };
+  status: OnboardingRequestStatusOption;
+  /**
+   * The email address the team's response will be sent to (from the signup form). Only present when the
+   * current user is the one who submitted the request; null for other project members.
+   */
+  contactEmail: string | null;
+}
+
 /** Represents a comment on an onboarding request. */
 export interface OnboardingRequestComment {
   id: string;
@@ -137,8 +152,8 @@ export class OnboardingRequestService {
   }
 
   /** Gets the existing onboarding request for the specified project, if any. */
-  async getOpenOnboardingRequest(projectId: string): Promise<OnboardingRequest | null> {
-    return (await this.onlineInvoke<OnboardingRequest | null>('getOpenOnboardingRequest', { projectId }))!;
+  async getOpenOnboardingRequest(projectId: string): Promise<OpenOnboardingRequest | null> {
+    return (await this.onlineInvoke<OpenOnboardingRequest | null>('getOpenOnboardingRequest', { projectId }))!;
   }
 
   async getRequestById(requestId: string): Promise<OnboardingRequest> {

@@ -112,4 +112,61 @@ public class OnboardingRequestServiceTests
             .Received(1)
             .SendEmailAsync(AdminEmail, expectedSubject, expectedBody, CancellationToken.None);
     }
+
+    [Test]
+    public async Task GetOpenOnboardingRequestAsync_DisclosesContactEmailToSubmitter()
+    {
+        object result = await GetOpenOnboardingRequestAsync(callingUserId: UserId);
+
+        Assert.That(GetProperty(result, "contactEmail"), Is.EqualTo("contact@example.com"));
+    }
+
+    [Test]
+    public async Task GetOpenOnboardingRequestAsync_HidesContactEmailFromOtherUsers()
+    {
+        object result = await GetOpenOnboardingRequestAsync(callingUserId: "user02");
+
+        Assert.That(GetProperty(result, "contactEmail"), Is.Null);
+        // The rest of the response is still returned
+        Assert.That(GetProperty(result, "submittedBy"), Is.Not.Null);
+    }
+
+    private static async Task<object> GetOpenOnboardingRequestAsync(string callingUserId)
+    {
+        var repository = new MemoryRepository<OnboardingRequest>([
+            new OnboardingRequest
+            {
+                Id = "request01",
+                Submission = new OnboardingSubmission
+                {
+                    ProjectId = ProjectId,
+                    UserId = UserId,
+                    Timestamp = DateTime.UtcNow,
+                    FormData = new OnboardingRequestFormData { Email = "contact@example.com" },
+                },
+                Resolution = "unresolved",
+            },
+        ]);
+
+        var realtimeService = Substitute.For<IRealtimeService>();
+        realtimeService
+            .QuerySnapshots<User>()
+            .Returns(
+                new List<User>
+                {
+                    new User
+                    {
+                        Id = UserId,
+                        Name = "User One",
+                        Email = "account@example.com",
+                    },
+                }.AsQueryable()
+            );
+
+        var service = new OnboardingRequestService(repository, realtimeService, Substitute.For<IServiceScopeFactory>());
+        return await service.GetOpenOnboardingRequestAsync(ProjectId, callingUserId);
+    }
+
+    private static object? GetProperty(object obj, string propertyName) =>
+        obj.GetType().GetProperty(propertyName)!.GetValue(obj);
 }

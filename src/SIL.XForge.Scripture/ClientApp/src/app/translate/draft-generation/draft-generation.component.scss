@@ -56,6 +56,10 @@ app-notice {
   margin-top: 20px;
 }
 
+.signup-response-email ::ng-deep b {
+  font-weight: 500;
+}
+
 // Hide the tab headers
 mat-tab-group {
   ::ng-deep .mat-mdc-tab-header {
