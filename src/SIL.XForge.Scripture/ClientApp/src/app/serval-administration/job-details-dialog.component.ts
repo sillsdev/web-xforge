@@ -199,7 +199,7 @@ export class JobDetailsDialogComponent implements OnInit {
   }
 
   formatDate(timestamp: string): string {
-    return this.i18n.formatDate(new Date(timestamp), { showTimeZone: true });
+    return this.i18n.formatDate(new Date(timestamp), { showTime: true, showTimeZone: true });
   }
 
   hasPayload(payload: any): boolean {

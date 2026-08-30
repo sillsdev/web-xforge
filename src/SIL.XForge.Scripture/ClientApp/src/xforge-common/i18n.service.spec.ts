@@ -87,31 +87,32 @@ describe('I18nService', () => {
     const service = getI18nService();
     // As of Chromium 110 the space between the minutes and AM/PM has been changed to U+202F (NARROW NO-BREAK SPACE)
     // Test for any white space character for maximum compatibility
+    const options = { showTime: true, showTimeZone: false };
     if (isSafari()) {
-      expect(service.formatDate(date)).toMatch(/Nov 25, 1991 at 5:28\sPM/);
+      expect(service.formatDate(date, options)).toMatch(/Nov 25, 1991 at 5:28\sPM/);
     } else {
       // Chrome, Firefox
-      expect(service.formatDate(date)).toMatch(/Nov 25, 1991, 5:28\sPM/);
+      expect(service.formatDate(date, options)).toMatch(/Nov 25, 1991, 5:28\sPM/);
     }
 
     service.setLocale('en-GB');
     if (isSafari()) {
-      expect(service.formatDate(date)).toMatch(/25 Nov 1991 at 5:28\spm/);
+      expect(service.formatDate(date, options)).toMatch(/25 Nov 1991 at 5:28\spm/);
     } else {
       // Chrome, Firefox
-      expect(service.formatDate(date)).toMatch(/25 Nov 1991, 5:28\spm/);
+      expect(service.formatDate(date, options)).toMatch(/25 Nov 1991, 5:28\spm/);
     }
 
     // As of Chromium 98 for zh-CN it's changed from using characters to indicate AM/PM, to using a 24 hour clock. It's
     // unclear whether the cause is Chromium itself or a localization library. The tests should pass with either version
     service.setLocale('zh-CN');
-    expect(['1991/11/25 17:28', '1991/11/25下午5:28']).toContain(service.formatDate(date));
+    expect(['1991/11/25 17:28', '1991/11/25下午5:28']).toContain(service.formatDate(date, options));
 
     service.setLocale('az');
-    expect(service.formatDate(date)).toEqual('25.11.1991 17:28');
+    expect(service.formatDate(date, options)).toEqual('25.11.1991 17:28');
 
     service.setLocale('npi');
-    expect(service.formatDate(date)).toEqual('१९९१-११-२५, १७:२८');
+    expect(service.formatDate(date, options)).toEqual('१९९१-११-२५ १७:२८');
   });
 
   it('should support including the timezone in the date', () => {
@@ -122,10 +123,10 @@ describe('I18nService', () => {
     const trailingTimezoneRegex = / ((GMT|UTC)[\-+−]\d{1,2}(:\d{2})?|[A-Z]+)$/;
 
     service.setLocale('fr');
-    expect(service.formatDate(date, { showTimeZone: true })).toMatch(trailingTimezoneRegex);
+    expect(service.formatDate(date, { showTime: true, showTimeZone: true })).toMatch(trailingTimezoneRegex);
 
     service.setLocale('az');
-    expect(service.formatDate(date, { showTimeZone: true })).toMatch(trailingTimezoneRegex);
+    expect(service.formatDate(date, { showTime: true, showTimeZone: true })).toMatch(trailingTimezoneRegex);
   });
 
   it('should interpolate translations around and within numbered template tags', done => {

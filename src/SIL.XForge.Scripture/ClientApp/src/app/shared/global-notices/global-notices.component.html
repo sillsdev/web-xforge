@@ -6,7 +6,7 @@
           {{
             t("upcoming_maintenance", {
               duration,
-              startTime: i18n.formatDate(upcomingDowntime.start, { showTimeZone: true })
+              startTime: i18n.formatDate(upcomingDowntime.start, { showTime: true, showTimeZone: true })
             })
           }}
           <a [href]="upcomingDowntime.detailsUrl" target="_blank">{{ t("learn_more") }}</a>

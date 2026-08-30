@@ -346,7 +346,8 @@ export class DraftHistoryEntryComponent {
   ) {}
 
   formatDate(date?: string): string {
-    const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
+    const formattedDate =
+      date == null ? '' : this.i18n.formatDate(new Date(date), { showTime: true, showTimeZone: false });
     return formattedDate.indexOf(RIGHT_TO_LEFT_MARK) !== -1 ? RIGHT_TO_LEFT_MARK + formattedDate : formattedDate;
   }
 

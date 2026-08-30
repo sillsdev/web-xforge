@@ -333,7 +333,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return '';
     }
     return this.i18n.translateStatic('checking_overview.time_archived_stamp', {
-      timeStamp: this.i18n.formatDate(new Date(date))
+      timeStamp: this.i18n.formatDate(new Date(date), { showTime: true, showTimeZone: false })
     });
   }
 

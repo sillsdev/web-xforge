@@ -60,7 +60,7 @@ describe('SyncLogComponent', () => {
     // A pre-formatted date would be re-parsed by the owner component, which swaps the day and month or yields an
     // invalid date in many locales
     expect(env.component.rows.map(row => row.dateTime)).toEqual([dateStarted, dateStarted, dateStarted]);
-    const expected = env.i18n.formatDate(new Date(dateStarted));
+    const expected = env.i18n.formatDate(new Date(dateStarted), { showTime: true, showTimeZone: false });
     expect(env.dateTimes).toEqual([expected, expected, expected]);
   }));
 
@@ -71,7 +71,7 @@ describe('SyncLogComponent', () => {
     env.wait();
 
     expect(env.component.rows[0].dateTime).toEqual(dateQueued);
-    expect(env.dateTimes).toEqual([env.i18n.formatDate(new Date(dateQueued))]);
+    expect(env.dateTimes).toEqual([env.i18n.formatDate(new Date(dateQueued), { showTime: true, showTimeZone: false })]);
   }));
 
   it('should show more entries when the show more button is clicked', fakeAsync(() => {

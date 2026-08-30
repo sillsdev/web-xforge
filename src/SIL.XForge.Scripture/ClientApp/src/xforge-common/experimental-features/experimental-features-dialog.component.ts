@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatIconButton } from '@angular/material/button';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogClose, MatDialogContent, MatDialogTitle } from '@angular/material/dialog';
-import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ExperimentalFeature, ExperimentalFeaturesService } from './experimental-features.service';
@@ -21,7 +20,6 @@ import { ExperimentalFeature, ExperimentalFeaturesService } from './experimental
     MatDialogContent,
     MatDialogClose,
     MatCheckbox,
-    MatDivider,
     FormsModule
   ]
 })
