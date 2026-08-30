@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Services;
 /// 3. A note changelist is computed by diffing the real-time question docs and the notes in the local repo.
 /// 4. The local repo is updated using the note changelist.
 /// 5. PT send/receive is performed (remote and local repos are synced).
-/// 6. Docs associated with remotely deleted books are deleted.
+/// 6. Docs associated with remotely deleted books are deleted, except for question docs, which are archived.
 /// 7. Updated USX is retrieved from the local repo.
 /// 7. The returned USX is converted back to text deltas and diffed against the current deltas.
 /// 8. The diff is submitted as an operation to the real-time text docs (chapter docs are added and deleted as
@@ -301,7 +301,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (targetBooksToDelete.Count > 0)
             {
                 LogMetric(
-                    $"RunAsync: Going to delete texts and questions,comments,answers for {targetBooksToDelete.Count} books."
+                    $"RunAsync: Going to delete texts, and archive questions, for {targetBooksToDelete.Count} books."
                 );
                 // delete target books
                 foreach (int bookNum in targetBooksToDelete)
@@ -312,7 +312,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await _projectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
 
                     await DeleteAllTextDocsForBookAsync(text);
-                    await DeleteAllQuestionsDocsForBookAsync(text);
+                    await ArchiveAllQuestionsDocsForBookAsync(text);
                     await DeleteNoteThreadDocsInChapters(text.BookNum, text.Chapters);
                 }
 
@@ -1660,28 +1660,38 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     /// <summary>
-    /// Deletes all real-time questions docs from the database for a book.
+    /// Archives all real-time question docs in the database for a book.
     /// </summary>
-    private async Task DeleteAllQuestionsDocsForBookAsync(TextInfo text)
+    /// <remarks>
+    /// The questions are archived rather than deleted so that they are not lost if the book was removed from Paratext
+    /// by accident.
+    /// </remarks>
+    private async Task ArchiveAllQuestionsDocsForBookAsync(TextInfo text)
     {
         List<string> questionDocIds = await _realtimeService
             .QuerySnapshots<Question>()
-            .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
+            .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum && !q.IsArchived)
             .Select(q => q.Id)
             .ToListAsync();
         var tasks = new List<Task>();
         foreach (string questionId in questionDocIds)
         {
-            async Task deleteQuestion()
+            async Task archiveQuestion()
             {
                 IDocument<Question> questionDoc = await _conn.FetchAsync<Question>(questionId);
-                if (questionDoc.IsLoaded)
-                    await questionDoc.DeleteAsync();
+                if (questionDoc.IsLoaded && !questionDoc.Data.IsArchived)
+                {
+                    await questionDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Set(q => q.IsArchived, true);
+                        op.Set(q => q.DateArchived, (DateTime?)DateTime.UtcNow);
+                    });
+                }
             }
-            tasks.Add(deleteQuestion());
+            tasks.Add(archiveQuestion());
         }
         await Task.WhenAll(tasks);
-        _syncMetrics.Questions.Deleted += questionDocIds.Count;
+        _syncMetrics.Questions.Updated += questionDocIds.Count;
     }
 
     private async Task<List<string>> DeleteNoteThreadDocsInChapters(int bookNum, IEnumerable<Chapter> chapters)
