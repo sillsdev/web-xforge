@@ -16,8 +16,6 @@
   --sf-translate-progress-complete: #{if($is-dark, mat.get-theme-color($theme, tertiary, 50), #b8d332)};
   --sf-translate-progress-remaining: #{if($is-dark, color.change(mat.get-theme-color($theme, neutral, 30)), #ececec)};
   --sf-translate-progress-icon-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 87), rgba(0, 0, 0, 0.6))};
-  --sf-translate-engine-card-background: #{if($is-dark, mat.get-theme-color($theme, tertiary, 40), $greenLight)};
-  --sf-translate-suggestions-info-color: #{if($is-dark, mat.get-theme-color($theme, neutral, 80), $lighterTextColor)};
 }
 
 @mixin theme($theme) {

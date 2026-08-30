@@ -36,7 +36,6 @@
 @use 'src/app/translate/biblical-terms/biblical-terms-theme' as sf-biblical-terms;
 @use 'src/app/translate/font-unsupported-message/font-unsupported-message-theme' as sf-font-unsupported-message;
 @use 'src/app/translate/translate-overview/translate-overview-theme' as sf-translate-overview;
-@use 'src/app/translate/training-progress/training-progress-theme' as sf-training-progress;
 @use 'src/app/permissions-viewer/permissions-viewer-theme' as sf-permissions-viewer;
 @use 'src/app/serval-administration/draft-jobs-theme' as sf-draft-jobs;
 @use 'src/app/serval-administration/job-details-dialog-theme' as sf-job-details-dialog;
@@ -84,7 +83,6 @@
   @include sf-tab-group.theme($theme);
   @include sf-text.theme($theme);
   @include sf-translate-overview.theme($theme);
-  @include sf-training-progress.theme($theme);
   @include sf-permissions-viewer.theme($theme);
   @include sf-draft-jobs.theme($theme);
   @include sf-job-details-dialog.theme($theme);

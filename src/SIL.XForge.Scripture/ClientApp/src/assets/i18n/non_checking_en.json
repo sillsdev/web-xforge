@@ -556,7 +556,6 @@
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
     "your_comment": "Your comment"
   },
   "editor_draft_tab": {
@@ -869,9 +868,6 @@
     "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "source_text_placeholder": "Source text (optional)",
     "translate": "Translate",
-    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
-    "translation_suggestions": "Enable Translation Suggestions",
-    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "hide_community_checking_text": "Hide Scripture text",
     "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "insights_settings_header": "Insights",
@@ -903,18 +899,12 @@
     "select": "Select"
   },
   "translator_settings_dialog": {
-    "better": "Better",
     "close": "Close",
     "editor_settings_title": "Editor",
     "editor_tabs_in_single_pane": "Show editor tabs in a single pane",
     "insights_enable_assessments": "Show assessments",
     "insights_enable_autocorrect": "Allow auto-corrections",
     "insights_settings_title": "Insights",
-    "more": "More",
-    "number_of_suggestions": "Number of suggestions",
-    "settings_not_available_offline": "Translator settings are not available while you are offline.",
-    "suggestion_confidence": "Suggestion confidence",
-    "translation_suggestions_settings_title": "Translation suggestions",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
@@ -997,26 +987,11 @@
     "upload_training_data": "Upload Training Data",
     "uploading": "Uploading..."
   },
-  "training_progress": {
-    "completed_successfully": "Completed successfully",
-    "training_completed_successfully": "Training completed successfully",
-    "training": "Training"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
-    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Progress",
-    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
     "progress_not_available_offline": "Translation progress is not available when offline.",
-    "quality": "Quality",
-    "retrain": "Retrain",
-    "suggestion_engine": "Suggestion Engine",
-    "trained_segments": "trained segments",
-    "training": "Training...",
-    "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments",
-    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",
