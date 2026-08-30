@@ -584,11 +584,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       }
 
       // If we have come online, watch for the creation of the text document
-      if (isOnline && this._id != null && this._editor != null) {
-        const textDoc = await this.projectService.getText(this._id);
-        this.onCreateSub?.unsubscribe();
-        this.onCreateSub = textDoc.create$.subscribe(() => this.bindQuill());
-      }
+      await this.subscribeToTextDocumentCreationAsync(isOnline);
     });
 
     // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
@@ -1214,12 +1210,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
     if (!(await this.projectHasText())) {
       // If we are online, watch for the creation of the text document
-      if (this.onlineStatusService.isOnline) {
-        const textDoc = await this.projectService.getText(this._id);
-        this.onCreateSub?.unsubscribe();
-        this.onCreateSub = textDoc.create$.subscribe(() => this.bindQuill());
-      }
-
+      await this.subscribeToTextDocumentCreationAsync(this.onlineStatusService.isOnline);
       this.loaded.emit();
       return;
     }
@@ -2008,6 +1999,15 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.highlightMarkerHeight = bounds.height;
     this.highlightMarker.style.top = this._selectionBoundsTop + 'px';
     this.updateHighlightMarkerVisibility();
+  }
+
+  private async subscribeToTextDocumentCreationAsync(isOnline: boolean): Promise<void> {
+    // If we are online, watch for the creation of the text document
+    if (isOnline && this._id != null && this._editor != null) {
+      const textDoc = await this.projectService.getText(this._id);
+      this.onCreateSub?.unsubscribe();
+      this.onCreateSub = textDoc.create$.subscribe(() => this.bindQuill());
+    }
   }
 
   private updateHighlightMarkerVisibility(): void {
