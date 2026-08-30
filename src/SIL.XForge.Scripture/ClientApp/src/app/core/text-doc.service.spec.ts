@@ -326,7 +326,7 @@ describe('TextDocService', () => {
       expect(actual).toBe(false);
     });
 
-    it('should return false if the user not have the permission', () => {
+    it('should return false if the user does not have permission', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({ userRoles: { user01: SFProjectRole.ParatextObserver } });
 
@@ -355,7 +355,7 @@ describe('TextDocService', () => {
       expect(actual).toBeUndefined();
     });
 
-    it('should return false if the user not have the permission', () => {
+    it('should return false if the user does not have permission', () => {
       const env = new TestEnvironment();
       const project = createTestProjectProfile({ texts: [{ bookNum: 1, chapters: [{ number: 1 }] }] });
 

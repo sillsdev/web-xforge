@@ -413,8 +413,8 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       draftApplyState.chapterNum === 0
     ) {
       this.draftCheckState = 'draft-present';
-      this.isDraftApplied = true;
-      this.userAppliedDraft = true;
+      this.isDraftApplied = draftApplyState.status === DraftApplyStatus.Successful;
+      this.userAppliedDraft = this.isDraftApplied;
       void this.textDocService.notifyChanges(this.textDocId);
     } else {
       // Ensure that the UI reflects that a draft is being applied
