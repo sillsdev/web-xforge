@@ -89,7 +89,7 @@ export interface DraftConfig {
 }
 
 export interface TranslateConfig {
-  translationSuggestionsEnabled: boolean;
+  translationSuggestionsEnabled?: boolean;
   source?: TranslateSource;
   defaultNoteTagId?: number;
   preTranslate: boolean;

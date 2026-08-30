@@ -367,8 +367,7 @@ class TestEnvironment {
       getSFProjectUserConfigDocId('project01', this.commenterId),
       createTestProjectUserConfig({
         projectRef: 'project01',
-        ownerRef: this.commenterId,
-        translationSuggestionsEnabled: false
+        ownerRef: this.commenterId
       })
     );
 
