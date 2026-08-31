@@ -61,6 +61,7 @@ import { BuildConfidencesExportService } from './build-confidences-export.servic
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
+import { SearchRecordsComponent } from './search-records.component';
 import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
@@ -190,7 +191,8 @@ export interface BuildInputItem {
     DisplayConfidenceComponent,
     MatFormFieldModule,
     MatInputModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SearchRecordsComponent
   ]
 })
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
@@ -273,7 +275,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       });
   }
 
-  protected onDateRangeChange(range: NormalizedDateRange): void {
+  protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
+    if (range == null) return;
     this.dateRange$.next(range);
   }
 
