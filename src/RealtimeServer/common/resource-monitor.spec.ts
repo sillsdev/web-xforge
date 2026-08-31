@@ -8,6 +8,29 @@ jest.mock('fs/promises', () => ({
   appendFile: (...args: [string, string, unknown]) => mockFsPromises.appendFile(...args)
 }));
 
+let mockHomedir: string = '';
+jest.mock('os', () => ({ ...jest.requireActual('os'), homedir: () => mockHomedir }));
+
+// TestEnvironment sets these directly on real process.env. Restore after each test.
+const ENV_VAR_NAMES = ['SF_RESOURCE_REPORTS_PATH', 'XDG_DATA_HOME'] as const;
+let originalEnvValues: Record<string, string | undefined>;
+
+beforeEach(() => {
+  originalEnvValues = {};
+  for (const name of ENV_VAR_NAMES) {
+    originalEnvValues[name] = process.env[name];
+  }
+});
+
+afterEach(() => {
+  for (const name of ENV_VAR_NAMES) {
+    const originalValue: string | undefined = originalEnvValues[name];
+    if (originalValue === undefined) delete process.env[name];
+    else process.env[name] = originalValue;
+  }
+  mockHomedir = '';
+});
+
 describe('ResourceMonitor', () => {
   describe('getOutputDir', () => {
     function expectWriteCallsForBaseDir(expectedDir: string): void {
@@ -26,7 +49,7 @@ describe('ResourceMonitor', () => {
       const env: TestEnvironment = new TestEnvironment({
         SF_RESOURCE_REPORTS_PATH: sfResourceReportsPath,
         XDG_DATA_HOME: `${path.sep}xdg-data-home`,
-        HOME: `${path.sep}home`
+        homedir: `${path.sep}home`
       });
       const expectedDir: string = sfResourceReportsPath;
       // SUT
@@ -39,7 +62,7 @@ describe('ResourceMonitor', () => {
       const env = new TestEnvironment({
         SF_RESOURCE_REPORTS_PATH: null,
         XDG_DATA_HOME: xdgDataHome,
-        HOME: `${path.sep}home`
+        homedir: `${path.sep}home`
       });
       const reportDirName: string = 'sf-resource-reports';
       const expectedDir: string = path.join(xdgDataHome, reportDirName);
@@ -48,8 +71,12 @@ describe('ResourceMonitor', () => {
       expectWriteCallsForBaseDir(expectedDir);
     });
 
-    it('uses HOME when SF_RESOURCE_REPORTS_PATH and XDG_DATA_HOME are unset', async () => {
-      const env = new TestEnvironment({ SF_RESOURCE_REPORTS_PATH: null, XDG_DATA_HOME: null, HOME: `${path.sep}home` });
+    it('uses the home directory when SF_RESOURCE_REPORTS_PATH and XDG_DATA_HOME are unset', async () => {
+      const env = new TestEnvironment({
+        SF_RESOURCE_REPORTS_PATH: null,
+        XDG_DATA_HOME: null,
+        homedir: `${path.sep}home`
+      });
       const reportDirName: string = 'sf-resource-reports';
       const expectedDir: string = path.join(`${path.sep}home`, '.local', 'share', reportDirName);
       // SUT
@@ -57,10 +84,14 @@ describe('ResourceMonitor', () => {
       expectWriteCallsForBaseDir(expectedDir);
     });
 
-    it('uses HOME when SF_RESOURCE_REPORTS_PATH is unset and XDG_DATA_HOME is empty', async () => {
+    it('uses the home directory when SF_RESOURCE_REPORTS_PATH is unset and XDG_DATA_HOME is empty', async () => {
       // XDG_DATA_HOME is not used if unset or empty
       // (https://specifications.freedesktop.org/basedir-spec/latest/#variables).
-      const env = new TestEnvironment({ SF_RESOURCE_REPORTS_PATH: null, XDG_DATA_HOME: '', HOME: `${path.sep}home` });
+      const env = new TestEnvironment({
+        SF_RESOURCE_REPORTS_PATH: null,
+        XDG_DATA_HOME: '',
+        homedir: `${path.sep}home`
+      });
       const reportDirName: string = 'sf-resource-reports';
       const expectedDir: string = path.join(`${path.sep}home`, '.local', 'share', reportDirName);
       // SUT
@@ -68,8 +99,8 @@ describe('ResourceMonitor', () => {
       expectWriteCallsForBaseDir(expectedDir);
     });
 
-    it('uses cwd when HOME, SF_RESOURCE_REPORTS_PATH, and XDG_DATA_HOME are unset', async () => {
-      const env = new TestEnvironment({ SF_RESOURCE_REPORTS_PATH: null, XDG_DATA_HOME: null, HOME: null });
+    it('uses cwd when SF_RESOURCE_REPORTS_PATH and XDG_DATA_HOME are unset and there is no home directory', async () => {
+      const env = new TestEnvironment({ SF_RESOURCE_REPORTS_PATH: null, XDG_DATA_HOME: null, homedir: null });
       const reportDirName: string = 'sf-resource-reports';
       const expectedDir: string = path.join(process.cwd(), reportDirName);
       // SUT
@@ -103,15 +134,18 @@ class MockFsPromises {
 class TestEnvironment {
   public readonly monitor: ResourceMonitor;
 
-  constructor(values: { SF_RESOURCE_REPORTS_PATH: string | null; XDG_DATA_HOME: string | null; HOME: string | null }) {
+  constructor(values: {
+    SF_RESOURCE_REPORTS_PATH: string | null;
+    XDG_DATA_HOME: string | null;
+    homedir: string | null;
+  }) {
     if (values.SF_RESOURCE_REPORTS_PATH == null) delete process.env.SF_RESOURCE_REPORTS_PATH;
     else process.env.SF_RESOURCE_REPORTS_PATH = values.SF_RESOURCE_REPORTS_PATH;
 
     if (values.XDG_DATA_HOME == null) delete process.env.XDG_DATA_HOME;
     else process.env.XDG_DATA_HOME = values.XDG_DATA_HOME;
 
-    if (values.HOME == null) delete process.env.HOME;
-    else process.env.HOME = values.HOME;
+    mockHomedir = values.homedir ?? '';
 
     // Recreate mock
     mockFsPromises = new MockFsPromises();

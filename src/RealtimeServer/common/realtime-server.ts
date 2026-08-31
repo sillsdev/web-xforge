@@ -4,10 +4,11 @@ import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
 import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
+import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
 import { SchemaProperties, ValidationSchema } from './models/validation-schema';
-import { ResourceMonitor } from './resource-monitor';
+import { AgentInternal, ResourceMonitor } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -131,7 +132,7 @@ export function submitMigrationOp(version: number, doc: Doc, ops: Op[]): Promise
 export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBackend {}
 
 /**
- * This class represents the real-time server. It extends ShareDB and adds support for migrations and access control.
+ * This class represents the real-time server. It extends ShareDB and adds support for migrations and access control. Connections are handled from frontend clients, from the dotnet process, and from itself (defaultConnection). See also an API for dotnet in `RealtimeServer/common/index.ts`.
  */
 export class RealtimeServer extends ShareDB {
   /* eslint-enable @typescript-eslint/no-unsafe-declaration-merging */
@@ -162,7 +163,10 @@ export class RealtimeServer extends ShareDB {
       context.stream.checkServerAccess = true;
       this.setConnectSession(context)
         .then(() => done())
-        .catch(err => done(err));
+        .catch(err => {
+          ActivityLogger.instance.log('connectionRejected', { errorMessage: `${err}` });
+          done(err);
+        });
     });
 
     // Configure op, snapshot, or milestone changes to be made just before the op is committed to the database
@@ -190,6 +194,22 @@ export class RealtimeServer extends ShareDB {
       callback();
     });
 
+    // Unlike 'commit', 'afterWrite' fires once the op has actually been persisted, so this is where we log
+    // opCommitted rather than in the 'commit' hook above.
+    this.use('afterWrite', (context, callback) => {
+      ActivityLogger.instance.log('opCommitted', {
+        collection: context.collection,
+        docId: context.id,
+        clientId: (context.agent as unknown as AgentInternal).clientId,
+        srcClientId: context.op.src,
+        opSeq: context.op.seq,
+        version: context.snapshot?.v,
+        saveMilestoneSnapshot: context.saveMilestoneSnapshot,
+        source: typeof context.extra?.source === 'string' ? context.extra.source : undefined
+      });
+      callback();
+    });
+
     for (const docService of docServices) {
       docService.init(this);
       this.docServices.set(docService.collection, docService);
@@ -205,6 +225,20 @@ export class RealtimeServer extends ShareDB {
         context.op.m.migration = context.op.mv;
         delete context.op.mv;
       }
+
+      const failValidation = (message: string): void => {
+        ActivityLogger.instance.log('opValidationFailed', {
+          collection: context.collection,
+          docId: context.id,
+          // Needed here as well as on opSubmitted: a failed op never reaches the opSubmitted entry below, so this
+          // entry has nothing else to be attributed by.
+          clientId: (context.agent as unknown as AgentInternal).clientId,
+          srcClientId: context.op.src,
+          opSeq: context.op.seq,
+          errorMessage: message
+        });
+        done(message);
+      };
 
       // Perform data validation, if enabled. It will be disabled during migration.
       // Also, do not validate if the connection is from the backend server - we can trust it
@@ -288,7 +322,7 @@ export class RealtimeServer extends ShareDB {
 
               // If we still have no property schema, this is an invalid path
               if (propertySchema === undefined) {
-                done(`Invalid path for operation: ${JSON.stringify(op)}`);
+                failValidation(`Invalid path for operation: ${JSON.stringify(op.p)}`);
                 return;
               }
 
@@ -361,16 +395,58 @@ export class RealtimeServer extends ShareDB {
               }
 
               if (!validData) {
-                done(`Invalid operation data: ${JSON.stringify(op)}`);
+                failValidation(`Invalid operation data with path: ${JSON.stringify(op.p)}`);
                 return;
               }
             } else {
-              done(`Invalid path for operation: ${JSON.stringify(op)}`);
+              failValidation(`Invalid path for operation: ${JSON.stringify(op)}`);
               return;
             }
           }
         }
       }
+
+      let opType: 'create' | 'del' | 'op';
+      if (context.op.create != null) {
+        opType = 'create';
+      } else if (context.op.del != null) {
+        opType = 'del';
+      } else {
+        opType = 'op';
+      }
+      let opsCount: number;
+      if (Array.isArray(context.op.op)) {
+        opsCount = context.op.op.length;
+      } else if (context.op.op != null) {
+        opsCount = 1;
+      } else {
+        opsCount = 0;
+      }
+      ActivityLogger.instance.log('opSubmitted', {
+        collection: context.collection,
+        docId: context.id,
+        // Which connection the op arrived on, matching the clientId that connectionEstablished reported.
+        //
+        // srcClientId is not a substitute for this, because the two are not always the same id. ShareDB gives each
+        // agent a clientId when it is created, but agent.src stays null until the client's handshake message supplies
+        // an id, which is after the 'connect' middleware has run - so the source is not even known at the point
+        // connectionEstablished is logged. A client connecting for the first time has no id to supply, so its ops fall
+        // back to the agent's clientId and the two agree. But a browser that reconnects does supply one: it keeps the
+        // id from its previous session as the source of its ops. From then on its ops carry a srcClientId that no
+        // connectionEstablished entry ever reported, and reporting both is what still ties them to a connection.
+        clientId: (context.agent as unknown as AgentInternal).clientId,
+        // Together these identify the op, so that this entry can be matched up with the opCommitted or
+        // opValidationFailed entry for the same op.
+        srcClientId: context.op.src,
+        opSeq: context.op.seq,
+        // The version the op was submitted against. A commit of this op lands at the next version.
+        version: context.op.v,
+        userId: (context.agent as unknown as AgentInternal).connectSession?.userId,
+        isServer: (context.agent as unknown as AgentInternal).connectSession?.isServer,
+        opType: opType,
+        opsCount: opsCount,
+        migrationVersion: context.op.m.migration
+      });
       done();
     });
 
@@ -445,10 +521,13 @@ export class RealtimeServer extends ShareDB {
    * permissions).
    *
    * Dotnet requests, this.defaultConnection, and other places in RealtimeServer reach this.
+   *
+   * @param interopHandle Identifies a dotnet caller's handle on this connection, so that logged activity can be
+   * matched with the connection it was performed on.
    */
-  connectAsServer(onBehalfOfUserId?: string): Connection {
-    if (onBehalfOfUserId == null) return this.connect();
-    else return this.connect(undefined, { userId: onBehalfOfUserId });
+  connectAsServer(onBehalfOfUserId?: string, interopHandle?: number): Connection {
+    if (onBehalfOfUserId == null && interopHandle == null) return this.connect();
+    else return this.connect(undefined, { userId: onBehalfOfUserId, interopHandle: interopHandle });
   }
 
   listen(stream: any, req?: any): ShareDB.Agent {
@@ -457,6 +536,16 @@ export class RealtimeServer extends ShareDB {
     if (!this.dataValidationDisabled) {
       ResourceMonitor.instance.monitorAgent(agent, stream);
     }
+    stream.once('close', () => {
+      // The stream can close before the 'connect' middleware finishes (e.g. the client disconnects mid-handshake,
+      // or authentication fails), so connectSession may not be set yet.
+      const agentInfo: AgentInternal = agent as unknown as AgentInternal;
+      ActivityLogger.instance.log('agentDisconnected', {
+        clientId: agentInfo.clientId,
+        userId: agentInfo.connectSession?.userId,
+        isServer: agentInfo.connectSession?.isServer
+      });
+    });
     this.trigger('connect', agent, { stream, req }, err => {
       if (err) {
         return agent.close(err);
@@ -487,6 +576,11 @@ export class RealtimeServer extends ShareDB {
       if (curVersion === version) {
         continue;
       }
+      ActivityLogger.instance.log('migrationCollectionStarted', {
+        collection: docService.collection,
+        fromVersion: curVersion,
+        toVersion: version
+      });
       const limit = 10000;
       let skip = 0;
       let query = await createFetchQuery(this.defaultConnection!, docService.collection, {
@@ -516,6 +610,10 @@ export class RealtimeServer extends ShareDB {
       }
 
       await this.schemaVersions.set(docService.collection, version);
+      ActivityLogger.instance.log('migrationCollectionCompleted', {
+        collection: docService.collection,
+        version: version
+      });
     }
   }
 
@@ -538,5 +636,14 @@ export class RealtimeServer extends ShareDB {
       session = { isServer: true, userId, roles: [] };
     }
     context.agent.connectSession = session;
+    ActivityLogger.instance.log('connectionEstablished', {
+      // The op source (agent.src) is not reported here: it is not set until the client's handshake message, which
+      // arrives after this runs. See the opSubmitted entry, which reports both ids.
+      clientId: (context.agent as unknown as AgentInternal).clientId,
+      interopHandle: context.req?.interopHandle,
+      userId: session.userId,
+      roles: session.roles,
+      isServer: session.isServer
+    });
   }
 }
