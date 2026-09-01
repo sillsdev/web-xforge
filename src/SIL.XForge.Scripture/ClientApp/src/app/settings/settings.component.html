@@ -39,19 +39,19 @@
                   ></app-write-status>
                 </div>
                 @if (projectLoadingFailed && resourceLoadingFailed) {
-                  <mat-error>
+                  <span class="error-text">
                     {{ t("error_fetching_projects_resources") }}
-                  </mat-error>
+                  </span>
                 }
                 @if (projectLoadingFailed && !resourceLoadingFailed) {
-                  <mat-error>
+                  <span class="error-text">
                     {{ t("error_fetching_projects") }}
-                  </mat-error>
+                  </span>
                 }
                 @if (resourceLoadingFailed && !projectLoadingFailed) {
-                  <mat-error>
+                  <span class="error-text">
                     {{ t("error_fetching_resources") }}
-                  </mat-error>
+                  </span>
                 }
               }
             </div>
@@ -87,12 +87,10 @@
                 ></app-write-status>
               </div>
               @if (biblicalTermsMessage) {
-                <mat-error>
-                  @if (biblicalTermsMessage) {
-                    <app-info icon="error" type="error" [text]="biblicalTermsMessage"></app-info>
-                  }
+                <span class="error-text">
+                  <app-info icon="error" type="error" [text]="biblicalTermsMessage"></app-info>
                   <span>{{ biblicalTermsMessage }}</span>
-                </mat-error>
+                </span>
               }
             </div>
           </mat-card-content>

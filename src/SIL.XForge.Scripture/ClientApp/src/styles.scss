@@ -94,6 +94,12 @@ as-split > .as-split-gutter .as-split-gutter-icon {
   color: var(--sf-error-color);
 }
 
+// Error message text that is not inside a mat-form-field (mat-error is only styled within mat-form-field)
+.error-text {
+  display: block;
+  color: var(--sf-error-color);
+}
+
 // A <button> styled to be indistinguishable from surrounding text, for cases where a click target needs to be
 // inline with body text (e.g. an expand/collapse toggle within a sentence) but must remain a real <button> for
 // keyboard/screen-reader accessibility.
