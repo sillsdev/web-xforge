@@ -49,6 +49,17 @@ h1 {
   }
 }
 
+.sync-progress.compact {
+  row-gap: 4px;
+
+  .sync-status {
+    justify-content: flex-start;
+    padding-top: 0;
+    font-size: 0.85em;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
 .centered-content {
   display: flex;
   flex-direction: column;
