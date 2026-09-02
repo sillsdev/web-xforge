@@ -441,7 +441,7 @@ export const CannotSaveAndSyncWhenOffline: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const offlineMessage = canvasElement.querySelector('mat-error')?.textContent ?? '';
+    const offlineMessage = canvasElement.querySelector('.offline-text')?.textContent ?? '';
     // Offline message is displayed
     expect(offlineMessage).toContain(
       'You are offline. Please connect to the internet to save and sync your draft sources.'

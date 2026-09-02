@@ -959,7 +959,7 @@ class TestEnvironment {
   }
 
   get basedOnSelectErrorMessage(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('.tool-setting-field + mat-error');
+    return this.fixture.nativeElement.querySelector('.tool-setting-field + .error-text');
   }
 
   get biblicalTermsCheckbox(): DebugElement {

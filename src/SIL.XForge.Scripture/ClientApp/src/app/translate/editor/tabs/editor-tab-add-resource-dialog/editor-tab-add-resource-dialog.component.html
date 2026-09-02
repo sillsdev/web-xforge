@@ -36,28 +36,28 @@
     }
 
     @if (projectLoadingFailed && resourceLoadingFailed) {
-      <mat-error id="project-resources-error">
+      <span class="error-text" id="project-resources-error">
         {{ t("error_fetching_projects_resources") }}
-      </mat-error>
+      </span>
     } @else if (projectLoadingFailed && !resourceLoadingFailed) {
-      <mat-error id="project-error">
+      <span class="error-text" id="project-error">
         {{ t("error_fetching_projects") }}
-      </mat-error>
+      </span>
     } @else if (resourceLoadingFailed && !projectLoadingFailed) {
-      <mat-error id="resource-error">
+      <span class="error-text" id="resource-error">
         {{ t("error_fetching_resources") }}
-      </mat-error>
+      </span>
     }
     @if (!appOnline) {
-      <mat-error id="offline-error">
+      <span class="offline-text" id="offline-error">
         {{ t("error_offline") }}
-      </mat-error>
+      </span>
     }
 
     @if (projectFetchFailed || syncFailed) {
-      <mat-error id="fetch-sync-error">
+      <span class="error-text" id="fetch-sync-error">
         {{ t("error_loading_resource") }}
-      </mat-error>
+      </span>
     }
   </mat-dialog-content>
 

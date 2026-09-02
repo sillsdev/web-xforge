@@ -455,7 +455,7 @@ class TestEnvironment {
   }
 
   get resourceLoadingErrorMessage(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-project-select + mat-error'));
+    return this.fixture.debugElement.query(By.css('app-project-select + .error-text'));
   }
 
   selectSourceProject(projectId: string): void {

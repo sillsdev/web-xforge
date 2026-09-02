@@ -111,7 +111,7 @@
                 [projectId]="currentProjectId"
               ></app-book-multi-select>
               @if (showCompletedBooksRequiredError) {
-                <mat-error>{{ t("required") }}</mat-error>
+                <span class="error-text">{{ t("required") }}</span>
               }
             </div>
           </mat-card-content>
@@ -177,7 +177,7 @@
                 (bookSelect)="onSubmittedBooksSelect($event)"
               ></app-book-multi-select>
               @if (showPlannedBooksRequiredError) {
-                <mat-error>{{ t("required") }}</mat-error>
+                <span class="error-text">{{ t("required") }}</span>
               }
             </div>
           </mat-card-content>
