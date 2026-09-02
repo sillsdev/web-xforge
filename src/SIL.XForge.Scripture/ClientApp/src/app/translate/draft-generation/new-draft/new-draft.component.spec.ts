@@ -804,12 +804,19 @@ describe('NewDraftComponent', () => {
 
     it('shows the pending-updates page for an involved, connected project with an update', fakeAsync(() => {
       const env = new TestEnvironment(testState, {
-        projects: [makeParatextProject({ projectId: 'draft-source-1-id', name: 'Draft Source 1', hasUpdate: true })]
+        projects: [
+          makeParatextProject({
+            projectId: 'draft-source-1-id',
+            name: 'Draft Source 1',
+            shortName: 'DS1',
+            hasUpdate: true
+          })
+        ]
       });
       tick();
 
       expect(env.component.page).toEqual('pending_updates');
-      expect(env.component.pendingProjects).toEqual([{ projectId: 'draft-source-1-id', name: 'Draft Source 1' }]);
+      expect(env.component.pendingProjects).toEqual([{ projectId: 'draft-source-1-id', name: 'DS1 - Draft Source 1' }]);
     }));
 
     it('excludes projects that are not involved, not connected, or have no update', fakeAsync(() => {
@@ -825,15 +832,6 @@ describe('NewDraftComponent', () => {
 
       expect(env.component.pendingProjects).toEqual([]);
       expect(env.component.page).toEqual('preface');
-    }));
-
-    it('falls back to shortName when the project name is empty', fakeAsync(() => {
-      const env = new TestEnvironment(testState, {
-        projects: [makeParatextProject({ projectId: 'testProjectId', name: '', shortName: 'TGT', hasUpdate: true })]
-      });
-      tick();
-
-      expect(env.component.pendingProjects).toEqual([{ projectId: 'testProjectId', name: 'TGT' }]);
     }));
 
     it('skips detection entirely when offline', fakeAsync(() => {
