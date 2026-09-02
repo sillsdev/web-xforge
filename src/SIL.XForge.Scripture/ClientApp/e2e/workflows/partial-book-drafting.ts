@@ -2,9 +2,7 @@ import { expect } from 'npm:@playwright/test';
 import { Locator, Page } from 'npm:playwright';
 import { E2E_SYNC_DEFAULT_TIMEOUT, preset, ScreenshotContext } from '../e2e-globals.ts';
 import {
-  enableDeveloperMode,
   enableDraftingOnProjectAsServalAdmin,
-  enableFeatureFlag,
   freshlyConnectProject,
   getNewBrowserForSideWork,
   installMouseFollower,
@@ -53,9 +51,6 @@ export async function partialBookDrafting(
   const user = new UserEmulator(page);
 
   await freshlyConnectProject(page, TARGET_PROJECT_SHORT_NAME);
-
-  await enableDeveloperMode(page, { closeMenu: true });
-  await enableFeatureFlag(page, 'Partial book drafting');
 
   await user.click(page.getByRole('link', { name: 'Generate draft' }));
   await expect(page.getByRole('heading', { name: 'Generate translation drafts' })).toBeVisible();
