@@ -105,6 +105,21 @@ describe('SyncProgressComponent', () => {
     env.emitSyncComplete(true, 'testProject01');
   }));
 
+  it('ignores progress notifications for unrelated projects', fakeAsync(async () => {
+    const env = new TestEnvironment({ userId: 'user01' });
+    env.setupProjectDoc();
+    env.updateSyncProgress(0.5, 'testProject01');
+    expect(await env.getPercent()).toEqual(50);
+
+    // The SignalR connection is shared, so another component's project can emit through the same handler.
+    env.host.syncProgress['updateProgressState']('otherProject99', new ProgressState(0.9, undefined, undefined, 3.5));
+
+    expect(await env.getPercent()).toEqual(50);
+    expect(env.host.syncProgress.syncProgress).toBe(0);
+    expect(env.host.syncProgress.phasePercentage).toBe(0);
+    env.emitSyncComplete(true, 'testProject01');
+  }));
+
   it('does not throw error if get project role times out', fakeAsync(() => {
     const env = new TestEnvironment({ userId: 'user01', sourceProject: 'sourceProject02' });
     when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenReject(new Error('504: Gateway Timeout'));
