@@ -2720,6 +2720,61 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_ProgressNotificationsAreThrottled()
+    {
+        var env = new TestEnvironment();
+        Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
+        env.SetupSFData(true, true, true, false, books);
+        env.SetupPTData(books);
+
+        // The same terms exist in Scripture Forge and Paratext, so both biblical terms phases loop over every term
+        const int termCount = 500;
+        env.RealtimeService.GetRepository<BiblicalTerm>()
+            .Add(
+                Enumerable
+                    .Range(1, termCount)
+                    .Select(i => new BiblicalTerm
+                    {
+                        Id = $"project01:dataId{i}",
+                        ProjectRef = "project01",
+                        DataId = $"dataId{i}",
+                        TermId = $"termId{i}",
+                        Renderings = [$"rendering{i}"],
+                    })
+            );
+        var biblicalTermsChanges = new BiblicalTermsChanges { ErrorMessage = string.Empty, HasRenderings = true };
+        biblicalTermsChanges.BiblicalTerms.AddRange(
+            Enumerable
+                .Range(1, termCount)
+                .Select(i => new BiblicalTerm { TermId = $"termId{i}", Renderings = [$"rendering{i}"] })
+        );
+        env.ParatextService.GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
+            .Returns(Task.FromResult(biblicalTermsChanges));
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        env.VerifyProjectSync(true);
+        List<ProgressState> notifications = env
+            .Notifier.ReceivedCalls()
+            .Where(call => call.GetMethodInfo().Name == nameof(INotifier.NotifySyncProgress))
+            .Select(call => (ProgressState)call.GetArguments()[1])
+            .ToList();
+
+        // Without throttling, each biblical terms phase would send one notification per term
+        Assert.That(notifications.Count, Is.GreaterThan(0).And.LessThan(termCount));
+        for (int i = 1; i < notifications.Count; i++)
+        {
+            bool phaseChanged = notifications[i].SyncPhase != notifications[i - 1].SyncPhase;
+            double change = Math.Abs(notifications[i].SyncProgress - notifications[i - 1].SyncProgress);
+            Assert.That(
+                phaseChanged || change >= ParatextSyncRunner.MinimumProgressChangeToNotify - 1e-9,
+                Is.True,
+                $"Notification {i} in phase {notifications[i].SyncPhase} changed progress by only {change}"
+            );
+        }
+    }
+
+    [Test]
     public async Task SyncAsync_BiblicalTermsAreUpdated()
     {
         var env = new TestEnvironment();
@@ -3504,6 +3559,7 @@ public class ParatextSyncRunnerTests
     private class TestEnvironment
     {
         public readonly int translateNoteTagId = 5;
+        public INotifier Notifier { get; }
         public readonly int checkingNoteTagId = 6;
         private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
         private readonly MemoryRepository<SyncMetrics> _syncMetrics;
@@ -3636,6 +3692,8 @@ public class ParatextSyncRunnerTests
             DeltaUsxMapper = deltaUsxMapper ?? Substitute.For<IDeltaUsxMapper>();
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
+            Notifier = Substitute.For<INotifier>();
+            hubContext.Clients.Groups(Arg.Any<IReadOnlyList<string>>()).Returns(Notifier);
             MockLogger = new MockLogger<ParatextSyncRunner>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             GuidService = Substitute.For<IGuidService>();

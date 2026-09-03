@@ -58,6 +58,11 @@ namespace SIL.XForge.Scripture.Services;
 public class ParatextSyncRunner : IParatextSyncRunner
 {
     private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
+
+    /// <summary>The minimum change in a phase's progress (0.0 to 1.0) before another progress message is sent.</summary>
+    internal const double MinimumProgressChangeToNotify = 0.01;
+    private SyncPhase? _lastNotifiedSyncPhase;
+    private double _lastNotifiedProgressPercent;
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
@@ -2199,6 +2204,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
         if (_projectDoc is not null)
         {
             double progressPercent = (progress > 1.0 ? progress / 100.0 : progress);
+
+            // Skip changes too small to be worth a message. Several phases report once per item (e.g. once per biblical
+            // term), which would otherwise send thousands of near-identical messages to every connected client.
+            if (
+                syncPhase == _lastNotifiedSyncPhase
+                && Math.Abs(progressPercent - _lastNotifiedProgressPercent) < MinimumProgressChangeToNotify
+            )
+            {
+                return;
+            }
+
+            _lastNotifiedSyncPhase = syncPhase;
+            _lastNotifiedProgressPercent = progressPercent;
             await _hubContext.NotifySyncProgress(
                 _projectDoc.Id,
                 new ProgressState
