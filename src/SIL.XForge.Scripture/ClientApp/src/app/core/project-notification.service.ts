@@ -3,6 +3,9 @@ import { HubConnectionBuilder } from '@microsoft/signalr';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { NotificationServiceBase } from './notification-service-base';
+import { SignalRDiagnosticsService } from './signalr-diagnostics.service';
+
+const hubUrl = '/project-notifications';
 
 /**
  * Provides notification for project-level events via SignalR.
@@ -11,12 +14,14 @@ import { NotificationServiceBase } from './notification-service-base';
   providedIn: 'root'
 })
 export class ProjectNotificationService extends NotificationServiceBase {
-  constructor(authService: AuthService, onlineService: OnlineStatusService) {
-    super(authService, onlineService);
-    this.connection = new HubConnectionBuilder()
-      .withUrl('/project-notifications', this.options)
-      .withAutomaticReconnect()
-      .build();
+  constructor(
+    authService: AuthService,
+    onlineService: OnlineStatusService,
+    signalRDiagnostics: SignalRDiagnosticsService
+  ) {
+    super(authService, onlineService, signalRDiagnostics);
+    this.connection = new HubConnectionBuilder().withUrl(hubUrl, this.options).withAutomaticReconnect().build();
+    this.countReceivedMessages(hubUrl, ['notifyBuildProgress', 'notifyDraftApplyProgress', 'notifySyncProgress']);
   }
 
   removeNotifyBuildProgressHandler(handler: any): void {

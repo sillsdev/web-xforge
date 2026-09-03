@@ -8,6 +8,7 @@ import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
+import { SignalRDiagnosticsService } from '../../core/signalr-diagnostics.service';
 
 export interface DiagnosticOverlayData {
   bookNum: number;
@@ -33,6 +34,7 @@ export class DiagnosticOverlayComponent {
     private readonly realtimeService: RealtimeService,
     private readonly diagnosticOverlayService: DiagnosticOverlayService,
     readonly noticeService: NoticeService,
+    readonly signalRDiagnostics: SignalRDiagnosticsService,
     private readonly localSettings: LocalSettingsService
   ) {
     if (this.localSettings.get<boolean>(diagnosticOverlayCollapsedKey) === false) {

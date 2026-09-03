@@ -1,6 +1,7 @@
 import { AbortError, HubConnection, HubConnectionState, IHttpConnectionOptions } from '@microsoft/signalr';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SignalRDiagnosticsService } from './signalr-diagnostics.service';
 
 /**
  * The base class containing functionality for SignalR notification hubs.
@@ -17,7 +18,8 @@ export abstract class NotificationServiceBase {
 
   constructor(
     private authService: AuthService,
-    private readonly onlineService: OnlineStatusService
+    private readonly onlineService: OnlineStatusService,
+    private readonly signalRDiagnostics: SignalRDiagnosticsService
   ) {}
 
   get appOnline(): boolean {
@@ -68,6 +70,16 @@ export abstract class NotificationServiceBase {
         }
       }
       await this.connection.stop();
+    }
+  }
+
+  /**
+   * Counts every message the hub sends for the given events, so the developer diagnostics overlay can show them.
+   * Call this after building the connection.
+   */
+  protected countReceivedMessages(hubUrl: string, eventNames: string[]): void {
+    for (const eventName of eventNames) {
+      this.connection.on(eventName, () => this.signalRDiagnostics.recordMessage(hubUrl, eventName));
     }
   }
 

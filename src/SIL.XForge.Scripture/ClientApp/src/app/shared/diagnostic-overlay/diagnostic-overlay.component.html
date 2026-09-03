@@ -37,6 +37,26 @@
       </tbody>
     </table>
 
+    <h3>{{ signalRDiagnostics.totalMessageCount | l10nNumber }} SignalR messages received</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Hub</th>
+          <th>Event</th>
+          <th>Messages</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (messageCount of signalRDiagnostics.messageCounts; track messageCount.hub + messageCount.event) {
+          <tr>
+            <td>{{ messageCount.hub }}</td>
+            <td>{{ messageCount.event }}</td>
+            <td>{{ messageCount.count | l10nNumber }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
     <h3>Components affecting loading indicator</h3>
     <table>
       <thead>
