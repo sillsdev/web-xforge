@@ -47,6 +47,17 @@ import { LynxWorkspaceFactory } from './lynx-workspace-factory.service';
 
 const TEXTS_PATH_TEMPLATE = obj<SFProjectProfile>().pathTemplate(p => p.texts);
 
+/**
+ * Time (ms) to wait for a doc's diagnostics events to settle before processing them.
+ *
+ * The Lynx workspace merges the latest event from each diagnostic provider (checker) and re-emits the merged result
+ * every time any single provider reports.  A single doc change therefore produces a burst of events for that doc,
+ * one per provider, each carrying the diagnostics of only the providers that have reported so far.  Only the last
+ * event of the burst is complete.  The providers validate synchronously, so the whole burst arrives within one task
+ * and any non-negative delay is enough to let it settle.
+ */
+const DIAGNOSTICS_SETTLE_TIME = 10;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -268,7 +279,14 @@ export class LynxWorkspaceService {
       // Group events by event URI, then switchMap within each group to handle the cancellation and processing
       // of only the latest event for that URI.
       rxjsGroupBy(event => event.uri),
-      mergeMap(group$ => group$.pipe(switchMap(event => this.onDiagnosticsChanged(event)))),
+      mergeMap(group$ =>
+        group$.pipe(
+          // Wait for the burst of per-provider events for the doc to settle so that only the final, complete
+          // event is processed (see DIAGNOSTICS_SETTLE_TIME).
+          debounceTime(DIAGNOSTICS_SETTLE_TIME),
+          switchMap(event => this.onDiagnosticsChanged(event))
+        )
+      ),
       debounceTime(10) // Debouncing avoids emitting after each event URI when loading a new project
     );
 
@@ -293,16 +311,22 @@ export class LynxWorkspaceService {
           parseInt(textDocIdParts[2])
         );
 
-        // Group diagnostics by source because onDiagnosticsChanged event may fire multiple times
-        // for the same URI (once for each diagnostic source).
-        // This way, 'current insights' for a different diagnostic source will not be cleared and insight id
-        // will be reused if the diagnostic matches an existing insight.
+        // Group diagnostics by source so that an insight id can be reused if the diagnostic matches an
+        // existing insight of the same source.
         const diagnosticsBySource = groupBy(event.diagnostics, 'source');
+
+        // Lynx never states that a provider found nothing: a provider with no diagnostics is simply absent from the
+        // event.  Since the debounced event is the complete report of every provider for this doc, a provider's
+        // silence has to be interpreted as "no issues found".  So the insights of every source are rebuilt from the
+        // event, and a source that is absent from it (e.g. because applying an insight action resolved its last
+        // diagnostic) loses its previous insights rather than keeping them (SF-3844, SF-3786, SF-3914).
+        const prevInsightsBySource: Map<string, LynxInsight[]> =
+          this.curInsightsByEventUriAndSource.get(event.uri) ?? new Map<string, LynxInsight[]>();
+        const updatedInsightsBySource = new Map<string, LynxInsight[]>();
 
         for (const [source, diagnosticsForSource] of Object.entries(diagnosticsBySource)) {
           const updatedInsightsForSource: LynxInsight[] = [];
-          const currentInsightsForSource: LynxInsight[] =
-            this.curInsightsByEventUriAndSource.get(event.uri)?.get(source) ?? [];
+          const currentInsightsForSource: LynxInsight[] = prevInsightsBySource.get(source) ?? [];
 
           for (const diagnostic of diagnosticsForSource) {
             let type: LynxInsightType = 'info';
@@ -346,9 +370,10 @@ export class LynxWorkspaceService {
             });
           }
 
-          // Refresh the insights for this source only
-          this.curInsightsByEventUriAndSource.get(event.uri)!.set(source, updatedInsightsForSource);
+          updatedInsightsBySource.set(source, updatedInsightsForSource);
         }
+
+        this.curInsightsByEventUriAndSource.set(event.uri, updatedInsightsBySource);
       }
     }
 
