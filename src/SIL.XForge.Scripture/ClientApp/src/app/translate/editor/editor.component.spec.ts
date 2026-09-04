@@ -379,7 +379,54 @@ describe('EditorComponent', () => {
     env.routeWithParams({ projectId: 'project01', bookId: 'GEN' });
     env.wait();
     expect(env.bookName).toEqual('Genesis');
-    expect(env.component.chapters.length).toEqual(50);
+    expect(env.component.availableChapters.length).toEqual(50);
+  }));
+
+  it('allows navigating to extra chapters in the draft', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProject({
+      texts: [
+        { bookNum: 40, chapters: [{ number: 1 }] },
+        { bookNum: 41, chapters: [{ number: 1 }] }
+      ],
+      translateConfig: {
+        draftConfig: {
+          trainingSources: [
+            {
+              paratextId: 'source01',
+              projectRef: 's01',
+              name: 'Source Project',
+              shortName: 'SRC',
+              writingSystem: { tag: 'en' }
+            }
+          ],
+          draftingSources: [
+            {
+              paratextId: 'source01',
+              projectRef: 's01',
+              name: 'Source Project',
+              shortName: 'SRC',
+              writingSystem: { tag: 'en' }
+            }
+          ],
+          draftedScriptureRange: 'JON;MAT;MRK'
+        }
+      }
+    });
+    env.wait();
+    // Jonah is included since it is a book with a draft
+    expect(env.component.books).toEqual([32, ...env.testProjectProfile.texts.map(t => t.bookNum)]);
+
+    env.routeWithParams({ projectId: 'project01', bookId: 'JON' });
+    env.wait();
+    expect(env.bookName).toEqual('Jonah');
+    // Jonah has 4 chapters
+    expect(env.component.availableChapters).toEqual([1, 2, 3, 4]);
+
+    env.component.onDraftChaptersUpdated([1, 2, 3, 4, 5]);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.availableChapters).toEqual([1, 2, 3, 4, 5]);
   }));
 
   describe('Show editor tabs in single pane setting', () => {

@@ -10,7 +10,7 @@
           (bookChange)="setBook($event)"
           [books]="books"
           [(chapter)]="chapter"
-          [chapters]="chapters"
+          [chapters]="availableChapters"
         ></app-book-chapter-chooser>
         @if (canShowSourceTab) {
           <div class="toolbar-separator">&nbsp;</div>
@@ -282,6 +282,7 @@
                   [isRightToLeft]="isTargetRightToLeft"
                   [fontSize]="fontSize"
                   [timestamp]="draftTimestamp"
+                  (chaptersUpdated)="onDraftChaptersUpdated($event)"
                 >
                 </app-editor-draft>
               }
