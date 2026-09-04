@@ -62,6 +62,11 @@
             !projectSelectionForm.valid ? t("select_project_description") : t("waiting_for_project_to_load")
           }}</app-notice>
         }
+        @if (draftHasLowConfidence && !(needsConnection || showBookSelection)) {
+          <app-notice type="error" data-test-id="low-confidence-warning">
+            {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
+          </app-notice>
+        }
       </form>
 
       <div class="button-strip">
@@ -164,6 +169,11 @@
               </app-notice>
             }
           }
+          @if (draftHasLowConfidence && !showBookSelection) {
+            <app-notice type="error" data-test-id="low-confidence-warning">
+              {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
+            </app-notice>
+          }
           <div class="button-strip">
             <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -198,6 +208,16 @@
             </mat-checkbox>
           }
         </div>
+
+        @if (selectedBooksWithLowConfidence === 1) {
+          <app-notice type="error" data-test-id="low-confidence-warning">
+            {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
+          </app-notice>
+        } @else if (selectedBooksWithLowConfidence > 1) {
+          <app-notice type="error" data-test-id="low-confidence-warning">
+            {{ t("low_confidence_books", { number: selectedBooksWithLowConfidence }) }}
+          </app-notice>
+        }
 
         <div class="button-strip">
           <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">

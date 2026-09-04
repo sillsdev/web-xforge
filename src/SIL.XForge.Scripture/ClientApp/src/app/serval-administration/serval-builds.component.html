@@ -106,7 +106,7 @@
                 }
               </div>
               <app-display-confidence
-                [confidence]="row.report.buildConfidences?.lowestConfidence"
+                [lowConfidence]="hasLowConfidence(row)"
                 [showText]="false"
               ></app-display-confidence>
             </div>
@@ -616,7 +616,7 @@
                     <mat-card-header>
                       <mat-card-title-group>
                         <mat-icon>traffic</mat-icon>
-                        <mat-card-title>Quality Estimation</mat-card-title>
+                        <mat-card-title>Build Confidence</mat-card-title>
                       </mat-card-title-group>
                     </mat-card-header>
                     <mat-card-content class="detail-card-content">
@@ -628,31 +628,24 @@
                               track bookConfidence.bookNum
                             ) {
                               <div class="book-confidence">
-                                <div class="detail-keyvalue">
-                                  <span class="detail-key">
-                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
-                                  </span>
-                                  <span class="detail-value">
-                                    <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
-                                  </span>
-                                </div>
-                                <div class="detail-keyvalue">
-                                  <span class="detail-key">
-                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Projected ChrF3
-                                  </span>
-                                  <span class="detail-value">{{ bookConfidence.projectedChrF3.toFixed(3) }}</span>
-                                </div>
+                                @if (hasLowConfidence(row, getBookId(bookConfidence))) {
+                                  <div class="detail-keyvalue">
+                                    <span class="detail-key">
+                                      {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
+                                    </span>
+                                    <span class="detail-value">
+                                      <app-display-confidence
+                                        [lowConfidence]="true"
+                                        [showText]="true"
+                                      ></app-display-confidence>
+                                    </span>
+                                  </div>
+                                }
                                 <div class="detail-keyvalue">
                                   <span class="detail-key">
                                     {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Confidence
                                   </span>
-                                  <span class="detail-value">{{ bookConfidence.confidence.toFixed(3) }}</span>
-                                </div>
-                                <div class="detail-keyvalue">
-                                  <span class="detail-key">
-                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Usability
-                                  </span>
-                                  <span class="detail-value">{{ bookConfidence.usability.toFixed(3) }}</span>
+                                  <span class="detail-value">{{ bookConfidence.confidence.toFixed(4) }}</span>
                                 </div>
                               </div>
                             }
@@ -665,7 +658,7 @@
                               (click)="exportCsv(row.report.buildConfidences.bookConfidences)"
                             >
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Book Usability CSV </span>
+                              <span class="export-item-label"> Export Book Confidence CSV </span>
                             </button>
                             <button
                               mat-raised-button
@@ -679,11 +672,11 @@
                           <mat-menu #exportBookMenu="matMenu" xPosition="before">
                             <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.bookConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Book Usability TSV </span>
+                              <span class="export-item-label"> Export Book Confidence TSV </span>
                             </button>
                             <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.bookConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Book Usability RSV </span>
+                              <span class="export-item-label"> Export Book Confidence RSV </span>
                             </button>
                           </mat-menu>
                           <div class="export-button-group">
@@ -694,7 +687,7 @@
                               (click)="exportCsv(row.report.buildConfidences.chapterConfidences)"
                             >
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Chapter Usability CSV </span>
+                              <span class="export-item-label"> Export Chapter Confidence CSV </span>
                             </button>
                             <button
                               mat-raised-button
@@ -708,11 +701,40 @@
                           <mat-menu #exportChapterMenu="matMenu" xPosition="before">
                             <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.chapterConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Chapter Usability TSV </span>
+                              <span class="export-item-label"> Export Chapter Confidence TSV </span>
                             </button>
                             <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.chapterConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Chapter Usability RSV </span>
+                              <span class="export-item-label"> Export Chapter Confidence RSV </span>
+                            </button>
+                          </mat-menu>
+                          <div class="export-button-group">
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-csv-button"
+                              (click)="exportCsv(row.report.buildConfidences.verseConfidences)"
+                            >
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence CSV </span>
+                            </button>
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-menu-button"
+                              [matMenuTriggerFor]="exportVerseMenu"
+                            >
+                              <mat-icon>arrow_drop_down</mat-icon>
+                            </button>
+                          </div>
+                          <mat-menu #exportVerseMenu="matMenu" xPosition="before">
+                            <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.verseConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence TSV </span>
+                            </button>
+                            <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.verseConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence RSV </span>
                             </button>
                           </mat-menu>
                         } @else {

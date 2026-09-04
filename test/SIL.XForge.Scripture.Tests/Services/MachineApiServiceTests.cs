@@ -108,13 +108,6 @@ public class MachineApiServiceTests
         DateFinished = DateTimeOffset.UtcNow,
     };
 
-    private static readonly QualityEstimationConfig QualityEstimationConfig = new QualityEstimationConfig
-    {
-        Version = "0.1",
-        Slope = 109.6145,
-        Intercept = -14.0633,
-    };
-
     [Test]
     public async Task ApplyPreTranslationToProjectAsync_BlankUsjFromMongo()
     {
@@ -245,7 +238,7 @@ public class MachineApiServiceTests
                 currentUserOnly: false,
                 writeToParatext: false
             )
-            .ThrowsAsync(new NotSupportedException());
+            .Throws(new NotSupportedException());
 
         // SUT
         DraftApplyResult actual = await env.Service.ApplyPreTranslationToProjectAsync(
@@ -1483,6 +1476,27 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetBuildsAsync_TaskCanceled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(new TaskCanceledException());
+
+        // SUT
+        IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
+            User02,
+            Project01,
+            preTranslate: true,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(0, builds.Count);
+    }
+
+    [Test]
     public void GetBuildsSinceAsync_NoPermission()
     {
         // Set up test environment
@@ -1526,7 +1540,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IList<TranslationBuild>>([translationBuild]));
         const string draftGenerationRequestId = "draft-req";
         env.SetDraftGenerationMetricAssociation(draftGenerationRequestId);
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
 
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
@@ -1551,6 +1565,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(draftGenerationRequestId, report.DraftGenerationRequestId);
         Assert.NotZero(report.BuildConfidences!.BookConfidences.Count);
         Assert.NotZero(report.BuildConfidences!.ChapterConfidences.Count);
+        Assert.NotZero(report.BuildConfidences!.VerseConfidences.Count);
     }
 
     [Test]
@@ -1593,6 +1608,26 @@ public class MachineApiServiceTests
         const int pretranslateCount = 567;
         const string sourceLanguageTag = "es";
         const string targetLanguageTag = "en";
+        const bool isTrainFilteredByChapter = true;
+        const bool isPretranslateFilteredByChapter = true;
+        const string resolvedSourceLanguage = "es_MX";
+        const string resolvedTargetLanguage = "en_NZ";
+        const double averagePretranslationConfidence = 0.5;
+        const bool diagnosticsTruncated = true;
+        var diagnostic = new Diagnostic
+        {
+            Category = "MODEL",
+            Code = "MODEL-0003",
+            Message =
+                "The average pretranslation model confidence 0.18819426932823188 in book HAG is unusually low for the base model Unknown.",
+            Severity = DiagnosticSeverity.Warn,
+            Data =
+            {
+                { "bookId", "HAG" },
+                { "averagePretranslationConfidence", 0.18819426932823188 },
+                { "modelName", "Unknown" },
+            },
+        };
         DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
         env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
             .Returns(
@@ -1608,6 +1643,100 @@ public class MachineApiServiceTests
                             PretranslateCount = pretranslateCount,
                             EngineSourceLanguageTag = sourceLanguageTag,
                             EngineTargetLanguageTag = targetLanguageTag,
+                            IsTrainFilteredByChapter = isTrainFilteredByChapter,
+                            IsPretranslateFilteredByChapter = isPretranslateFilteredByChapter,
+                            ResolvedSourceLanguage = resolvedSourceLanguage,
+                            ResolvedTargetLanguage = resolvedTargetLanguage,
+                            AveragePretranslationConfidence = averagePretranslationConfidence,
+                            DiagnosticsTruncated = diagnosticsTruncated,
+                            Diagnostics =
+                            [
+                                new Diagnostic
+                                {
+                                    Category = diagnostic.Category,
+                                    Code = diagnostic.Code,
+                                    Data = diagnostic.Data,
+                                    Message = diagnostic.Message,
+                                    Severity = diagnostic.Severity,
+                                },
+                            ],
+                        },
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.That(reports, Has.Count.EqualTo(1));
+        ServalBuildDto? build = reports[0].Build;
+        Assert.That(build, Is.Not.Null);
+        Assert.That(build!.ExecutionData, Is.Not.Null);
+        Assert.That(build.ExecutionData!.TrainCount, Is.EqualTo(trainCount));
+        Assert.That(build.ExecutionData.PretranslateCount, Is.EqualTo(pretranslateCount));
+        Assert.That(build.ExecutionData.SourceLanguageTag, Is.EqualTo(sourceLanguageTag));
+        Assert.That(build.ExecutionData.TargetLanguageTag, Is.EqualTo(targetLanguageTag));
+        Assert.That(build.ExecutionData.IsTrainFilteredByChapter, Is.EqualTo(isTrainFilteredByChapter));
+        Assert.That(build.ExecutionData.IsPretranslateFilteredByChapter, Is.EqualTo(isPretranslateFilteredByChapter));
+        Assert.That(build.ExecutionData.ResolvedSourceLanguage, Is.EqualTo(resolvedSourceLanguage));
+        Assert.That(build.ExecutionData.ResolvedTargetLanguage, Is.EqualTo(resolvedTargetLanguage));
+        Assert.That(build.ExecutionData.AveragePretranslationConfidence, Is.EqualTo(averagePretranslationConfidence));
+        Assert.That(build.ExecutionData.DiagnosticsTruncated, Is.EqualTo(diagnosticsTruncated));
+        Assert.That(build.ExecutionData.Diagnostics, Has.Count.EqualTo(1));
+        Assert.That(build.ExecutionData.Diagnostics[0].Category, Is.EqualTo(diagnostic.Category));
+        Assert.That(build.ExecutionData.Diagnostics[0].Code, Is.EqualTo(diagnostic.Code));
+        Assert.That(build.ExecutionData.Diagnostics[0].Data, Is.EqualTo(diagnostic.Data).UsingPropertiesComparer());
+        Assert.That(build.ExecutionData.Diagnostics[0].Message, Is.EqualTo(diagnostic.Message));
+        Assert.That((int)build.ExecutionData.Diagnostics[0].Severity, Is.EqualTo((int)diagnostic.Severity));
+    }
+
+    [Test]
+    [Obsolete("Legacy diagnostic messages from Serval 1.19 and earlier")]
+    public async Task GetBuildsSinceAsync_DoesNotIncludeWarningsWhenDiagnosticMessagesPresent()
+    {
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        var diagnostic = new Diagnostic
+        {
+            Category = "MODEL",
+            Code = "MODEL-0003",
+            Message =
+                "The average pretranslation model confidence 0.18819426932823188 in book HAG is unusually low for the base model Unknown.",
+            Severity = DiagnosticSeverity.Warn,
+            Data =
+            {
+                { "bookId", "HAG" },
+                { "averagePretranslationConfidence", 0.18819426932823188 },
+                { "modelName", "Unknown" },
+            },
+        };
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        ExecutionData = new ExecutionData
+                        {
+                            Warnings = ["This should not create a diagnostic message"],
+                            Diagnostics =
+                            [
+                                new Diagnostic
+                                {
+                                    Category = diagnostic.Category,
+                                    Code = diagnostic.Code,
+                                    Data = diagnostic.Data,
+                                    Message = diagnostic.Message,
+                                    Severity = diagnostic.Severity,
+                                },
+                            ],
                         },
                     },
                 ])
@@ -1625,10 +1754,47 @@ public class MachineApiServiceTests
         ServalBuildDto? build = reports[0].Build;
         Assert.IsNotNull(build);
         Assert.IsNotNull(build!.ExecutionData);
-        Assert.AreEqual(trainCount, build.ExecutionData!.TrainCount);
-        Assert.AreEqual(pretranslateCount, build.ExecutionData.PretranslateCount);
-        Assert.AreEqual(sourceLanguageTag, build.ExecutionData.SourceLanguageTag);
-        Assert.AreEqual(targetLanguageTag, build.ExecutionData.TargetLanguageTag);
+        Assert.That(build.ExecutionData!.Diagnostics, Has.Count.EqualTo(1));
+        Assert.That(build.ExecutionData.Diagnostics[0].Category, Is.EqualTo(diagnostic.Category));
+        Assert.That(build.ExecutionData.Diagnostics[0].Code, Is.EqualTo(diagnostic.Code));
+        Assert.That(build.ExecutionData.Diagnostics[0].Data, Is.EqualTo(diagnostic.Data).UsingPropertiesComparer());
+        Assert.That(build.ExecutionData.Diagnostics[0].Message, Is.EqualTo(diagnostic.Message));
+        Assert.That((int)build.ExecutionData.Diagnostics[0].Severity, Is.EqualTo((int)diagnostic.Severity));
+    }
+
+    [Test]
+    [Obsolete("Legacy diagnostic messages from Serval 1.19 and earlier")]
+    public async Task GetBuildsSinceAsync_IncludesWarningsWhenNoDiagnosticMessages()
+    {
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-1);
+        const string warning = "An old build warning";
+        env.TranslationBuildsClient.GetAllBuildsCreatedAfterAsync(beginning, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        ExecutionData = new ExecutionData { Warnings = [warning] },
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            beginning,
+            isServalAdmin: true,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        ServalBuildDto? build = reports[0].Build;
+        Assert.IsNotNull(build);
+        Assert.IsNotNull(build!.ExecutionData);
+        Assert.AreEqual(warning, build.ExecutionData!.Diagnostics[0].Message);
     }
 
     [Test]
@@ -2467,6 +2633,27 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetCurrentBuildAsync_TaskCanceled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
+            .Throws(new TaskCanceledException());
+
+        // SUT
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
+            User01,
+            Project01,
+            minRevision: null,
+            preTranslate: false,
+            isServalAdmin: false,
+            CancellationToken.None
+        );
+
+        Assert.IsNull(actual);
+    }
+
+    [Test]
     public async Task GetCurrentBuildAsync_PreTranslationCompleted()
     {
         // Set up test environment
@@ -2578,7 +2765,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
 
         // SUT
         BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
@@ -2595,6 +2782,7 @@ public class MachineApiServiceTests
             Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
             Assert.That(actual?.BookConfidences, Is.Not.Empty);
             Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.VerseConfidences, Is.Not.Empty);
             Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
     }
@@ -2604,7 +2792,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
 
         // SUT
         BuildConfidences? actual = await env.Service.GetBuildConfidencesAsync(
@@ -2621,6 +2809,7 @@ public class MachineApiServiceTests
             Assert.That(actual?.BuildId, Is.EqualTo(ServalBuildId01));
             Assert.That(actual?.BookConfidences, Is.Not.Empty);
             Assert.That(actual?.ChapterConfidences, Is.Not.Empty);
+            Assert.That(actual?.VerseConfidences, Is.Not.Empty);
             Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
     }
@@ -5976,11 +6165,11 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task UpdatePreTranslationTextDocumentsAsync_QualityEstimation()
+    public async Task UpdatePreTranslationTextDocumentsAsync_BuildConfidence()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01, QualityEstimationConfig);
+        await env.SetupDraftMetricsAsync(Project01, ServalBuildId01);
         const int bookNum = 1;
         const int chapterNum = 0;
         string textDocumentId = TextDocument.GetDocId(Project01, bookNum, chapter: 1, TextDocument.Draft);
@@ -6015,10 +6204,6 @@ public class MachineApiServiceTests
             Assert.That(draftMetrics.BookConfidences, Has.Count.EqualTo(1));
             Assert.That(draftMetrics.ChapterConfidences, Has.Count.EqualTo(1));
             Assert.That(draftMetrics.VerseConfidences, Has.Count.EqualTo(1));
-            Assert.That(
-                draftMetrics.QualityEstimationConfig,
-                Is.EqualTo(QualityEstimationConfig).UsingPropertiesComparer()
-            );
         }
     }
 
@@ -6944,28 +7129,13 @@ public class MachineApiServiceTests
                 );
         }
 
-        public async Task SetupDraftMetricsAsync(
-            string sfProjectId,
-            string buildId,
-            QualityEstimationConfig qualityEstimationConfig
-        )
+        public async Task SetupDraftMetricsAsync(string sfProjectId, string buildId)
         {
             DraftMetrics.Add(
                 new DraftMetrics
                 {
                     Id = Models.DraftMetrics.GetDocId(sfProjectId, buildId),
-                    QualityEstimationConfig = qualityEstimationConfig,
-                    BookConfidences =
-                    [
-                        new BookConfidence
-                        {
-                            BookNum = 1,
-                            Confidence = 0.6,
-                            Label = "Green",
-                            ProjectedChrF3 = 51.93,
-                            Usability = 0.765,
-                        },
-                    ],
+                    BookConfidences = [new BookConfidence { BookNum = 1, Confidence = 0.6 }],
                     ChapterConfidences =
                     [
                         new ChapterConfidence
@@ -6973,16 +7143,20 @@ public class MachineApiServiceTests
                             BookNum = 1,
                             ChapterNum = 1,
                             Confidence = 0.6,
-                            Label = "Green",
-                            ProjectedChrF3 = 51.93,
-                            Usability = 0.765,
+                        },
+                    ],
+                    VerseConfidences =
+                    [
+                        new VerseConfidence
+                        {
+                            BookNum = 1,
+                            ChapterNum = 1,
+                            Verse = "1",
+                            VerseNum = 1,
+                            Confidence = 0.6,
                         },
                     ],
                 }
-            );
-            await Projects.UpdateAsync(
-                p => p.Id == sfProjectId,
-                u => u.Set(s => s.TranslateConfig.DraftConfig.QualityEstimationConfig, qualityEstimationConfig)
             );
         }
 

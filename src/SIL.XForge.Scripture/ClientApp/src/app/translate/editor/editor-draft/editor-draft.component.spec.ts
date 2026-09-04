@@ -28,7 +28,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { BuildDto } from '../../../machine-api/build-dto';
+import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticCode } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
@@ -96,8 +96,8 @@ describe('EditorDraftComponent', () => {
     when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
     const defaultProjectDoc: SFProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
     when(mockActivatedProjectService.projectDoc$).thenReturn(of(defaultProjectDoc));
-    when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
-      of({ state: BuildStates.Completed } as BuildDto)
+    when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+      of([{ state: BuildStates.Completed } as BuildDto])
     );
     when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(bookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
@@ -396,6 +396,63 @@ describe('EditorDraftComponent', () => {
     flush();
   }));
 
+  it('should show the low confidence warning if selected revision has low confidence', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+      of([
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[0].timestamp },
+          executionData: {
+            diagnostics: [
+              { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'EXO' } } as Partial<ServalBuildDiagnostic>
+            ]
+          }
+        } as BuildDto,
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[1].timestamp },
+          executionData: {
+            diagnostics: [
+              { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'GEN' } } as Partial<ServalBuildDiagnostic>
+            ]
+          }
+        } as BuildDto
+      ])
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    // SUT 1
+    // The first item in the dropdown is selected by default
+    // hasLowConfidence is false as we are looking at Genesis, but the diagnostic is for Exodus
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.hasLowConfidence).toBeFalse();
+
+    // SUT 2
+    // Select the second item in the dropdown
+    // hasLowConfidence is true as we are looking at Genesis, and the diagnostic is for Genesis
+    component.onSelectionChanged({ value: draftHistory[1] } as MatSelectChange);
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.hasLowConfidence).toBeTrue();
+
+    // SUT 3
+    // Select the first item in the dropdown again
+    // hasLowConfidence is false as we are looking at Genesis, but the diagnostic is for Exodus
+    component.onSelectionChanged({ value: draftHistory[0] } as MatSelectChange);
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.hasLowConfidence).toBeFalse();
+    flush();
+  }));
+
   describe('applyDraft', () => {
     it('should allow user to apply draft when formatting selected', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
@@ -567,8 +624,8 @@ describe('EditorDraftComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
-      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
-        of({ state: BuildStates.Completed } as BuildDto)
+      when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+        of([{ state: BuildStates.Completed } as BuildDto])
       );
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -592,8 +649,8 @@ describe('EditorDraftComponent', () => {
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
 
-      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
-        of({ state: BuildStates.Completed } as BuildDto)
+      when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+        of([{ state: BuildStates.Completed } as BuildDto])
       );
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -624,8 +681,8 @@ describe('EditorDraftComponent', () => {
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(false);
 
-      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
-        of({ state: BuildStates.Completed } as BuildDto)
+      when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+        of([{ state: BuildStates.Completed } as BuildDto])
       );
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -636,7 +693,7 @@ describe('EditorDraftComponent', () => {
       flush();
     }));
 
-    it('should be false when latest build is canceled even if draft exists and selected revision is latest', fakeAsync(() => {
+    it('should be false when latest build is canceled even if draft exists and selected revision is the latest', fakeAsync(() => {
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           texts: [
@@ -647,8 +704,8 @@ describe('EditorDraftComponent', () => {
           ]
         })
       } as SFProjectProfileDoc;
-      when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
-        of({ state: BuildStates.Canceled } as BuildDto)
+      when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+        of([{ state: BuildStates.Canceled } as BuildDto])
       );
       when(mockActivatedProjectService.projectDoc$).thenReturn(of(testProjectDoc));
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));

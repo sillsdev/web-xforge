@@ -54,9 +54,14 @@ import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { ChapterSet, trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
 import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
-import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
+import {
+  BookConfidence,
+  ChapterConfidence,
+  VerseConfidence
+} from '../translate/draft-generation/build-confidences/build-confidences';
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
@@ -315,7 +320,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return this.expandedRows.has(id);
   }
 
-  protected exportCsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+  protected exportCsv(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[] | undefined = undefined): void {
     if (rows == null) {
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportCsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
@@ -324,7 +329,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     }
   }
 
-  protected exportRsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+  protected exportRsv(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[] | undefined = undefined): void {
     if (rows == null) {
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
@@ -333,13 +338,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     }
   }
 
-  protected exportTsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+  protected exportTsv(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[] | undefined = undefined): void {
     if (rows == null) {
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
     } else {
       this.buildConfidencesExportService.exportTsv(rows, this.dateRange$.value);
     }
+  }
+
+  protected hasLowConfidence(row: ServalBuildRow | undefined, bookId: string | undefined = undefined): boolean {
+    return hasLowConfidence(row?.report.build, bookId);
   }
 
   private createSpreadsheetData(): {
