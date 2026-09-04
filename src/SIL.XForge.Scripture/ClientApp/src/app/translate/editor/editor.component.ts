@@ -1610,7 +1610,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
 
     const hasUnappliedDraft: boolean = hasDraft && !draftApplied;
-    const draftShouldBeVisible: boolean = hasUnappliedDraft || urlDraftActive;
+    const draftShouldBeVisible: boolean = hasUnappliedDraft || urlDraftActive || existingDraftTab != null;
 
     let draftBuild: BuildDto | undefined;
     // Only try to fetch the draft build if existing information indicates we should show the draft
