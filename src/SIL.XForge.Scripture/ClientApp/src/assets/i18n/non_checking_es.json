@@ -223,7 +223,7 @@
     "quota_exceeded": "La función de creación de borradores no está disponible temporalmente para este proyecto, ya que se ha superado su cuota",
     "report_problem": "Reportar problema",
     "signup_already_submitted": "{{ name }} envió una solicitud para inscribirse en la redacción en {{ date }}. Un miembro del equipo se pondrá en contacto con usted en un plazo de entre {{ min }} y {{ max }} para hablar de su proyecto y de los pasos a seguir.",
-    "signup_response_will_be_emailed": "The response will be sent by email to [b]{{ email }}[/b].",
+    "signup_response_will_be_emailed": "La respuesta se enviará por correo electrónico a [b]{{ email }}[/b].",
     "sign_up_for_drafting": "Inscríbase para redactar",
     "temporarily_unavailable": "La generación de borradores está temporalmente no disponible.",
     "problem_fetching_build_history": "Ha surgido un problema al recuperar el historial de compilaciones.",
@@ -282,6 +282,7 @@
     "pending_updates": {
       "heading": "Sincronizar antes de redactar",
       "body": "Estos proyectos presentan cambios en Paratext que aún no se han reflejado aquí. Redactar sin sincronizar puede reducir la calidad del borrador.",
+      "checking_projects": "Comprobando el estado del proyecto...",
       "sync": "Sincronizar",
       "sync_all": "Sincronizar todo",
       "continue_anyway": "Continuar de todos modos",
@@ -289,7 +290,9 @@
       "sync_failed": "Sincronización fallida",
       "retry": "Reintentar",
       "cant_sync": "Hay cambios: pide a un administrador del proyecto que lo sincronice",
-      "wait_for_sync": "Espera a que termine la sincronización antes de continuar."
+      "wait_for_sync": "Espera a que termine la sincronización antes de continuar.",
+      "sync_count_progress": "{{ completed }} de {{ total }} proyectos sincronizados",
+      "all_synced_continuing": "Todo está al día. Continuando..."
     },
     "draft_books": {
       "title": "Seleccionar libros para el borrador",
