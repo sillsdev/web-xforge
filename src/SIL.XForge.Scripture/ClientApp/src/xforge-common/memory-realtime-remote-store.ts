@@ -34,6 +34,10 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
     return collectionSnapshots.values();
   }
 
+  removeSnapshot(collection: string, id: string): void {
+    this.snapshots.get(collection)?.delete(id);
+  }
+
   clear(): void {
     this.snapshots.clear();
   }
@@ -45,9 +49,9 @@ export class MemoryRealtimeRemoteStore extends RealtimeRemoteStore {
       snapshot = collectionSnapshots.get(id);
     }
     if (snapshot == null) {
-      return new MemoryRealtimeDocAdapter(collection, id);
+      return new MemoryRealtimeDocAdapter(collection, id, undefined, undefined, undefined, this);
     }
-    return new MemoryRealtimeDocAdapter(collection, id, snapshot.data, types.map[snapshot.type], snapshot.v);
+    return new MemoryRealtimeDocAdapter(collection, id, snapshot.data, types.map[snapshot.type], snapshot.v, this);
   }
 
   createQueryAdapter(collection: string, parameters: QueryParameters): RealtimeQueryAdapter {
@@ -101,7 +105,8 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     public readonly id: string,
     public data?: any,
     public type: OTType | undefined = OTJson0.type,
-    version?: number
+    version?: number,
+    private readonly remoteStore?: MemoryRealtimeRemoteStore
   ) {
     if (version != null) {
       this.version = version;
@@ -115,6 +120,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     this.data = data;
     this.type = types.map[type];
     this.version = 0;
+    this.syncSnapshotToStore();
     this.emitCreate();
     return Promise.resolve();
   }
@@ -143,6 +149,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     }
     this.data = this.type.apply(this.data, op);
     this.version++;
+    this.syncSnapshotToStore();
     this.emitChange(op);
     if (!source) {
       this.emitRemoteChange(op);
@@ -162,6 +169,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     this.data = undefined;
     this.version = -1;
     this.type = undefined;
+    this.remoteStore?.removeSnapshot(this.collection, this.id);
     this.emitDelete();
     return Promise.resolve();
   }
@@ -172,6 +180,23 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
 
   destroy(): Promise<void> {
     return Promise.resolve();
+  }
+
+  /**
+   * Keeps the remote store's snapshot in sync with this adapter, so that the memory
+   * implementation behaves like an instantly-consistent server: local submits are immediately
+   * reflected in query results (MemoryRealtimeQueryAdapter re-queries the store on access).
+   */
+  private syncSnapshotToStore(): void {
+    if (this.remoteStore == null || this.type == null) {
+      return;
+    }
+    this.remoteStore.addSnapshot(this.collection, {
+      id: this.id,
+      data: this.data,
+      v: this.version,
+      type: this.type.name
+    });
   }
 
   emitChange(op?: any): void {
@@ -194,12 +219,12 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
 export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
   subscribed: boolean = false;
   ready: boolean = true;
-  unpagedCount: number = 0;
-  docIds: string[] = [];
-  count: number = 0;
 
   readonly ready$ = new Subject<void>();
   readonly remoteChanges$ = new Subject<void>();
+
+  private lastDocIds: string[] = [];
+  private lastCount: number = 0;
 
   constructor(
     private readonly remoteStore: MemoryRealtimeRemoteStore,
@@ -207,49 +232,64 @@ export class MemoryRealtimeQueryAdapter implements RealtimeQueryAdapter {
     public readonly parameters: QueryParameters
   ) {}
 
+  // The results are re-queried from the remote store on every access, so that the memory
+  // implementation behaves like an instantly-consistent server (there is no notion of an
+  // in-flight op or a not-yet-polled query subscription, as there is with the ShareDB adapters).
+  get docIds(): string[] {
+    return this.performQuery().docIds;
+  }
+
+  get count(): number {
+    return this.performQuery().count;
+  }
+
+  get unpagedCount(): number {
+    return this.performQuery().unpagedCount;
+  }
+
   fetch(): Promise<void> {
-    this.performQuery();
+    this.rememberResults();
     this.ready = true;
     this.ready$.next();
     return Promise.resolve();
   }
 
   subscribe(_initialDocIds?: string[]): void {
-    this.performQuery();
+    this.rememberResults();
     this.subscribed = true;
     this.ready = true;
     this.ready$.next();
   }
 
   updateResults(): void {
-    if (this.performQuery()) {
+    if (this.rememberResults()) {
       this.remoteChanges$.next();
     }
   }
 
   destroy(): void {}
 
-  private performQuery(): boolean {
-    let changed = false;
+  /** Re-queries the results and reports whether they changed since the last remembered results. */
+  private rememberResults(): boolean {
+    const { docIds, count } = this.performQuery();
+    const changed: boolean = !isEqual(this.lastDocIds, docIds) || this.lastCount !== count;
+    this.lastDocIds = docIds;
+    this.lastCount = count;
+    return changed;
+  }
+
+  private performQuery(): { docIds: string[]; count: number; unpagedCount: number } {
     const snapshots = Array.from(this.remoteStore.getSnapshots(this.collection));
     const { results, unpagedCount } = performQuery(this.parameters, snapshots);
+    let docIds: string[];
     let count: number;
     if (results instanceof Array) {
-      const before = this.docIds;
-      const after = results.map(s => s.id);
-      this.docIds = after;
-      if (!isEqual(before, after)) {
-        changed = true;
-      }
+      docIds = results.map(s => s.id);
       count = results.length;
     } else {
+      docIds = [];
       count = results;
     }
-    if (this.count !== count) {
-      this.count = count;
-      changed = true;
-    }
-    this.unpagedCount = unpagedCount;
-    return changed;
+    return { docIds: docIds, count: count, unpagedCount: unpagedCount };
   }
 }
