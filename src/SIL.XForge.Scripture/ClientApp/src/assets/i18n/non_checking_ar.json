@@ -282,6 +282,7 @@
     "pending_updates": {
       "heading": "المزامنة قبل البَدْء في الصياغة",
       "body": "تتضمن هذه المشاريع تغييرات في Paratext لم تنعكس هنا بعد. وقد يؤدي العمل على المُسَوَّدَة دون مزامنة إلى انخفاض جودتها.",
+      "checking_projects": "Checking project status...",
       "sync": "مزامنة",
       "sync_all": "مزامنة الكل",
       "continue_anyway": "المتابعة على أي حال",
@@ -289,7 +290,9 @@
       "sync_failed": "تعذّرت المزامنة",
       "retry": "أعد المحاولة",
       "cant_sync": "توجد تغييرات — اطلب من مسؤول المشروع إجراء المزامنة",
-      "wait_for_sync": "انتظر حتى تنتهي عملية المزامنة قبل الاستمرار."
+      "wait_for_sync": "انتظر حتى تنتهي عملية المزامنة قبل الاستمرار.",
+      "sync_count_progress": "{{ completed }} of {{ total }} projects synced",
+      "all_synced_continuing": "Everything is up to date. Continuing..."
     },
     "draft_books": {
       "title": "اختر الأسفار التي تريد إنشاء مسوداتها",

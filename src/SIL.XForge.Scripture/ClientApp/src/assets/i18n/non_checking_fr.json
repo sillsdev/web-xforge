@@ -282,6 +282,7 @@
     "pending_updates": {
       "heading": "Synchroniser avant de rédiger",
       "body": "Ces projets ont des modifications dans Paratext qui ne sont pas encore reflétées ici. Le fait de rédiger sans synchroniser peut réduire la qualité des ébauches.",
+      "checking_projects": "Checking project status...",
       "sync": "Synchroniser",
       "sync_all": "Tout synchroniser",
       "continue_anyway": "Continuer quand même",
@@ -289,7 +290,9 @@
       "sync_failed": "Échec de la synchronisation",
       "retry": "Réessayer",
       "cant_sync": "A des modifications — demander à un administrateur de projet de synchroniser",
-      "wait_for_sync": "Attendez que la synchronisation soit terminée avant de continuer."
+      "wait_for_sync": "Attendez que la synchronisation soit terminée avant de continuer.",
+      "sync_count_progress": "{{ completed }} of {{ total }} projects synced",
+      "all_synced_continuing": "Everything is up to date. Continuing..."
     },
     "draft_books": {
       "title": "Sélectionnez les livres à ébaucher",

@@ -282,6 +282,7 @@
     "pending_updates": {
       "heading": "Sync before drafting",
       "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
+      "checking_projects": "Checking project status...",
       "sync": "Sync",
       "sync_all": "Sync all",
       "continue_anyway": "Continue anyway",
@@ -289,7 +290,9 @@
       "sync_failed": "Sync failed",
       "retry": "Reîncearcă",
       "cant_sync": "Has changes — ask a project admin to sync",
-      "wait_for_sync": "Wait for the sync to finish before continuing."
+      "wait_for_sync": "Wait for the sync to finish before continuing.",
+      "sync_count_progress": "{{ completed }} of {{ total }} projects synced",
+      "all_synced_continuing": "Everything is up to date. Continuing..."
     },
     "draft_books": {
       "title": "Select books to draft",
