@@ -30,15 +30,6 @@ public class SyncConfig
     public bool TargetOnly { get; init; }
 
     /// <summary>
-    /// A value indicating whether we are to train the SMT engine.
-    /// </summary>
-    /// <value>
-    /// Required. <c>true</c> if we are to train the SMT engine; otherwise <c>false</c>.
-    /// </value>
-    /// <remarks>This value is not used if <see cref="TargetOnly"/> is <c>true</c>.</remarks>
-    public bool TrainEngine { get; init; }
-
-    /// <summary>
     /// The user who is initiating the sync.
     /// </summary>
     /// <value>

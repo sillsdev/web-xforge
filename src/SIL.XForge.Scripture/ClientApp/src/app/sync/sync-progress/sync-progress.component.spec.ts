@@ -84,20 +84,7 @@ describe('SyncProgressComponent', () => {
   it('show progress as source and target combined', fakeAsync(() => {
     const env = new TestEnvironment({
       userId: 'user01',
-      sourceProject: 'sourceProject02',
-      translationSuggestionsEnabled: true
-    });
-    env.setupProjectDoc();
-    env.checkCombinedProgress();
-    expect(env.syncStatus).not.toBeNull();
-    tick();
-  }));
-
-  it('show source and target progress combined when translation suggestions disabled', fakeAsync(() => {
-    const env = new TestEnvironment({
-      userId: 'user01',
-      sourceProject: 'sourceProject02',
-      translationSuggestionsEnabled: false
+      sourceProject: 'sourceProject02'
     });
     env.setupProjectDoc();
     env.checkCombinedProgress();
@@ -164,7 +151,6 @@ class HostComponent {
 interface TestEnvArgs {
   userId: string;
   sourceProject?: string;
-  translationSuggestionsEnabled?: boolean;
   isInProgress?: boolean;
 }
 
@@ -185,7 +171,6 @@ class TestEnvironment {
       data: createTestProject(
         {
           translateConfig: {
-            translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
             source:
               args.sourceProject != null
                 ? {

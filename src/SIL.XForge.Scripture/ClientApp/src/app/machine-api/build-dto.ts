@@ -18,8 +18,13 @@ export interface BuildDto extends ResourceDto {
 
 /** Execution data from a Serval translation build. */
 export interface BuildExecutionData {
+  averagePretranslationConfidence?: number;
+  isPretranslateFilteredByChapter?: boolean;
+  isTrainFilteredByChapter?: boolean;
   trainCount: number;
   pretranslateCount: number;
+  resolvedSourceLanguage?: string;
+  resolvedTargetLanguage?: string;
   sourceLanguageTag?: string;
   targetLanguageTag?: string;
   warnings: string[];
