@@ -278,44 +278,49 @@ export async function localizedScreenshots(
   });
   await page.getByRole('button', { name: 'Generate draft' }).click();
 
-  // FIXME(application-bug) This sometimes fails when "You have no books available for drafting." is shown
-  await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
-  await expect(page.getByText('Loading project sync status...')).not.toBeVisible({ timeout: 15_000 });
+  // The stepper may first ask to sync projects that have pending changes in Paratext; skip past that if it appears
+  const continueAnywayLocator = page.getByRole('button', { name: 'Continue anyway' });
+  const reviewDraftSetupLocator = page.getByRole('heading', { name: 'Review draft setup' });
+  await expect(reviewDraftSetupLocator.or(continueAnywayLocator).first()).toBeVisible();
+  if (await continueAnywayLocator.isVisible()) await continueAnywayLocator.click();
+  await expect(reviewDraftSetupLocator).toBeVisible();
+
+  const stepperLocator = page.locator('app-new-draft');
+  const stepperNextButtonLocator = stepperLocator.locator('.step-buttons').getByRole('button').last();
   await forEachLocale(async locale => {
-    await user.hover(
-      page.locator('app-draft-generation-steps .button-strip').getByRole('button').last(),
-      defaultArrowLocation
-    );
+    await user.hover(stepperNextButtonLocator, defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('app-draft-generation')],
+      [stepperLocator],
       { ...context, pageName: 'generate_draft_confirm_sources', locale },
       { margin: 8 }
     );
   });
 
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.waitForTimeout(1000);
+  await expect(page.getByRole('heading', { name: 'Select books to draft' })).toBeVisible();
 
   await page.getByRole('option', { name: 'Ruth' }).click();
   await forEachLocale(async locale => {
     await user.hover(page.getByRole('option', { selected: true }), defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('app-draft-generation')],
+      [stepperLocator],
       { ...context, pageName: 'generate_draft_select_books_to_draft', locale },
       { margin: 8 }
     );
   });
 
   await page.getByRole('button', { name: 'Next' }).click();
-  const ntCheckboxLocator = page.locator('app-book-multi-select').getByRole('checkbox').nth(1);
+  await expect(page.getByRole('heading', { name: 'Select books to train on' })).toBeVisible();
+  // Books that look complete may already be selected, so this is a no-op in that case
+  const ntCheckboxLocator = page.locator('app-book-multi-select .nt-checkbox').getByRole('checkbox');
   await ntCheckboxLocator.check();
   await forEachLocale(async locale => {
     await user.hover(ntCheckboxLocator);
     await screenshotElements(
       page,
-      [page.locator('app-draft-generation')],
+      [stepperLocator],
       { ...context, pageName: 'generate_draft_select_books_to_train', locale },
       { margin: 8 }
     );
@@ -333,10 +338,10 @@ export async function localizedScreenshots(
 
   await forEachLocale(async locale => {
     await expect(emailLocator).not.toBeVisible();
-    await user.hover(page.getByRole('button').last(), defaultArrowLocation);
+    await user.hover(stepperNextButtonLocator, defaultArrowLocation);
     await screenshotElements(
       page,
-      [page.locator('app-draft-generation')],
+      [stepperLocator],
       { ...context, pageName: 'generate_draft_summary', locale },
       { margin: 8 }
     );
@@ -345,12 +350,11 @@ export async function localizedScreenshots(
   // Reset the viewport size to the original size full page screenshots aren't excessively tall
   await page.setViewportSize(originalViewportSize);
 
-  // Generate the draft
-
+  // Generate the draft. Developer mode adds the engine options to the summary step, so enable it only after the summary
+  // screenshots are taken.
   await enableDeveloperMode(page, { closeMenu: true });
-  await user.check(page.getByRole('checkbox', { name: 'Use Echo Translation Engine' }));
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Generate draft' }).click();
+  await user.check(page.getByRole('checkbox', { name: 'Echo Translation Engine' }));
+  await page.getByRole('button', { name: 'Generate Draft' }).click();
   await expect(page.getByText('Draft queued')).toBeVisible({ timeout: 60_000 });
 
   // Go to settings page and set a source while the draft is being generated

@@ -18,7 +18,36 @@ import { UserEmulator } from '../user-emulator.mts';
 type EngineMode = 'echo' | 'fast';
 
 const ENGINE_MODE: EngineMode = 'echo';
-const DRAFT_PROJECT_SHORT_NAME = 'SEEDSP2';
+
+const TARGET_PROJECT_SHORT_NAME = 'SFDDP';
+const DRAFTING_SOURCE = { shortName: 'ntv', optionName: 'NTV - Nueva Traducción' };
+const SECOND_REFERENCE = { shortName: 'dhh94', optionName: 'DHH94 - Spanish: Dios Habla' };
+
+// Every canonical book with content in the drafting source is offered for drafting (NTV is a complete Bible).
+const EXPECTED_DRAFTABLE_BOOK_COUNT = 66;
+
+// A book the test will partially draft. The test drafts some of its untranslated chapters.
+const PARTIAL_BOOK_NAME = 'Genesis';
+const DRAFT_CHAPTERS = '30-32';
+const FIRST_DRAFTED_CHAPTER = 30;
+const AN_UNDRAFTED_CHAPTER = 33;
+// A book the test will draft in full. It has 12 chapters, the minimum for the wizard to offer partial drafting, so it
+// exercises the whole-book path of a book that could have been drafted partially.
+const WHOLE_BOOK_NAME = 'Daniel (Hebrew)';
+const WHOLE_BOOK_CHAPTERS = '1-12';
+
+// Books selected for training. The New Testament is complete in the target project. Used to check that the training
+// selection is remembered when returning to the wizard.
+const TRAINING_NT_BOOKS = ['Matthew', 'Mark'];
+// A training book deliberately left unselected. It must still be unselected when returning to the wizard.
+const UNSELECTED_TRAINING_BOOK = 'Luke';
+
+const TRAINING_FILES = [
+  { path: 'test_data/partial_draft_training_1.tsv', title: 'partial_draft_training_1' },
+  { path: 'test_data/partial_draft_training_2.tsv', title: 'partial_draft_training_2' }
+];
+// Deselected in the wizard, and expected to still be deselected when returning to the wizard.
+const DESELECTED_FILE = TRAINING_FILES[1];
 
 export async function generateDraft(
   page: Page,
@@ -31,145 +60,231 @@ export async function generateDraft(
   await page.waitForTimeout(500);
   const user = new UserEmulator(page);
 
-  await freshlyConnectProject(page, DRAFT_PROJECT_SHORT_NAME);
+  await freshlyConnectProject(page, TARGET_PROJECT_SHORT_NAME);
 
+  // Needed for the Echo engine option on the wizard summary step
   await enableDeveloperMode(page, { closeMenu: true });
 
   await user.click(page.getByRole('link', { name: 'Generate draft' }));
   await expect(page.getByRole('heading', { name: 'Generate translation drafts' })).toBeVisible();
-  await screenshot(page, { pageName: 'generate_draft', ...context });
 
-  // Have Serval admin enable pre-translation drafting
+  // Have a Serval admin enable pre-translation drafting on the project
   const siteAdminBrowser = await getNewBrowserForSideWork();
   await logInAsSiteAdmin(siteAdminBrowser.page);
-  await enableDraftingOnProjectAsServalAdmin(siteAdminBrowser.page, DRAFT_PROJECT_SHORT_NAME);
+  await enableDraftingOnProjectAsServalAdmin(siteAdminBrowser.page, TARGET_PROJECT_SHORT_NAME);
   await siteAdminBrowser.browser.close();
 
-  // Configure sources page
+  await configureSources(page, user, context);
+
+  // Launch a draft of part of one book and all of another
+  await user.click(page.getByRole('button', { name: 'Generate draft' }));
+  await stepThroughPreface(page, user, context);
+  await selectBooksToDraft(page, user, context);
+  await selectTrainingData(page, user, context);
+  await reviewSummaryAndGenerate(page, user, context);
+
+  await waitForDraftToComplete(page, context);
+  await applyOneChapterFromEditor(page, user, context);
+  await importDraft(page, user, context);
+  // Verify what was actually drafted
+  await verifyDraftedChaptersInEditor(page, user);
+
+  // Return to the wizard and verify remembered selections
+  await verifyRememberedSelectionsOnReturn(page, user, context);
+
+  await logOut(page);
+}
+
+/** Configure the drafting source, two reference projects, and upload two training-data files, then save & sync. */
+async function configureSources(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
   await user.click(page.getByRole('button', { name: 'Configure sources' }));
-  await screenshot(page, { pageName: 'configure_sources_initial', ...context });
 
   const trainingDataSection = page.locator('mat-card').nth(0);
   const translationDataSection = page.locator('mat-card').nth(1);
 
-  // Step 1: Reference projects
   await user.click(trainingDataSection.getByRole('combobox').first());
-  await user.type('ntv');
-  await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
+  await user.type(DRAFTING_SOURCE.shortName);
+  await user.click(page.getByRole('option', { name: DRAFTING_SOURCE.optionName }));
   await user.click(page.getByRole('button', { name: 'Add another reference project' }));
   await user.click(trainingDataSection.getByRole('combobox').nth(1));
-  await user.type('dhh94');
-  await user.click(page.getByRole('option', { name: 'DHH94 - Spanish: Dios Habla' }));
+  await user.type(SECOND_REFERENCE.shortName);
+  await user.click(page.getByRole('option', { name: SECOND_REFERENCE.optionName }));
 
-  // Step 2: Source project
+  // Fixtures have a header row; skip it.
+  for (const file of TRAINING_FILES) {
+    await user.click(page.getByRole('button', { name: 'Upload spreadsheet' }));
+    await page.locator('mat-dialog-container input[type="file"]').setInputFiles(file.path);
+    await page.getByRole('checkbox', { name: 'Skip first row of data file' }).check();
+    await page.locator('#upload-save-btn').click();
+    await expect(page.locator('mat-dialog-container')).toHaveCount(0);
+  }
+
   await user.click(translationDataSection.getByRole('combobox'));
-  await user.type('ntv');
-  await user.click(page.getByRole('option', { name: 'NTV - Nueva Traducción' }));
+  await user.type(DRAFTING_SOURCE.shortName);
+  await user.click(page.getByRole('option', { name: DRAFTING_SOURCE.optionName }));
 
-  // Step 3: Main project and other training data
   await user.check(page.getByRole('checkbox', { name: 'All the language codes are correct' }));
-  await screenshot(page, { pageName: 'configure_sources_final', ...context });
-  await user.click(page.getByRole('button', { name: 'Save & sync' }));
+  await screenshot(page, { pageName: 'generate_draft_configure_sources', ...context });
+  await user.click(page.locator('#save_button'));
 
-  // Wait for changes to be fully saved, which can take some time if the projects have never synced before
+  // Saving/syncing can take several minutes on first sync.
   const closeLocator = page.getByRole('button', { name: 'Close' });
   await expect(closeLocator).toBeVisible({ timeout: 5 * 60_000 });
   await user.click(closeLocator);
+}
 
-  // The stepper renders every step to the page at once. Get the step we're on.
-  function getStep(): Locator {
-    return page.locator('.mat-horizontal-stepper-content-current');
+/**
+ * The wizard may first ask to sync projects that have changes pending in Paratext. After that (or instead, when nothing
+ * is pending) it shows a read-only summary of the configured sources.
+ */
+async function stepThroughPreface(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
+  const continueAnyway = page.getByRole('button', { name: 'Continue anyway' });
+  const confirmSources = page.locator('app-confirm-sources');
+  await expect(confirmSources.or(continueAnyway).first()).toBeVisible();
+  if (await continueAnyway.isVisible()) {
+    await user.click(continueAnyway);
   }
-  async function goToNextStepExpectingHeading(expectedHeading: string): Promise<void> {
-    await user.click(getStep().getByRole('button', { name: 'Next' }));
-    await expect(getStep().getByRole('heading', { name: expectedHeading })).toBeVisible();
-    await user.wait(1500);
+
+  await expect(confirmSources).toBeVisible();
+  await expect(page.locator('app-confirm-sources')).toContainText(DRAFTING_SOURCE.shortName.toUpperCase());
+  await screenshot(page, { pageName: 'generate_draft_preface', ...context });
+  await user.click(page.getByRole('button', { name: 'Next' }));
+}
+
+/**
+ * Select two books to draft. Genesis is partly translated: check that its chapter range defaults to the untranslated
+ * chapters, check that an invalid range is rejected, then set the range to DRAFT_CHAPTERS. Daniel is drafted in full.
+ */
+async function selectBooksToDraft(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
+  await expect(page.getByRole('option', { name: PARTIAL_BOOK_NAME, exact: true })).toBeVisible();
+  await expect(page.getByRole('option')).toHaveCount(EXPECTED_DRAFTABLE_BOOK_COUNT);
+  await user.click(page.getByRole('option', { name: PARTIAL_BOOK_NAME, exact: true }));
+
+  const chapterInput = page.locator('.partial-book-drafting-table .chapter-input input');
+  await expect(chapterInput).toBeVisible();
+
+  // By default the chapters to draft are those that have content in the source but not in the target.
+  const defaultRange = await chapterInput.inputValue();
+  console.log(`Default drafting chapter range for ${PARTIAL_BOOK_NAME}: "${defaultRange}"`);
+  expect(defaultRange).toMatch(/-50$/);
+  expect(Number.parseInt(defaultRange)).toBeGreaterThan(1);
+
+  await chapterInput.fill('23-21');
+  await chapterInput.blur();
+  await expect(page.locator('.partial-book-drafting-table .chapter-error')).toHaveCount(1);
+
+  await chapterInput.fill(DRAFT_CHAPTERS);
+  await chapterInput.blur();
+  await expect(page.locator('.partial-book-drafting-table .chapter-error')).toHaveCount(0);
+  await expect(chapterInput).toHaveValue(DRAFT_CHAPTERS);
+
+  await user.click(page.getByRole('option', { name: WHOLE_BOOK_NAME, exact: true }));
+  await expect(page.getByRole('option', { name: WHOLE_BOOK_NAME, exact: true })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  // The wizard offers a chapter input for Daniel only when the target project already has content in it, which is the
+  // case after an earlier run of this test imported the whole book and synced it to Paratext. The input defaults to the
+  // chapters without content in the target, falling back to the whole book when every chapter has content, so here it
+  // must default to the whole book.
+  const wholeBookHasChapterInput: boolean =
+    (await page.locator('.partial-book-drafting-table .book-name', { hasText: WHOLE_BOOK_NAME }).count()) > 0;
+  console.log(`${WHOLE_BOOK_NAME} has a chapter input: ${wholeBookHasChapterInput}`);
+  if (wholeBookHasChapterInput) {
+    // Rows are in canonical order, so Daniel's input comes after Genesis's
+    await expect(page.locator('.partial-book-drafting-table .chapter-input input').nth(1)).toHaveValue(
+      WHOLE_BOOK_CHAPTERS
+    );
+  }
+  await expect(page.locator('.partial-book-drafting-table .chapter-input input')).toHaveCount(
+    wholeBookHasChapterInput ? 2 : 1
+  );
+
+  await screenshot(page, { pageName: 'generate_draft_select_books', ...context });
+  await user.click(page.getByRole('button', { name: 'Next' }));
+}
+
+/**
+ * On the training step, select New Testament books in the target project, check they are paired in every reference
+ * project, and deselect one training data file.
+ */
+async function selectTrainingData(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
+  // Select specific books and leave UNSELECTED_TRAINING_BOOK unselected, so that when returning to the wizard both the
+  // selected and the unselected state can be checked.
+  const bookSelects = page.locator('app-book-multi-select');
+  const targetBookSelect = bookSelects.first();
+  for (const book of TRAINING_NT_BOOKS) {
+    await user.click(targetBookSelect.getByRole('option', { name: book, exact: true }));
   }
 
-  // Draft generation page
-  await user.click(page.getByRole('button', { name: 'Generate draft' }));
-  await expect(page.getByRole('heading', { name: 'Review draft setup' })).toBeVisible();
-  await screenshot(page, { pageName: 'generate_draft_confirm_sources', ...context });
-
-  await goToNextStepExpectingHeading('Select books to draft');
-  await expect(getStep().getByRole('option')).toHaveCount(66);
-  const options = await getStep().getByRole('option').all();
-
-  let previousBookWasSelected = false;
-  let firstBookFollowingLastSelectedBook: string | undefined;
-  for (const option of options) {
-    const isSelected = (await option.getAttribute('aria-selected')) === 'true';
-    if (isSelected) await user.click(option);
-
-    if (previousBookWasSelected && !isSelected) {
-      firstBookFollowingLastSelectedBook = (await option.textContent())!.trim();
+  // Selecting a book in the target project automatically selects it in each reference project.
+  const sourceCount = await bookSelects.count();
+  expect(sourceCount).toBeGreaterThan(1); // target + at least one training source
+  for (let i = 1; i < sourceCount; i++) {
+    for (const book of TRAINING_NT_BOOKS) {
+      await expectBookSelected(bookSelects.nth(i), book, true);
     }
-
-    previousBookWasSelected = isSelected;
   }
 
-  const bookToDraft = firstBookFollowingLastSelectedBook == null ? 'Obadiah' : firstBookFollowingLastSelectedBook;
+  // A book can be deselected in one reference project as long as another reference project still has it selected.
+  const toggledBook = TRAINING_NT_BOOKS[TRAINING_NT_BOOKS.length - 1];
+  const firstSourceSelect = bookSelects.nth(1);
+  await user.click(firstSourceSelect.getByRole('option', { name: toggledBook, exact: true }));
+  await expectBookSelected(firstSourceSelect, toggledBook, false);
+  await user.click(firstSourceSelect.getByRole('option', { name: toggledBook, exact: true }));
+  await expectBookSelected(firstSourceSelect, toggledBook, true);
 
-  await user.click(getStep().getByRole('option', { name: bookToDraft }));
-  await screenshot(page, { pageName: 'generate_draft_select_books_to_draft', ...context });
+  // Both training data files are selected by default for a project's first draft. Deselect the second one.
+  const fileCheckbox = page.locator('.training-data-files').getByRole('checkbox', { name: DESELECTED_FILE.title });
+  await expect(fileCheckbox).toBeChecked();
+  await user.click(fileCheckbox);
+  await expect(fileCheckbox).not.toBeChecked();
 
-  await goToNextStepExpectingHeading('Select books to train on');
-  await user.check(page.getByRole('checkbox', { name: 'New Testament' }));
-  await screenshot(page, { pageName: 'generate_draft_select_books_to_train', ...context });
+  await screenshot(page, { pageName: 'generate_draft_training_data', ...context });
+  await user.click(page.getByRole('button', { name: 'Next' }));
+}
 
-  await goToNextStepExpectingHeading('Advanced');
-  if (ENGINE_MODE === 'echo') await user.check(page.getByRole('checkbox', { name: 'Use Echo Translation Engine' }));
-  else if (ENGINE_MODE === 'fast') await user.check(page.getByRole('checkbox', { name: 'Enable Fast Training' }));
+/** The summary should list both books, the partial one with its chapter range; set the engine and launch. */
+async function reviewSummaryAndGenerate(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
+  await expect(page.locator('.draft-books-list').getByRole('listitem')).toHaveText([
+    `${PARTIAL_BOOK_NAME} ${DRAFT_CHAPTERS}`,
+    WHOLE_BOOK_NAME
+  ]);
 
-  await screenshot(page, { pageName: 'generate_draft_advanced_settings', ...context });
+  if (ENGINE_MODE === 'echo') {
+    await user.check(page.getByRole('checkbox', { name: 'Echo Translation Engine' }));
+  } else if (ENGINE_MODE === 'fast') {
+    await user.check(page.getByRole('checkbox', { name: 'Fast Training' }));
+  }
 
-  await goToNextStepExpectingHeading('Summary');
-  await page.waitForTimeout(400);
   await screenshot(page, { pageName: 'generate_draft_summary', ...context });
-  await user.click(page.getByRole('button', { name: 'Generate draft' }));
-  const startTime = Date.now();
+  await user.click(page.getByRole('button', { name: 'Generate Draft' }));
   console.log('Draft started');
+}
 
-  const progressCard = page.locator('.draft-progress-card');
-  const progressCardHeader = progressCard.locator('mat-card-title');
+/** Wait for the draft to complete, with stall detection. */
+async function waitForDraftToComplete(page: Page, context: ScreenshotContext): Promise<void> {
+  const startTime = Date.now();
+  const progressCardHeader = page.locator('.draft-progress-card mat-card-title');
+  await expect(progressCardHeader).toContainText(PARTIAL_BOOK_NAME, { timeout: 60_000 });
+  await expect(progressCardHeader).toContainText(WHOLE_BOOK_NAME);
 
-  // Initializing
-  await expect(progressCardHeader).toContainText('Draft initializing');
-  await expect(progressCardHeader).toContainText(bookToDraft);
-  await screenshot(page, { pageName: 'generate_draft_initializing', ...context });
-
-  // Queued
-  await expect(progressCardHeader).toContainText('Draft queued', { timeout: 60_000 });
-  await expect(progressCardHeader).toContainText(bookToDraft);
-  await screenshot(page, { pageName: 'generate_draft_queued', ...context });
-
-  // The draft ready message shouldn't show up until after progress messages, but echo jobs can run too fast for
-  // progress messages to appear.
   const draftReadyLocator = page.getByRole('heading', { name: 'The draft is ready' });
-
-  // Wait for the draft to start - timeout is long because there can be another job in the queue
   const inProgressTimeout = ENGINE_MODE === 'echo' ? 3 * 60_000 : 15 * 60_000;
   await expect(page.getByRole('heading', { name: 'Draft in progress' }).or(draftReadyLocator)).toBeVisible({
     timeout: inProgressTimeout
   });
-  console.log('UI shows draft in progress after', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
-  await screenshot(page, { pageName: 'generate_draft_in_progress', ...context });
 
-  // Make sure the progress is changing
   let progress: number | null = null;
   let lastProgressChange: number | null = null;
   while (!(await draftReadyLocator.isVisible())) {
-    // Use allTextContents so it won't crash if the element disappears before we can read it
-    // FIXME Sometimes fails with "Execution context was destroyed, most likely because of a navigation"
     const currentProgressText = (await page.locator('circle-progress').allTextContents())[0];
     if (currentProgressText == null) break;
-
     const currentProgress = Number.parseInt(currentProgressText);
     if (progress !== currentProgress) {
       lastProgressChange = Date.now();
       progress = currentProgress;
     }
-    // If the progress hasn't changed in a while, throw an error
     const progressChangeTimeoutMinutes = 3;
     if (lastProgressChange != null && Date.now() - lastProgressChange > 60_000 * progressChangeTimeoutMinutes) {
       throw new Error(
@@ -179,17 +294,12 @@ export async function generateDraft(
     await page.waitForTimeout(100);
   }
 
-  // Completion
   await expect(draftReadyLocator).toBeVisible();
-  await screenshot(page, { pageName: 'generate_draft_completed', ...context });
   console.log('Draft generation took', ((Date.now() - startTime) / 60_000).toFixed(2), 'minutes');
+  await screenshot(page, { pageName: 'generate_draft_completed', ...context });
 
-  // FIXME(application-bug) If we don't reload the page at this step, the page freezes, especially on lower-end machines
-  // (including GitHub actions) while attempting to click on the name of the book to draft.
-  // The reload also serves to trigger the update of the draft status
+  // Reloading triggers the draft-status update and avoids a known freeze on lower-end machines.
   await page.reload();
-
-  // Wait for draft to finalize. In some cases it may already have finalized, so if it doesn't show up, skip it
   let finishing: boolean;
   try {
     await expect(page.getByText('Draft is Finishing')).toBeVisible({ timeout: 15_000 });
@@ -198,35 +308,184 @@ export async function generateDraft(
     finishing = false;
   }
   if (finishing) await expect(page.getByText('Draft is Finishing')).not.toBeVisible({ timeout: 15_000 });
+}
 
-  // Select formatting options
+/**
+ * Choose formatting options, then open the Genesis draft in the editor and add its first drafted chapter to the project
+ * from there. This tests adding a single chapter from the editor, and it also guarantees that the chapter has content
+ * when the whole draft is imported in importDraft, so the wizard's overwrite confirmation step appears.
+ */
+async function applyOneChapterFromEditor(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
+  // Formatting options must be chosen before the preview and import actions appear.
   await user.click(page.getByRole('button', { name: 'Formatting options' }));
   await user.click(page.getByRole('button', { name: 'Save' }));
 
-  // Preview and apply chapter 1
-  await user.click(page.getByRole('button', { name: bookToDraft, exact: true }));
-  await user.click(page.getByRole('button', { name: 'Add to project' }));
-  await user.click(page.getByRole('button', { name: 'Overwrite chapter' }));
-  await user.click(page.locator('app-tab-header').filter({ hasText: DRAFT_PROJECT_SHORT_NAME }));
+  // Daniel's button is labeled with the book name alone because all of it was drafted; Genesis's includes the range.
+  await expect(page.getByRole('button', { name: WHOLE_BOOK_NAME, exact: true })).toBeVisible();
+  await user.click(page.getByRole('button', { name: `${PARTIAL_BOOK_NAME} ${DRAFT_CHAPTERS}`, exact: true }));
 
-  // Go back to generate draft page and apply all chapters
+  // The preview opens on the first drafted chapter
+  await expectEditorOnChapter(page, PARTIAL_BOOK_NAME, FIRST_DRAFTED_CHAPTER);
+  await user.click(page.getByRole('button', { name: 'Add to project' }));
+  // The editor asks for confirmation only when the chapter already has content, which is the case when an earlier run of
+  // this test imported the draft and synced it to Paratext. Otherwise the draft is added right away.
+  const overwriteButton = page.getByRole('button', { name: 'Overwrite chapter' });
+  const addedIndicator = page.locator('.draft-indicator');
+  await expect(overwriteButton.or(addedIndicator)).toBeVisible();
+  if (await overwriteButton.isVisible()) await user.click(overwriteButton);
+  await expect(addedIndicator).toBeVisible();
+  await user.click(page.locator('app-tab-header').filter({ hasText: TARGET_PROJECT_SHORT_NAME }));
+  await screenshot(page, { pageName: 'generate_draft_chapter_applied', ...context });
+
   await user.click(page.getByRole('link', { name: 'Generate draft' }));
+}
+
+/** Import the completed draft into the target project, confirming the overwrite of the chapter applied earlier. */
+async function importDraft(page: Page, user: UserEmulator, context: ScreenshotContext): Promise<void> {
   await user.click(page.getByRole('button', { name: 'Add to a project' }));
   await user.click(page.getByRole('combobox', { name: 'Choose a project' }));
-  await user.type(DRAFT_PROJECT_SHORT_NAME);
-  await user.click(page.getByRole('option', { name: `${DRAFT_PROJECT_SHORT_NAME} -` }));
-  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.type(TARGET_PROJECT_SHORT_NAME);
+  await user.click(page.getByRole('option', { name: `${TARGET_PROJECT_SHORT_NAME} -` }));
+  await user.click(page.locator('[data-test-id="step-1-next"]'));
+
+  // With more than one drafted book, the wizard asks which to import. Both are checked by default.
+  await expect(page.getByRole('heading', { name: 'Confirm books to import' })).toBeVisible();
+  await expect(page.getByRole('checkbox', { name: `${PARTIAL_BOOK_NAME} ${DRAFT_CHAPTERS}` })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: WHOLE_BOOK_NAME })).toBeChecked();
+  await user.click(page.locator('[data-test-id="step-4-next"]'));
+
+  // The chapter applied from the editor already has content, so the overwrite confirmation must appear
   await user.check(page.getByRole('checkbox', { name: /I understand that existing content will be overwritten/ }));
-  await user.click(page.getByRole('button', { name: 'Import' }));
-  await expect(page.getByText('Import complete', { exact: true })).toBeVisible();
-  await user.click(page.getByRole('button', { name: 'Next' }));
+  await user.click(page.locator('[data-test-id="step-5-next"]'));
+
+  await expect(page.getByText('Import complete', { exact: true })).toBeVisible({ timeout: 5 * 60_000 });
+
+  // Finish the wizard through the sync step, as a real user would, so the imported draft lands in the project.
+  await user.click(page.locator('[data-test-id="step-6-next"]'));
   await user.click(page.locator('[data-test-id="step-7-sync"]'));
-  await expect(page.getByText(`The draft has been imported into ${DRAFT_PROJECT_SHORT_NAME}`)).toBeVisible({
+  await expect(page.getByText(`The draft has been imported into ${TARGET_PROJECT_SHORT_NAME}`)).toBeVisible({
     timeout: E2E_SYNC_DEFAULT_TIMEOUT
   });
-  await user.click(page.getByRole('button', { name: 'Done' }));
+  await user.click(page.locator('[data-test-id="step-7-done"]'));
 
-  await screenshot(page, { pageName: 'generate_draft_add_to_project', ...context });
+  await screenshot(page, { pageName: 'generate_draft_imported', ...context });
+}
 
-  await logOut(page);
+/**
+ * Verify that the first drafted chapter of Genesis has content, that the chapter after the drafted range is still
+ * empty, and that Daniel has content.
+ */
+async function verifyDraftedChaptersInEditor(page: Page, user: UserEmulator): Promise<void> {
+  await user.click(page.getByRole('link', { name: 'Edit & review' }));
+  await page.waitForSelector('#sync-icon:not(.sync-in-progress)');
+
+  await selectBookAndChapter(page, user, PARTIAL_BOOK_NAME, FIRST_DRAFTED_CHAPTER);
+  await expectEditorOnChapter(page, PARTIAL_BOOK_NAME, FIRST_DRAFTED_CHAPTER);
+  await expectVerseHasContent(page, FIRST_DRAFTED_CHAPTER, 1);
+
+  // Confirm the editor is on the expected chapter before checking that it is empty, so that a failed navigation is not
+  // mistaken for an empty chapter.
+  await selectBookAndChapter(page, user, PARTIAL_BOOK_NAME, AN_UNDRAFTED_CHAPTER);
+  await expectEditorOnChapter(page, PARTIAL_BOOK_NAME, AN_UNDRAFTED_CHAPTER);
+  const targetEditor = page.locator('app-tab-group:has(#target) .ql-editor').filter({ visible: true });
+  await expect(targetEditor).toBeVisible();
+  const verseTexts = await targetEditor.locator(`[data-segment^="verse_${AN_UNDRAFTED_CHAPTER}_"]`).allTextContents();
+  const versesWithContent = verseTexts.filter(text => text.trim().length > 0);
+  expect(versesWithContent).toEqual([]);
+
+  await selectBookAndChapter(page, user, WHOLE_BOOK_NAME, 1);
+  await expectEditorOnChapter(page, WHOLE_BOOK_NAME, 1);
+  await expectVerseHasContent(page, 1, 1);
+}
+
+async function expectVerseHasContent(page: Page, chapter: number, verse: number): Promise<void> {
+  const segment = getTargetSegment(page, chapter, verse);
+  await expect(segment).toBeVisible();
+  expect(((await segment.textContent()) ?? '').trim().length).toBeGreaterThan(0);
+}
+
+async function expectEditorOnChapter(page: Page, book: string, chapter: number): Promise<void> {
+  const chooser = page.locator('.toolbar app-book-chapter-chooser');
+  await expect(chooser.getByRole('combobox').first()).toContainText(book);
+  await expect(chooser.getByRole('combobox').last()).toContainText(String(chapter));
+}
+
+/**
+ * Returning to generate another draft, the wizard should restore the training selections (training source books,
+ * target training books, and training-data file selection) but NOT the drafting book/chapter selection.
+ */
+async function verifyRememberedSelectionsOnReturn(
+  page: Page,
+  user: UserEmulator,
+  context: ScreenshotContext
+): Promise<void> {
+  await user.click(page.getByRole('link', { name: 'Generate draft' }));
+  // Once a draft exists, the button is labeled "New draft" rather than "Generate draft".
+  await user.click(page.getByRole('button', { name: 'New draft' }));
+
+  await stepThroughPreface(page, user, context);
+
+  // The selection of books to draft is intentionally not remembered: no book should be selected on return.
+  await expect(page.getByRole('option', { name: PARTIAL_BOOK_NAME, exact: true })).toBeVisible();
+  await expect(page.getByRole('option', { selected: true })).toHaveCount(0);
+  await expect(page.locator('.partial-book-drafting-table')).toHaveCount(0);
+  await user.click(page.getByRole('option', { name: PARTIAL_BOOK_NAME, exact: true }));
+  const chapterInput = page.locator('.partial-book-drafting-table .chapter-input input');
+  await chapterInput.fill(DRAFT_CHAPTERS);
+  await chapterInput.blur();
+  await user.click(page.getByRole('button', { name: 'Next' }));
+
+  // The training selection is remembered: the selected books come back selected and the unselected one stays unselected.
+  const bookSelects = page.locator('app-book-multi-select');
+  const bookSelectCount = await bookSelects.count();
+  expect(bookSelectCount).toBeGreaterThan(1); // target + at least one training source
+  for (let i = 0; i < bookSelectCount; i++) {
+    const bookSelect = bookSelects.nth(i);
+    for (const book of TRAINING_NT_BOOKS) {
+      await expectBookSelected(bookSelect, book, true);
+    }
+  }
+
+  await expectBookSelected(bookSelects.first(), UNSELECTED_TRAINING_BOOK, false);
+
+  const fileCheckbox = page.locator('.training-data-files').getByRole('checkbox', { name: DESELECTED_FILE.title });
+  await expect(fileCheckbox).not.toBeChecked();
+
+  await screenshot(page, { pageName: 'generate_draft_remembered_selections', ...context });
+}
+
+async function expectBookSelected(bookSelect: Locator, book: string, selected: boolean): Promise<void> {
+  const option = bookSelect.getByRole('option', { name: book, exact: true });
+  if (selected) {
+    await expect(option).toHaveAttribute('aria-selected', 'true');
+  } else {
+    await expect(option).not.toHaveAttribute('aria-selected', 'true');
+  }
+}
+
+// Editor helpers (mirrors edit-translation.ts)
+
+function getTargetSegment(page: Page, chapter: number, verse: number): Locator {
+  return page
+    .locator('app-tab-group:has(#target) .ql-editor')
+    .locator(`[data-segment="verse_${chapter}_${verse}"]`)
+    .filter({ visible: true });
+}
+
+async function selectBookAndChapter(page: Page, user: UserEmulator, book: string, chapter: number): Promise<void> {
+  const bookChapterChooser = page.locator('.toolbar app-book-chapter-chooser');
+  const bookChooser = bookChapterChooser.getByRole('combobox').first();
+  const chapterChooser = bookChapterChooser.getByRole('combobox').last();
+
+  const currentBookText = (await bookChooser.textContent())?.trim() ?? '';
+  if (book !== currentBookText) {
+    await user.click(bookChooser);
+    await user.click(page.getByRole('option', { name: book, exact: true }));
+  }
+
+  const currentChapterText = (await chapterChooser.textContent())?.trim() ?? '';
+  if (chapter.toString() !== currentChapterText) {
+    await user.click(chapterChooser);
+    await user.click(page.getByRole('option', { name: chapter.toString(), exact: true }));
+  }
 }
