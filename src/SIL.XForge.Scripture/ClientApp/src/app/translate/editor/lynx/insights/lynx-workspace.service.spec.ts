@@ -27,6 +27,8 @@ import { LynxWorkspaceService, TextDocReader } from './lynx-workspace.service';
 
 describe('LynxWorkspaceService', () => {
   const PROJECT_ID = 'project01';
+  /** Enough time for the service to settle diagnostics events for a doc and then emit the insights. */
+  const DIAGNOSTICS_DEBOUNCE_TIME = 25;
   const BOOK_NUM = 40;
   const CHAPTER_NUM = 1;
   const TEST_CONTENT = 'This is test content.';
@@ -233,7 +235,7 @@ describe('LynxWorkspaceService', () => {
         uri: textDocId.toString(),
         diagnostics
       });
-      tick(10); // 10ms debounce time
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
     }
 
     setupActiveTextDocId(): void {
@@ -1071,7 +1073,7 @@ describe('LynxWorkspaceService', () => {
       };
 
       env.diagnosticsChangedTestSubject$.next(diagnosticsChangedEvent);
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       // Should receive 3 insights total
       expect(insights.length).toBe(3);
@@ -1113,7 +1115,15 @@ describe('LynxWorkspaceService', () => {
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const { insights, subscription } = env.captureInsights();
 
-      // Add insights from source-a
+      const sourceBDiagnostic = {
+        code: '002',
+        source: 'source-b',
+        range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
+        severity: DiagnosticSeverity.Error,
+        message: 'Error from source B'
+      };
+
+      // Add insights from source-a and source-b
       env.diagnosticsChangedTestSubject$.next({
         uri: textDocId.toString(),
         diagnostics: [
@@ -1123,29 +1133,15 @@ describe('LynxWorkspaceService', () => {
             range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
             severity: DiagnosticSeverity.Warning,
             message: 'Warning from source A'
-          }
+          },
+          sourceBDiagnostic
         ]
       });
-      tick(10);
-
-      // Add insights from source-b
-      env.diagnosticsChangedTestSubject$.next({
-        uri: textDocId.toString(),
-        diagnostics: [
-          {
-            code: '002',
-            source: 'source-b',
-            range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
-            severity: DiagnosticSeverity.Error,
-            message: 'Error from source B'
-          }
-        ]
-      });
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       expect(insights.length).toBe(2);
 
-      // Update only source-a with new diagnostic
+      // Update source-a's diagnostic, leaving source-b's diagnostic as it was
       env.diagnosticsChangedTestSubject$.next({
         uri: textDocId.toString(),
         diagnostics: [
@@ -1155,12 +1151,13 @@ describe('LynxWorkspaceService', () => {
             range: { start: { line: 0, character: 11 }, end: { line: 0, character: 15 } },
             severity: DiagnosticSeverity.Information,
             message: 'Updated insight from source A'
-          }
+          },
+          sourceBDiagnostic
         ]
       });
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
-      // Should now have insights from both sources
+      // Should still have insights from both sources
       expect(insights.length).toBe(2);
 
       const curInsightsByEventUriAndSource = env.service['curInsightsByEventUriAndSource'];
@@ -1175,6 +1172,68 @@ describe('LynxWorkspaceService', () => {
       const sourceBInsights = uriMap.get('source-b')!;
       expect(sourceBInsights.length).toBe(1);
       expect(sourceBInsights[0].description).toBe('Error from source B');
+
+      subscription.unsubscribe();
+    }));
+
+    it('should clear insights of a source that no longer reports diagnostics', fakeAsync(() => {
+      const env = new TestEnvironment();
+
+      // Set up project with lynx features enabled
+      const projectDoc = env.createMockProjectDoc(PROJECT_ID, {
+        autoCorrectionsEnabled: false,
+        assessmentsEnabled: true,
+        punctuationCheckerEnabled: true,
+        allowedCharacterCheckerEnabled: false
+      });
+      env.projectDocTestSubject$.next(projectDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectDoc);
+      when(mockActivatedProjectService.projectId).thenReturn(PROJECT_ID);
+
+      env.setupActiveTextDocId();
+      tick(); // Allow workspace setup to complete
+
+      const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
+      const { insights, subscription } = env.captureInsights();
+
+      const sourceBDiagnostic = {
+        code: '002',
+        source: 'source-b',
+        range: { start: { line: 0, character: 6 }, end: { line: 0, character: 10 } },
+        severity: DiagnosticSeverity.Error,
+        message: 'Error from source B'
+      };
+
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [
+          {
+            code: '001',
+            source: 'source-a',
+            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+            severity: DiagnosticSeverity.Warning,
+            message: 'Warning from source A'
+          },
+          sourceBDiagnostic
+        ]
+      });
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
+
+      expect(insights.length).toBe(2);
+
+      // Source-a's diagnostic is resolved (as when its insight action is applied), while source-b still
+      // reports its diagnostic, so the event no longer includes source-a
+      env.diagnosticsChangedTestSubject$.next({
+        uri: textDocId.toString(),
+        diagnostics: [sourceBDiagnostic]
+      });
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
+
+      expect(insights.length).toBe(1);
+      expect(insights[0].description).toBe('Error from source B');
+
+      const uriMap = env.service['curInsightsByEventUriAndSource'].get(textDocId.toString())!;
+      expect(uriMap.has('source-a')).toBe(false);
 
       subscription.unsubscribe();
     }));
@@ -1199,69 +1258,27 @@ describe('LynxWorkspaceService', () => {
       const textDocId = new TextDocId(PROJECT_ID, BOOK_NUM, CHAPTER_NUM);
       const { insights, subscription } = env.captureInsights();
 
-      // Send initial diagnostic
-      env.diagnosticsChangedTestSubject$.next({
-        uri: textDocId.toString(),
-        diagnostics: [
-          {
-            code: '001',
-            source: 'source-a',
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
-            severity: DiagnosticSeverity.Warning,
-            message: 'Warning message'
-          }
-        ]
-      });
-      tick(10);
+      const diagnostics = ['source-a', 'source-b', 'source-c'].map((source, index) => ({
+        code: `00${index + 1}`,
+        source,
+        range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
+        severity: DiagnosticSeverity.Warning,
+        message: 'Warning message'
+      }));
 
-      env.diagnosticsChangedTestSubject$.next({
-        uri: textDocId.toString(),
-        diagnostics: [
-          {
-            code: '002',
-            source: 'source-b',
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
-            severity: DiagnosticSeverity.Warning,
-            message: 'Warning message'
-          }
-        ]
-      });
-      tick(10);
-
-      env.diagnosticsChangedTestSubject$.next({
-        uri: textDocId.toString(),
-        diagnostics: [
-          {
-            code: '003',
-            source: 'source-c',
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
-            severity: DiagnosticSeverity.Warning,
-            message: 'Warning message'
-          }
-        ]
-      });
-      tick(10);
+      // Send initial diagnostics
+      env.diagnosticsChangedTestSubject$.next({ uri: textDocId.toString(), diagnostics });
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       const originalIdA = insights[0].id;
       const originalIdB = insights[1].id;
       const originalIdC = insights[2].id;
 
-      // Send same diagnostic again (simulating re-analysis)
-      env.diagnosticsChangedTestSubject$.next({
-        uri: textDocId.toString(),
-        diagnostics: [
-          {
-            code: '001',
-            source: 'source-a',
-            range: { start: { line: 0, character: 0 }, end: { line: 0, character: 5 } },
-            severity: DiagnosticSeverity.Warning,
-            message: 'Warning message'
-          }
-        ]
-      });
-      tick(10);
+      // Send same diagnostics again (simulating re-analysis)
+      env.diagnosticsChangedTestSubject$.next({ uri: textDocId.toString(), diagnostics });
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
-      // Id should be preserved
+      // Ids should be preserved
       expect(insights[0].id).toBe(originalIdA);
       expect(insights[1].id).toBe(originalIdB);
       expect(insights[2].id).toBe(originalIdC);
@@ -1310,7 +1327,7 @@ describe('LynxWorkspaceService', () => {
           }
         ]
       });
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       env.diagnosticsChangedTestSubject$.next({
         uri: textDocId2.toString(),
@@ -1324,7 +1341,7 @@ describe('LynxWorkspaceService', () => {
           }
         ]
       });
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       // Should receive all insights flattened
       expect(insights.length).toBe(3);
@@ -1375,7 +1392,7 @@ describe('LynxWorkspaceService', () => {
           }
         ]
       });
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       expect(insights.length).toBe(2);
 
@@ -1384,7 +1401,7 @@ describe('LynxWorkspaceService', () => {
         uri: textDocId.toString(),
         diagnostics: []
       });
-      tick(10);
+      tick(DIAGNOSTICS_DEBOUNCE_TIME);
 
       // All insights should be cleared
       expect(insights.length).toBe(0);
