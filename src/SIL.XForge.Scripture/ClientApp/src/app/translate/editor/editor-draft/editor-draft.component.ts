@@ -10,7 +10,6 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -67,7 +66,6 @@ import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/his
     MatProgressBar,
     NoticeComponent,
     DraftPreviewBooksComponent,
-    TranslocoMarkupComponent,
     MatFormField,
     MatSelect,
     MatSelectTrigger,

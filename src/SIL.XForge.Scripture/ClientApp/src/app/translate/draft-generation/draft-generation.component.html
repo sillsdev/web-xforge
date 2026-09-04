@@ -117,7 +117,7 @@
       @if (draftEnabled && !isDraftInProgress(draftJob)) {
         @if (!lastSyncSuccessful) {
           <app-notice type="warning" icon="warning" data-test-id="warning-last-sync-failed">
-            <transloco key="draft_generation.info_alert_last_sync_failed"></transloco>
+            {{ t("info_alert_last_sync_failed") }}
           </app-notice>
         }
       }
