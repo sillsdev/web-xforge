@@ -12,5 +12,11 @@ public class TestComplexObject : TestSimpleObject
     public required int Integer { get; init; }
     public required long LongInteger { get; init; }
     public required float SingleFloat { get; init; }
+    public required TestEnum Enum { get; init; }
     // ReSharper restore UnusedAutoPropertyAccessor.Global
+}
+
+public enum TestEnum
+{
+    TestValue,
 }
