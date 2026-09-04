@@ -715,6 +715,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task SetDraftApplied_Success()
     {
         var env = new TestEnvironment();
@@ -732,6 +733,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task SetDraftApplied_Forbidden()
     {
         var env = new TestEnvironment();
@@ -749,6 +751,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task SetDraftApplied_NotFound()
     {
         var env = new TestEnvironment();
@@ -768,6 +771,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public void SetDraftApplied_UnknownError()
     {
         var env = new TestEnvironment();

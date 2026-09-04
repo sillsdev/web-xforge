@@ -3,6 +3,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { MatSelect, MatSelectChange } from '@angular/material/select';
 import { MatTooltip } from '@angular/material/tooltip';
+import { Canon } from '@sillsdev/scripture';
 import { QuillService } from 'ngx-quill';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
@@ -28,25 +29,30 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { Revision } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { provideQuillRegistrations } from '../../../shared/text/quill-editor-registration/quill-providers';
 import { EDITOR_READY_TIMEOUT } from '../../../shared/text/text.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
+import { DraftApplyStatus } from '../../draft-generation/draft-import-wizard/draft-import-wizard.component';
+import { DraftNotificationService } from '../../draft-generation/draft-notification.service';
 import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/history-revision-format.pipe';
 import { EditorDraftComponent } from './editor-draft.component';
 
-const mockDraftGenerationService = mock(DraftGenerationService);
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockAuthService = mock(AuthService);
-const mockDraftHandlingService = mock(DraftHandlingService);
-const mockI18nService = mock(I18nService);
 const mockDialogService = mock(DialogService);
-const mockNoticeService = mock(NoticeService);
+const mockDraftGenerationService = mock(DraftGenerationService);
+const mockDraftHandlingService = mock(DraftHandlingService);
+const mockDraftNotificationService = mock(DraftNotificationService);
 const mockErrorReportingService = mock(ErrorReportingService);
-const mockSFProjectService = mock(SFProjectService);
+const mockI18nService = mock(I18nService);
+const mockNoticeService = mock(NoticeService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
+const mockSFProjectService = mock(SFProjectService);
+const mockTextDocService = mock(TextDocService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -71,15 +77,17 @@ describe('EditorDraftComponent', () => {
       provideTestRealtime(SF_TYPE_REGISTRY),
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: AuthService, useMock: mockAuthService },
+      { provide: DialogService, useMock: mockDialogService },
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
+      { provide: DraftNotificationService, useMock: mockDraftNotificationService },
+      { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: DialogService, useMock: mockDialogService },
+      { provide: ProjectNotificationService, useMock: mockProjectNotificationService },
       { provide: NoticeService, useMock: mockNoticeService },
-      { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: SFProjectService, useMock: mockSFProjectService },
-      { provide: ProjectNotificationService, useMock: mockProjectNotificationService }
+      { provide: TextDocService, useMock: mockTextDocService }
     ]
   }));
 
@@ -90,21 +98,41 @@ describe('EditorDraftComponent', () => {
   });
 
   beforeEach(() => {
-    when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
     buildProgress$.next({ state: BuildStates.Completed } as BuildDto);
-    when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));
-    when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
     const defaultProjectDoc: SFProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
     when(mockActivatedProjectService.projectDoc$).thenReturn(of(defaultProjectDoc));
+    when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));
+    when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
     when(mockDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(
       of({ state: BuildStates.Completed } as BuildDto)
     );
+    when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
     when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(bookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
     when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
+
+    when(
+      mockSFProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
+    ).thenCall(projectId => {
+      // Simulate the SignalR service emitting that the draft is being applied then successful
+      tick();
+      component.updateDraftApplyState(projectId, {
+        bookNum: 0,
+        chapterNum: 0,
+        totalChapters: 0,
+        status: DraftApplyStatus.InProgress
+      });
+      tick();
+      component.updateDraftApplyState(projectId, {
+        bookNum: 0,
+        chapterNum: 0,
+        totalChapters: 0,
+        status: DraftApplyStatus.Successful
+      });
+    });
 
     testOnlineStatus = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
 
@@ -477,7 +505,7 @@ describe('EditorDraftComponent', () => {
 
     it('should throw error if there is no draft', fakeAsync(() => {
       component.applyDraft().catch(e => {
-        expect(e).toEqual(new Error('No draft ops to apply.'));
+        expect(e).toEqual(new Error('No draft to apply.'));
       });
       flush();
     }));
@@ -502,7 +530,14 @@ describe('EditorDraftComponent', () => {
       tick();
 
       expect(draftDelta.ops).toEqual(component['draftDelta']!.ops);
-      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, component['draftDelta']!)).once();
+      verify(
+        mockSFProjectService.onlineApplyPreTranslationToProject(
+          component.textDocId!.projectId,
+          Canon.bookNumberToId(component.textDocId!.bookNum) + ' ' + component.textDocId!.chapterNum,
+          component.textDocId!.projectId,
+          anything()
+        )
+      ).once();
       expect(component.isDraftApplied).toBe(true);
       flush();
     }));
@@ -521,23 +556,37 @@ describe('EditorDraftComponent', () => {
       tick(EDITOR_READY_TIMEOUT);
 
       // Does not report network related issues to bugsnag
-      when(mockDraftHandlingService.applyChapterDraftAsync(anything(), anything())).thenReject(
-        new CommandError(CommandErrorCode.Other, '504 Gateway Timeout')
-      );
+      when(
+        mockSFProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
+      ).thenReject(new CommandError(CommandErrorCode.Other, '504 Gateway Timeout'));
       component.applyDraft();
       tick();
-      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, anything())).once();
+      verify(
+        mockSFProjectService.onlineApplyPreTranslationToProject(
+          component.textDocId!.projectId,
+          Canon.bookNumberToId(component.textDocId!.bookNum) + ' ' + component.textDocId!.chapterNum,
+          component.textDocId!.projectId,
+          anything()
+        )
+      ).once();
       verify(mockNoticeService.showError(anything())).once();
       verify(mockErrorReportingService.silentError(anything())).never();
       expect(component.isDraftApplied).toBe(false);
 
       // Reports to bugsnag if error is not network related
-      when(mockDraftHandlingService.applyChapterDraftAsync(anything(), anything())).thenReject(
-        new CommandError(CommandErrorCode.Other, 'Unknown error')
-      );
+      when(
+        mockSFProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
+      ).thenReject(new CommandError(CommandErrorCode.Other, 'Unknown error'));
       component.applyDraft();
       tick();
-      verify(mockDraftHandlingService.applyChapterDraftAsync(component.textDocId!, anything())).twice();
+      verify(
+        mockSFProjectService.onlineApplyPreTranslationToProject(
+          component.textDocId!.projectId,
+          Canon.bookNumberToId(component.textDocId!.bookNum) + ' ' + component.textDocId!.chapterNum,
+          component.textDocId!.projectId,
+          anything()
+        )
+      ).twice();
       verify(mockNoticeService.showError(anything())).twice();
       verify(mockErrorReportingService.silentError(anything(), anything())).once();
       expect(component.isDraftApplied).toBe(false);

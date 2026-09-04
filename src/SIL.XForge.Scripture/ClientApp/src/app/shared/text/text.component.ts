@@ -152,6 +152,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
   private activePresenceSubscription?: Subscription;
+  private onCreateSub?: Subscription;
   private onDeleteSub?: Subscription;
   private localSystemChangesSub?: Subscription;
   private readonly DEFAULT_MODULES: any = {
@@ -575,12 +576,15 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
       this.changeDetector.detectChanges();
 
       if (!isOnline && this._editor != null) {
         this.clearCursors(false); // Don't clear the local cursor
       }
+
+      // If we have come online, watch for the creation of the text document
+      await this.subscribeToTextDocumentCreationAsync(isOnline);
     });
 
     // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
@@ -674,6 +678,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.viewModel?.unbind();
     this.loadingState = 'unloaded';
     void this.dismissPresences();
+    this.onCreateSub?.unsubscribe();
     this.onDeleteSub?.unsubscribe();
     this.localSystemChangesSub?.unsubscribe();
   }
@@ -1204,6 +1209,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
 
     if (!(await this.projectHasText())) {
+      // If we are online, watch for the creation of the text document
+      await this.subscribeToTextDocumentCreationAsync(this.onlineStatusService.isOnline);
       this.loaded.emit();
       return;
     }
@@ -1992,6 +1999,15 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.highlightMarkerHeight = bounds.height;
     this.highlightMarker.style.top = this._selectionBoundsTop + 'px';
     this.updateHighlightMarkerVisibility();
+  }
+
+  private async subscribeToTextDocumentCreationAsync(isOnline: boolean): Promise<void> {
+    // If we are online, watch for the creation of the text document
+    if (isOnline && this._id != null && this._editor != null) {
+      const textDoc = await this.projectService.getText(this._id);
+      this.onCreateSub?.unsubscribe();
+      this.onCreateSub = textDoc.create$.subscribe(() => this.bindQuill());
+    }
   }
 
   private updateHighlightMarkerVisibility(): void {

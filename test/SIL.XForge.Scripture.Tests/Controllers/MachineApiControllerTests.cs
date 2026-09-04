@@ -1634,8 +1634,8 @@ public class MachineApiControllerTests
         Assert.IsTrue(revisionsExist);
     }
 
-#pragma warning disable CS0618 // GetPreTranslationUsfmAsync is deprecated, but tested until it is removed
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_MachineApiDown()
     {
         // Set up test environment
@@ -1667,6 +1667,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_NoPermission()
     {
         // Set up test environment
@@ -1696,6 +1697,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_NoProject()
     {
         // Set up test environment
@@ -1725,6 +1727,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_NotBuilt()
     {
         // Set up test environment
@@ -1754,6 +1757,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_NotSupported()
     {
         // Set up test environment
@@ -1784,6 +1788,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_ServalAdmin()
     {
         // Set up test environment
@@ -1827,6 +1832,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationUsfmAsync_Success()
     {
         // Set up test environment
@@ -1868,7 +1874,6 @@ public class MachineApiControllerTests
             );
     }
 
-#pragma warning restore CS0618
     [Test]
     public async Task GetPreTranslationUsjAsync_MachineApiDown()
     {
