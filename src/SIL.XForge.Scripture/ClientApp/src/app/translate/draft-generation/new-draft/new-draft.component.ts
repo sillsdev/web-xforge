@@ -304,10 +304,7 @@ export class NewDraftComponent {
     ]);
     this.pendingProjects = projects
       .filter(p => p.projectId != null && involvedIds.has(p.projectId) && p.isConnected && p.hasUpdate)
-      .map(p => ({
-        projectId: p.projectId!,
-        name: p.name?.length ? p.name : p.shortName
-      }));
+      .map(p => ({ projectId: p.projectId!, name: projectLabel(p) }));
   }
 
   /**

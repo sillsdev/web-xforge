@@ -24,6 +24,7 @@ const mockedOnlineStatusService = mock(OnlineStatusService);
 /** Describes one row of the interstitial. `queuedCount > 0` makes the project syncing on entry. */
 interface ProjectSpec {
   projectId: string;
+  shortName: string;
   name: string;
   canSync: boolean;
   queuedCount?: number;
@@ -54,7 +55,7 @@ function setUpMocks(specs: ProjectSpec[]): void {
   for (const spec of specs) {
     const remoteChanges$ = new Subject<unknown>();
     const data = createTestProjectProfile({
-      shortName: spec.name,
+      shortName: spec.shortName,
       sync: { queuedCount: spec.queuedCount ?? 0, lastSyncSuccessful: spec.lastSyncSuccessful ?? true }
     });
     docs.set(spec.projectId, {
@@ -107,7 +108,9 @@ const meta: Meta<StoryArgs> = {
   render: args => {
     setUpMocks(args.projects);
     return {
-      props: { pendingProjects: args.projects.map(p => ({ projectId: p.projectId, name: p.name })) },
+      props: {
+        pendingProjects: args.projects.map(p => ({ projectId: p.projectId, name: `${p.shortName} - ${p.name}` }))
+      },
       moduleMetadata: {
         imports: [DraftPendingUpdatesComponent],
         providers: [
@@ -129,10 +132,10 @@ type Story = StoryObj<StoryArgs>;
 
 /** A single syncable project: it uses its own row's Sync button (no "Sync all", which would imply more than one). */
 export const SingleSyncableProject: Story = {
-  args: { projects: [{ projectId: 'p1', name: 'Greek NT', canSync: true }] },
+  args: { projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true }] },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await canvas.findByText('Greek NT');
+    await canvas.findByText('GRK - Greek NT');
     expect(canvas.queryByRole('button', { name: /sync all/i })).toBeNull();
   }
 };
@@ -141,9 +144,9 @@ export const SingleSyncableProject: Story = {
 export const MultipleSyncableProjects: Story = {
   args: {
     projects: [
-      { projectId: 'p1', name: 'Greek NT', canSync: true },
-      { projectId: 'p2', name: 'Hebrew OT', canSync: true },
-      { projectId: 'p3', name: 'Back Translation', canSync: true }
+      { projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true },
+      { projectId: 'p2', shortName: 'HEB', name: 'Hebrew OT', canSync: true },
+      { projectId: 'p3', shortName: 'BT', name: 'Back Translation', canSync: true }
     ]
   },
   play: async ({ canvasElement }) => {
@@ -154,27 +157,27 @@ export const MultipleSyncableProjects: Story = {
 
 /** The user lacks Texts.Edit, so it's informational only; they must ask an admin or continue anyway. */
 export const CannotSync: Story = {
-  args: { projects: [{ projectId: 'p1', name: 'Greek NT', canSync: false }] }
+  args: { projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: false }] }
 };
 
 /** A mix: one project the user can sync and one they can't. */
 export const MixedPermissions: Story = {
   args: {
     projects: [
-      { projectId: 'p1', name: 'Greek NT', canSync: true },
-      { projectId: 'p2', name: 'Hebrew OT', canSync: false }
+      { projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true },
+      { projectId: 'p2', shortName: 'HEB', name: 'Hebrew OT', canSync: false }
     ]
   }
 };
 
 /** A project that was already syncing when the wizard opened shows live progress and no Sync button. */
 export const AlreadySyncing: Story = {
-  args: { projects: [{ projectId: 'p1', name: 'Greek NT', canSync: true, queuedCount: 1 }] }
+  args: { projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true, queuedCount: 1 }] }
 };
 
 /** Project docs haven't loaded yet. */
 export const Loading: Story = {
-  args: { projects: [{ projectId: 'p1', name: 'Greek NT', canSync: true, neverLoad: true }] },
+  args: { projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true, neverLoad: true }] },
   play: async ({ canvasElement }) => {
     await waitFor(() => expect(canvasElement.querySelector('.loading-indicator')).not.toBeNull());
   }
@@ -182,10 +185,12 @@ export const Loading: Story = {
 
 /** Start a sync, then let it finish successfully; the row shows "Up to date". */
 export const SyncSucceeded: Story = {
-  args: { projects: [{ projectId: 'p1', name: 'Greek NT', canSync: true, completeOnSyncWith: 'success' }] },
+  args: {
+    projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true, completeOnSyncWith: 'success' }]
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await canvas.findByText('Greek NT');
+    await canvas.findByText('GRK - Greek NT');
     await userEvent.click(await canvas.findByRole('button', { name: /sync/i }));
     await waitFor(() => expect(canvas.getByText('Up to date')).not.toBeNull());
   }
@@ -193,10 +198,12 @@ export const SyncSucceeded: Story = {
 
 /** Start a sync, then let it fail; the row shows "Sync failed" with a Retry button. */
 export const SyncFailed: Story = {
-  args: { projects: [{ projectId: 'p1', name: 'Greek NT', canSync: true, completeOnSyncWith: 'failure' }] },
+  args: {
+    projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true, completeOnSyncWith: 'failure' }]
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await canvas.findByText('Greek NT');
+    await canvas.findByText('GRK - Greek NT');
     await userEvent.click(await canvas.findByRole('button', { name: /sync/i }));
     await waitFor(() => expect(canvas.getByText('Sync failed')).not.toBeNull());
     await canvas.findByRole('button', { name: /retry/i });
