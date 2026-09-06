@@ -512,6 +512,53 @@ describe('TextComponent', () => {
     TestEnvironment.waitForPresenceTimer();
   }));
 
+  it('applies edits made next to a note at the start of a segment to the correct position', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+    // A note anchored to the start of the first segment puts the note icon at editor position 0
+    env.embedThreadAt('MAT 1:0', { start: 0, length: 0 });
+    tick();
+    env.fixture.detectChanges();
+    expect(Array.from(env.component.embeddedElements.values())).toEqual([0]);
+
+    const textDoc: TextDoc = env.realtimeService.get<TextDoc>(TextDoc.COLLECTION, 'project01:MAT:1:target');
+    const submittedOps: any[] = [];
+    const submit = textDoc.submit.bind(textDoc);
+    spyOn(textDoc, 'submit').and.callFake((op: any, source?: any) => {
+      submittedOps.push(...(op.ops ?? []));
+      return submit(op, source);
+    });
+
+    // The user types immediately after the note icon
+    env.component.editor!.updateContents(new Delta().retain(1).insert('X'), 'user');
+    tick();
+    env.fixture.detectChanges();
+
+    // The retain that only covered the note icon must not be submitted as a zero-length retain, which would cause
+    // the ops that follow it to be applied one op too late in the text doc
+    expect(submittedOps.filter(op => op.retain != null && op.retain < 1)).toEqual([]);
+    expect(env.component.getSegmentText('s_1')).toEqual('XTitle for chapter 1');
+    expect(textDoc.data!.ops![0].insert).toEqual('XTitle for chapter 1');
+
+    submittedOps.length = 0;
+
+    // The user deletes the character they just typed
+    env.component.editor!.updateContents(new Delta().retain(1).delete(1), 'user');
+    tick();
+    env.fixture.detectChanges();
+
+    expect(submittedOps.filter(op => op.retain != null && op.retain < 1)).toEqual([]);
+    expect(env.component.getSegmentText('s_1')).toEqual('Title for chapter 1');
+    // the paragraph break following the segment must still be intact
+    expect(textDoc.data!.ops![0].insert).toEqual('Title for chapter 1');
+    expect(textDoc.data!.ops![1].insert).toEqual('\n');
+
+    TestEnvironment.waitForPresenceTimer();
+    flush();
+  }));
+
   it('allows cut when valid selection', fakeAsync(() => {
     const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
 
