@@ -22,6 +22,10 @@ minimumReleaseAgeExclude:
   - nanoid@3.3.18
   - postcss@8.5.18
   - postcss@8.5.23
+  - qs@6.15.4
+  - qs@6.16.0
+  - '@xmldom/xmldom@0.9.12'
+  - fast-uri@3.1.6
 overrides:
   "webpack": "5.105.0" # Fix for @storybook/builder-webpack5. Remove if updating Angular
 patchedDependencies:
