@@ -223,7 +223,7 @@
     "quota_exceeded": "Das Generieren von Entwürfen ist für dieses Projekt vorübergehend nicht verfügbar, da das Kontingent überschritten wurde",
     "report_problem": "Problem melden",
     "signup_already_submitted": "{{ name }} hat am {{ date }} eine Anfrage zur Anmeldung für die Erstellung von Entwürfen eingereicht. Ein Teammitglied wird Dich innerhalb von {{ min }} bis {{ max }} Werktagen kontaktieren, um Dein Projekt und die nächsten Schritte zu besprechen.",
-    "signup_response_will_be_emailed": "The response will be sent by email to [b]{{ email }}[/b].",
+    "signup_response_will_be_emailed": "Die Antwort wird per E-Mail an [b]{{ email }}[/b] gesendet.",
     "sign_up_for_drafting": "Für das Generieren von Entwürfen anmelden",
     "temporarily_unavailable": "Das Generieren von Entwürfen ist vorübergehend nicht verfügbar.",
     "problem_fetching_build_history": "Es gab ein Problem beim Abrufen des Build-Verlaufs.",
@@ -282,6 +282,7 @@
     "pending_updates": {
       "heading": "Vor dem Genererieren des Entwurfs synchronisieren",
       "body": "Bei diesen Projekten wurden in Paratext Änderungen vorgenommen, die hier noch nicht berücksichtigt sind. Das Generieren von Entwürfen ohne Synchronisierung kann die Qualität der Entwürfe beeinträchtigen.",
+      "checking_projects": "Prüfe Projektstatus...",
       "sync": "Synchronisation",
       "sync_all": "Alles synchroniesieren",
       "continue_anyway": "Trotzdem fortfahren",
@@ -289,7 +290,9 @@
       "sync_failed": "Synchronisation fehlgeschlagen",
       "retry": "Wiederholen",
       "cant_sync": "Es gibt Änderungen – bitte einen Projektadministrator um die Synchronisierung bitten",
-      "wait_for_sync": "Warte, bis die Synchronisierung abgeschlossen ist, bevor Du fortfährst."
+      "wait_for_sync": "Warte, bis die Synchronisierung abgeschlossen ist, bevor Du fortfährst.",
+      "sync_count_progress": "{{ completed }} von {{ total }} synchronisierte Projekte",
+      "all_synced_continuing": "Alles ist auf dem neuesten Stand. Fortfahren..."
     },
     "draft_books": {
       "title": "Bücher zum Entwurf auswählen",
