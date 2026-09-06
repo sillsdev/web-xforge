@@ -69,6 +69,11 @@ export class DraftHandlingService {
     return chapterDrafts;
   }
 
+  async chaptersWithDraft(textDocId: TextDocId, timestamp: Date): Promise<number[]> {
+    const drafts: Map<string, DeltaOperation[]> = await this.getBookDraft(textDocId, { timestamp });
+    return Array.from(drafts.keys()).map(chapterNumStr => +chapterNumStr);
+  }
+
   canApplyDraft(
     targetProject: SFProjectProfile,
     bookNum: number,

@@ -1,3 +1,4 @@
+import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
@@ -48,16 +49,46 @@ const mockErrorReportingService = mock(ErrorReportingService);
 const mockSFProjectService = mock(SFProjectService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
 
+@Component({
+  standalone: true,
+  imports: [EditorDraftComponent],
+  template: `
+    <app-editor-draft
+      #editorDraft
+      [projectId]="projectId"
+      [bookNum]="bookNum"
+      [chapter]="chapter"
+      [isRightToLeft]="isRightToLeft"
+      [timestamp]="timestamp"
+      (chaptersUpdated)="onChaptersInDraft($event)"
+    />
+  `
+})
+class HostEditorDraftComponent {
+  @ViewChild('editorDraft') editorDraftComponent!: EditorDraftComponent;
+  projectId = 'targetProjectId';
+  bookNum = 1;
+  chapter = 1;
+  isRightToLeft = false;
+  timestamp?: Date;
+  chaptersInDraft: number[] = [];
+
+  onChaptersInDraft(chaptersInDraft: number[]): void {
+    this.chaptersInDraft = chaptersInDraft;
+  }
+}
+
 describe('EditorDraftComponent', () => {
-  let fixture: ComponentFixture<EditorDraftComponent>;
+  let fixture: ComponentFixture<HostEditorDraftComponent>;
   let component: EditorDraftComponent;
+  let hostComponent: HostEditorDraftComponent;
   let testOnlineStatus: TestOnlineStatusService;
   const buildProgress$ = new BehaviorSubject<BuildDto | undefined>(undefined);
 
   configureTestingModule(() => ({
     imports: [
       HistoryRevisionFormatPipe,
-      EditorDraftComponent,
+      HostEditorDraftComponent,
       MatProgressBar,
       MatSelect,
       MatIcon,
@@ -102,20 +133,27 @@ describe('EditorDraftComponent', () => {
     when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(bookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
     when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
+    when(mockSFProjectService.getText(anything())).thenResolve({ isLoaded: false } as any);
 
-    fixture = TestBed.createComponent(EditorDraftComponent);
-    component = fixture.componentInstance;
+    fixture = TestBed.createComponent(HostEditorDraftComponent);
+    hostComponent = fixture.componentInstance;
 
     testOnlineStatus = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+  });
+
+  function initializeComponent(host: HostEditorDraftComponent): void {
+    fixture.detectChanges();
+    component = host.editorDraftComponent;
 
     component.projectId = 'targetProjectId';
     component.bookNum = 1;
     component.chapter = 1;
     component.isRightToLeft = false;
     component.ngOnChanges();
-  });
+  }
 
   it('should handle offline when component created', fakeAsync(() => {
+    initializeComponent(hostComponent);
     testOnlineStatus.setIsOnline(false);
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-unknown');
@@ -132,6 +170,7 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     fixture.detectChanges();
@@ -160,6 +199,7 @@ describe('EditorDraftComponent', () => {
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
       of(draftHistory)
     );
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     testOnlineStatus.setIsOnline(false);
@@ -195,6 +235,7 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     fixture.detectChanges();
@@ -214,12 +255,14 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     // Initial load fetches draft for current selection.
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
     expect(component.bookNum).toBe(1);
+    expect(hostComponent.chaptersInDraft).toEqual([1, 2]);
     verify(mockDraftHandlingService.getBookDraft(anything(), anything())).once();
 
     // Changing chapter triggers another draft retrieval call.
@@ -227,14 +270,17 @@ describe('EditorDraftComponent', () => {
     component.ngOnChanges();
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
+    expect(hostComponent.chaptersInDraft).toEqual([1, 2]);
     verify(mockDraftHandlingService.getBookDraft(anything(), anything())).twice();
 
     // Changing book triggers one more draft retrieval call.
+    when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(emptyBookDraftByChapters);
     component.bookNum = 2;
     component.chapter = 1;
     component.ngOnChanges();
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
+    expect(hostComponent.chaptersInDraft).toEqual([1]);
     verify(mockDraftHandlingService.getBookDraft(anything(), anything())).thrice();
     flush();
   }));
@@ -247,6 +293,7 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     // Set the date to a time before the earliest draft
@@ -270,6 +317,7 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     // Set the date to a time just before the earliest draft
@@ -296,6 +344,7 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     // SUT
@@ -316,9 +365,10 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
     when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(emptyBookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(false);
+    initializeComponent(hostComponent);
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     // SUT
     fixture.detectChanges();
@@ -340,8 +390,10 @@ describe('EditorDraftComponent', () => {
       of(draftHistory.slice(0, 1))
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
-    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(false);
+    when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(false);
+    initializeComponent(hostComponent);
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     // SUT
     fixture.detectChanges();
@@ -361,6 +413,7 @@ describe('EditorDraftComponent', () => {
     } as SFProjectProfileDoc;
     when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     fixture.detectChanges();
@@ -379,6 +432,7 @@ describe('EditorDraftComponent', () => {
       of(draftHistory)
     );
     when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    initializeComponent(hostComponent);
     spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
 
     fixture.detectChanges();
@@ -419,6 +473,7 @@ describe('EditorDraftComponent', () => {
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
       when(mockDraftHandlingService.canApplyDraft(anything(), anything(), anything(), anything())).thenReturn(true);
+      initializeComponent(hostComponent);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
 
       fixture.detectChanges();
@@ -437,6 +492,7 @@ describe('EditorDraftComponent', () => {
       );
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      initializeComponent(hostComponent);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
 
       fixture.detectChanges();
@@ -460,6 +516,7 @@ describe('EditorDraftComponent', () => {
         of(draftHistory)
       );
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+      initializeComponent(hostComponent);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of([]));
 
       fixture.detectChanges();
@@ -476,6 +533,8 @@ describe('EditorDraftComponent', () => {
     }));
 
     it('should throw error if there is no draft', fakeAsync(() => {
+      when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
+      initializeComponent(hostComponent);
       component.applyDraft().catch(e => {
         expect(e).toEqual(new Error('No draft ops to apply.'));
       });
@@ -491,6 +550,7 @@ describe('EditorDraftComponent', () => {
       );
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      initializeComponent(hostComponent);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
 
       fixture.detectChanges();
@@ -516,6 +576,7 @@ describe('EditorDraftComponent', () => {
       );
       when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
       when(mockDialogService.confirm(anything(), anything())).thenResolve(true);
+      initializeComponent(hostComponent);
       spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
@@ -550,10 +611,10 @@ describe('EditorDraftComponent', () => {
       when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
         of(draftHistory)
       );
-      spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops));
     });
 
     it('should be true when latest build has draft and selected revision is latest', fakeAsync(() => {
+      initializeComponent(hostComponent);
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           texts: [
@@ -579,6 +640,7 @@ describe('EditorDraftComponent', () => {
     }));
 
     it('should be false when selected revision is not the latest', fakeAsync(() => {
+      initializeComponent(hostComponent);
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           texts: [
@@ -610,6 +672,7 @@ describe('EditorDraftComponent', () => {
     }));
 
     it('should be false when latest build does not have a draft', fakeAsync(() => {
+      initializeComponent(hostComponent);
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           texts: [
@@ -637,6 +700,7 @@ describe('EditorDraftComponent', () => {
     }));
 
     it('should be false when latest build is canceled even if draft exists and selected revision is latest', fakeAsync(() => {
+      initializeComponent(hostComponent);
       const testProjectDoc: SFProjectProfileDoc = {
         data: createTestProjectProfile({
           texts: [
@@ -665,6 +729,7 @@ describe('EditorDraftComponent', () => {
 
   describe('getLocalizedBookChapter', () => {
     it('should return an empty string if bookNum or chapter is undefined', () => {
+      initializeComponent(hostComponent);
       component.bookNum = undefined;
       component.chapter = 1;
       expect(component['getLocalizedBookChapter']()).toEqual('');
@@ -675,6 +740,7 @@ describe('EditorDraftComponent', () => {
     });
 
     it('should return a localized book and chapter if both are not null', () => {
+      initializeComponent(hostComponent);
       when(mockI18nService.localizeBookChapter(1, 1)).thenReturn('Localized Book 1');
       component.bookNum = 1;
       component.chapter = 1;

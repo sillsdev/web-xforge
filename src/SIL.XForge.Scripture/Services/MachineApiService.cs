@@ -2749,7 +2749,7 @@ public partial class MachineApiService(
         await using IConnection connection = await realtimeService.ConnectAsync(userId);
         string id = TextDocument.GetDocId(sfProjectId, bookNum, chapterNum, TextDocument.Draft);
 
-        DateTime latestTimestampForRevision = await LatestTimestampForRevisionAsync(
+        (DateTime latestTimestampForRevision, ServalBuildDto build) = await GetCorrespondingTimestampAndBuildAsync(
             curUserId,
             sfProjectId,
             bookNum,
@@ -2770,10 +2770,11 @@ public partial class MachineApiService(
                 ScrVers versification =
                     paratextService.GetParatextSettings(userSecret, project.ParatextId)?.Versification
                     ?? VerseRef.defaultVersification;
-                // Just in case the versification is incorrect, use the last chapter in Mongo if it is larger
-                int lastChapterInMongo =
-                    project.Texts.SingleOrDefault(t => t.BookNum == bookNum)?.Chapters.Max(c => c.Number) ?? 0;
-                int lastChapter = Math.Max(versification.GetLastChapter(bookNum), lastChapterInMongo);
+                // Find the last chapter of the drafted book based on the build
+                Dictionary<string, SortedSet<int>> draftedChapters = GetDraftedChaptersForBuild(build, versification);
+                draftedChapters.TryGetValue(Canon.BookNumberToId(bookNum), out SortedSet<int> chapters);
+                int lastChapter = Math.Max(versification.GetLastChapter(bookNum), chapters?.Max ?? 0);
+
                 List<object> content = [];
                 for (int chapter = 1; chapter <= lastChapter; chapter++)
                 {
@@ -3958,7 +3959,7 @@ public partial class MachineApiService(
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The timestamp of the draft that immediate follows the intended draft revision.</returns>
     /// <remarks>This function is internal so it can be unit tests.</remarks>
-    internal async Task<DateTime> LatestTimestampForRevisionAsync(
+    internal async Task<(DateTime, ServalBuildDto)> GetCorrespondingTimestampAndBuildAsync(
         string curUserId,
         string sfProjectId,
         int bookNum,
@@ -3986,17 +3987,23 @@ public partial class MachineApiService(
         builds = await FilterBuildsByBookAndChapterAsync(project, builds, bookNum, chapterNum, cancellationToken);
 
         // See if there is a build that was requested after the timestamp
-        DateTimeOffset? time = builds
-            .FirstOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime > timestamp)
-            ?.AdditionalInfo?.DateRequested;
+        ServalBuildDto? build = builds.FirstOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime > timestamp);
+        DateTimeOffset? time = build?.AdditionalInfo?.DateRequested;
 
-        // If not, search for a build that comes before the timestamp and use the current time if the build exists
-        time ??= builds.LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp) is not null
-            ? DateTime.UtcNow
-            : null;
+        if (time is null)
+        {
+            // If not, search for a build that comes before the timestamp and use the current time if the build exists
+            build = builds.LastOrDefault(b => b.AdditionalInfo?.DateRequested?.UtcDateTime < timestamp);
+            time = build is not null ? DateTime.UtcNow : null;
+        }
+
+        if (build is null)
+        {
+            throw new DataNotFoundException("No draft builds were found for the specified book and chapter.");
+        }
 
         // Return the latest time to access a draft, or the original timestamp is none is found
-        return time?.UtcDateTime ?? timestamp;
+        return (time?.UtcDateTime ?? timestamp, build);
     }
 
     /// <summary>

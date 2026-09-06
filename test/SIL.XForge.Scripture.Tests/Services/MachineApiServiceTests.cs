@@ -3078,6 +3078,8 @@ public class MachineApiServiceTests
             )
             .Throws(ServalApiExceptions.InvalidCorpus);
 
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(() =>
             env.Service.GetPreTranslationDeltaAsync(
@@ -3101,6 +3103,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         Dictionary<string, Snapshot<TextData>> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -3125,6 +3128,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         Dictionary<string, Snapshot<TextData>> actual = await env.Service.GetPreTranslationDeltaAsync(
@@ -3149,6 +3153,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
         DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
@@ -3187,6 +3192,7 @@ public class MachineApiServiceTests
         JToken token = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
         Delta expected = new Delta([token]);
         env.DeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>()).Returns([new ChapterDelta(1, 1, true, expected)]);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
         DraftUsfmConfig config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
@@ -3406,6 +3412,8 @@ public class MachineApiServiceTests
             )
             .Throws(ServalApiExceptions.InvalidCorpus);
 
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(() =>
             env.Service.GetPreTranslationUsfmAsync(
@@ -3452,6 +3460,8 @@ public class MachineApiServiceTests
         env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
             .Returns(expected);
 
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
             User02,
@@ -3474,6 +3484,8 @@ public class MachineApiServiceTests
         const string expected = "\\c 1 \\v1 Verse 1";
         env.ParatextService.ConvertUsxToUsfm(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, Arg.Any<XDocument>())
             .Returns(expected);
+
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -3503,6 +3515,7 @@ public class MachineApiServiceTests
             ParagraphFormat = ParagraphBreakFormatOptions.Remove,
             QuoteFormat = QuoteStyleOptions.Normalized,
         };
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         string usfm = await env.Service.GetPreTranslationUsfmAsync(
@@ -3559,6 +3572,7 @@ public class MachineApiServiceTests
         env.TextDocuments.Add(new TextDocument(id1, TestUsj));
         string id2 = TextDocument.GetDocId(Project01, 40, 2, TextDocument.Draft);
         env.TextDocuments.Add(new TextDocument(id2, testUsjChapterTwo));
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // The chapters must be configured in the project document
         await env.Projects.UpdateAsync(
@@ -3607,6 +3621,8 @@ public class MachineApiServiceTests
             )
             .Throws(ServalApiExceptions.InvalidCorpus);
 
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
+
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(() =>
             env.Service.GetPreTranslationUsjAsync(
@@ -3636,6 +3652,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(TestUsfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -3670,6 +3687,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(TestUsfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -3750,6 +3768,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(TestUsfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -3783,6 +3802,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(TestUsfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, TestUsfm).Returns(TestUsx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -3805,6 +3825,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         string id = TextDocument.GetDocId(Project01, 40, 1, TextDocument.Draft);
         env.TextDocuments.Add(new TextDocument(id, TestUsj));
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         IUsj actual = await env.Service.GetPreTranslationUsjAsync(
@@ -3866,6 +3887,7 @@ public class MachineApiServiceTests
         };
         // Add a default document snapshot
         env.TextDocuments.Add(new TextDocument(id, usj));
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
         var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
         // SUT
@@ -3906,6 +3928,8 @@ public class MachineApiServiceTests
                 CancellationToken.None
             )
             .Throws(ServalApiExceptions.InvalidCorpus);
+
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
 
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(() =>
@@ -3962,6 +3986,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(usfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
         string expected = UsjToUsx.UsjToUsxString(TestUsj);
 
         // SUT
@@ -3996,6 +4021,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(usfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
         string expected = UsjToUsx.UsjToUsxString(TestUsj);
 
         // SUT
@@ -4030,6 +4056,7 @@ public class MachineApiServiceTests
             )
             .Returns(Task.FromResult(usfm));
         env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), 40, usfm).Returns(usx);
+        env.SetupPreTranslationBuilds((ServalBuildId01, "MAT", DateTime.UtcNow.AddHours(-1), JobState.Completed));
         string expected = UsjToUsx.UsjToUsxString(TestUsj);
         var config = new DraftUsfmConfig { ParagraphFormat = ParagraphBreakFormatOptions.Remove };
 
@@ -4774,7 +4801,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
 
         // SUT
-        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+        var (actualTimestamp, correspondingBuild) = await env.Service.GetCorrespondingTimestampAndBuildAsync(
             User01,
             Project01,
             bookNum: 2,
@@ -4783,7 +4810,8 @@ public class MachineApiServiceTests
             timestamp,
             CancellationToken.None
         );
-        Assert.AreEqual(actual, buildRequested);
+        Assert.AreEqual(actualTimestamp, buildRequested);
+        Assert.AreEqual(correspondingBuild, build);
     }
 
     [Test]
@@ -4804,7 +4832,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
 
         // SUT
-        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
+        var (actualTimestamp, correspondingBuild) = await env.Service.GetCorrespondingTimestampAndBuildAsync(
             User01,
             Project01,
             bookNum: 2,
@@ -4813,37 +4841,30 @@ public class MachineApiServiceTests
             timestamp,
             CancellationToken.None
         );
-        Assert.GreaterOrEqual(actual, timestamp);
+        Assert.GreaterOrEqual(actualTimestamp, timestamp);
+        Assert.AreEqual(correspondingBuild, build);
     }
 
     [Test]
-    public async Task LatestTimestampForRevisionAsync_BuildFinishing()
+    public async Task LatestTimestampForRevisionAsync_BuildActive()
     {
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         DateTime buildRequested = timestamp.AddHours(-1);
-        var build = new ServalBuildDto
-        {
-            State = MachineApiService.BuildStateFinishing,
-            AdditionalInfo = new ServalBuildAdditionalInfo(),
-        };
-        build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
-        build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "GEN-DEU" });
-        env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
-            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
+        env.SetupPreTranslationBuilds((ServalBuildId01, "GEN-DEU", buildRequested, JobState.Active));
 
         // SUT
-        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
-            User01,
-            Project01,
-            bookNum: 2,
-            chapterNum: 1,
-            isServalAdmin: true,
-            timestamp,
-            CancellationToken.None
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+            await env.Service.GetCorrespondingTimestampAndBuildAsync(
+                User01,
+                Project01,
+                bookNum: 2,
+                chapterNum: 1,
+                isServalAdmin: true,
+                timestamp,
+                CancellationToken.None
+            )
         );
-        Assert.AreEqual(actual, timestamp);
     }
 
     [Test]
@@ -4852,28 +4873,20 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
         DateTime buildRequested = timestamp.AddHours(-1);
-        var build = new ServalBuildDto
-        {
-            State = MachineApiService.BuildStateFinishing,
-            AdditionalInfo = new ServalBuildAdditionalInfo(),
-        };
-        build.AdditionalInfo.DateRequested = new DateTimeOffset(buildRequested);
-        build.AdditionalInfo.TranslationScriptureRanges.Add(new ProjectScriptureRange { ScriptureRange = "LEV-DEU" });
-        env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
-            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([build]));
+        env.SetupPreTranslationBuilds((ServalBuildId01, "LEV-DEU", buildRequested, JobState.Completed));
 
         // SUT
-        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
-            User01,
-            Project01,
-            bookNum: 2,
-            chapterNum: 1,
-            isServalAdmin: true,
-            timestamp,
-            CancellationToken.None
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+            await env.Service.GetCorrespondingTimestampAndBuildAsync(
+                User01,
+                Project01,
+                bookNum: 2,
+                chapterNum: 1,
+                isServalAdmin: true,
+                timestamp,
+                CancellationToken.None
+            )
         );
-        Assert.AreEqual(actual, timestamp);
     }
 
     [Test]
@@ -4881,21 +4894,20 @@ public class MachineApiServiceTests
     {
         var env = new TestEnvironment();
         DateTime timestamp = DateTime.UtcNow;
-        env.Service.Configure()
-            .GetBuildsAsync(User01, Project01, preTranslate: true, isServalAdmin: true, CancellationToken.None)
-            .Returns(Task.FromResult<IReadOnlyList<ServalBuildDto>>([]));
+        env.SetupPreTranslationBuilds();
 
         // SUT
-        DateTime actual = await env.Service.LatestTimestampForRevisionAsync(
-            User01,
-            Project01,
-            bookNum: 2,
-            chapterNum: 1,
-            isServalAdmin: true,
-            timestamp,
-            CancellationToken.None
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+            await env.Service.GetCorrespondingTimestampAndBuildAsync(
+                User01,
+                Project01,
+                bookNum: 2,
+                chapterNum: 1,
+                isServalAdmin: true,
+                timestamp,
+                CancellationToken.None
+            )
         );
-        Assert.AreEqual(actual, timestamp);
     }
 
     [Test]
@@ -6896,6 +6908,26 @@ public class MachineApiServiceTests
                             Revision = 43,
                             State = b.State,
                             DateFinished = b.DateRequested.AddMinutes(30),
+                            Pretranslate = b.ScriptureRange is not null
+                                ?
+                                [
+                                    new PretranslateCorpus
+                                    {
+                                        SourceFilters =
+                                        [
+                                            new ParallelCorpusFilter
+                                            {
+                                                Corpus = new ResourceLink
+                                                {
+                                                    Id = "corpusId",
+                                                    Url = "https://example.com",
+                                                },
+                                                ScriptureRange = "MAT",
+                                            },
+                                        ],
+                                    },
+                                ]
+                                : null,
                         }),
                     ])
                 );

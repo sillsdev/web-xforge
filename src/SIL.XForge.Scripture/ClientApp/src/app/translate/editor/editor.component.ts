@@ -287,7 +287,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
   books: number[] = [];
-  chapters: number[] = [];
+  /** Includes all chapters in the texts, resources, and drafts that a user can navigate to for a book. */
+  availableChapters: number[] = [];
   text?: TextInfo;
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
@@ -330,6 +331,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private chapter$ = new BehaviorSubject<number | undefined>(undefined);
+  private chaptersInTexts: number[] = [];
   private _verse: string = '0';
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
@@ -840,7 +842,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.text?.chapters[this.text.chapters.length - 1]?.number ?? 1,
           expectedBookChapters(Canon.bookNumberToId(bookNum))
         );
-        this.chapters = Array.from({ length: allChapters }, (_, i) => i + 1);
+        this.chaptersInTexts = Array.from({ length: allChapters }, (_, i) => i + 1);
+        this.availableChapters = [...this.chaptersInTexts];
 
         this.updateVerseNumber();
 
@@ -1337,6 +1340,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     this.changeDetector.detectChanges();
+  }
+
+  // Respond to updates to the chapters available in the draft tab
+  onDraftChaptersUpdated(draftChapters: number[]): void {
+    const highestChapter: number = Math.max(...this.chaptersInTexts, ...draftChapters);
+    this.availableChapters = Array.from({ length: highestChapter }, (_, i) => i + 1);
   }
 
   /**
@@ -2158,16 +2167,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (
           this.projectUserConfigDoc.data.selectedChapterNum != null &&
-          this.chapters.includes(this.projectUserConfigDoc.data.selectedChapterNum)
+          this.availableChapters.includes(this.projectUserConfigDoc.data.selectedChapterNum)
         ) {
           chapter = this.projectUserConfigDoc.data.selectedChapterNum;
         }
       }
     }
 
-    if (!this.chapters.includes(chapter)) {
+    if (!this.availableChapters.includes(chapter)) {
       this.loadingFinished();
-      this.chapter = this.chapters[0] ?? 1;
+      this.chapter = this.availableChapters[0] ?? 1;
       return;
     }
     this.toggleNoteThreadVerses(false);
