@@ -102,12 +102,10 @@ describe('EditorDraftComponent', () => {
     const defaultProjectDoc: SFProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
     when(mockActivatedProjectService.projectDoc$).thenReturn(of(defaultProjectDoc));
     when(mockActivatedProjectService.projectId$).thenReturn(of('targetProjectId'));
-    when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
-    const defaultProjectDoc: SFProjectProfileDoc = { data: createTestProjectProfile() } as SFProjectProfileDoc;
-    when(mockActivatedProjectService.projectDoc$).thenReturn(of(defaultProjectDoc));
     when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
       of([{ state: BuildStates.Completed } as BuildDto])
     );
+    when(mockDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of(undefined));
     when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
     when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(bookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
