@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
@@ -9,12 +8,10 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
-import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
 
-const mockedProjectService = mock(SFProjectService);
 const mockedTextDocService = mock(TextDocService);
 const mockedDraftGenerationService = mock(DraftGenerationService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
@@ -25,7 +22,6 @@ describe('DraftHandlingService', () => {
 
   configureTestingModule(() => ({
     providers: [
-      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TextDocService, useMock: mockedTextDocService },
       { provide: DraftGenerationService, useMock: mockedDraftGenerationService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService }
@@ -224,71 +220,6 @@ describe('DraftHandlingService', () => {
       when(mockedTextDocService.isEditingDisabled(projectProfile)).thenReturn(false);
 
       expect(service.canApplyDraft(projectProfile, book, chapter, badOps)).toBe(false);
-    });
-  });
-
-  describe('applyChapterDraftAsync', () => {
-    it('should apply draft to text doc', async () => {
-      const textDocId = new TextDocId('project01', 1, 1);
-      const draftOps: DeltaOperation[] = [
-        { insert: { verse: { number: 1 } } },
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1' } }
-      ];
-      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
-      await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
-      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
-      verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          1
-        )
-      ).once();
-      expect().nothing();
-    });
-
-    it('should apply draft to text doc with verse letter', async () => {
-      const textDocId = new TextDocId('project01', 1, 1);
-      const draftOps: DeltaOperation[] = [
-        { insert: { verse: { number: '1a' } } },
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1a' } }
-      ];
-      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
-      await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
-      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
-      verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          1
-        )
-      ).once();
-      expect().nothing();
-    });
-
-    it('should apply draft to text doc with verse range', async () => {
-      const textDocId = new TextDocId('project01', 1, 1);
-      const draftOps: DeltaOperation[] = [
-        { insert: { verse: { number: '1-2' } } },
-        { insert: 'In the beginning', attributes: { segment: 'verse_1_1-2' } }
-      ];
-      when(mockedTextDocService.canRestore(anything(), 1, 1)).thenReturn(true);
-      await service.applyChapterDraftAsync(textDocId, new Delta(draftOps));
-      verify(mockedTextDocService.overwrite(textDocId, anything(), 'Draft')).once();
-      verify(
-        mockedProjectService.onlineSetDraftApplied(
-          textDocId.projectId,
-          textDocId.bookNum,
-          textDocId.chapterNum,
-          true,
-          2
-        )
-      ).once();
-      expect().nothing();
     });
   });
 
