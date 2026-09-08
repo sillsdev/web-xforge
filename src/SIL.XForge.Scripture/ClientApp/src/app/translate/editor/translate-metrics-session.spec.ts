@@ -87,41 +87,6 @@ describe('TranslateMetricsSession', () => {
       env.sessionDispose();
     }));
 
-    it('start with accepted suggestion', fakeAsync(() => {
-      const env = new TestEnvironment();
-
-      env.mouseClick();
-      env.showSuggestion();
-      expect(env.session.metrics.type).toBe('navigate');
-      expect(env.session.metrics.mouseClickCount).toBe(1);
-
-      env.mouseClick();
-      env.showSuggestion();
-      expect(env.session.metrics.type).toBe('navigate');
-      expect(env.session.metrics.mouseClickCount).toBe(2);
-
-      env.clickSuggestion();
-      const expectedMetrics: TranslateMetrics = {
-        id: env.session.prevMetricsId,
-        type: 'navigate',
-        sessionId: env.session.id,
-        bookNum: 40,
-        chapterNum: 1,
-        mouseClickCount: 2
-      };
-      verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', deepEqual(expectedMetrics))).once();
-      env.keyPress('a');
-      tick(ACTIVE_EDIT_TIMEOUT);
-      expect(env.session.metrics.type).toBe('edit');
-      expect(env.session.metrics.timeEditActive).toBeDefined();
-      expect(env.session.metrics.keyCharacterCount).toBe(1);
-      expect(env.session.metrics.mouseClickCount).toBe(1);
-      expect(env.session.metrics.suggestionTotalCount).toBe(1);
-      expect(env.session.metrics.suggestionAcceptedCount).toBe(1);
-
-      env.sessionDispose();
-    }));
-
     it('navigate keystroke', fakeAsync(() => {
       const env = new TestEnvironment();
 
@@ -539,18 +504,6 @@ class TestEnvironment {
     const mouseupEvent: any = document.createEvent('CustomEvent');
     mouseupEvent.initEvent('mouseup', true, true);
     this.target.editor!.root.dispatchEvent(mouseupEvent);
-  }
-
-  showSuggestion(): void {
-    this.session.onSuggestionShown();
-  }
-
-  clickSuggestion(): void {
-    this.mouseClick();
-    const clickEvent: any = document.createEvent('CustomEvent');
-    clickEvent.initEvent('click', true, true);
-    this.target.editor!.root.dispatchEvent(clickEvent);
-    this.session.onSuggestionAccepted(clickEvent);
   }
 
   sessionDispose(): void {

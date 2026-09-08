@@ -4,7 +4,6 @@ import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/mod
  * This interface represents the project settings that can be updated using "SFProjectService.onlineUpdateSettings()".
  */
 export interface SFProjectSettings {
-  translationSuggestionsEnabled?: boolean | null;
   sourceParatextId?: string | null;
   biblicalTermsEnabled?: boolean | null;
 

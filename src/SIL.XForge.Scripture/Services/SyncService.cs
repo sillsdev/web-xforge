@@ -125,7 +125,7 @@ public class SyncService(
                             syncConfig.ProjectId,
                             syncConfig.UserId,
                             targetSyncMetrics.Id,
-                            syncConfig.TrainEngine,
+                            false,
                             CancellationToken.None
                         ),
                     null,
@@ -180,58 +180,7 @@ public class SyncService(
                     throw;
                 }
 
-                // If we are not training SMT suggestions
-                if (!syncConfig.TrainEngine)
-                {
-                    // Exit so we don't queue the target again, later in this method
-                    return targetJobId;
-                }
-
-                // Schedule the build of SMT translation suggestions
-                string? buildJobId = null;
-                try
-                {
-                    // Build the SMT suggestions after the target has synced successfully
-                    buildJobId = backgroundJobClient.ContinueJobWith<IMachineProjectService>(
-                        targetJobId,
-                        r =>
-                            r.BuildProjectForBackgroundJobAsync(
-                                syncConfig.UserId,
-                                new BuildConfig { ProjectId = syncConfig.ProjectId },
-                                false,
-                                null,
-                                CancellationToken.None
-                            ),
-                        null,
-                        JobContinuationOptions.OnAnyFinishedState
-                    );
-
-                    // Set the translation queued date and time, and hang fire job id
-                    await projectSecrets.UpdateAsync(
-                        projectSecret.Id,
-                        u =>
-                        {
-                            u.Set(p => p.ServalData.TranslationJobId, buildJobId);
-                            u.Set(p => p.ServalData.TranslationQueuedAt, DateTime.UtcNow);
-                            u.Unset(p => p.ServalData.TranslationErrorMessage);
-                        }
-                    );
-
-                    // Return the build job id as it is the last in the chain
-                    return buildJobId;
-                }
-                catch (Exception)
-                {
-                    // Any exceptions should not halt the sync process
-                    if (!string.IsNullOrWhiteSpace(buildJobId))
-                    {
-                        // We only need to delete the build job
-                        backgroundJobClient.Delete(buildJobId);
-                    }
-
-                    // Return the target job id, as the build job was not created
-                    return targetJobId;
-                }
+                return targetJobId;
             }
         }
 
@@ -251,26 +200,12 @@ public class SyncService(
         string jobId = !string.IsNullOrWhiteSpace(syncConfig.ParentJobId)
             ? backgroundJobClient.ContinueJobWith<IParatextSyncRunner>(
                 syncConfig.ParentJobId,
-                r =>
-                    r.RunAsync(
-                        syncConfig.ProjectId,
-                        syncConfig.UserId,
-                        syncMetrics.Id,
-                        syncConfig.TrainEngine,
-                        CancellationToken.None
-                    ),
+                r => r.RunAsync(syncConfig.ProjectId, syncConfig.UserId, syncMetrics.Id, false, CancellationToken.None),
                 null,
                 JobContinuationOptions.OnAnyFinishedState
             )
             : backgroundJobClient.Schedule<IParatextSyncRunner>(
-                r =>
-                    r.RunAsync(
-                        syncConfig.ProjectId,
-                        syncConfig.UserId,
-                        syncMetrics.Id,
-                        syncConfig.TrainEngine,
-                        CancellationToken.None
-                    ),
+                r => r.RunAsync(syncConfig.ProjectId, syncConfig.UserId, syncMetrics.Id, false, CancellationToken.None),
                 TimeSpan.FromMinutes(5)
             );
         logger.LogInformation(

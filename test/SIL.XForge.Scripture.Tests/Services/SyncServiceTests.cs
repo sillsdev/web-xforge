@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -154,27 +153,6 @@ public class SyncServiceTests
     }
 
     [Test]
-    public async Task SyncAsync_DoesNotTrainWhenNoSource()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
-
-        // Run sync
-        await env.Service.SyncAsync(
-            new SyncConfig
-            {
-                ProjectId = Project01,
-                UserId = "userid",
-                TrainEngine = true,
-            }
-        );
-
-        // Verify that only a sync for the target was received
-        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
-    }
-
-    [Test]
     public void SyncAsync_Enqueues()
     {
         var env = new TestEnvironment();
@@ -226,32 +204,6 @@ public class SyncServiceTests
         Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project01), Is.Zero);
         Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project02), Is.Zero);
         Assert.That(env.SyncMetrics.Query().Count(s => s.ProjectRef == Project03), Is.EqualTo(1));
-    }
-
-    [Test]
-    public async Task SyncAsync_EnqueuesTrainingJob()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("jobid");
-
-        // Run sync
-        await env.Service.SyncAsync(
-            new SyncConfig
-            {
-                ProjectId = Project03,
-                UserId = "userid",
-                TrainEngine = true,
-            }
-        );
-
-        // Verify that three jobs were created - source, target, and training
-        env.BackgroundJobClient.Received(3).Create(Arg.Any<Job>(), Arg.Any<IState>());
-
-        // Verify the project secret
-        Assert.That(env.ProjectSecrets.Get(Project03).JobIds.Count, Is.EqualTo(1));
-        Assert.That(env.ProjectSecrets.Get(Project03).ServalData?.TranslationQueuedAt, Is.Not.Null);
-        Assert.That(env.ProjectSecrets.Get(Project03).ServalData?.TranslationJobId, Is.Not.Null);
     }
 
     [Test]
@@ -551,25 +503,25 @@ public class SyncServiceTests
 
         env.Service.WarnIfAnomalousQueuedCount(0, "");
         env.MockLogger.AssertNoEvent(
-            logEvent => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message!.Contains("QueuedCount"),
             "No warning should have been logged for reasonable queued count 0."
         );
 
         env.Service.WarnIfAnomalousQueuedCount(1, "");
         env.MockLogger.AssertNoEvent(
-            logEvent => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message!.Contains("QueuedCount"),
             "No warning should have been logged for reasonable queued count 1."
         );
 
         env.Service.WarnIfAnomalousQueuedCount(-1, "");
         env.MockLogger.AssertHasEvent(
-            logEvent => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message!.Contains("QueuedCount"),
             "Warn for unexpected queued count -1."
         );
 
         env.Service.WarnIfAnomalousQueuedCount(2, "");
         env.MockLogger.AssertHasEvent(
-            logEvent => logEvent.Message.Contains("QueuedCount"),
+            logEvent => logEvent.Message!.Contains("QueuedCount"),
             "Warn for less expected queued count 2."
         );
     }
@@ -614,7 +566,6 @@ public class SyncServiceTests
                         ShortName = "P03",
                         TranslateConfig = new TranslateConfig
                         {
-                            TranslationSuggestionsEnabled = true,
                             Source = new TranslateSource { ProjectRef = Project01 },
                         },
                     },

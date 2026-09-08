@@ -68,7 +68,7 @@ export class MockPreTranslationHttpClient {
   }
 
   get<T extends BuildDto | undefined>(url: string): Observable<HttpResponse<T>> {
-    const GET_BUILD_PROGRESS_URL_REGEX: RegExp = /^translation\/builds\/id:[^\/?]+\?preTranslate=true$/i;
+    const GET_BUILD_PROGRESS_URL_REGEX: RegExp = /^translation\/builds\/id:[^\/?]+$/i;
     const GET_LAST_COMPLETED_BUILD_URL_REGEX: RegExp =
       /^translation\/engines\/project:[^\/]+\/actions\/getLastCompletedPreTranslationBuild$/i;
 

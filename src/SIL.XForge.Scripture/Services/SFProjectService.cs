@@ -138,7 +138,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 Script = ptProject.LanguageScript,
                 Tag = ptProject.LanguageTag,
             },
-            TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
             CheckingConfig = new CheckingConfig
             {
                 CheckingEnabled = settings.CheckingEnabled,
@@ -192,14 +191,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        await _syncService.SyncAsync(
-            new SyncConfig
-            {
-                ProjectId = projectId,
-                TrainEngine = false,
-                UserId = curUserId,
-            }
-        );
+        await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
         return projectId;
     }
 
@@ -357,8 +349,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await RealtimeService.DeleteProjectAsync(projectId);
 
         // The machine service requires the project secrets, so call it before removing them
-        await _machineProjectService.RemoveProjectAsync(projectId, preTranslate: false, CancellationToken.None);
-        await _machineProjectService.RemoveProjectAsync(projectId, preTranslate: true, CancellationToken.None);
+        await _machineProjectService.RemoveProjectAsync(projectId, CancellationToken.None);
         await ProjectSecrets.DeleteAsync(projectId);
     }
 
@@ -367,6 +358,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // Throw an exception if obsolete settings are specified
 #pragma warning disable CS0618 // Type or member is obsolete
         if (settings.AlternateSourceEnabled is not null)
+            throw new ForbiddenException();
+        if (settings.TranslationSuggestionsEnabled is not null)
             throw new ForbiddenException();
 #pragma warning restore CS0618 // Type or member is obsolete
 
@@ -479,14 +472,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         await projectDoc.SubmitJson0OpAsync(op =>
         {
-            UpdateSetting(
-                op,
-                p => p.TranslateConfig.TranslationSuggestionsEnabled,
-                settings.TranslationSuggestionsEnabled
-            );
             UpdateSetting(op, p => p.BiblicalTermsConfig.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
             UpdateSetting(op, p => p.TranslateConfig.DraftConfig.TrainingSources, trainingSources);
@@ -512,56 +499,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
         });
 
-        bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
         bool sourceParatextIdSet = settings.SourceParatextId != null || unsetSourceProject;
         bool checkingEnabledSet = settings.CheckingEnabled != null;
         bool biblicalTermsEnabledSet = settings.BiblicalTermsEnabled != null;
         // check if a sync needs to be run
-        if (suggestionsEnabledSet || sourceParatextIdSet || checkingEnabledSet || biblicalTermsEnabledSet)
+        if (sourceParatextIdSet || checkingEnabledSet || biblicalTermsEnabledSet)
         {
-            bool trainEngine = false;
-            if (suggestionsEnabledSet || sourceParatextIdSet)
-            {
-                if (
-                    projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled
-                    && projectDoc.Data.TranslateConfig.Source != null
-                )
-                {
-                    // translation suggestions was enabled or source project changed
-
-                    // recreate Machine project only if one existed
-                    if (hasExistingMachineProject)
-                    {
-                        await _machineProjectService.RemoveProjectAsync(
-                            projectId,
-                            preTranslate: false,
-                            CancellationToken.None
-                        );
-                    }
-
-                    await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                    await _machineProjectService.AddSmtProjectAsync(projectId, CancellationToken.None);
-                    trainEngine = true;
-                }
-                else if (hasExistingMachineProject)
-                {
-                    // translation suggestions was disabled or source project set to null
-                    await _machineProjectService.RemoveProjectAsync(
-                        projectId,
-                        preTranslate: false,
-                        CancellationToken.None
-                    );
-                }
-            }
-
-            await _syncService.SyncAsync(
-                new SyncConfig
-                {
-                    ProjectId = projectId,
-                    TrainEngine = trainEngine,
-                    UserId = curUserId,
-                }
-            );
+            await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
         }
     }
 
@@ -2534,8 +2478,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 Script = ptProject.LanguageScript,
                 Tag = ptProject.LanguageTag,
             },
-            TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false, Source = null },
-            CheckingConfig = new CheckingConfig { CheckingEnabled = false },
         };
 
         // Create the new project using the realtime service

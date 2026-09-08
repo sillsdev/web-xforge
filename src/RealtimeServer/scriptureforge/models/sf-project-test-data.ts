@@ -15,7 +15,6 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
     writingSystem: { tag: 'en' },
     isRightToLeft: false,
     translateConfig: {
-      translationSuggestionsEnabled: false,
       preTranslate: false,
       defaultNoteTagId: 1,
       draftConfig: {
