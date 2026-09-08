@@ -42,21 +42,16 @@ export interface ServalBuildDiagnostic {
 /** Execution data from a Serval translation build. */
 export interface BuildExecutionData {
   averagePretranslationConfidence?: number;
+  diagnostics: ServalBuildDiagnostic[];
+  diagnosticsTruncated?: boolean;
   isPretranslateFilteredByChapter?: boolean;
   isTrainFilteredByChapter?: boolean;
-  trainCount: number;
   pretranslateCount: number;
-  isTrainFilteredByChapter?: boolean;
-  isPretranslateFilteredByChapter?: boolean;
   resolvedSourceLanguage?: string;
   resolvedTargetLanguage?: string;
   sourceLanguageTag?: string;
   targetLanguageTag?: string;
-  resolvedSourceLanguage?: string;
-  resolvedTargetLanguage?: string;
-  averagePretranslationConfidence?: number;
-  diagnostics: ServalBuildDiagnostic[];
-  diagnosticsTruncated?: boolean;
+  trainCount: number;
 }
 
 /** Additional information about a Serval build. */

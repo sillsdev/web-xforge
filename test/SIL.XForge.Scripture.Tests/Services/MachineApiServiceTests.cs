@@ -1451,7 +1451,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        await env.QueueBuildAsync(Project01, preTranslate: true, dateTime: DateTime.UtcNow);
+        await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Throws(new TaskCanceledException());
 
@@ -1459,7 +1459,6 @@ public class MachineApiServiceTests
         IReadOnlyList<ServalBuildDto> builds = await env.Service.GetBuildsAsync(
             User02,
             Project01,
-            preTranslate: true,
             isServalAdmin: true,
             CancellationToken.None
         );
@@ -2538,7 +2537,6 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
-            preTranslate: false,
             isServalAdmin: false,
             CancellationToken.None
         );

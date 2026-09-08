@@ -3569,6 +3569,7 @@ public partial class MachineApiService(
     /// <returns>The build DTO.</returns>
     private static ServalBuildDto CreateDto(TranslationBuild translationBuild)
     {
+        ExecutionData? executionData = translationBuild.ExecutionData;
         var buildDto = new ServalBuildDto
         {
             Id = translationBuild.Id,
@@ -3627,7 +3628,7 @@ public partial class MachineApiService(
         // Add new diagnostic messages
         if (executionData?.Diagnostics is { Count: > 0 } diagnostics)
         {
-            buildDto.ExecutionData.Diagnostics.AddRange(
+            buildDto.ExecutionData?.Diagnostics.AddRange(
                 diagnostics.Select(d => new ServalBuildDiagnostic
                 {
                     Category = d.Category,
@@ -3643,7 +3644,7 @@ public partial class MachineApiService(
 #pragma warning restore CS0612 // Type or member is obsolete
         {
             // Add the legacy warnings to the diagnostic messages, if there were no diagnostic messages
-            buildDto.ExecutionData.Diagnostics.AddRange(
+            buildDto.ExecutionData?.Diagnostics.AddRange(
                 warnings.Select(w => new ServalBuildDiagnostic
                 {
                     Category = "LEGACY",
