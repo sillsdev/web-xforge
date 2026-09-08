@@ -128,6 +128,32 @@ describe('ServalBuildsComponent', () => {
       expect(env.component['rows']).toEqual([matchingRow]);
     }));
 
+    it('filters rows by target language code', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createRow({ targetLanguageTag: 'abc' });
+      const otherRow: ServalBuildRow = env.createRow({ targetLanguageTag: 'def' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('abc');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by source language code', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createRow({ sourceLanguageTag: 'cba' });
+      const otherRow: ServalBuildRow = env.createRow({ sourceLanguageTag: 'fed' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('cba');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
     it('filters rows by Serval build ID', fakeAsync(() => {
       // Suppose a user searches for a Serval build ID. It should match. And the matching
       // for this and any other searchable fields is both case insensitive and partial,
@@ -2220,7 +2246,9 @@ class TestEnvironment {
     projectDeleted = false,
     hasServalBuild = true,
     hasEvents = true,
-    buildConfidences = undefined
+    buildConfidences = undefined,
+    sourceLanguageTag = undefined,
+    targetLanguageTag = undefined
   }: {
     projectId?: string | null;
     ptProjectId?: string;
@@ -2238,6 +2266,8 @@ class TestEnvironment {
     status?: DraftGenerationBuildStatus;
     problems?: BuildReportProblem[];
     projectDeleted?: boolean;
+    sourceLanguageTag?: string;
+    targetLanguageTag?: string;
     /** Whether or not there is a Serval build that this row is based on. Records that correspond to no Serval build
      * aren't able to have certain kinds of data. */
     hasServalBuild?: boolean;
@@ -2296,7 +2326,17 @@ class TestEnvironment {
             trainingDataFileIds: [],
             canDenormalizeQuotes: true,
             requestedByUserId: requesterId ?? undefined
-          }
+          },
+          executionData:
+            sourceLanguageTag != null || targetLanguageTag != null
+              ? {
+                  trainCount: 0,
+                  pretranslateCount: 0,
+                  diagnostics: [],
+                  sourceLanguageTag: sourceLanguageTag,
+                  targetLanguageTag: targetLanguageTag
+                }
+              : undefined
         }
       : undefined;
 
