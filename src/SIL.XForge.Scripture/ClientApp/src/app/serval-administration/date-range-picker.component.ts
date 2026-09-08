@@ -83,7 +83,7 @@ export class DateRangePickerComponent implements OnInit {
   /** Event emitted when the date range changes with a valid normalized range */
   @Output() dateRangeChange = new EventEmitter<NormalizedDateRange | undefined>();
 
-  /** Whether current range is equal to the initial default range. */
+  /** Whether the last emitted range is equal to the initial default range. */
   isDefaultRange: boolean = true;
 
   private defaultRange: NormalizedDateRange | undefined;
