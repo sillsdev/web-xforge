@@ -4132,6 +4132,40 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task SubmitUserFeedbackAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.AddUserFeedbackAsync(User01, Project01, "Great feature!");
+
+        UserFeedback userFeedback = await env.UserFeedback.GetAsync(UserFeedback.GetDocId(Project01, User01));
+        Assert.That(userFeedback, Is.Not.Null);
+        Assert.That(userFeedback.ProjectRef, Is.EqualTo(Project01));
+        Assert.That(userFeedback.Feedback, Is.EqualTo("Great feature!"));
+    }
+
+    [Test]
+    public void SubmitUserFeedbackAsync_ProjectDoesNotExist()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.AddUserFeedbackAsync(User01, "invalid_project", "feedback")
+        );
+    }
+
+    [Test]
+    public void SubmitUserFeedbackAsync_UserNotOnProject()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddUserFeedbackAsync(User04, Project01, "feedback"));
+    }
+
+    [Test]
     public void SetDraftAppliedAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
@@ -5977,6 +6011,7 @@ public class SFProjectServiceTests
             );
             var translateMetrics = new MemoryRepository<TranslateMetrics>();
             SyncMetrics = new MemoryRepository<SyncMetrics>();
+            UserFeedback = new MemoryRepository<UserFeedback>();
             FileSystemService = Substitute.For<IFileSystemService>();
             var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
@@ -6116,6 +6151,7 @@ public class SFProjectServiceTests
                 UserSecrets,
                 translateMetrics,
                 SyncMetrics,
+                UserFeedback,
                 Localizer,
                 TransceleratorService,
                 BackgroundJobClient,
@@ -6140,6 +6176,7 @@ public class SFProjectServiceTests
         public IStringLocalizer<SharedResource> Localizer { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
         public MemoryRepository<SyncMetrics> SyncMetrics { get; }
+        public MemoryRepository<UserFeedback> UserFeedback { get; }
         public ITransceleratorService TransceleratorService { get; set; }
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
