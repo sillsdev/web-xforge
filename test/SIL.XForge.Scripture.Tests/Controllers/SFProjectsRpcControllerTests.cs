@@ -1750,6 +1750,54 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task SubmitUserFeedback_Success()
+    {
+        var env = new TestEnvironment();
+
+        var result = await env.Controller.AddUserFeedback(Project01, "Great feature!");
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().AddUserFeedbackAsync(User01, Project01, "Great feature!");
+    }
+
+    [Test]
+    public async Task SubmitUserFeedback_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, "feedback").Throws(new ForbiddenException());
+
+        var result = await env.Controller.AddUserFeedback(Project01, "feedback");
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SubmitUserFeedback_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, "feedback")
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.AddUserFeedback(Project01, "feedback");
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void SubmitUserFeedback_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, "feedback").Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddUserFeedback(Project01, "feedback"));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task CancelSync_Success()
     {
         var env = new TestEnvironment();
