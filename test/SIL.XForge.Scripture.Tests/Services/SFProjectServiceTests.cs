@@ -4235,6 +4235,146 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task AddUserFeedbackAsync_Success()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Great feature!",
+        };
+
+        // SUT
+        await Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, Project01, feedbackParams));
+    }
+
+    [Test]
+    public async Task AddUserFeedbackAsync_EmptyProjectString_Success()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Great feature!",
+        };
+
+        // SUT
+        await Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, string.Empty, feedbackParams));
+    }
+
+    [Test]
+    public async Task AddUserFeedbackAsync_ProjectDoesNotExist()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Project does not exist.",
+        };
+
+        // SUT
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.AddUserFeedbackAsync(User01, "ProjectNotExist", feedbackParams)
+        );
+    }
+
+    [Test]
+    public async Task AddUserFeedbackAsync_UserNotOnProject()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "User no on project.",
+        };
+
+        // SUT
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.AddUserFeedbackAsync(User04, Project01, feedbackParams)
+        );
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedbackAsync_ReturnsFalseWhenNoFeedbackSubmitted()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedbackAsync_ReturnsTrueWhenFeedbackSubmitted()
+    {
+        var env = new TestEnvironment();
+        await env.UserFeedback.InsertAsync(
+            new UserFeedback
+            {
+                Id = "feedback01",
+                ProjectRef = Project01,
+                UserRef = User01,
+                Source = PageSource.GenerateDraftPage,
+            }
+        );
+
+        // SUT
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedbackAsync_OnlyCountsFeedbackFromTheSpecifiedUser()
+    {
+        var env = new TestEnvironment();
+        await env.UserFeedback.InsertAsync(
+            new UserFeedback
+            {
+                Id = "feedback01",
+                ProjectRef = Project01,
+                UserRef = User02,
+            }
+        );
+
+        // SUT
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void HasUserSubmittedFeedbackAsync_ProjectDoesNotExist()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.HasUserSubmittedFeedbackAsync(User01, "invalid_project", PageSource.GenerateDraftPage)
+        );
+    }
+
+    [Test]
+    public void HasUserSubmittedFeedbackAsync_UserNotOnProject()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.HasUserSubmittedFeedbackAsync(User04, Project01, PageSource.GenerateDraftPage)
+        );
+    }
+
+    [Test]
     public async Task SetDraftAppliedAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
@@ -6150,6 +6290,7 @@ public class SFProjectServiceTests
             );
             var translateMetrics = new MemoryRepository<TranslateMetrics>();
             SyncMetrics = new MemoryRepository<SyncMetrics>();
+            UserFeedback = new MemoryRepository<UserFeedback>();
             FileSystemService = Substitute.For<IFileSystemService>();
             var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
@@ -6289,6 +6430,7 @@ public class SFProjectServiceTests
                 UserSecrets,
                 translateMetrics,
                 SyncMetrics,
+                UserFeedback,
                 Localizer,
                 TransceleratorService,
                 BackgroundJobClient,
@@ -6313,6 +6455,7 @@ public class SFProjectServiceTests
         public IStringLocalizer<SharedResource> Localizer { get; }
         public MemoryRepository<UserSecret> UserSecrets { get; }
         public MemoryRepository<SyncMetrics> SyncMetrics { get; }
+        public MemoryRepository<UserFeedback> UserFeedback { get; }
         public ITransceleratorService TransceleratorService { get; set; }
         public IBackgroundJobClient BackgroundJobClient { get; }
         public ISFProjectRights ProjectRights { get; }
