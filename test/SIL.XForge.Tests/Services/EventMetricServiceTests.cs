@@ -249,6 +249,7 @@ public class EventMetricServiceTests
             DateAndTime = DateTime.UtcNow,
             DecimalNumber = 12.34M,
             DoubleFloat = 56.78,
+            Enum = TestEnum.TestValue,
             Integer = 1234,
             LongInteger = 5678L,
             ProjectId = Project01,
@@ -307,6 +308,7 @@ public class EventMetricServiceTests
         const float singleFloat = 90.12F;
         string[] stringArray = ["string1", "string2"];
         Uri uri = new Uri("https://example.com", UriKind.Absolute);
+        const TestEnum enumValue = TestEnum.TestValue;
         Dictionary<string, object> argumentsWithNames = new Dictionary<string, object>
         {
             { "projectId", Project01 },
@@ -320,6 +322,7 @@ public class EventMetricServiceTests
             { "singleFloat", singleFloat },
             { "stringArray", stringArray },
             { "uri", uri },
+            { "enum", enumValue },
             { "nullValue", null },
         };
         Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
@@ -335,6 +338,7 @@ public class EventMetricServiceTests
             { "singleFloat", BsonDouble.Create(singleFloat) },
             { "stringArray", BsonArray.Create(stringArray) },
             { "uri", BsonValue.Create(uri.ToString()) },
+            { "enum", BsonValue.Create(enumValue.ToString()) },
             { "nullValue", BsonNull.Value },
         };
         const bool result = true;

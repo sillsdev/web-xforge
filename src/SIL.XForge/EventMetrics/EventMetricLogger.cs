@@ -35,7 +35,11 @@ namespace SIL.XForge.EventMetrics;
 /// See https://autofac.readthedocs.io/en/latest/advanced/interceptors.html for information on interceptors.
 /// </para>
 /// </remarks>
-public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<EventMetric> logger) : IInterceptor
+public class EventMetricLogger(
+    IEventMetricService eventMetricService,
+    IExceptionHandler exceptionHandler,
+    ILogger<EventMetric> logger
+) : IInterceptor
 {
     /// <summary>
     /// A task was started by the Interceptor.
@@ -201,6 +205,7 @@ public class EventMetricLogger(IEventMetricService eventMetricService, ILogger<E
                 {
                     // Just log any errors rather than throwing
                     logger.LogError(e, "Error logging event metric for {methodName}", methodName);
+                    exceptionHandler.ReportException(e);
                 }
                 finally
                 {
