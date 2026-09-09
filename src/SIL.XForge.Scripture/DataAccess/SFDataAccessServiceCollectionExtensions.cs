@@ -51,6 +51,16 @@ public static class SFDataAccessServiceCollectionExtensions
                 )
         );
         services.AddMongoRepository<DraftMetrics>("draft_metrics", cm => cm.MapIdProperty(dm => dm.Id));
+        services.AddMongoRepository<UserFeedback>(
+            "user_feedback",
+            cm => cm.MapIdProperty(uf => uf.Id),
+            im =>
+                im.CreateOne(
+                    new CreateIndexModel<UserFeedback>(
+                        Builders<UserFeedback>.IndexKeys.Ascending(uf => uf.ProjectRef).Ascending(uf => uf.UserRef)
+                    )
+                )
+        );
 
         return services;
     }
