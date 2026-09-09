@@ -16,18 +16,42 @@ export interface BuildDto extends ResourceDto {
   executionData?: BuildExecutionData;
 }
 
+// Enum Definition
+export enum ServalDiagnosticSeverity {
+  Info = 0,
+  Warn = 1,
+  Error = 2
+}
+
+/**
+ * Not a comprehensive list of the build diagnostics, but the ones which we can correctly handle
+ */
+export enum ServalDiagnosticCode {
+  LowConfidence = 'MODEL-0003'
+}
+
+// Model Interface
+export interface ServalBuildDiagnostic {
+  code: string;
+  category: string;
+  message: string;
+  severity: ServalDiagnosticSeverity;
+  data: Record<string, any>;
+}
+
 /** Execution data from a Serval translation build. */
 export interface BuildExecutionData {
   averagePretranslationConfidence?: number;
+  diagnostics: ServalBuildDiagnostic[];
+  diagnosticsTruncated?: boolean;
   isPretranslateFilteredByChapter?: boolean;
   isTrainFilteredByChapter?: boolean;
-  trainCount: number;
   pretranslateCount: number;
   resolvedSourceLanguage?: string;
   resolvedTargetLanguage?: string;
   sourceLanguageTag?: string;
   targetLanguageTag?: string;
-  warnings: string[];
+  trainCount: number;
 }
 
 /** Additional information about a Serval build. */

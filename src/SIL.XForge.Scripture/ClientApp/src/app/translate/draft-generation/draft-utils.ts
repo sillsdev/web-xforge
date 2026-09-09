@@ -6,6 +6,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import language_code_mapping from '../../../../../language_code_mapping.json';
 import { SelectableProjectWithLanguageCode } from '../../core/models/selectable-project';
+import { BuildDto, ServalDiagnosticCode } from '../../machine-api/build-dto';
 
 /** Represents draft sources as a set of two {@link TranslateSource} arrays, and one {@link SFProjectProfile} array. */
 export interface DraftSourcesAsTranslateSourceArrays {
@@ -86,4 +87,18 @@ export function normalizeLanguageCodeToISO639_3(code: string): string {
  */
 export function draftingEnabled(translateConfig: TranslateConfig): boolean {
   return translateConfig.preTranslate === true || translateConfig.projectType === ProjectType.BackTranslation;
+}
+
+/**
+ * Determines if a build or a book in a build has low confidence
+ * @param build The build DTO.
+ * @param bookId The book identifier.
+ * @returns true if the build or a book in the build has low confidence; otherwise, false.
+ */
+export function hasLowConfidence(build: BuildDto | undefined, bookId: string | undefined = undefined): boolean {
+  return (
+    build?.executionData?.diagnostics?.some(
+      d => d.code === ServalDiagnosticCode.LowConfidence && (bookId == null || d.data?.bookId === bookId)
+    ) ?? false
+  );
 }

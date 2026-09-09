@@ -15,6 +15,10 @@
         </mat-panel-title>
         <mat-panel-description>
           <span class="status" [ngClass]="getStatus(entry.state).color">
+            <app-display-confidence
+              [lowConfidence]="hasLowConfidence(entry)"
+              [showText]="true"
+            ></app-display-confidence>
             <mat-icon class="status-icon">{{ getStatus(entry.state).icons }}</mat-icon>
             {{ t(getStatus(entry.state).text) }}
           </span>
@@ -40,6 +44,17 @@
                   <transloco key="draft_history_entry.per_chapter_remarks_notice"></transloco>
                 </app-notice>
               </p>
+            }
+            @if (hasLowConfidence(entry)) {
+              @if (booksWithLowConfidence(entry) > 1) {
+                <app-notice type="error" data-test-id="low-confidence-books">{{
+                  t("low_confidence_books", { number: booksWithLowConfidence(entry) })
+                }}</app-notice>
+              } @else {
+                <app-notice type="error" data-test-id="low-confidence-book">{{
+                  t("low_confidence_book", { book: lowConfidenceBookName(entry) })
+                }}</app-notice>
+              }
             }
             <p>{{ t("click_book_to_preview_draft") }}</p>
             <p class="book-buttons">

@@ -623,6 +623,7 @@ public class MachineApiControllerTests
                         BuildId = Build01,
                         BookConfidences = [],
                         ChapterConfidences = [],
+                        VerseConfidences = [],
                     }
                 )
             );
