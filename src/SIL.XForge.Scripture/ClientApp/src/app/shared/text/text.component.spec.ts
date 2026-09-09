@@ -261,6 +261,30 @@ describe('TextComponent', () => {
     expect(env.fixture.nativeElement.querySelector('quill-editor[dir="auto"]')).not.toBeNull();
   }));
 
+  it('keeps a verse marker beside its own verse when a number is typed in a right to left text', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.hostComponent.isTextRightToLeft = true;
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+
+    // put right to left text on both sides of verse 2, then type a number into verse 2, which is blank
+    const arabicText = '\u0646\u0635';
+    const verse1Range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
+    env.insertText(verse1Range.index + verse1Range.length, arabicText);
+    env.insertText(env.component.getSegmentRange('verse_1_3')!.index, arabicText);
+    env.insertText(env.component.getSegmentRange('verse_1_2')!.index + 1, '500');
+
+    // in a right to left text the verse 2 marker is to the right of the number, and verse 3's to the left of it
+    const verse2: DOMRect = env.getSegment('verse_1_2')!.getBoundingClientRect();
+    const verse2Marker: DOMRect = env.getVerseMarker('2')!.getBoundingClientRect();
+    const verse3Marker: DOMRect = env.getVerseMarker('3')!.getBoundingClientRect();
+    expect(verse2Marker.top).withContext('setup: verse 2 is all on one line').toEqual(verse2.top);
+    expect(verse3Marker.top).withContext('setup: verse 2 is all on one line').toEqual(verse2.top);
+    expect(verse2Marker.left).toBeGreaterThanOrEqual(verse2.right);
+    expect(verse3Marker.right).toBeLessThanOrEqual(verse2.left);
+  }));
+
   it('handles a null style on a paragraph', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
     const mockedQuill = new MockQuill('quill-editor');
@@ -2041,6 +2065,12 @@ class TestEnvironment {
 
   getUserDoc(userId: string): UserDoc {
     return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
+  }
+
+  getVerseMarker(verseNumber: string): HTMLElement | undefined {
+    return Array.from(this.quillEditor.querySelectorAll('usx-verse')).find(
+      verse => verse.textContent?.trim() === verseNumber
+    ) as HTMLElement | undefined;
   }
 
   getSegment(segmentRef: string): HTMLElement | null {
