@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
@@ -261,6 +262,8 @@ public class Startup
             }
         );
 
+        app.Use(PreventBackForwardCaching);
+
         if (SpaDevServerStartup == SpaDevServerStartup.None)
         {
             // Register header parsing for accept encoding
@@ -403,6 +406,38 @@ public class Startup
                 });
             }
         );
+    }
+
+    /// <summary>
+    /// Stops browsers from keeping pages of the Angular app in their back/forward cache, which would let the Back
+    /// button show a page from the logged in session after logging out.
+    /// </summary>
+    /// <remarks>
+    /// Firefox does not put pages served with <c>Cache-Control: no-store</c> in its back/forward cache. Chrome does,
+    /// except pages that used a WebSocket (which every page of the app does), and it evicts them when cookies change
+    /// (which logging out does). Safari ignores the header for its back/forward cache, so this does not help there.
+    /// The header is only set on the app's HTML page. Its scripts and other assets are versioned by file name, and
+    /// keep their existing cache headers.
+    /// </remarks>
+    internal Task PreventBackForwardCaching(HttpContext context, Func<Task> next)
+    {
+        if (IsSpaRoute(context))
+        {
+            context.Response.OnStarting(() =>
+            {
+                PreventBackForwardCaching(context.Response);
+                return Task.CompletedTask;
+            });
+        }
+        return next();
+    }
+
+    internal static void PreventBackForwardCaching(HttpResponse response)
+    {
+        if (response.ContentType?.StartsWith("text/html", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            response.Headers.CacheControl = "no-store";
+        }
     }
 
     /// <summary>Is the request something that should be handled by the Angular SPA, instead of by ASP.NET?</summary>
