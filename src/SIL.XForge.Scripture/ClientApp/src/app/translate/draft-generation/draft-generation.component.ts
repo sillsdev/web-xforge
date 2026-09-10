@@ -17,6 +17,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
+import { UserFeedbackComponent } from 'src/app/shared/user-feedback/user-feedback.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -40,6 +41,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
+import { PageSource } from '../../shared/user-feedback/user-feedback-dialog.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
@@ -85,11 +87,13 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     L10nPercentPipe,
     DraftGenerationStepsComponent,
     DraftInformationComponent,
-    DraftHistoryListComponent
+    DraftHistoryListComponent,
+    UserFeedbackComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
+  @ViewChild(DraftHistoryListComponent) draftHistoryList?: DraftHistoryListComponent;
   draftJob?: BuildDto;
 
   // This component url, but with a hash for opening a dialog
@@ -139,6 +143,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   readonly draftDurationHours = 1.5;
   /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 500;
+  private hasUserSubmittedFeedback = false;
 
   get draftEnabled(): boolean {
     return this.isBackTranslation || this.isPreTranslationApproved;
@@ -192,6 +197,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return issuesEmailTemplate();
   }
 
+  get showUserFeedbackNotice(): boolean {
+    return !this.hasUserSubmittedFeedback && this.hasUsedDraftGenerationThreeMonths;
+  }
+
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
     const elapsedTime = new Date().getTime() - new Date(onboardingRequest.submittedAt).getTime();
     const elapsedDays = elapsedTime / (1000 * 60 * 60 * 24);
@@ -212,6 +221,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   get hasConfigureSourcePermission(): boolean {
     return this.permissions.canConfigureSources(this.activatedProject.projectDoc);
+  }
+
+  private get hasUsedDraftGenerationThreeMonths(): boolean {
+    const dates = (this.draftHistoryList?.savedHistoricalBuilds ?? [])
+      .map(b => b.additionalInfo?.dateGenerated)
+      .filter((d): d is string => d != null)
+      .map(d => new Date(d).getTime());
+    if (dates.length === 0) return false;
+    const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000;
+    return Math.max(...dates) - Math.min(...dates) > threeMonthsInMs;
   }
 
   ngOnInit(): void {
@@ -303,6 +322,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
     });
+
+    this.activatedProject.projectId$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish())
+      .subscribe(projectId => {
+        void this.projectService
+          .onlineHasUserSubmittedFeedback(projectId, PageSource.GenerateDraftPage)
+          .then(hasFeedback => (this.hasUserSubmittedFeedback = hasFeedback));
+      });
   }
 
   get formattingOptionsRequired(): boolean {

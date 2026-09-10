@@ -24,9 +24,10 @@ import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
-import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
 import { BookProgressWithChapterProgress } from '../shared/progress-service/progress.service';
+import { PageSource, UserFeedbackDialogResult } from '../shared/user-feedback/user-feedback-dialog.component';
 import { expandNumbers } from '../shared/utils';
+import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { InviteeStatus } from './models/invitee-status';
 import { NoteThreadDoc } from './models/note-thread-doc';
@@ -435,5 +436,18 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   /** Gets project progress by calling the backend aggregation endpoint. */
   async getProjectProgress(projectId: string): Promise<BookProgressWithChapterProgress[]> {
     return await this.onlineInvoke<BookProgressWithChapterProgress[]>('getProjectProgress', { projectId });
+  }
+
+  async addUserFeedback(result: UserFeedbackDialogResult): Promise<void> {
+    const params: any = {
+      projectId: result.sfProjectId,
+      feedbackParams: result.feedbackParams
+    };
+    return await this.onlineInvoke('addUserFeedback', params);
+  }
+
+  /** Determines whether the current user has already submitted feedback for the specified project. */
+  async onlineHasUserSubmittedFeedback(projectId: string, source: PageSource): Promise<boolean> {
+    return await this.onlineInvoke<boolean>('hasUserSubmittedFeedback', { projectId, source });
   }
 }
