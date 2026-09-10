@@ -3249,6 +3249,196 @@ describe('EditorComponent', () => {
     }));
   });
 
+  describe('source scroll sync', () => {
+    /**
+     * Sets up the source scroll container and the source/target selection bounds that syncScroll reads, and returns
+     * a getter for the source scroll position it produces. Selection bounds are relative to the viewport, as Quill
+     * reports them.
+     */
+    function setUpScrollSync(
+      env: TestEnvironment,
+      options: {
+        scrollTop: number;
+        containerTop: number;
+        containerHeight: number;
+        sourceSelectionTop: number;
+        sourceSelectionHeight: number;
+        targetSelectionTop: number;
+      }
+    ): { scrollTop: () => number } {
+      env.clickSegmentRef('verse_1_1');
+      env.component.targetFocused = true;
+      expect(env.component.source?.segment).withContext('source segment').not.toBeNull();
+
+      const container = env.component['sourceScrollContainer'] as HTMLElement;
+      let scrollTop: number = options.scrollTop;
+      Object.defineProperty(container, 'scrollTop', {
+        get: () => scrollTop,
+        set: (value: number) => (scrollTop = value),
+        configurable: true
+      });
+      Object.defineProperty(container, 'clientHeight', { value: options.containerHeight, configurable: true });
+      spyOn(container, 'getBoundingClientRect').and.returnValue({
+        top: options.containerTop,
+        height: options.containerHeight,
+        bottom: options.containerTop + options.containerHeight
+      } as DOMRect);
+      spyOn(env.component.source!.editor!.selection, 'getBounds').and.returnValue({
+        top: options.sourceSelectionTop,
+        height: options.sourceSelectionHeight,
+        bottom: options.sourceSelectionTop + options.sourceSelectionHeight,
+        left: 0,
+        right: 0,
+        width: 0
+      });
+      spyOn(env.component.target!.editor!.selection, 'getBounds').and.returnValue({
+        top: options.targetSelectionTop,
+        height: 20,
+        bottom: options.targetSelectionTop + 20,
+        left: 0,
+        right: 0,
+        width: 0
+      });
+
+      return { scrollTop: () => scrollTop };
+    }
+
+    it('scrolls the source selection to the target selection when scrolling down', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Source selection is far below the visible area of the source
+      const scroll = setUpScrollSync(env, {
+        scrollTop: 0,
+        containerTop: 100,
+        containerHeight: 600,
+        sourceSelectionTop: 1300,
+        sourceSelectionHeight: 140,
+        targetSelectionTop: 400
+      });
+
+      env.component['syncScroll']();
+
+      // The source selection lands where the target selection is, which is within view
+      expect(scroll.scrollTop()).toEqual(900);
+
+      env.dispose();
+    }));
+
+    it('scrolls the source selection to the target selection when scrolling up', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Source selection is above the visible area of the source, as it is when selecting an earlier verse
+      const scroll = setUpScrollSync(env, {
+        scrollTop: 1900,
+        containerTop: 100,
+        containerHeight: 600,
+        sourceSelectionTop: -600,
+        sourceSelectionHeight: 140,
+        targetSelectionTop: 400
+      });
+
+      env.component['syncScroll']();
+
+      expect(scroll.scrollTop()).toEqual(900);
+
+      env.dispose();
+    }));
+
+    it('scrolls further when the target selection is above the top of the source', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // The target selection is 50 pixels above the top of the source container
+      const scroll = setUpScrollSync(env, {
+        scrollTop: 0,
+        containerTop: 100,
+        containerHeight: 600,
+        sourceSelectionTop: 1300,
+        sourceSelectionHeight: 140,
+        targetSelectionTop: 50
+      });
+
+      env.component['syncScroll']();
+
+      // Aligning the selections would put the source selection 50 pixels above the container, so scroll 50 less
+      expect(scroll.scrollTop()).toEqual(1200);
+
+      env.dispose();
+    }));
+
+    it('scrolls further when the bottom of the source selection is below the source', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Aligned with the target selection, the source selection would extend 100 pixels below the container
+      const scroll = setUpScrollSync(env, {
+        scrollTop: 0,
+        containerTop: 100,
+        containerHeight: 600,
+        sourceSelectionTop: 1300,
+        sourceSelectionHeight: 200,
+        targetSelectionTop: 600
+      });
+
+      env.component['syncScroll']();
+
+      expect(scroll.scrollTop()).toEqual(800);
+
+      env.dispose();
+    }));
+
+    it('scrolls a source selection exactly as tall as the source to the top of the source', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // Aligned with the target selection, the source selection would extend 300 pixels below the container, and
+      // scrolling that far up puts its top exactly at the top of the container
+      const scroll = setUpScrollSync(env, {
+        scrollTop: 0,
+        containerTop: 100,
+        containerHeight: 600,
+        sourceSelectionTop: 1300,
+        sourceSelectionHeight: 600,
+        targetSelectionTop: 400
+      });
+
+      env.component['syncScroll']();
+
+      expect(scroll.scrollTop()).toEqual(1200);
+
+      env.dispose();
+    }));
+
+    it('does not scroll a source selection taller than the source past its top', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      // The source selection is taller than the container, so showing its bottom would hide its top
+      const scroll = setUpScrollSync(env, {
+        scrollTop: 0,
+        containerTop: 100,
+        containerHeight: 600,
+        sourceSelectionTop: 1300,
+        sourceSelectionHeight: 800,
+        targetSelectionTop: 400
+      });
+
+      env.component['syncScroll']();
+
+      expect(scroll.scrollTop()).toEqual(900);
+
+      env.dispose();
+    }));
+  });
+
   describe('Translator settings enabled/disabled', () => {
     it('shows translator settings when the user has a paratext role', fakeAsync(() => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };

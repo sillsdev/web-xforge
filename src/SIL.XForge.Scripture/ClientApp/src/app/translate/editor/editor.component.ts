@@ -2275,19 +2275,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     let newScrollTop: number =
       this.sourceScrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
 
-    // Check to see if the top of source selection would be visible after the scroll adjustment
+    // Check whether the top of the source selection would be visible after the scroll. The scroll above puts the
+    // source selection where the target selection is, so the target selection's position decides visibility, not
+    // where the source selection is now.
     const sourceTopPosition: number =
-      sourceSelectionBounds.top - this.sourceScrollContainer.getBoundingClientRect().top;
+      targetSelectionBounds.top - this.sourceScrollContainer.getBoundingClientRect().top;
 
-    // Check to see if the bottom of source selection would be visible after the scroll adjustment
+    // Check whether the bottom of the source selection would be visible after the scroll
     const sourceBottomPosition: number =
       sourceTopPosition + sourceSelectionBounds.height - this.sourceScrollContainer.clientHeight;
 
-    // Adjust the scroll to ensure the selection fits within the container
-    // Only adjust the bottom position so long as that doesn't hide the top position i.e. a long verse(s)
+    // Adjust the scroll so the selection fits in the container. Scroll for the bottom only when that keeps the top
+    // visible. A selection taller than the container keeps its top in view instead. A selection exactly as tall as
+    // the container fits, with its top at the top of the container.
     if (sourceTopPosition < 0) {
       newScrollTop += sourceTopPosition;
-    } else if (sourceBottomPosition > 0 && sourceTopPosition - sourceBottomPosition > 0) {
+    } else if (sourceBottomPosition > 0 && sourceTopPosition - sourceBottomPosition >= 0) {
       newScrollTop += sourceBottomPosition;
     }
 
