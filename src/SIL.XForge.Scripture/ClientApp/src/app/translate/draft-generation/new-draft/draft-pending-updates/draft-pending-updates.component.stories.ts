@@ -1,11 +1,11 @@
 import { Meta, StoryObj } from '@storybook/angular';
+import userEvent from '@testing-library/user-event';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Subject } from 'rxjs';
-import userEvent from '@testing-library/user-event';
 import { expect, waitFor, within } from 'storybook/test';
 import { anything, instance, mock, reset, when } from 'ts-mockito';
-import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
@@ -185,6 +185,10 @@ export const Loading: Story = {
 
 /** Start a sync, then let it finish successfully; the row shows "Up to date". */
 export const SyncSucceeded: Story = {
+  parameters: {
+    // Skip spurious/random diff on last ew pixels in the text "Up to date"
+    screenshot: { maxDiffPixels: 4 }
+  },
   args: {
     projects: [{ projectId: 'p1', shortName: 'GRK', name: 'Greek NT', canSync: true, completeOnSyncWith: 'success' }]
   },
