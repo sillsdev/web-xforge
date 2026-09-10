@@ -1,0 +1,17 @@
+.feedback-description {
+  font-size: 1rem;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  row-gap: 8px;
+}
+
+.project-select {
+  width: 280px;
+}
+
+.permission-control {
+  margin-bottom: 0;
+}
