@@ -233,6 +233,45 @@ describe('NoteThreadService', () => {
     expect(commenterNoteThread.notes.length).toEqual(0);
   });
 
+  it('allows commenter to re-open their own note thread when replying to it', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const commenterThreadDocId: string = getNoteThreadDocId('project01', env.dataId3);
+
+    // an administrator resolves the thread the commenter created
+    const adminConn: Connection = clientConnect(env.server, env.projectAdminId);
+    await submitJson0Op<NoteThread>(adminConn, NOTE_THREAD_COLLECTION, commenterThreadDocId, op =>
+      op.set(n => n.status, NoteStatus.Resolved)
+    );
+
+    // the commenter adds a note to the thread, which sets the thread status back to to do
+    const conn: Connection = clientConnect(env.server, env.commenterId);
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, commenterThreadDocId);
+    const note: Note = env.getNewNote(env.threadId3, 'noteThread03note02', env.commenterId);
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, commenterThreadDocId, op => {
+      op.insert(n => n.notes, 1, note);
+      op.set(n => n.status, NoteStatus.Todo);
+    });
+
+    const commenterNoteThread: NoteThread = doc.data;
+    expect(commenterNoteThread.notes.length).toEqual(2);
+    expect(commenterNoteThread.status).toEqual(NoteStatus.Todo);
+  });
+
+  it('prohibits commenter from changing the status of a note thread they do not own', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, env.commenterId);
+    const noteThreadDocId: string = getNoteThreadDocId('project01', env.dataId2);
+    await expect(() =>
+      submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, op =>
+        op.set(n => n.status, NoteStatus.Resolved)
+      )
+    ).rejects.toEqual(
+      new Error(`403: Permission denied (update), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
+    );
+  });
+
   it('allows commenter to delete their own note thread', async () => {
     const env = new TestEnvironment();
     await env.createData();
