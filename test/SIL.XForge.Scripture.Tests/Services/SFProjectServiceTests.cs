@@ -4132,37 +4132,127 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task SubmitUserFeedbackAsync_Success()
+    public async Task AddUserFeedbackAsync_Success()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Great feature!",
+        };
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, Project01, feedbackParams));
+    }
+
+    [Test]
+    public void AddUserFeedbackAsync_ProjectDoesNotExist()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "feedback",
+        };
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.AddUserFeedbackAsync(User01, "invalid_project", feedbackParams)
+        );
+    }
+
+    [Test]
+    public void AddUserFeedbackAsync_UserNotOnProject()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "feedback",
+        };
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.AddUserFeedbackAsync(User04, Project01, feedbackParams)
+        );
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedbackAsync_ReturnsFalseWhenNoFeedbackSubmitted()
     {
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.AddUserFeedbackAsync(User01, Project01, "Great feature!");
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
 
-        UserFeedback userFeedback = await env.UserFeedback.GetAsync(UserFeedback.GetDocId(Project01, User01));
-        Assert.That(userFeedback, Is.Not.Null);
-        Assert.That(userFeedback.ProjectRef, Is.EqualTo(Project01));
-        Assert.That(userFeedback.Feedback, Is.EqualTo("Great feature!"));
+        Assert.That(result, Is.False);
     }
 
     [Test]
-    public void SubmitUserFeedbackAsync_ProjectDoesNotExist()
+    public async Task HasUserSubmittedFeedbackAsync_ReturnsTrueWhenFeedbackSubmitted()
+    {
+        var env = new TestEnvironment();
+        await env.UserFeedback.InsertAsync(
+            new UserFeedback
+            {
+                Id = "feedback01",
+                ProjectRef = Project01,
+                UserRef = User01,
+                Source = PageSource.GenerateDraftPage,
+            }
+        );
+
+        // SUT
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedbackAsync_OnlyCountsFeedbackFromTheSpecifiedUser()
+    {
+        var env = new TestEnvironment();
+        await env.UserFeedback.InsertAsync(
+            new UserFeedback
+            {
+                Id = "feedback01",
+                ProjectRef = Project01,
+                UserRef = User02,
+            }
+        );
+
+        // SUT
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void HasUserSubmittedFeedbackAsync_ProjectDoesNotExist()
     {
         var env = new TestEnvironment();
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.AddUserFeedbackAsync(User01, "invalid_project", "feedback")
+            env.Service.HasUserSubmittedFeedbackAsync(User01, "invalid_project", PageSource.GenerateDraftPage)
         );
     }
 
     [Test]
-    public void SubmitUserFeedbackAsync_UserNotOnProject()
+    public void HasUserSubmittedFeedbackAsync_UserNotOnProject()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddUserFeedbackAsync(User04, Project01, "feedback"));
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.HasUserSubmittedFeedbackAsync(User04, Project01, PageSource.GenerateDraftPage)
+        );
     }
 
     [Test]
