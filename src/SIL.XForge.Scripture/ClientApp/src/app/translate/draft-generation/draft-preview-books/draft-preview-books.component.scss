@@ -1,3 +1,8 @@
+:host {
+  display: flex;
+  gap: 8px;
+}
+
 app-display-confidence ::ng-deep mat-icon {
   // it's not entirely clear why, but this is needed to vertically align the icon with the book name
   margin-bottom: -6px;
