@@ -692,6 +692,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       row.report.project?.shortName,
       row.report.project?.name,
       row.report.project?.ptProjectId,
+      row.report.build?.executionData?.sourceLanguageTag,
+      row.report.build?.executionData?.targetLanguageTag,
       requesterId,
       requesterIdentity?.name,
       requesterIdentity?.displayName,
