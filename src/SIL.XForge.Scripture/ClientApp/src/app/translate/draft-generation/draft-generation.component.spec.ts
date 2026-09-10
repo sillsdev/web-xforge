@@ -207,9 +207,10 @@ describe('DraftGenerationComponent', () => {
         asymmetricMatch: (proj: SFProjectProfile | undefined) =>
           proj != null && proj.paratextId === projectDoc.data?.paratextId
       };
-      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
+      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft', 'onlineHasUserSubmittedFeedback']);
       mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
       mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
+      mockSFProjectService.onlineHasUserSubmittedFeedback.and.returnValue(Promise.resolve(false));
       mockProjectNotificationService = jasmine.createSpyObj<ProjectNotificationService>([
         'setNotifyBuildProgressHandler',
         'start',
