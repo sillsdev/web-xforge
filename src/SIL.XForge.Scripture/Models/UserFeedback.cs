@@ -3,37 +3,65 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Scripture.Models;
 
+public class UserFeedbackParams
+{
+    public string Type { get; init; } = FeedbackType.HowSfImpactedProject;
+    public string Source { get; init; } = PageSource.None;
+    public string Permission { get; init; } = FeedbackPermission.Private;
+    public string Feedback { get; init; } = string.Empty;
+}
+
+public static class FeedbackType
+{
+    public const string HowSfImpactedProject = "how_sf_impacted_project";
+}
+
+public static class PageSource
+{
+    public const string None = "none";
+    public const string GenerateDraftPage = "generate_draft_page";
+}
+
+public static class FeedbackPermission
+{
+    public const string PublishPublic = "publish_public";
+    public const string PublishAnonymous = "public_anonymous";
+    public const string Private = "private";
+}
+
 /// <summary>
 /// Feedback submitted by a user about a specific project.
 /// </summary>
 public class UserFeedback : IIdentifiable
 {
     /// <summary>
-    /// Gets the document identifier for the user feedback.
+    /// The identifier for the feedback.
     /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
-    /// <param name="userId">The user identifier.</param>
-    /// <returns>An id in the format <c>projectId:userId</c>.</returns>
-    public static string GetDocId(string sfProjectId, string userId) => $"{sfProjectId}:{userId}";
-
-    /// <summary>
-    /// Gets or sets the identifier.
-    /// </summary>
-    /// <remarks>This is in the format projectId:userId.</remarks>
     public required string Id { get; set; }
 
     /// <summary>
-    /// Gets the project reference from the document identifier.
+    /// The project reference from the document identifier.
     /// </summary>
-    public string ProjectRef => Id.Split(':')[0];
+    public string ProjectRef { get; init; } = string.Empty;
+
+    public string UserRef { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets string containing the feedback provided by the user.
+    /// The type of feedback provided by a user.
+    /// </summary>
+    public string Type { get; init; } = string.Empty;
+
+    public string Source { get; init; } = string.Empty;
+
+    public string FeedbackPermission { get; init; } = string.Empty;
+
+    /// <summary>
+    /// A string containing the feedback provided by the user.
     /// </summary>
     public string Feedback { get; init; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the date when the feedback was submitted.
+    /// The date when the feedback was submitted.
     /// </summary>
     public DateTime DateSubmitted { get; init; }
 }

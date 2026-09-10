@@ -192,6 +192,8 @@
                   </a>
                 </div>
               </app-notice>
+            } @else if (showUserFeedbackNotice) {
+              <app-user-feedback></app-user-feedback>
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
               <section class="action-button-strip">

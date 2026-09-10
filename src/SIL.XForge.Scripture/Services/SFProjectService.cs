@@ -532,10 +532,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="projectId">The project identifier the feedback pertains to.</param>
-    /// <param name="feedback">The feedback text.</param>
+    /// <param name="feedbackParams">The feedback parameters.</param>
     /// <exception cref="DataNotFoundException">The project does not exist.</exception>
     /// <exception cref="ForbiddenException">The user is not a member of the project.</exception>
-    public async Task AddUserFeedbackAsync(string curUserId, string projectId, string feedback)
+    public async Task AddUserFeedbackAsync(string curUserId, string projectId, UserFeedbackParams feedbackParams)
     {
         Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
         if (!attempt.TryResult(out SFProject project))
@@ -547,12 +547,39 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await _userFeedback.ReplaceAsync(
             new UserFeedback
             {
-                Id = UserFeedback.GetDocId(projectId, curUserId),
-                Feedback = feedback,
+                Id = ObjectId.GenerateNewId().ToString(),
+                ProjectRef = projectId,
+                UserRef = curUserId,
+                Type = feedbackParams.Type,
+                Source = feedbackParams.Source,
+                FeedbackPermission = feedbackParams.Permission,
+                Feedback = feedbackParams.Feedback,
                 DateSubmitted = DateTime.UtcNow,
             },
             upsert: true
         );
+    }
+
+    /// <summary>
+    /// Determines whether the specified user has already submitted feedback for the specified project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="source">The page source where the feedback was requested.</param>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user is not a member of the project.</exception>
+    public async Task<bool> HasUserSubmittedFeedbackAsync(string curUserId, string projectId, string source)
+    {
+        Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+        if (!attempt.TryResult(out SFProject project))
+            throw new DataNotFoundException("The project does not exist.");
+
+        if (!project.UserRoles.ContainsKey(curUserId))
+            throw new ForbiddenException();
+
+        return await _userFeedback
+            .Query()
+            .AnyAsync(f => f.ProjectRef == projectId && f.UserRef == curUserId && f.Source == source);
     }
 
     /// <summary>
