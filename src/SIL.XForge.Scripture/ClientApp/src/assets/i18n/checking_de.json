@@ -334,12 +334,9 @@
   },
   "error_messages": {
     "error_occurred_login": "Beim Anmelden ist ein Fehler aufgetreten.",
-    "failed_to_retrieve_suggestions": "Kein Übersetzungsvorschlag verfügbar.",
     "failed_to_update_avatar": "Dein Avatar konnte nicht aktualisiert werden.",
     "login": "Anmelden",
     "login_expired": "Deine Anmeldung ist abgelaufen. Bitte melde Dich erneut an.",
-    "suggestion_engine_requires_retrain": "Keine Übersetzungsvorschläge verfügbar. Bitte die Vorschläge auf der Übersichtsseite neu erfassen.",
-    "go_to_retrain": "Zur Übersicht",
     "try_again": "Wiederholen"
   },
   "exception_handling_service": {

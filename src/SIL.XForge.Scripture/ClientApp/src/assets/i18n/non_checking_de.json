@@ -319,6 +319,9 @@
       "generate_draft": "Entwurf generieren"
     }
   },
+  "draft_confidence": {
+    "low_confidence": "Geringe Zuverlässigkeit"
+  },
   "draft_generation_steps": {
     "back": "Zurück",
     "books_are_hidden_hide_explanation": "{{ numBooks }} Bücher sind versteckt. {{ underlineStart }}Erklärung ausblenden{{ underlineEnd }}",
@@ -386,6 +389,9 @@
     "formatting_options": "Optionen für die Formatierung",
     "formatting": "Formatierung",
     "hide_model_training_configuration": "Modellschulungskonfiguration ausblenden",
+    "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
+    "low_confidence_books": "Die Entwurfsqulität für {{ number }} Bücher ist möglicherweise geringer als üblich.",
+    "one_book": "1 Buch",
     "per_chapter_remarks_notice": "[b]Neu![/b] Eine Benachrichtigung, dass der Entwurf von KI generiert wurde, wird nun in jedem Kapitel angezeigt anstatt am Anfang des Buches.",
     "requested_at": "Angefordert {{ requestedAtTime }}.",
     "requested_by": "Angefordert von {{ requestedByUserName }} um {{ requestedAtTime }}.",
@@ -437,6 +443,8 @@
     "import_some_chapters_failed": "{{ successful }} Kapitel erfolgreich importiert. Fehler beim Importieren von {{ failed }} Kapitel. Siehe Details oben.",
     "importing_draft": "Entwurf wird importiert",
     "importing": "Wird importiert",
+    "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
+    "low_confidence_books": "Die Entwurfsqulität für {{ number }} Bücher ist möglicherweise geringer als üblich.",
     "next": "Weiter",
     "no_books_ready_for_import": "Es sind keine Entwürfe von Kapitel für den Import bereit. Generiere einen Entwurf und versuche es erneut.",
     "overwrite_book_description": "Ein oder mehrere Kapitel haben bestehende Inhalte, die in {{ bookName }} in [b]{{ projectNameLabel }}[/b] überschrieben werden. Die Kapitel mit vorhandenem Inhalt sind unten aufgeführt. Klicke auf jedes Kapitel, um den Inhalt anzuzeigen.",
@@ -556,7 +564,6 @@
     "text_doc_corrupted": "Dieses Kapitel kann nicht bearbeitet werden, da die Daten beschädigt wurden.",
     "text_has_been_deleted": "Das Buch wurde gelöscht oder ist nicht mehr zugänglich.",
     "to_report_issue_email": "Um ein Problem zu melden, sende eine E-Mail an {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Dieser Vers ist zu lang, um Vorschläge zu generieren.",
     "your_comment": "Dein Kommentar"
   },
   "editor_draft_tab": {
@@ -567,6 +574,7 @@
     "error_applying_draft": "Hinzufügen des Entwurfs zum Projekt ist fehlgeschlagen. Versuche es später noch einmal.",
     "format_draft": "Optionen für die Formatierung",
     "format_draft_tooltip": "Optionen für die Formatierung des Entwurfs anpassen",
+    "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
     "no_draft_notice": "{{ bookChapterName }} hat keinen Entwurf.",
     "offline_notice": "Generierte Entwürfe sind offline nicht verfügbar.",
     "overwrite": "Das Hinzufügen des Entwurfs wird das aktuelle Kapitel überschreiben. Bist Du sicher, dass Du fortfahren möchtest?",
@@ -869,9 +877,6 @@
     "source_projects_cannot_be_deleted": "Ein anderes Projekt basiert auf diesem Projekt und kann daher nicht gelöscht werden.",
     "source_text_placeholder": "Ausgangstext (optional)",
     "translate": "Übersetzen",
-    "translation_suggestions_require_source_text": "Hinweis: Übersetzungsvorschläge sind nur verfügbar, wenn ein Ausgangstext ausgewählt ist.",
-    "translation_suggestions": "Übersetzungsvorschläge aktivieren",
-    "translations_will_be_suggested": "Übersetzungen für Wörter und Ausdrücke werden vorgeschlagen, während Du die Bibelstelle bearbeitest, basierend auf dem oben ausgewählten Projekt oder der Ressource.",
     "hide_community_checking_text": "Bibeltext ausblenden",
     "checkers_listen_to_scripture_audio": "Prüfer müssen sich das Audio der Bibelstelle anhören.",
     "insights_settings_header": "Insights",
@@ -903,18 +908,12 @@
     "select": "Wählen"
   },
   "translator_settings_dialog": {
-    "better": "Besser",
     "close": "Schliessen",
     "editor_settings_title": "Editor",
     "editor_tabs_in_single_pane": "Editor-Registerkarten in einem einzigen Fenster anzeigen",
     "insights_enable_assessments": "Bewertungen anzeigen",
     "insights_enable_autocorrect": "Auto-Korrekturen erlauben",
     "insights_settings_title": "Erkenntnisse",
-    "more": "Mehr",
-    "number_of_suggestions": "Anzahl Vorschläge",
-    "settings_not_available_offline": "Übersetzungseinstellungen sind nicht verfügbar, wenn Du offline bist.",
-    "suggestion_confidence": "Vertrauen in Vorschlag",
-    "translation_suggestions_settings_title": "Übersetzungsvorschläge",
     "translator_settings": "Übersetzungseinstellungen"
   },
   "supported_back_translation_languages_dialog": {
@@ -997,26 +996,11 @@
     "upload_training_data": "Schulungsdaten hochladen",
     "uploading": "Hochladen im Gange..."
   },
-  "training_progress": {
-    "completed_successfully": "Erfolgreich abgeschlossen",
-    "training_completed_successfully": "Schulung erfolgreich abgeschlossen",
-    "training": "Schulung"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Übersetzungsvorschläge sind nicht verfügbar. Bitte wähle ein Ausgangsprojekt, das Bücher mit diesem Projekt gemeinsam hat, um Übersetzungsvorschläge zu erhalten.",
-    "not_enough_verses_translated": "Übersetzungsvorschläge sind nicht verfügbar. Bitte stelle sicher, dass mindestens 10 übereinstimmende Verse in den Ausgangs- und Zielprojekten übersetzt sind.",
     "progress": "Fortschritt",
-    "progress_and_suggestions_not_available_offline": "Der Übersetzungsfortschritt und die Vorschläge sind nicht verfügbar, wenn Du offline bist.",
     "progress_not_available_offline": "Der Übersetzungsfortschritt ist nicht verfügbar, wenn Du offline bist.",
-    "quality": "Qualität",
-    "retrain": "Neu schulen",
-    "suggestion_engine": "Funktion Vorschlagen",
-    "trained_segments": "geschulte Segmente",
-    "training": "Schulung...",
-    "training_unavailable": "Schulung ist vorübergehend nicht verfügbar",
     "translate_overview": "Übersicht übersetzen",
-    "translated_segments": "{{ translatedSegments }} von {{ total }} Segmenten",
-    "translation_suggestions_will_be_removed": "Dein Projekt scheint die Funktion der Übersetzungsvorschläge zu verwenden. Die Übersetzungsvorschläge werden bald entfernt {{ date }}. Bitte wende Dich an {{ email }} , um alternative Möglichkeiten zur Übersetzung mit Scripture Forge zu besprechen."
+    "translated_segments": "{{ translatedSegments }} von {{ total }} Segmenten"
   },
   "draft_signup": {
     "additional_comments_label": "Zusätzliche Anmerkungen",

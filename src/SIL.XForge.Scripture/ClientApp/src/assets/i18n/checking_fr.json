@@ -334,12 +334,9 @@
   },
   "error_messages": {
     "error_occurred_login": "Une erreur s'est produite lors de la connexion.",
-    "failed_to_retrieve_suggestions": "Impossible d'obtenir des suggestions de traduction.",
     "failed_to_update_avatar": "L'image de votre avatar n'a pas pu être mise à jour.",
     "login": "Se connecter",
     "login_expired": "Votre connexion a expiré, Veuillez vous reconnecter à nouveau.",
-    "suggestion_engine_requires_retrain": "Il n'a pas été possible d'obtenir des suggestions de traduction. Veuillez reformuler les suggestions sur la page d'aperçu.",
-    "go_to_retrain": "Aller à l'aperçu",
     "try_again": "Essayez à nouveau"
   },
   "exception_handling_service": {
