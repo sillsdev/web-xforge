@@ -319,6 +319,9 @@
       "generate_draft": "إنشاء مسودة"
     }
   },
+  "draft_confidence": {
+    "low_confidence": "Low confidence"
+  },
   "draft_generation_steps": {
     "back": "رجوع",
     "books_are_hidden_hide_explanation": "{{ numBooks }} كتب مخفية. {{ underlineStart }}إخفاء السبب{{ underlineEnd }}",
@@ -386,6 +389,9 @@
     "formatting_options": "خيارات التنسيق",
     "formatting": "التنسيق",
     "hide_model_training_configuration": "إخفاء إعدادات تدريب النموذج",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
+    "one_book": "1 book",
     "per_chapter_remarks_notice": "[b]جديد![/b] يُعرض الآن إشعار يفيد بأن المُسَوَّدَة مُولّدة بالذكاء الاصطناعي في كل فصل، بدلاً من عرضه في بداية الكتاب.",
     "requested_at": "تم طلبه في {{ requestedAtTime }}.",
     "requested_by": "طلب من قِبَل {{ requestedByUserName }} في {{ requestedAtTime }}.",
@@ -437,6 +443,8 @@
     "import_some_chapters_failed": "تم استيراد الفصل (الفصول) {{ successful }} بنجاح. تعذّر استيراد الفصل (الفصول) {{ failed }}. انظر التفاصيل أعلاه.",
     "importing_draft": "جاري استيراد مسودة",
     "importing": "جاري الاستيراد",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
     "next": "التالي",
     "no_books_ready_for_import": "لا توجد فصول أولية جاهزة للاستيراد. أنشئ مسودة وحاول مرة أخرى.",
     "overwrite_book_description": "يحتوي فصل واحد أو أكثر على محتوى حالي سيتم استبداله في {{ bookName }} في [b]{{ projectNameLabel }}[/b]. وفيما يلي قائمة بالفصول التي تحتوي على محتوى موجود. انقر على كل فصل لعرض المحتوى.",
@@ -556,7 +564,6 @@
     "text_doc_corrupted": "لا يمكن تعديل أو تحرير هذا الفصل لأن البيانات أصبحت تالفة.",
     "text_has_been_deleted": "تمّ حذف الكتاب أو لم يعد الوصول إليه ممكناً.",
     "to_report_issue_email": "للإبلاغ عن مشكلة، أرسِل رسالة إلكترونية إلى {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "هذه الآية أطول مما ينبغي ولذا يصعب استحداث اقتراحات.",
     "your_comment": "تعليقك"
   },
   "editor_draft_tab": {
@@ -567,6 +574,7 @@
     "error_applying_draft": "تعذّرت إضافة المسودة إلى المشروع. حاول مرة أخرى لاحقًا.",
     "format_draft": "خيارات التنسيق",
     "format_draft_tooltip": "تخصيص خيارات التنسيق للمسودة",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
@@ -869,9 +877,6 @@
     "source_projects_cannot_be_deleted": "ثمّة مشروع آخر مبني على هذا المشروع، ولذا لا يمكن حذفه.",
     "source_text_placeholder": "نص المصدر (اختياري)",
     "translate": "التَّرْجَمَة",
-    "translation_suggestions_require_source_text": "ملاحظة: اقتراحات التَّرْجَمَة متاحة فقط إذا تم اختيار نص مصدر.",
-    "translation_suggestions": "فعِّل اقتراحات الترجمة",
-    "translations_will_be_suggested": "سيتم اقتراح ترجمات للكلمات والعبارات عند تحرير النص الكتابي استناداً إلى المشروع أو المصدر الذي تمّ اختياره أعلاه.",
     "hide_community_checking_text": "Hide Scripture text",
     "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "insights_settings_header": "Insights",
@@ -903,18 +908,12 @@
     "select": "اختيار"
   },
   "translator_settings_dialog": {
-    "better": "أفضل",
     "close": "إغلاق",
     "editor_settings_title": "Editor",
     "editor_tabs_in_single_pane": "Show editor tabs in a single pane",
     "insights_enable_assessments": "Show assessments",
     "insights_enable_autocorrect": "Allow auto-corrections",
     "insights_settings_title": "Insights",
-    "more": "أكثر",
-    "number_of_suggestions": "عدد الاقتراحات",
-    "settings_not_available_offline": "Translator settings are not available while you are offline.",
-    "suggestion_confidence": "درجة الثقة في الاقتراح",
-    "translation_suggestions_settings_title": "ترجمات مقترحة",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
@@ -997,26 +996,11 @@
     "upload_training_data": "Upload Training Data",
     "uploading": "جارٍ تحميل..."
   },
-  "training_progress": {
-    "completed_successfully": "تم إكماله بنجاح",
-    "training_completed_successfully": "أكتمل التدريب بنجاح",
-    "training": "التدريب"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "اقتراحات التَّرْجَمَة غير متوفرة. يرجى اختيار مشروع مصدر يشترك مع هذا المشروع في بعض الأسفار للحصول على اقتراحات التَّرْجَمَة.",
-    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "مستوى التقدُّم",
-    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
     "progress_not_available_offline": "Translation progress is not available when offline.",
-    "quality": "الجودة",
-    "retrain": "إعادة التدريب",
-    "suggestion_engine": "محرك الاقتراحات",
-    "trained_segments": "شرائح مُدرَّبة",
-    "training": "التدريب...",
-    "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "نظرة عامة على الترجمة",
-    "translated_segments": "{{ translatedSegments }} من {{ total }} جزئا",
-    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translated_segments": "{{ translatedSegments }} من {{ total }} جزئا"
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",

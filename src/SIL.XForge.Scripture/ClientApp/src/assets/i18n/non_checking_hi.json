@@ -319,6 +319,9 @@
       "generate_draft": "Generate Draft"
     }
   },
+  "draft_confidence": {
+    "low_confidence": "Low confidence"
+  },
   "draft_generation_steps": {
     "back": "पीछे जाएं",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
@@ -386,6 +389,9 @@
     "formatting_options": "Formatting options",
     "formatting": "स्वरूपण",
     "hide_model_training_configuration": "Hide model training configuration",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
+    "one_book": "1 book",
     "per_chapter_remarks_notice": "[b]New![/b] A notice that the draft is AI-generated is now shown on every chapter instead of at the start of the book.",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
@@ -437,6 +443,8 @@
     "import_some_chapters_failed": "Imported {{ successful }} chapter(s) successfully. Failed to import {{ failed }} chapter(s). See details above.",
     "importing_draft": "Importing draft",
     "importing": "Importing",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
     "next": "अगला",
     "no_books_ready_for_import": "No draft chapters are ready for import. Generate a draft and try again.",
     "overwrite_book_description": "One or more chapters have existing content that will be overwritten in {{ bookName }} in [b]{{ projectNameLabel }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
@@ -556,7 +564,6 @@
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
     "your_comment": "Your comment"
   },
   "editor_draft_tab": {
@@ -567,6 +574,7 @@
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
     "format_draft": "Formatting options",
     "format_draft_tooltip": "Customize formatting options for the draft",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
@@ -869,9 +877,6 @@
     "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "source_text_placeholder": "Source text (optional)",
     "translate": "अनुवाद करें",
-    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
-    "translation_suggestions": "Enable Translation Suggestions",
-    "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "hide_community_checking_text": "Hide Scripture text",
     "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "insights_settings_header": "Insights",
@@ -903,18 +908,12 @@
     "select": "चुनें"
   },
   "translator_settings_dialog": {
-    "better": "श्रेष्ठतर",
     "close": "बंद करें",
     "editor_settings_title": "Editor",
     "editor_tabs_in_single_pane": "Show editor tabs in a single pane",
     "insights_enable_assessments": "Show assessments",
     "insights_enable_autocorrect": "Allow auto-corrections",
     "insights_settings_title": "Insights",
-    "more": "अधिक",
-    "number_of_suggestions": "Number of suggestions",
-    "settings_not_available_offline": "Translator settings are not available while you are offline.",
-    "suggestion_confidence": "Suggestion confidence",
-    "translation_suggestions_settings_title": "अनुवाद के सुझाव",
     "translator_settings": "Translator settings"
   },
   "supported_back_translation_languages_dialog": {
@@ -997,26 +996,11 @@
     "upload_training_data": "Upload Training Data",
     "uploading": "Uploading..."
   },
-  "training_progress": {
-    "completed_successfully": "Completed successfully",
-    "training_completed_successfully": "Training completed successfully",
-    "training": "Training"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
-    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "प्रगति",
-    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
     "progress_not_available_offline": "Translation progress is not available when offline.",
-    "quality": "गुणवत्ता",
-    "retrain": "Retrain",
-    "suggestion_engine": "Suggestion Engine",
-    "trained_segments": "trained segments",
-    "training": "Training...",
-    "training_unavailable": "Training is temporarily unavailable",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments",
-    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",

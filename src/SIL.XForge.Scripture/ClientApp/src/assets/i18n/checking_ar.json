@@ -334,12 +334,9 @@
   },
   "error_messages": {
     "error_occurred_login": "حدث خطأ أثناء تسجيل الدخول.",
-    "failed_to_retrieve_suggestions": "تعذر الحصول على اقتراحات التَّرْجَمَة.",
     "failed_to_update_avatar": "لا يمكن تحديث الصورة الرمزية الخاصة بك.",
     "login": "تسجيل الدخول",
     "login_expired": "انتهت صَلاحِيَة تسجيل دخولك. يرجى تسجيل الدخول مرة أخرى.",
-    "suggestion_engine_requires_retrain": "تعذر الحصول على اقتراحات التَّرْجَمَة. الرجاء إعادة تدريب الاقتراحات على صفحة «نظرة عامة».",
-    "go_to_retrain": "انتقل إلى «نظرة عامة»",
     "try_again": "حاول ثانيةً"
   },
   "exception_handling_service": {

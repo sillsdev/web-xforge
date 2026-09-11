@@ -319,6 +319,9 @@
       "generate_draft": "Generate Draft"
     }
   },
+  "draft_confidence": {
+    "low_confidence": "Low confidence"
+  },
   "draft_generation_steps": {
     "back": "Kembali",
     "books_are_hidden_hide_explanation": "{{ numBooks }} kitab disembunyikan. {{ underlineStart }}Sembunyikan penjelasan{{ underlineEnd }}",
@@ -386,6 +389,9 @@
     "formatting_options": "Formatting options",
     "formatting": "Pemformatan",
     "hide_model_training_configuration": "Menyembunyikan konfigurasi pelatihan model",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
+    "one_book": "1 book",
     "per_chapter_remarks_notice": "[b]New![/b] A notice that the draft is AI-generated is now shown on every chapter instead of at the start of the book.",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
@@ -437,6 +443,8 @@
     "import_some_chapters_failed": "Imported {{ successful }} chapter(s) successfully. Failed to import {{ failed }} chapter(s). See details above.",
     "importing_draft": "Importing draft",
     "importing": "Importing",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
     "next": "Berikutnya",
     "no_books_ready_for_import": "No draft chapters are ready for import. Generate a draft and try again.",
     "overwrite_book_description": "One or more chapters have existing content that will be overwritten in {{ bookName }} in [b]{{ projectNameLabel }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
@@ -556,7 +564,6 @@
     "text_doc_corrupted": "Pasal ini tidak dapat disunting karena data telah rusak.",
     "text_has_been_deleted": "Kitab telah dihapus atau tidak dapat diakses lagi.",
     "to_report_issue_email": "Untuk melaporkan sebuah masalah, kirim email {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan.",
     "your_comment": "Komentar Anda"
   },
   "editor_draft_tab": {
@@ -567,6 +574,7 @@
     "error_applying_draft": "Gagal menambahkan konsep ke proyek. Coba lagi nanti.",
     "format_draft": "Formatting options",
     "format_draft_tooltip": "Customize formatting options for the draft",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
     "no_draft_notice": "{{ bookChapterName }} tidak memiliki konsep.",
     "offline_notice": "Konsep yang dihasilkan tidak tersedia secara luring.",
     "overwrite": "Menambahkan konsep akan menimpa pasal yang sedang berjalan. Apakah Anda yakin ingin melanjutkan?",
@@ -869,9 +877,6 @@
     "source_projects_cannot_be_deleted": "Proyek lain didasarkan pada proyek ini sehingga tidak dapat dihapus.",
     "source_text_placeholder": "Teks sumber (pilihan)",
     "translate": "Menerjemahkan",
-    "translation_suggestions_require_source_text": "Catatan: Saran terjemahan hanya tersedia jika teks sumber dipilih.",
-    "translation_suggestions": "Mengaktifkan Saran Terjemahan",
-    "translations_will_be_suggested": "Terjemahan untuk kata dan frasa akan disarankan saat Anda menyunting Alkitab berdasarkan proyek atau sumber yang dipilih di atas.",
     "hide_community_checking_text": "Menyembunyikan teks Alkitab",
     "checkers_listen_to_scripture_audio": "Pemeriksa perlu mendengarkan audio Alkitab.",
     "insights_settings_header": "Insights",
@@ -903,18 +908,12 @@
     "select": "Pilih"
   },
   "translator_settings_dialog": {
-    "better": "Lebih baik",
     "close": "Tutup",
     "editor_settings_title": "Editor",
     "editor_tabs_in_single_pane": "Show editor tabs in a single pane",
     "insights_enable_assessments": "Show assessments",
     "insights_enable_autocorrect": "Allow auto-corrections",
     "insights_settings_title": "Insights",
-    "more": "Lebih banyak",
-    "number_of_suggestions": "Jumlah saran",
-    "settings_not_available_offline": "Translator settings are not available while you are offline.",
-    "suggestion_confidence": "Saran meyakinkan",
-    "translation_suggestions_settings_title": "Saran Terjemahan",
     "translator_settings": "Pengaturan penerjemah"
   },
   "supported_back_translation_languages_dialog": {
@@ -997,26 +996,11 @@
     "upload_training_data": "Unggah Data Pelatihan",
     "uploading": "Mengunggah..."
   },
-  "training_progress": {
-    "completed_successfully": "Berhasil diselesaikan",
-    "training_completed_successfully": "Pelatihan berhasil diselesaikan",
-    "training": "Pelatihan"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Saran terjemahan tidak tersedia. Pilihlah proyek sumber yang memiliki kesamaan kitab dengan proyek ini untuk mendapatkan saran penerjemahan.",
-    "not_enough_verses_translated": "Saran terjemahan tidak tersedia. Harap pastikan bahwa setidaknya ada 10 ayat yang cocok yang diterjemahkan dalam proyek sumber dan target.",
     "progress": "Kemajuan",
-    "progress_and_suggestions_not_available_offline": "Translation progress and suggestions are not available when offline.",
     "progress_not_available_offline": "Translation progress is not available when offline.",
-    "quality": "Kualitas",
-    "retrain": "Melatih kembali",
-    "suggestion_engine": "Mesin Saran",
-    "trained_segments": "segmen terlatih",
-    "training": "Pelatihan...",
-    "training_unavailable": "Pelatihan untuk sementara tidak tersedia",
     "translate_overview": "Ringkasan Terjemahan",
-    "translated_segments": "{{ translatedSegments }} dari {{ total }} segmen",
-    "translation_suggestions_will_be_removed": "Your project appears to be using the translation suggestions feature. Translation suggestions will be removed {{ date }}. Please contact {{ email }} to discuss alternative ways to translate using Scripture Forge."
+    "translated_segments": "{{ translatedSegments }} dari {{ total }} segmen"
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",
