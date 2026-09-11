@@ -155,6 +155,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private onCreateSub?: Subscription;
   private onDeleteSub?: Subscription;
   private localSystemChangesSub?: Subscription;
+  private onlineSubscription?: Subscription;
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
     keyboard: {
@@ -1220,6 +1221,23 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     // But if getText does not return, then we are showing a good message.
     this.loadingState = 'offline-or-loading';
     const textDoc = await this.projectService.getText(this._id);
+
+    // When the user appears offline, ensure that the user's ops are not sent to ShareDB by pausing sending.
+    // This will prevent the ViewModel's fixSegment offline-specific logic causing issues with a flaky connection.
+    this.onlineSubscription?.unsubscribe();
+    this.onlineSubscription = this.onlineStatusService.onlineStatus$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(isOnline => {
+        if (isOnline) {
+          textDoc.adapter.resume();
+        } else {
+          textDoc.adapter.pause();
+        }
+      });
+    if (!this.onlineStatusService.isOnline) {
+      textDoc.adapter.pause();
+    }
+
     this.loadingState = 'loading';
     this.viewModel.bind(this._id, textDoc, this.subscribeToUpdates);
     if (this.viewModel.isEmpty) this.loadingState = 'empty-viewModel';

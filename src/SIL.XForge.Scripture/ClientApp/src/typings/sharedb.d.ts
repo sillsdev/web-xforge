@@ -123,6 +123,8 @@ declare module 'sharedb/lib/client' {
     whenNothingPending(callback: Callback): void;
     hasWritePending(): boolean;
     flush(): void;
+    pause(): void;
+    resume(): void;
     previousSnapshot(): Snapshot;
   }
 
