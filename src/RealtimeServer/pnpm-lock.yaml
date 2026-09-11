@@ -122,7 +122,7 @@ importers:
         version: 60.8.3(eslint@9.39.2)
       eslint-plugin-prettier:
         specifier: ^5.5.5
-        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@9.39.2))(eslint@9.39.2)(prettier@3.6.2)
+        version: 5.5.5(eslint-config-prettier@10.1.8(eslint@9.39.2))(eslint@9.39.2)(prettier@3.9.6)
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.19.0)
@@ -136,8 +136,8 @@ importers:
         specifier: ^0.9.0
         version: 0.9.0
       prettier:
-        specifier: ^3.6.2
-        version: 3.6.2
+        specifier: ^3.9.6
+        version: 3.9.6
       sharedb-mingo-memory:
         specifier: ^4.1.0
         version: 4.1.0(sharedb@5.2.2)
@@ -2498,8 +2498,8 @@ packages:
     resolution: {integrity: sha512-SxToR7P8Y2lWmv/kTzVLC1t/GDI2WGjMwNhLLE9qtH8Q13C+aEmuRlzDst4Up4s0Wc8sF2M+J57iB3cMLqftfg==}
     engines: {node: '>=6.0.0'}
 
-  prettier@3.6.2:
-    resolution: {integrity: sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ==}
+  prettier@3.9.6:
+    resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -5133,10 +5133,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-prettier@5.5.5(eslint-config-prettier@10.1.8(eslint@9.39.2))(eslint@9.39.2)(prettier@3.6.2):
+  eslint-plugin-prettier@5.5.5(eslint-config-prettier@10.1.8(eslint@9.39.2))(eslint@9.39.2)(prettier@3.9.6):
     dependencies:
       eslint: 9.39.2
-      prettier: 3.6.2
+      prettier: 3.9.6
       prettier-linter-helpers: 1.0.1
       synckit: 0.11.12
     optionalDependencies:
@@ -6377,7 +6377,7 @@ snapshots:
     dependencies:
       fast-diff: 1.2.0
 
-  prettier@3.6.2: {}
+  prettier@3.9.6: {}
 
   pretty-format@29.7.0:
     dependencies:

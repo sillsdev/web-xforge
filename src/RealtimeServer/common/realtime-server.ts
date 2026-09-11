@@ -8,7 +8,7 @@ import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
 import { SchemaProperties, ValidationSchema } from './models/validation-schema';
-import { AgentInternal, ResourceMonitor } from './resource-monitor';
+import { ResourceMonitor, sizeof } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -127,6 +127,34 @@ export function submitMigrationOp(version: number, doc: Doc, ops: Op[]): Promise
   });
 }
 
+/**
+ * Picks out the identifiers in a request received from a client over the ShareDB protocol.
+ *
+ * A request carries at most one id in `id` and one sequence number in `seq`, but what each means depends on the kind
+ * of request: an op's sequence number, a query's id, the id a reconnecting client is asking to keep, or a presence
+ * update's own id and sequence. Reporting them under a single name would mix those together, so each is named for the
+ * kind of request it came from. Presence contributes none, its ids identifying nothing outside the presence exchange.
+ */
+export function identifiersInClientRequest(request: Record<string, any>): {
+  opSeq?: number;
+  queryId?: string;
+  srcClientId?: string;
+} {
+  switch (request.a) {
+    case 'op':
+      return { opSeq: request.seq };
+    case 'qf':
+    case 'qs':
+    case 'qu':
+      return { queryId: request.id };
+    case 'hs':
+      // Absent when a client connects for the first time, having no earlier id to keep.
+      return { srcClientId: request.id ?? undefined };
+    default:
+      return {};
+  }
+}
+
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 // We merge these two declarations, as we want to extend two classes
 export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBackend {}
@@ -169,6 +197,85 @@ export class RealtimeServer extends ShareDB {
         });
     });
 
+    // Measure what every read of documents returned. Including frontend client reads, a query's results, and the server's own connection's reads.
+    this.use('readSnapshots', (context, next) => {
+      if (context.agent == null) {
+        next();
+        return;
+      }
+      ResourceMonitor.instance.recordSnapshotRead(
+        context.agent.clientId,
+        context.collection,
+        context.snapshotType,
+        context.snapshots,
+        context.agent.connectSession?.userId,
+        context.agent.connectSession?.isServer
+      );
+      next();
+    });
+
+    // Measure the operations that pass through a connection.
+    this.use('op', (context, next) => {
+      if (context.agent == null) {
+        next();
+        return;
+      }
+      ResourceMonitor.instance.recordOpLoaded(
+        context.agent.clientId,
+        context.collection,
+        context.id,
+        context.op,
+        context.agent.connectSession?.userId,
+        context.agent.connectSession?.isServer
+      );
+      next();
+    });
+
+    // Count the queries a connection asks for. ShareDB triggers this when a query is fetched or subscribed to, and not
+    // for the re-polls a subscription then causes, which reach the database without passing through middleware.
+    this.use('query', (context, next) => {
+      if (context.agent == null) {
+        next();
+        return;
+      }
+      ResourceMonitor.instance.recordQueryRun(
+        context.agent.clientId,
+        context.collection,
+        context.agent.connectSession?.userId,
+        context.agent.connectSession?.isServer
+      );
+      next();
+    });
+
+    // Count the polls of subscribed queries. A subscription is polled again whenever a document that might match it
+    // changes, so one subscription on a busy collection can put an unbounded number of queries on the database. Those
+    // polls reach the database with no middleware running. But by watching the 'timing' event notices, we can see them
+    // happen.
+    this.on('timing', (action: string, durationMs: number, context: ShareDB.TimingContext) => {
+      if (action !== 'queryEmitter.poll' && action !== 'queryEmitter.pollDoc') {
+        return;
+      }
+      if (context.agent == null || context.collection == null) {
+        return;
+      }
+      ResourceMonitor.instance.recordQueryPolled(
+        context.agent.clientId,
+        context.collection,
+        action,
+        durationMs,
+        context.agent.connectSession?.userId,
+        context.agent.connectSession?.isServer
+      );
+    });
+
+    // Report what a client asks for.
+    this.use('receive', (context, next) => {
+      if (ActivityLogger.instance.enabled) {
+        RealtimeServer.logClientRequest(context);
+      }
+      next();
+    });
+
     // Configure op, snapshot, or milestone changes to be made just before the op is committed to the database
     this.use('commit', (context, callback) => {
       switch (context.collection) {
@@ -200,7 +307,7 @@ export class RealtimeServer extends ShareDB {
       ActivityLogger.instance.log('opCommitted', {
         collection: context.collection,
         docId: context.id,
-        clientId: (context.agent as unknown as AgentInternal).clientId,
+        clientId: context.agent?.clientId,
         srcClientId: context.op.src,
         opSeq: context.op.seq,
         version: context.snapshot?.v,
@@ -232,7 +339,7 @@ export class RealtimeServer extends ShareDB {
           docId: context.id,
           // Needed here as well as on opSubmitted: a failed op never reaches the opSubmitted entry below, so this
           // entry has nothing else to be attributed by.
-          clientId: (context.agent as unknown as AgentInternal).clientId,
+          clientId: context.agent?.clientId,
           srcClientId: context.op.src,
           opSeq: context.op.seq,
           errorMessage: message
@@ -247,7 +354,7 @@ export class RealtimeServer extends ShareDB {
         !this.dataValidationDisabled &&
         validationSchema != null &&
         context.op.op != null &&
-        !context.agent.connectSession.isServer
+        !context.agent?.connectSession?.isServer
       ) {
         let ops;
         if (Array.isArray(context.op.op)) {
@@ -399,7 +506,7 @@ export class RealtimeServer extends ShareDB {
                 return;
               }
             } else {
-              failValidation(`Invalid path for operation: ${JSON.stringify(op)}`);
+              failValidation(`Invalid path for operation: ${JSON.stringify(op.p)}`);
               return;
             }
           }
@@ -434,15 +541,15 @@ export class RealtimeServer extends ShareDB {
         // back to the agent's clientId and the two agree. But a browser that reconnects does supply one: it keeps the
         // id from its previous session as the source of its ops. From then on its ops carry a srcClientId that no
         // connectionEstablished entry ever reported, and reporting both is what still ties them to a connection.
-        clientId: (context.agent as unknown as AgentInternal).clientId,
+        clientId: context.agent?.clientId,
         // Together these identify the op, so that this entry can be matched up with the opCommitted or
         // opValidationFailed entry for the same op.
         srcClientId: context.op.src,
         opSeq: context.op.seq,
         // The version the op was submitted against. A commit of this op lands at the next version.
         version: context.op.v,
-        userId: (context.agent as unknown as AgentInternal).connectSession?.userId,
-        isServer: (context.agent as unknown as AgentInternal).connectSession?.isServer,
+        userId: context.agent?.connectSession?.userId,
+        isServer: context.agent?.connectSession?.isServer,
         opType: opType,
         opsCount: opsCount,
         migrationVersion: context.op.m.migration
@@ -536,16 +643,32 @@ export class RealtimeServer extends ShareDB {
     if (!this.dataValidationDisabled) {
       ResourceMonitor.instance.monitorAgent(agent, stream);
     }
-    stream.once('close', () => {
+    let disconnectReported = false;
+    const reportDisconnect = (): void => {
+      if (disconnectReported) {
+        return;
+      }
+      disconnectReported = true;
       // The stream can close before the 'connect' middleware finishes (e.g. the client disconnects mid-handshake,
       // or authentication fails), so connectSession may not be set yet.
-      const agentInfo: AgentInternal = agent as unknown as AgentInternal;
       ActivityLogger.instance.log('agentDisconnected', {
-        clientId: agentInfo.clientId,
-        userId: agentInfo.connectSession?.userId,
-        isServer: agentInfo.connectSession?.isServer
+        clientId: agent.clientId,
+        userId: agent.connectSession?.userId,
+        isServer: agent.connectSession?.isServer,
+        // What the connection was still holding as it went. These are counted rather than measured to be faster.
+        subscribedCollectionsCount: Object.keys(agent.subscribedDocs).length,
+        subscribedDocsCount: Object.values(agent.subscribedDocs).reduce(
+          (total: number, docs: Record<string, unknown>) => total + Object.keys(docs).length,
+          0
+        ),
+        subscribedQueriesCount: Object.keys(agent.subscribedQueries).length,
+        subscribedPresencesCount: Object.keys(agent.subscribedPresences).length
       });
-    });
+    };
+    // A stream signals that it is finished with 'end' (the readable side reached its end) and 'close' (the stream was
+    // destroyed), or with only one of them, and sometimes more than once.
+    stream.once('end', reportDisconnect);
+    stream.once('close', reportDisconnect);
     this.trigger('connect', agent, { stream, req }, err => {
       if (err) {
         return agent.close(err);
@@ -553,6 +676,28 @@ export class RealtimeServer extends ShareDB {
       agent._open();
     });
     return agent;
+  }
+
+  /**
+   * Override to measure, log, and pass on a request to rebuild a document at a past version or timestamp by replaying operations onto a milestone snapshot.
+   *
+   * Measured here as these ops do not pass through the 'op' middleware.
+   */
+  _buildSnapshotFromOps(
+    id: string,
+    startingSnapshot: ShareDB.Snapshot | undefined,
+    ops: ShareDB.Op[],
+    callback: (err: Error, snapshot: ShareDB.Snapshot) => void
+  ): void {
+    if (ActivityLogger.instance.enabled) {
+      ActivityLogger.instance.log('snapshotRebuiltFromOps', {
+        docId: id,
+        fromVersion: startingSnapshot?.v ?? 0,
+        opsCount: ops.length,
+        opsBytes: sizeof(ops)
+      });
+    }
+    super._buildSnapshotFromOps(id, startingSnapshot, ops, callback);
   }
 
   async getProject(projectId: string): Promise<Project | undefined> {
@@ -617,6 +762,35 @@ export class RealtimeServer extends ShareDB {
     }
   }
 
+  /**
+   * Reports one request received over the ShareDB protocol.
+   *
+   * Every connection speaks this protocol, not only frontend clients, so entries carry isServer to tell them apart. A dotnet process's connection uses interop methods which drive an ordinary client underneath, and will come through here.
+   *
+   * An op is reported here as well as by opSubmitted and opCommitted. This is the only one of the three made before the
+   * agent and ot.checkOp can turn the op away, so an op malformed enough to be rejected by either is reported here and
+   * nowhere else.
+   */
+  private static logClientRequest(context: ShareDB.middleware.ReceiveContext): void {
+    const request: Record<string, any> = context.data;
+    const action: string = request.a;
+    const agent: ShareDB.Agent | undefined = context.agent;
+    const bulkIds: unknown = request.b;
+    ActivityLogger.instance.log('clientRequest', {
+      // The ShareDB message type.
+      action: action,
+      clientId: agent?.clientId,
+      userId: agent?.connectSession?.userId,
+      isServer: agent?.connectSession?.isServer,
+      collection: request.c,
+      docId: request.d,
+      // A bulk request names several docs at once, as a map of doc id to version, or a list of doc ids.
+      docsCount: bulkIds == null ? undefined : Array.isArray(bulkIds) ? bulkIds.length : Object.keys(bulkIds).length,
+      ...identifiersInClientRequest(request),
+      presenceChannel: request.ch
+    });
+  }
+
   private async setConnectSession(context: ShareDB.middleware.ConnectContext): Promise<void> {
     let session: ConnectSession;
     if (context.req != null && context.req.user != null) {
@@ -635,11 +809,15 @@ export class RealtimeServer extends ShareDB {
       }
       session = { isServer: true, userId, roles: [] };
     }
-    context.agent.connectSession = session;
+    const agent: ShareDB.Agent | undefined = context.agent;
+    if (agent == null) {
+      throw new Error('Cannot establish a connection session without an agent.');
+    }
+    agent.connectSession = session;
     ActivityLogger.instance.log('connectionEstablished', {
       // The op source (agent.src) is not reported here: it is not set until the client's handshake message, which
       // arrives after this runs. See the opSubmitted entry, which reports both ids.
-      clientId: (context.agent as unknown as AgentInternal).clientId,
+      clientId: agent.clientId,
       interopHandle: context.req?.interopHandle,
       userId: session.userId,
       roles: session.roles,
