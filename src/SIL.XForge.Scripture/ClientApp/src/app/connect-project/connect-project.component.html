@@ -34,7 +34,7 @@
                   [isDisabled]="projects.length === 0"
                 ></app-project-select>
                 @if (showResourcesLoadingFailedMessage) {
-                  <mat-error>{{ t("error_fetching_resources") }}</mat-error>
+                  <span class="error-text">{{ t("error_fetching_resources") }}</span>
                 }
               </mat-card-content>
               <mat-divider></mat-divider>

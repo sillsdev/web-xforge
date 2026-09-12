@@ -876,8 +876,8 @@ class TestEnvironment {
   }
 
   get errorMessages(): string[] {
-    return Array.from(this.overlayContainerElement.querySelectorAll('mat-error')).map(node =>
-      (node.textContent || '').trim()
+    return Array.from(this.overlayContainerElement.querySelectorAll('mat-error, .error-text, .offline-text')).map(
+      node => (node.textContent || '').trim()
     );
   }
 
