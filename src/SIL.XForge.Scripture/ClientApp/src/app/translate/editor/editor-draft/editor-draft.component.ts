@@ -10,6 +10,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -36,6 +37,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -69,6 +71,7 @@ import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/his
   styleUrls: ['./editor-draft.component.scss'],
   imports: [
     TranslocoModule,
+    TranslocoMarkupModule,
     MatProgressBar,
     NoticeComponent,
     DraftPreviewBooksComponent,
@@ -151,6 +154,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly noticeService: NoticeService,
     private readonly router: Router,
     private readonly textDocService: TextDocService,
+    protected readonly urlService: ExternalUrlService,
     projectNotificationService: ProjectNotificationService
   ) {
     this.activatedProjectService.projectId$
