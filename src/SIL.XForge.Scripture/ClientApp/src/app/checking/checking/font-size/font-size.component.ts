@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatIconButton } from '@angular/material/button';
-import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { NgClass } from '@angular/common';
-import { MatTooltip } from '@angular/material/tooltip';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
+import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
 
 @Component({
   selector: 'app-font-size',
@@ -13,7 +13,7 @@ import { MatIcon } from '@angular/material/icon';
   imports: [TranslocoModule, MatIconButton, MatMenuTrigger, NgClass, MatTooltip, MatIcon, MatMenu, MatMenuItem]
 })
 export class FontSizeComponent implements OnInit {
-  @Input() min: number = 1;
+  @Input() min: number = 0.5;
   @Input() max: number = 3;
   @Output() apply = new EventEmitter<string>();
 
