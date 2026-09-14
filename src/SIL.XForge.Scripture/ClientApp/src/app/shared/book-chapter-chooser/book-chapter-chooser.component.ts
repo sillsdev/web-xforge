@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { I18nService } from 'xforge-common/i18n.service';
-import { TranslocoModule } from '@ngneat/transloco';
-import { MatFormField } from '@angular/material/form-field';
-import { MatSelect } from '@angular/material/select';
 import { MatOption } from '@angular/material/autocomplete';
 import { MatIconButton } from '@angular/material/button';
-import { MatTooltip } from '@angular/material/tooltip';
+import { MatFormField } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
+import { MatSelect } from '@angular/material/select';
+import { MatTooltip } from '@angular/material/tooltip';
+import { TranslocoModule } from '@ngneat/transloco';
+import { I18nService } from 'xforge-common/i18n.service';
 
 /**
  * This component is used to choose a book and chapter. Actual navigation on the basis of the selection is the
@@ -63,7 +63,7 @@ export class BookChapterChooserComponent {
 
   isPrevChapterDisabled(): boolean {
     const index = this.chapters.findIndex(c => c === this.chapter);
-    return index === 0;
+    return index <= 0;
   }
 
   nextChapter(): void {
