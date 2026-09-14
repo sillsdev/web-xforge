@@ -1529,10 +1529,9 @@ public partial class MachineApiService(
         if (
             buildProjectEvent?.Payload?.TryGetValue("buildConfig", out BsonValue? buildConfigBson) == true
             && buildConfigBson != null
+            && JsonConvert.DeserializeObject<BuildConfig>(buildConfigBson.ToJson()) is { } buildConfig
         )
         {
-            BuildConfig buildConfig = JsonConvert.DeserializeObject<BuildConfig>(buildConfigBson.ToJson())!;
-
             // Look up project snapshots for any referenced project IDs not already cached
             HashSet<string> referencedProjectIds =
             [
@@ -3453,7 +3452,7 @@ public partial class MachineApiService(
         }
 
         // Get the parallel corpus id
-        string? parallelCorpusId = projectSecret.ServalData!.ParallelCorpusIdForPreTranslate;
+        string? parallelCorpusId = projectSecret.ServalData?.ParallelCorpusIdForPreTranslate;
         if (string.IsNullOrWhiteSpace(parallelCorpusId))
         {
             throw new DataNotFoundException("The parallel corpus ID cannot be found.");
