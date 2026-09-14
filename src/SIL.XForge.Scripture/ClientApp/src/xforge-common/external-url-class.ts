@@ -27,6 +27,10 @@ export class ExternalUrls {
     return this.helps + '/understanding-drafts';
   }
 
+  get understandingDraftQuality(): string {
+    return this.helps + '/understanding-draft-quality';
+  }
+
   get configuringSources(): string {
     return this.helps + '/preparing-for-ai-drafting';
   }
