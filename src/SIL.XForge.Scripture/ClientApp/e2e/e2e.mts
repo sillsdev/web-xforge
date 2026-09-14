@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports
 import { chromium, firefox, webkit } from 'npm:playwright';
 import { logger, preset, ScreenshotContext } from './e2e-globals.ts';
-import { screenshot } from './e2e-utils.ts';
+import { launchBrowser, screenshot } from './e2e-utils.ts';
 import { numberOfTimesToAttemptTest } from './pass-probability.ts';
 import { presets } from './presets.ts';
 import { tests } from './test-definitions.ts';
@@ -51,7 +51,7 @@ try {
 
       let testPassed = false;
       for (let i = 0; i < attempts && !testPassed; i++) {
-        const browser = await engine.launch({ headless: preset.headless });
+        const browser = await launchBrowser(engine, { headless: preset.headless });
         const browserContext = await browser.newContext();
         if (preset.trace) await browserContext.tracing.start({ screenshots: true, snapshots: true });
 
@@ -102,6 +102,7 @@ try {
   }
 } catch (error) {
   console.error(error);
+  console.log('%cTest run aborted.', 'color: red');
   failed = true;
 } finally {
   await logger.saveToFile();

@@ -1,9 +1,24 @@
 /// <reference lib="dom" />
-import { Browser, chromium, Locator, Page, PageScreenshotOptions } from 'npm:playwright';
+import { Browser, BrowserType, chromium, LaunchOptions, Locator, Page, PageScreenshotOptions } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
 import locales from '../../locales.json' with { type: 'json' };
-import { E2E_SYNC_DEFAULT_TIMEOUT, logger, preset, ScreenshotContext } from './e2e-globals.ts';
+import {
+  BROWSER_LAUNCH_TIMEOUT_MS,
+  E2E_SYNC_DEFAULT_TIMEOUT,
+  logger,
+  preset,
+  ScreenshotContext
+} from './e2e-globals.ts';
 import secrets from './secrets.json' with { type: 'json' };
+
+export async function launchBrowser(engine: BrowserType, options: LaunchOptions): Promise<Browser> {
+  try {
+    return await engine.launch({ timeout: BROWSER_LAUNCH_TIMEOUT_MS, ...options });
+  } catch (cause) {
+    // A browser that cannot start is a problem with the environment rather than with a test.
+    throw new Error(`Unable to start ${engine.name()}.`, { cause: cause });
+  }
+}
 
 export async function waitForAppLoad(page: Page): Promise<void> {
   // FIXME This is hideous, but the progress bar doesn't open instantly. Also, even waiting for it to close isn't
@@ -510,7 +525,7 @@ export async function enableDraftingOnProjectAsServalAdmin(page: Page, shortName
  * perform some action in the background to create a particular state)
  */
 export async function getNewBrowserForSideWork(): Promise<{ page: Page; browser: Browser }> {
-  const browser = await chromium.launch({ headless: preset.headless });
+  const browser = await launchBrowser(chromium, { headless: preset.headless });
   const context = await browser.newContext();
   const page = await context.newPage();
   return { page, browser };

@@ -10,6 +10,7 @@ import {
   installMouseFollower,
   isProjectConnected,
   joinWithLink,
+  launchBrowser,
   logInAsPTUser,
   screenshot
 } from '../e2e-utils.ts';
@@ -151,7 +152,7 @@ async function joinAsChecker(
   userNumber: number,
   answerCount: number
 ): Promise<void> {
-  const browser = await engine.launch({ headless: preset.headless });
+  const browser = await launchBrowser(engine, { headless: preset.headless });
   const page = await browser.newPage();
 
   try {
