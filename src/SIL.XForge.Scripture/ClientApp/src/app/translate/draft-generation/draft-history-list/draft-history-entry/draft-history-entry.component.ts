@@ -26,6 +26,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Subject, takeUntil } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -333,6 +334,7 @@ export class DraftHistoryEntryComponent {
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
+    protected readonly urlService: ExternalUrlService,
     private readonly userService: UserService,
     private readonly trainingDataService: TrainingDataService,
     private readonly activatedProjectService: ActivatedProjectService,

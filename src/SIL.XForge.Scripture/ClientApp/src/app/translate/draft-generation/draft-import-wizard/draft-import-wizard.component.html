@@ -64,7 +64,13 @@
         }
         @if (draftHasLowConfidence && !(needsConnection || showBookSelection)) {
           <app-notice type="error" data-test-id="low-confidence-warning">
-            {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
+            <transloco
+              key="draft_import_wizard.low_confidence_book"
+              [params]="{
+                book: bookNameWithLowConfidence,
+                learnMoreLink: urlService.understandingDraftQuality
+              }"
+            ></transloco>
           </app-notice>
         }
       </form>
@@ -171,7 +177,13 @@
           }
           @if (draftHasLowConfidence && !showBookSelection) {
             <app-notice type="error" data-test-id="low-confidence-warning">
-              {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
+              <transloco
+                key="draft_import_wizard.low_confidence_book"
+                [params]="{
+                  book: bookNameWithLowConfidence,
+                  learnMoreLink: urlService.understandingDraftQuality
+                }"
+              ></transloco>
             </app-notice>
           }
           <div class="button-strip">
@@ -211,11 +223,23 @@
 
         @if (selectedBooksWithLowConfidence === 1) {
           <app-notice type="error" data-test-id="low-confidence-warning">
-            {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
+            <transloco
+              key="draft_import_wizard.low_confidence_book"
+              [params]="{
+                book: bookNameWithLowConfidence,
+                learnMoreLink: urlService.understandingDraftQuality
+              }"
+            ></transloco>
           </app-notice>
         } @else if (selectedBooksWithLowConfidence > 1) {
           <app-notice type="error" data-test-id="low-confidence-warning">
-            {{ t("low_confidence_books", { number: selectedBooksWithLowConfidence }) }}
+            <transloco
+              key="draft_import_wizard.low_confidence_books"
+              [params]="{
+                number: selectedBooksWithLowConfidence,
+                learnMoreLink: urlService.understandingDraftQuality
+              }"
+            ></transloco>
           </app-notice>
         }
 
