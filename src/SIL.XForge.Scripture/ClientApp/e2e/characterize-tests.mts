@@ -1,14 +1,32 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports
 import { chromium } from 'npm:playwright';
-import { preset } from './e2e-globals.ts';
+import { helpRequested, preset } from './e2e-globals.ts';
 import { Utils } from './e2e-utils.ts';
 import { numberOfTimesToAttemptTest } from './pass-probability.ts';
-import { ScreenshotContext } from './presets.ts';
+import { presets, ScreenshotContext } from './presets.ts';
 import { tests } from './test-definitions.ts';
 
 const retriesToStopAt = 4; // Stop characterization after a test is reliable enough to only need this many retries
 const resultFilePath = 'test_characterization.json';
 const testNames = Object.keys(tests) as (keyof typeof tests)[];
+
+if (helpRequested) {
+  console.log(
+    [
+      'Usage: ./characterize-tests.mts [preset]',
+      '',
+      'Runs tests repeatedly to characterize flakyness.',
+      '',
+      'Update test_characterization.json (e.g. by setting numbers to 0 after making',
+      'changes to a test) before running this.',
+      '',
+      `Presets: ${Object.keys(presets).join(', ')}`,
+      ''
+    ].join('\n')
+  );
+  Deno.exit(0);
+}
+
 let mostRecentResultData = JSON.parse(await Deno.readTextFile(resultFilePath));
 
 printRetriesForEachTest();
