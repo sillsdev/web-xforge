@@ -174,6 +174,7 @@ describe('SyncLogComponent', () => {
     // An unrelated project document change does not refetch
     env.setQueuedCount(0);
     verify(mockedProjectService.onlineSyncMetrics(anything(), anything(), anything())).thrice();
+    expect(env.entries.length).toEqual(3);
   }));
 
   it('should keep refetching after a failed fetch', fakeAsync(() => {
