@@ -12,6 +12,7 @@ import {
   OnDestroy,
   Output
 } from '@angular/core';
+import { MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { isEqual, merge } from 'lodash-es';
@@ -1262,14 +1263,29 @@ export class TextComponent implements AfterViewInit, OnDestroy {
             .subscribe(event => {
               const noteText = attributeFromMouseEvent(event, 'USX-NOTE', 'title');
               const noteType = attributeFromMouseEvent(event, 'USX-NOTE', 'data-style');
-              this.dialogService.openMatDialog(TextNoteDialogComponent, {
-                width: '600px',
-                data: {
-                  type: noteType,
-                  text: noteText,
-                  isRightToLeft: this.isRtl
-                } as NoteDialogData
-              });
+              // Clicking the note focuses the editor, and the Quill root is also the scroll container.
+              // Letting the dialog restore focus to it natively puts the cursor at the start of the
+              // chapter and scrolls there, so restore focus through Quill instead, which keeps the
+              // cursor and the scroll position where they were.
+              const editorHadFocus: boolean = this.editor?.hasFocus() ?? false;
+              const dialogRef: MatDialogRef<TextNoteDialogComponent> = this.dialogService.openMatDialog(
+                TextNoteDialogComponent,
+                {
+                  width: '600px',
+                  restoreFocus: !editorHadFocus,
+                  data: {
+                    type: noteType,
+                    text: noteText,
+                    isRightToLeft: this.isRtl
+                  } as NoteDialogData
+                }
+              );
+              if (editorHadFocus) {
+                dialogRef
+                  .afterClosed()
+                  .pipe(quietTakeUntilDestroyed(this.destroyRef))
+                  .subscribe(() => this.editor?.focus({ preventScroll: true }));
+              }
             })
         )
       );
