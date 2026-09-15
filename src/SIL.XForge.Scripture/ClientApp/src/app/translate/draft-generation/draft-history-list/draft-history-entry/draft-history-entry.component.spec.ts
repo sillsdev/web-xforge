@@ -499,72 +499,6 @@ describe('DraftHistoryEntryComponent', () => {
       expect(fixture.nativeElement.querySelector('.format-usfm')).toBeNull();
       expect(component.formattingOptionsSupported).toBe(false);
     }));
-
-    describe('per-chapter remarks', () => {
-      it('should not show the notice for version 1.2', fakeAsync(() => {
-        const entry = getStandardBuildDto({ servalVersion: '1.2.1' });
-
-        // SUT
-        component.entry = entry;
-        tick();
-        fixture.detectChanges();
-
-        expect(fixture.nativeElement.querySelector('.per-chapter-remarks-notice')).toBeNull();
-      }));
-
-      it('should not show the notice for an invalid version string', fakeAsync(() => {
-        const entry = getStandardBuildDto({ servalVersion: 'invalid-version' });
-
-        // SUT
-        component.entry = entry;
-        tick();
-        fixture.detectChanges();
-
-        expect(fixture.nativeElement.querySelector('.per-chapter-remarks-notice')).toBeNull();
-      }));
-
-      it('should show the notice for version 1.18', fakeAsync(() => {
-        const entry = getStandardBuildDto({ servalVersion: '1.18.0' });
-
-        // SUT
-        component.entry = entry;
-        tick();
-        fixture.detectChanges();
-
-        expect(
-          fixture.nativeElement.querySelector('.per-chapter-remarks-notice') ??
-            (component.timeframeForPerChapterRemarksNotice ? null : true)
-        ).not.toBeNull();
-      }));
-
-      it('should show the notice for version 1.18 release candidate', fakeAsync(() => {
-        const entry = getStandardBuildDto({ servalVersion: '1.18.0-rc.3' });
-
-        // SUT
-        component.entry = entry;
-        tick();
-        fixture.detectChanges();
-
-        expect(
-          fixture.nativeElement.querySelector('.per-chapter-remarks-notice') ??
-            (component.timeframeForPerChapterRemarksNotice ? null : true)
-        ).not.toBeNull();
-      }));
-
-      it('should show the notice for version 1.20', fakeAsync(() => {
-        const entry = getStandardBuildDto({ servalVersion: '1.20.1' });
-
-        // SUT
-        component.entry = entry;
-        tick();
-        fixture.detectChanges();
-
-        expect(
-          fixture.nativeElement.querySelector('.per-chapter-remarks-notice') ??
-            (component.timeframeForPerChapterRemarksNotice ? null : true)
-        ).not.toBeNull();
-      }));
-    });
   });
 
   describe('low confidence', () => {
@@ -658,7 +592,6 @@ describe('DraftHistoryEntryComponent', () => {
     trainingBooks = ['EXO'],
     translateBooks = ['GEN'],
     trainingDataFiles = ['file01'],
-    servalVersion,
     executionData
   }: {
     user?: string;
@@ -666,7 +599,6 @@ describe('DraftHistoryEntryComponent', () => {
     trainingBooks?: string[];
     translateBooks?: string[];
     trainingDataFiles?: string[];
-    servalVersion?: string;
     executionData?: Partial<BuildExecutionData>;
   }): BuildDto {
     const userDoc = {
@@ -708,7 +640,6 @@ describe('DraftHistoryEntryComponent', () => {
         translationScriptureRanges: [{ projectId: 'project02', scriptureRange: translateBooks.join(';') }],
         trainingDataFileIds: trainingDataFiles
       },
-      deploymentVersion: servalVersion,
       executionData: executionData
     } as BuildDto;
 
