@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-run --allow-env --allow-sys --allow-read --allow-write --unstable-sloppy-imports
 import { chromium, firefox, webkit } from 'npm:playwright';
-import { logger, preset, ScreenshotContext } from './e2e-globals.ts';
+import { helpRequested, logger, preset, ScreenshotContext } from './e2e-globals.ts';
 import { launchBrowser, screenshot } from './e2e-utils.ts';
 import { numberOfTimesToAttemptTest } from './pass-probability.ts';
 import { presets } from './presets.ts';
@@ -12,15 +12,45 @@ const availableEngines = { chromium, firefox, webkit };
 const availableTests = Object.keys(tests) as (keyof typeof tests)[];
 const testScopes: typeof availableTests = [];
 
+if (helpRequested) {
+  printUsage();
+  Deno.exit(0);
+}
+
 const args = Deno.args.slice(1);
 for (const arg of args) {
   if ((availableTests as string[]).includes(arg)) {
     testScopes.push(arg as keyof typeof tests);
   } else if (!(arg in presets)) {
-    console.log('Usage: ./e2e.mts <preset> <test1> <test2> ...');
-    console.error(`Unknown test: ${arg}. Available tests: ${availableTests.join(', ')} and`);
+    console.error(`Unknown test: ${arg}`);
+    printUsage();
     Deno.exit(1);
   }
+}
+
+function printUsage(): void {
+  const presetLine = `  ${Object.keys(presets).join(' ')}`;
+  const testLine = `  ${availableTests.join(' ')}`;
+
+  console.log(
+    [
+      'Usage: ./e2e.mts [preset] [test ...]',
+      '',
+      'Runs all or the selected end-to-end tests against a running instance of Scripture Forge.',
+      '',
+      'Presets:',
+      presetLine,
+      '',
+      'Tests:',
+      testLine,
+      '',
+      'Examples:',
+      '  ./e2e.mts                                   Every test, using the default preset',
+      '  ./e2e.mts pre_merge_ci smoke_tests          Just the smoke tests, headlessly',
+      '  ./e2e.mts default smoke_tests generate_draft',
+      ''
+    ].join('\n')
+  );
 }
 if (testScopes.length === 0) {
   for (const scope of availableTests) testScopes.push(scope as keyof typeof testCharacterization);
