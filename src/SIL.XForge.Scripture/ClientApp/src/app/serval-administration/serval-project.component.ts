@@ -1,14 +1,14 @@
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
-import { AsyncPipe, SlicePipe } from '@angular/common';
-import { Component, DestroyRef, Input, OnInit } from '@angular/core';
+import { DecimalPipe, PercentPipe } from '@angular/common';
+import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatAnchor, MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatAccordion, MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
+import { MatExpansionPanel, MatExpansionPanelHeader } from '@angular/material/expansion';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
+import { MatSlideToggle, MatSlideToggleChange } from '@angular/material/slide-toggle';
 import {
   MatCell,
   MatCellDef,
@@ -26,7 +26,17 @@ import { saveAs } from 'file-saver';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { catchError, firstValueFrom, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
+import {
+  catchError,
+  combineLatest,
+  firstValueFrom,
+  lastValueFrom,
+  Observable,
+  of,
+  Subscription,
+  switchMap,
+  throwError
+} from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FileService } from 'xforge-common/file.service';
@@ -35,57 +45,105 @@ import { ElementState } from 'xforge-common/models/element-state';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { BuildDto } from '../machine-api/build-dto';
-import { InfoComponent } from '../shared/info/info.component';
+import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticSeverity } from '../machine-api/build-dto';
+import { BuildStates } from '../machine-api/build-states';
 import { JsonViewerComponent } from '../shared/json-viewer/json-viewer.component';
 import { MobileNotSupportedComponent } from '../shared/mobile-not-supported/mobile-not-supported.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../shared/scripture-range';
-import { formatScriptureRangeWithChapters } from '../shared/scripture-range-display';
+import { formatScriptureRangeCompact } from '../shared/scripture-range-display';
 import { projectLabel } from '../shared/utils';
+import { activeBuildStates } from '../translate/draft-generation/draft-generation';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
-import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
+import { buildStatusIcon } from './build-status-icon';
 import { ServalAdministrationService } from './serval-administration.service';
-interface Row {
-  id: string;
-  type: string;
-  name: string;
-  category: string;
+
+/** How a project in the sources table relates to the target project. */
+type SourceRole = 'Target' | 'Draft source' | 'Reference project' | 'Former draft source' | 'Former reference project';
+
+/**
+ * A row in the sources table. Either a project that is configured now as the target, a draft source or a reference
+ * project, or a project the last draft used that has since been removed from the configuration. Keeping both in one
+ * table lets the page show what the last draft actually used alongside what is configured now.
+ */
+interface SourceRow {
+  projectId: string;
+  role: SourceRole;
+  /** The project label, or the project id when the project is no longer configured so its name is not known. */
+  label: string;
+  type: string | undefined;
+  languageTag: string | undefined;
+  /** The books the last draft was trained on from this project, formatted for display. Only reference projects train. */
+  trainingBooks: string | undefined;
+  /** The books the last draft translated from this project, formatted for display. Only draft sources are drafted from. */
+  translationBooks: string | undefined;
   fileName: string;
-  languageCode: string;
+  /** Whether the project is currently configured as a source. False only for rows kept because the last draft used the project. */
+  isConfigured: boolean;
 }
 
-interface ProjectAndRange {
-  source: string;
-  scriptureRange: string;
+/**
+ * A row in the training files table. Either a file currently uploaded to the project, or a file the last draft used
+ * that has since been deleted, which is kept so that the last draft's inputs stay fully accounted for.
+ */
+interface TrainingFileRow {
+  dataId: string;
+  title: string;
+  usedInLastDraft: boolean;
+  isDeleted: boolean;
+  /** True when the file was uploaded after the last draft, which therefore could not have used it. */
+  isNewSinceLastDraft: boolean;
 }
+
+const BUILD_STATE_LABELS: Record<BuildStates, string> = {
+  [BuildStates.Queued]: 'Queued',
+  [BuildStates.Pending]: 'Pending',
+  [BuildStates.Active]: 'Running',
+  [BuildStates.Finishing]: 'Finishing',
+  [BuildStates.Completed]: 'Completed',
+  [BuildStates.Faulted]: 'Faulted',
+  [BuildStates.Canceled]: 'Canceled'
+};
+
+/** Builds can produce very long diagnostic lists, so only this many are shown until the user asks for the rest. */
+const DIAGNOSTICS_SHOWN_BY_DEFAULT = 3;
 
 function projectType(project: TranslateSource | SFProjectProfile): string {
   return ParatextService.isResource(project.paratextId) ? 'DBL resource' : 'Paratext project';
 }
 
+/**
+ * The Serval administration page for a single project. Shows the latest build, the drafting sources and what the last
+ * draft used from them, and the Serval-specific settings a Serval administrator can change.
+ */
 @Component({
   selector: 'app-serval-project',
   templateUrl: './serval-project.component.html',
   styleUrls: ['./serval-project.component.scss'],
   imports: [
-    AsyncPipe,
-    SlicePipe,
     CdkTextareaAutosize,
-    InfoComponent,
+    DecimalPipe,
+    PercentPipe,
     NoticeComponent,
+    MatAnchor,
     MatButton,
     MatFormField,
     MatLabel,
     MatInput,
-    MatCheckbox,
+    MatSlideToggle,
     MatIcon,
     MatCard,
     MatCardHeader,
@@ -104,23 +162,34 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     MatRowDef,
     MatExpansionPanel,
     MatExpansionPanelHeader,
-    MatAccordion,
     ReactiveFormsModule,
     RouterLinkDirective,
-    DraftInformationComponent,
     MobileNotSupportedComponent,
+    OwnerComponent,
     WriteStatusComponent,
     JsonViewerComponent
   ]
 })
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
-  @Input() showProjectTitle = true;
   preTranslate = false;
   projectName = '';
+  languageTag = '';
+  onboardingRequest: OpenOnboardingRequest | undefined;
+  onboardingRequestLink: string[] | undefined;
+  onboardingRequestStatusLabel = '';
 
-  headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', languageCode: 'Language tag', id: '' };
-  columnsToDisplay = ['category', 'type', 'name', 'languageCode', 'id'];
-  rows: Row[] = [];
+  /** The most recent build, whether it is still running or has finished. */
+  latestBuild: BuildDto | undefined;
+  /** The build whose draft the download button returns. Differs from the latest build while a newer build runs. */
+  lastCompletedBuild: BuildDto | undefined;
+  rawLatestBuild: Object | undefined;
+  showAllDiagnostics = false;
+
+  sourceColumns = ['role', 'label', 'languageTag', 'trainingBooks', 'translationBooks', 'download'];
+  sourceRows: SourceRow[] = [];
+  trainingFileColumns = ['title', 'usedInLastDraft', 'download'];
+  trainingFileRows: TrainingFileRow[] = [];
+  lastDraftExists = false;
 
   servalConfig = new FormControl<string | undefined>(undefined);
   form = new FormGroup({
@@ -128,16 +197,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   });
   servalConfigUpdateState = ElementState.InSync;
 
-  trainingBooksByProject: ProjectAndRange[] = [];
-  trainingFiles: string[] = [];
-  translationBooksByProject: ProjectAndRange[] = [];
-
   downloadingDraft: boolean = false;
 
-  draftConfig: Object | undefined;
-  draftJob$: Observable<BuildDto | undefined> = new Observable<BuildDto | undefined>();
-  lastCompletedBuild: BuildDto | undefined;
-  rawLastCompletedBuild: any;
+  draftConfig: DraftConfig | undefined;
   downloadSubscription: Subscription | undefined;
   trainingDataFiles: TrainingData[] = [];
 
@@ -146,6 +208,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     private readonly draftGenerationService: DraftGenerationService,
     private readonly i18n: I18nService,
     noticeService: NoticeService,
+    private readonly onboardingRequestService: OnboardingRequestService,
     private readonly trainingDataService: TrainingDataService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
@@ -165,122 +228,169 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     return this.onlineStatusService.isOnline;
   }
 
+  get buildStateLabel(): string {
+    if (this.latestBuild == null) return '';
+    return BUILD_STATE_LABELS[this.latestBuild.state] ?? this.latestBuild.state;
+  }
+
+  get isBuildActive(): boolean {
+    return this.latestBuild != null && activeBuildStates.includes(this.latestBuild.state);
+  }
+
+  /** Lower-cased state name, matching the status color variables shared with the Serval Builds tab. */
+  get buildStateClass(): string {
+    return this.latestBuild?.state.toLowerCase() ?? '';
+  }
+
+  get buildStateIcon(): string {
+    if (this.latestBuild == null) return '';
+    return buildStatusIcon(this.latestBuild.state);
+  }
+
+  /** A running build has not finished, so its request date is the meaningful one to show. */
+  get buildDateLabel(): string {
+    return this.isBuildActive ? 'Requested' : 'Finished';
+  }
+
+  get buildDate(): string | undefined {
+    const date: string | undefined = this.isBuildActive
+      ? this.latestBuild?.additionalInfo?.dateRequested
+      : this.latestBuild?.additionalInfo?.dateFinished;
+    if (date == null) return undefined;
+    return this.i18n.formatDate(new Date(date), { showTime: true, showTimeZone: false });
+  }
+
+  get requestedByUserId(): string | undefined {
+    return this.latestBuild?.additionalInfo?.requestedByUserId;
+  }
+
+  get formerSourceCount(): number {
+    return this.sourceRows.filter(row => !row.isConfigured).length;
+  }
+
+  get deletedTrainingFileCount(): number {
+    return this.trainingFileRows.filter(file => file.isDeleted).length;
+  }
+
+  get newTrainingFileCount(): number {
+    return this.trainingFileRows.filter(file => file.isNewSinceLastDraft).length;
+  }
+
+  /**
+   * True when the inputs available to a new draft differ from what the last draft used: a project it used is no longer
+   * configured, a file it used was deleted, or a file was uploaded after it. A configured source the last draft simply
+   * did not take books from is not a change.
+   */
+  get sourcesChangedSinceLastDraft(): boolean {
+    return (
+      this.lastDraftExists &&
+      (this.formerSourceCount > 0 || this.deletedTrainingFileCount > 0 || this.newTrainingFileCount > 0)
+    );
+  }
+
+  get trainCount(): number | undefined {
+    return this.latestBuild?.executionData?.trainCount;
+  }
+
+  get pretranslateCount(): number | undefined {
+    return this.latestBuild?.executionData?.pretranslateCount;
+  }
+
+  /** Serval's diagnostics for the latest build. Builds from before Serval 1.20 report their warnings here too. */
+  get buildDiagnostics(): ServalBuildDiagnostic[] {
+    return this.latestBuild?.executionData?.diagnostics ?? [];
+  }
+
+  /** Whether Serval dropped some diagnostics from the build, so the count shown is a lower bound. */
+  get diagnosticsTruncated(): boolean {
+    return this.latestBuild?.executionData?.diagnosticsTruncated === true;
+  }
+
+  get visibleDiagnostics(): ServalBuildDiagnostic[] {
+    return this.showAllDiagnostics
+      ? this.buildDiagnostics
+      : this.buildDiagnostics.slice(0, DIAGNOSTICS_SHOWN_BY_DEFAULT);
+  }
+
+  get hiddenDiagnosticCount(): number {
+    return this.buildDiagnostics.length - this.visibleDiagnostics.length;
+  }
+
+  diagnosticNoticeType(diagnostic: ServalBuildDiagnostic): 'error' | 'warning' | 'info' {
+    switch (diagnostic.severity) {
+      case ServalDiagnosticSeverity.Error:
+        return 'error';
+      case ServalDiagnosticSeverity.Warn:
+        return 'warning';
+      default:
+        return 'info';
+    }
+  }
+
+  /** The download always returns the last completed build's draft. The label says so when a newer build is running. */
+  get downloadDraftLabel(): string {
+    if (
+      this.lastCompletedBuild != null &&
+      this.latestBuild != null &&
+      this.lastCompletedBuild.id !== this.latestBuild.id
+    ) {
+      return 'Download draft from previous build';
+    }
+    return 'Download draft';
+  }
+
   ngOnInit(): void {
     this.activatedProjectService.projectDoc$
       .pipe(
         filterNullish(),
         switchMap(projectDoc => {
-          if (projectDoc.data == null) return of(undefined);
+          const noBuilds: Observable<[BuildDto | undefined, BuildDto | undefined]> = of([undefined, undefined]);
+          if (projectDoc.data == null) return noBuilds;
           const project: SFProjectProfile = projectDoc.data;
           this.preTranslate = project.translateConfig.preTranslate;
           this.projectName = projectLabel(project);
-          const draftSources: DraftSourcesAsTranslateSourceArrays = projectToDraftSources(project);
+          this.languageTag = project.writingSystem.tag;
           const draftConfig: DraftConfig = project.translateConfig.draftConfig;
 
-          // Setup the downloads table
-          const rows: Row[] = [];
-
-          // Add the target
-          rows.push({
-            id: projectDoc.id,
-            type: projectType(projectDoc.data),
-            name: this.projectName,
-            category: 'Target project',
-            fileName: project.shortName + '.zip',
-            languageCode: project.writingSystem.tag
-          });
-
-          let i = 1;
-          // Add the draft sources
-          for (const draftingSource of draftSources.draftingSources) {
-            rows.push({
-              id: draftingSource.projectRef,
-              type: projectType(draftingSource),
-              name: projectLabel(draftingSource),
-              category: draftSources.draftingSources.length === 1 ? 'Draft source' : 'Draft source ' + i++,
-              fileName: draftingSource.shortName + '.zip',
-              languageCode: draftingSource.writingSystem.tag
-            });
-          }
-
-          // Add the training sources (called reference projects)
-          i = 1;
-          for (const trainingSource of draftSources.trainingSources) {
-            rows.push({
-              id: trainingSource.projectRef,
-              type: projectType(trainingSource),
-              name: projectLabel(trainingSource),
-              category: draftSources.trainingSources.length === 1 ? 'Reference project' : 'Reference project ' + i++,
-              fileName: trainingSource.shortName + '.zip',
-              languageCode: trainingSource.writingSystem.tag
-            });
-          }
-
-          // We have to set the rows this way to trigger the update
-          this.rows = rows;
-
-          // Setup the books. The target project's entry is not a training source; it is folded into the source
-          // ranges as chapter detail.
-          this.trainingBooksByProject = [];
-          let trainingSourceCount = 1;
-          for (const range of trainingSourceRangesWithTargetDetail(
-            draftConfig.lastSelectedTrainingScriptureRanges ?? [],
-            r => r.projectId,
-            projectDoc.id
-          )) {
-            this.trainingBooksByProject.push({
-              source: `Source ${trainingSourceCount++}`,
-              scriptureRange: formatScriptureRangeWithChapters(
-                new VerboseScriptureRange(range.scriptureRange),
-                this.i18n
-              )
-            });
-          }
-          this.trainingFiles = draftConfig.lastSelectedTrainingDataFiles;
-          this.translationBooksByProject = [];
-          if (draftConfig.lastSelectedTranslationScriptureRanges != null) {
-            let sourceCount = 1;
-            for (const range of draftConfig.lastSelectedTranslationScriptureRanges) {
-              this.translationBooksByProject.push({
-                source: `Source ${sourceCount++}`,
-                scriptureRange: formatScriptureRangeWithChapters(
-                  new VerboseScriptureRange(range.scriptureRange),
-                  this.i18n
-                )
-              });
-            }
-          }
-
           this.draftConfig = draftConfig;
-          this.draftJob$ = this.projectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
+          this.updateSourceRows(projectDoc.id, project, draftConfig);
+          this.updateTrainingFileRows();
 
-          // Setup the serval config values
-          this.servalConfig.setValue(project.translateConfig.draftConfig.servalConfig);
+          this.servalConfig.setValue(draftConfig.servalConfig);
 
-          // Get the last completed build
           if (this.isOnline && this.projectService.hasDraft(project)) {
-            return this.draftGenerationService.getLastCompletedBuild(projectDoc.id);
-          } else {
-            return of(undefined);
+            return combineLatest([
+              this.draftGenerationService.getLastCompletedBuild(projectDoc.id),
+              this.draftGenerationService.getLastPreTranslationBuild(projectDoc.id)
+            ]);
           }
+          return noBuilds;
         }),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(async (build: BuildDto | undefined) => {
-        this.lastCompletedBuild = build;
-        if (build?.id != null) {
-          this.rawLastCompletedBuild = await firstValueFrom(this.draftGenerationService.getRawBuild(build.id));
-        }
+      .subscribe(async ([lastCompletedBuild, latestBuild]: [BuildDto | undefined, BuildDto | undefined]) => {
+        this.lastCompletedBuild = lastCompletedBuild;
+        this.latestBuild = latestBuild;
+        this.showAllDiagnostics = false;
+        this.rawLatestBuild =
+          latestBuild?.id != null
+            ? await firstValueFrom(this.draftGenerationService.getRawBuild(latestBuild.id))
+            : undefined;
       });
 
     this.activatedProjectService.projectId$
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         filterNullish(),
-        switchMap(projectId => this.trainingDataService.getTrainingData(projectId, this.destroyRef))
+        switchMap(projectId => {
+          void this.loadOnboardingRequest(projectId);
+          // Deleted files are included so that a file the last draft used can still be listed
+          return this.trainingDataService.getTrainingData(projectId, this.destroyRef, { includeDeleted: true });
+        })
       )
       .subscribe(activeFiles => {
         this.trainingDataFiles = activeFiles;
+        this.updateTrainingFileRows();
       });
   }
 
@@ -301,11 +411,10 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   async downloadProject(id: string, fileName: string): Promise<void> {
     this.loadingStarted();
 
-    // Download the zip file as a blob - this ensures we set the authorization header.
+    // Fetch through HttpClient rather than a plain download link so the request carries the authorization header
     const blob: Blob | undefined = await lastValueFrom(
       this.servalAdministrationService.downloadProject(id).pipe(
         catchError(err => {
-          // Stop the loading, and throw the error
           this.loadingFinished();
           if (err.status === 404) {
             return of(undefined);
@@ -316,13 +425,11 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
       )
     );
 
-    // If the blob is undefined, display an error
     if (blob == null) {
       this.noticeService.showError('The project was never synced successfully and does not exist on disk.');
       return;
     }
 
-    // Use the FileSaver API to download the file
     saveAs(blob, fileName);
 
     this.loadingFinished();
@@ -335,8 +442,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     this.fileService.onlineDownloadFile(FileType.TrainingData, trainingData.fileUrl, trainingData.title);
   }
 
-  onUpdatePreTranslate(newValue: boolean): Promise<void> {
-    return this.projectService.onlineSetPreTranslate(this.activatedProjectService.projectId!, newValue);
+  onUpdatePreTranslate(change: MatSlideToggleChange): Promise<void> {
+    return this.projectService.onlineSetPreTranslate(this.activatedProjectService.projectId!, change.checked);
   }
 
   async retrievePreTranslationStatus(): Promise<void> {
@@ -354,24 +461,169 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   }
 
   updateServalConfig(): void {
-    if (
-      this.activatedProjectService.projectDoc?.data == null ||
-      (this.form.value.servalConfig ?? '') ===
-        (this.activatedProjectService.projectDoc.data.translateConfig.draftConfig.servalConfig ?? '')
-    ) {
-      // Do not save if we do not have the project doc or if the configuration has not changed
-      return;
-    }
+    const projectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
+    if (projectDoc?.data == null) return;
+    const unchanged: boolean =
+      (this.form.value.servalConfig ?? '') === (projectDoc.data.translateConfig.draftConfig.servalConfig ?? '');
+    if (unchanged) return;
 
-    // Update Serval Configuration
     this.servalConfigUpdateState = ElementState.Submitting;
     void this.projectService
-      .onlineSetServalConfig(this.activatedProjectService.projectDoc.id, this.form.value.servalConfig)
+      .onlineSetServalConfig(projectDoc.id, this.form.value.servalConfig)
       .then(() => (this.servalConfigUpdateState = ElementState.Submitted))
       .catch(() => (this.servalConfigUpdateState = ElementState.Error));
   }
 
-  private getDraftJob(projectId: string): Observable<BuildDto | undefined> {
-    return this.draftGenerationService.getBuildProgress(projectId);
+  private async loadOnboardingRequest(projectId: string): Promise<void> {
+    this.onboardingRequest = undefined;
+    if (this.isOnline) {
+      try {
+        this.onboardingRequest = (await this.onboardingRequestService.getOpenOnboardingRequest(projectId)) ?? undefined;
+      } catch {
+        // The link is a convenience, so a failed lookup just leaves it out rather than blocking the page
+      }
+    }
+    this.onboardingRequestLink =
+      this.onboardingRequest == null
+        ? undefined
+        : ['/serval-administration', 'onboarding-requests', this.onboardingRequest.id];
+    this.onboardingRequestStatusLabel =
+      this.onboardingRequest == null
+        ? ''
+        : this.onboardingRequestService.getStatus(this.onboardingRequest.status).label;
+  }
+
+  /**
+   * Builds the sources table from the projects configured now, then appends rows for any project the last draft used
+   * that is no longer configured, so that the last draft's inputs are always fully accounted for.
+   */
+  private updateSourceRows(targetProjectId: string, project: SFProjectProfile, draftConfig: DraftConfig): void {
+    const draftSources: DraftSourcesAsTranslateSourceArrays = projectToDraftSources(project);
+
+    // The last draft's training ranges include an entry for the target project itself, holding only the chapter
+    // selection. trainingSourceRangesWithTargetDetail folds that into each source's range instead of listing the
+    // target as a source.
+    const trainingBooksByProjectId = new Map<string, string>();
+    for (const range of trainingSourceRangesWithTargetDetail(
+      draftConfig.lastSelectedTrainingScriptureRanges ?? [],
+      r => r.projectId,
+      targetProjectId
+    )) {
+      trainingBooksByProjectId.set(range.projectId, this.formatBooks(range.scriptureRange));
+    }
+    const translationBooksByProjectId = new Map<string, string>();
+    for (const range of draftConfig.lastSelectedTranslationScriptureRanges ?? []) {
+      translationBooksByProjectId.set(range.projectId, this.formatBooks(range.scriptureRange));
+    }
+    this.lastDraftExists = trainingBooksByProjectId.size > 0 || translationBooksByProjectId.size > 0;
+
+    // Ranges are attributed by role, not just by project id: a project that is both the draft source and a reference
+    // project is drafted from in its draft source role and trained on in its reference project role.
+    const rows: SourceRow[] = [];
+    rows.push(this.configuredSourceRow(targetProjectId, project, 'Target', undefined, undefined));
+    for (const draftingSource of draftSources.draftingSources) {
+      rows.push(
+        this.configuredSourceRow(
+          draftingSource.projectRef,
+          draftingSource,
+          'Draft source',
+          undefined,
+          translationBooksByProjectId.get(draftingSource.projectRef)
+        )
+      );
+    }
+    for (const trainingSource of draftSources.trainingSources) {
+      rows.push(
+        this.configuredSourceRow(
+          trainingSource.projectRef,
+          trainingSource,
+          'Reference project',
+          trainingBooksByProjectId.get(trainingSource.projectRef),
+          undefined
+        )
+      );
+    }
+
+    const draftingSourceIds = new Set<string>(draftSources.draftingSources.map(source => source.projectRef));
+    for (const [projectId, translationBooks] of translationBooksByProjectId) {
+      if (draftingSourceIds.has(projectId)) continue;
+      rows.push(this.formerSourceRow(projectId, 'Former draft source', undefined, translationBooks));
+    }
+    const trainingSourceIds = new Set<string>(draftSources.trainingSources.map(source => source.projectRef));
+    for (const [projectId, trainingBooks] of trainingBooksByProjectId) {
+      if (trainingSourceIds.has(projectId)) continue;
+      rows.push(this.formerSourceRow(projectId, 'Former reference project', trainingBooks, undefined));
+    }
+
+    this.sourceRows = rows;
+  }
+
+  private configuredSourceRow(
+    projectId: string,
+    source: TranslateSource | SFProjectProfile,
+    role: SourceRole,
+    trainingBooks: string | undefined,
+    translationBooks: string | undefined
+  ): SourceRow {
+    return {
+      projectId: projectId,
+      role: role,
+      label: projectLabel(source),
+      type: projectType(source),
+      languageTag: source.writingSystem.tag,
+      trainingBooks: trainingBooks,
+      translationBooks: translationBooks,
+      fileName: source.shortName + '.zip',
+      isConfigured: true
+    };
+  }
+
+  private formerSourceRow(
+    projectId: string,
+    role: SourceRole,
+    trainingBooks: string | undefined,
+    translationBooks: string | undefined
+  ): SourceRow {
+    return {
+      projectId: projectId,
+      role: role,
+      label: projectId,
+      type: undefined,
+      languageTag: undefined,
+      trainingBooks: trainingBooks,
+      translationBooks: translationBooks,
+      fileName: projectId + '.zip',
+      isConfigured: false
+    };
+  }
+
+  private updateTrainingFileRows(): void {
+    const lastDraftFileIds: string[] = this.draftConfig?.lastSelectedTrainingDataFiles ?? [];
+    // The files that existed when the last draft was started, or undefined for drafts made before this was recorded
+    const lastAvailableFileIds: string[] | undefined = this.draftConfig?.lastAvailableTrainingDataFiles;
+    const rows: TrainingFileRow[] = [];
+    for (const file of this.trainingDataFiles) {
+      const isDeleted: boolean = file.deleted === true;
+      const usedInLastDraft: boolean = lastDraftFileIds.includes(file.dataId);
+      // A deleted file only matters if the last draft used it
+      if (isDeleted && !usedInLastDraft) continue;
+      rows.push({
+        dataId: file.dataId,
+        title: file.title,
+        usedInLastDraft: usedInLastDraft,
+        isDeleted: isDeleted,
+        isNewSinceLastDraft: !isDeleted && lastAvailableFileIds != null && !lastAvailableFileIds.includes(file.dataId)
+      });
+    }
+    // A file the last draft used that has no record at all any more is known only by its id
+    for (const dataId of lastDraftFileIds) {
+      if (this.trainingDataFiles.some(file => file.dataId === dataId)) continue;
+      rows.push({ dataId: dataId, title: dataId, usedInLastDraft: true, isDeleted: true, isNewSinceLastDraft: false });
+    }
+    this.trainingFileRows = rows;
+  }
+
+  private formatBooks(scriptureRange: string): string {
+    return formatScriptureRangeCompact(new VerboseScriptureRange(scriptureRange));
   }
 }

@@ -1,70 +1,312 @@
 <app-mobile-not-supported></app-mobile-not-supported>
 
-@if (showProjectTitle) {
-  <h1>{{ projectName }}</h1>
-}
+<div class="page-header">
+  <a mat-button class="back-link" appRouterLink="/serval-administration">
+    <mat-icon>arrow_back</mat-icon>
+    Serval administration
+  </a>
+  <div class="title-row">
+    <div>
+      <h1>{{ projectName }}</h1>
+      <div class="subtitle">
+        Language tag <span class="language-tag">{{ languageTag }}</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="view-event-log" mat-stroked-button [appRouterLink]="eventLogLink" [disabled]="!isOnline">
+        <mat-icon>history</mat-icon>
+        Event log
+      </button>
+      <button id="view-draft-jobs" mat-stroked-button (click)="navigateToDraftJobs()" [disabled]="!isOnline">
+        <mat-icon>list</mat-icon>
+        Serval builds
+      </button>
+      @if (onboardingRequestLink != null) {
+        <a id="view-onboarding-request" mat-stroked-button [appRouterLink]="onboardingRequestLink">
+          <mat-icon>description</mat-icon>
+          Onboarding request · {{ onboardingRequestStatusLabel }}
+        </a>
+      }
+    </div>
+  </div>
+</div>
 
-<h2>Pre-Translation Configuration</h2>
-<div class="admin-tool">
-  <div class="admin-tool-control">
-    <mat-checkbox [checked]="preTranslate" (change)="onUpdatePreTranslate($event.checked)" [disabled]="!isOnline">
-      Pre-Translation Drafting Enabled
-    </mat-checkbox>
-  </div>
-  <div class="admin-tool-control">
-    <button
-      id="retrieve-pre-translations"
-      mat-flat-button
-      color="primary"
-      (click)="retrievePreTranslationStatus()"
-      [disabled]="!isOnline"
-    >
-      Force Pre-Translation Retrieval
-    </button>
-    <app-info
-      text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
-    ></app-info>
-  </div>
-  <div class="admin-tool-control">
-    <button id="view-event-log" mat-flat-button color="primary" [appRouterLink]="eventLogLink" [disabled]="!isOnline">
-      View Event Log
-    </button>
-  </div>
-  <div class="admin-tool-control">
-    <button id="view-draft-jobs" mat-flat-button color="primary" (click)="navigateToDraftJobs()" [disabled]="!isOnline">
-      View Serval Builds
-    </button>
-    <app-info text="View all Serval builds for this project in the Serval Administration page."></app-info>
-  </div>
-  <div class="admin-tool-control">
-    <button
-      (click)="downloadDraft()"
-      mat-flat-button
-      color="primary"
-      [disabled]="!isOnline || lastCompletedBuild == null || downloadingDraft"
-      id="download-draft"
-    >
-      <mat-icon>download</mat-icon>
-      Download draft
-    </button>
-    <app-info text="A zip file containing the latest generated draft."></app-info>
-    @if (downloadingDraft) {
-      <div class="zip-progress">Downloading draft...</div>
+<section>
+  <h2>Latest build</h2>
+  @if (latestBuild == null) {
+    <p class="empty-state" id="no-builds">No draft has been generated for this project.</p>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <dl class="build-summary">
+          <div>
+            <dt>State</dt>
+            <dd>
+              <span class="build-state status-is-{{ buildStateClass }}" id="build-state">
+                <mat-icon>{{ buildStateIcon }}</mat-icon>
+                <span class="build-state-label">{{ buildStateLabel }}</span>
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt>{{ buildDateLabel }}</dt>
+            <dd id="build-date">{{ buildDate ?? "—" }}</dd>
+          </div>
+          <div>
+            <dt>Requested by</dt>
+            <dd id="requested-by">
+              @if (requestedByUserId != null) {
+                <app-owner [ownerRef]="requestedByUserId" [includeAvatar]="true"></app-owner>
+              } @else {
+                —
+              }
+            </dd>
+          </div>
+          @if (isBuildActive) {
+            <div>
+              <dt>Progress</dt>
+              <dd>{{ latestBuild.percentCompleted | percent }}</dd>
+            </div>
+            <div>
+              <dt>Queue depth</dt>
+              <dd>{{ latestBuild.queueDepth }}</dd>
+            </div>
+          } @else {
+            <div>
+              <dt>Training pairs</dt>
+              <dd>{{ trainCount != null ? (trainCount | number) : "—" }}</dd>
+            </div>
+            <div>
+              <dt>Verses drafted</dt>
+              <dd>{{ pretranslateCount != null ? (pretranslateCount | number) : "—" }}</dd>
+            </div>
+          }
+          <div>
+            <dt>Diagnostics</dt>
+            <dd id="diagnostic-count">{{ buildDiagnostics.length }}{{ diagnosticsTruncated ? "+" : "" }}</dd>
+          </div>
+        </dl>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        @if (downloadingDraft) {
+          <span class="zip-progress">Downloading draft...</span>
+        }
+        <button
+          id="download-draft"
+          matButton="tonal"
+          (click)="downloadDraft()"
+          [disabled]="!isOnline || lastCompletedBuild == null || downloadingDraft"
+        >
+          <mat-icon>download</mat-icon>
+          {{ downloadDraftLabel }}
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    @for (diagnostic of visibleDiagnostics; track $index) {
+      @let noticeType = diagnosticNoticeType(diagnostic);
+      <app-notice [icon]="noticeType" mode="fill-dark" [type]="noticeType" class="build-diagnostic">
+        {{ diagnostic.message }}
+      </app-notice>
     }
+    @if (hiddenDiagnosticCount > 0) {
+      <button id="show-all-diagnostics" mat-button (click)="showAllDiagnostics = true">
+        <mat-icon>expand_more</mat-icon>
+        Show {{ hiddenDiagnosticCount }} more {{ hiddenDiagnosticCount === 1 ? "diagnostic" : "diagnostics" }}
+      </button>
+    }
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>Raw Serval build JSON</mat-expansion-panel-header>
+      <app-json-viewer [data]="rawLatestBuild ?? {}"></app-json-viewer>
+    </mat-expansion-panel>
+  }
+</section>
+
+<section>
+  <h2>Sources</h2>
+  @if (sourcesChangedSinceLastDraft) {
+    <app-notice icon="info" mode="fill-dark" type="info" id="sources-changed-notice">
+      The sources have changed since the last draft was generated.
+      @if (formerSourceCount > 0) {
+        Rows marked "former" were used by the last draft but are no longer configured as sources.
+      }
+      @if (deletedTrainingFileCount === 1) {
+        A training file the last draft used has since been deleted.
+      } @else if (deletedTrainingFileCount > 1) {
+        {{ deletedTrainingFileCount }} training files the last draft used have since been deleted.
+      }
+      @if (newTrainingFileCount === 1) {
+        A training file has been uploaded since the last draft.
+      } @else if (newTrainingFileCount > 1) {
+        {{ newTrainingFileCount }} training files have been uploaded since the last draft.
+      }
+    </app-notice>
+  }
+  <div class="table-container">
+    <table mat-table [dataSource]="sourceRows" class="draft-sources-table">
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef>Role</th>
+        <td mat-cell *matCellDef="let row" class="role-cell">{{ row.role }}</td>
+      </ng-container>
+      <ng-container matColumnDef="label">
+        <th mat-header-cell *matHeaderCellDef>Project</th>
+        <td mat-cell *matCellDef="let row">
+          <div class="source-label" [class.project-id]="!row.isConfigured">{{ row.label }}</div>
+          <div class="cell-detail">{{ row.isConfigured ? row.type : "No longer configured as a source" }}</div>
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="languageTag">
+        <th mat-header-cell *matHeaderCellDef>Language tag</th>
+        <td mat-cell *matCellDef="let row">{{ row.languageTag ?? "—" }}</td>
+      </ng-container>
+      <ng-container matColumnDef="trainingBooks">
+        <th mat-header-cell *matHeaderCellDef>Trained on (last draft)</th>
+        <td mat-cell *matCellDef="let row" class="training">
+          @if (row.trainingBooks != null) {
+            {{ row.trainingBooks }}
+          } @else if (lastDraftExists && row.role === "Reference project") {
+            <span class="not-used">Not used</span>
+          } @else {
+            —
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="translationBooks">
+        <th mat-header-cell *matHeaderCellDef>Drafted (last draft)</th>
+        <td mat-cell *matCellDef="let row" class="translation">
+          @if (row.translationBooks != null) {
+            {{ row.translationBooks }}
+          } @else if (lastDraftExists && row.role === "Draft source") {
+            <span class="not-used">Not used</span>
+          } @else {
+            —
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="download">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row" class="download-cell">
+          <button mat-stroked-button (click)="downloadProject(row.projectId, row.fileName)" [disabled]="!isOnline">
+            <mat-icon>download</mat-icon>
+            Download
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="sourceColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: sourceColumns" [class.former-source]="!row.isConfigured"></tr>
+    </table>
   </div>
-  <div class="admin-tool-control">
+  <p class="table-caption">
+    Rows show the sources as configured now. The two "last draft" columns show the books the last draft actually used
+    from each project; "Not used" means the last draft took no books from that source. Training pairs a reference
+    project with the target project, so the target row has no trained-on books of its own; where a reference project's
+    range lists chapters, those are the chapters of the target project that were selected for training.
+  </p>
+  <p class="table-caption">
+    Project zips hold the Paratext files as of the last sync, so Paratext edits not yet synced, and Scripture Forge
+    edits since the last sync, are not included.
+  </p>
+
+  <h3>Training files</h3>
+  @if (trainingFileRows.length === 0) {
+    <p class="empty-state" id="no-training-files">No training files have been uploaded.</p>
+  } @else {
+    <div class="table-container">
+      <table mat-table [dataSource]="trainingFileRows" class="training-data-table">
+        <ng-container matColumnDef="title">
+          <th mat-header-cell *matHeaderCellDef>File name</th>
+          <td mat-cell *matCellDef="let file">
+            <div class="source-label">{{ file.title }}</div>
+            @if (file.isDeleted) {
+              <div class="cell-detail">Deleted since the last draft</div>
+            } @else if (file.isNewSinceLastDraft) {
+              <div class="cell-detail">Uploaded since the last draft</div>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="usedInLastDraft">
+          <th mat-header-cell *matHeaderCellDef>Used in last draft</th>
+          <td mat-cell *matCellDef="let file" class="used-in-last-draft">
+            @if (file.usedInLastDraft) {
+              Yes
+            } @else if (lastDraftExists) {
+              <span class="not-used">No</span>
+            } @else {
+              —
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="download">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let file" class="download-cell">
+            @if (!file.isDeleted) {
+              <button mat-stroked-button (click)="downloadTrainingData(file.dataId)" [disabled]="!isOnline">
+                <mat-icon>download</mat-icon>
+                Download
+              </button>
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="trainingFileColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: trainingFileColumns" [class.former-source]="row.isDeleted"></tr>
+      </table>
+    </div>
+  }
+</section>
+
+<section>
+  <h2>Configuration</h2>
+  <mat-card>
+    <mat-card-content>
+      <div class="setting-row">
+        <div>
+          <div class="setting-title">Pre-translation drafting</div>
+        </div>
+        <mat-slide-toggle
+          id="pre-translate-toggle"
+          [checked]="preTranslate"
+          (change)="onUpdatePreTranslate($event)"
+          [disabled]="!isOnline"
+          aria-label="Pre-translation drafting"
+        ></mat-slide-toggle>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-title">Retrieve pre-translations now</div>
+          <div class="setting-description">
+            Checks Serval for any finished draft for this project and updates the project's chapters. This normally
+            happens automatically when a build completes.
+          </div>
+        </div>
+        <button
+          id="retrieve-pre-translations"
+          mat-stroked-button
+          (click)="retrievePreTranslationStatus()"
+          [disabled]="!isOnline"
+        >
+          <mat-icon>refresh</mat-icon>
+          Retrieve
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="config-editors">
     <mat-card>
       <mat-card-header>
-        <mat-card-title>Serval Configuration</mat-card-title>
+        <mat-card-title>Serval build options override</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <p>
+        <p class="setting-description">
           This value must be valid JSON. See the
-          <a href="https://github.com/sillsdev/serval/wiki/NMT-Build-Options" target="_blank">Serval Wiki</a> for
+          <a href="https://github.com/sillsdev/serval/wiki/NMT-Build-Options" target="_blank">Serval wiki</a> for
           configuration values.
         </p>
         <mat-form-field [formGroup]="form" appearance="outline" class="serval-config-field">
-          <mat-label>NMT Build Options Override (JSON)</mat-label>
+          <mat-label>NMT build options override (JSON)</mat-label>
           <textarea matInput cdkTextareaAutosize id="serval-config" formControlName="servalConfig"></textarea>
           <app-write-status
             [state]="servalConfigUpdateState"
@@ -73,126 +315,14 @@
           ></app-write-status>
         </mat-form-field>
       </mat-card-content>
-      <mat-card-actions>
-        <button mat-flat-button id="save-serval-config" color="primary" (click)="updateServalConfig()">Save</button>
+      <mat-card-actions align="end">
+        <button mat-flat-button id="save-serval-config" (click)="updateServalConfig()">Save</button>
       </mat-card-actions>
     </mat-card>
   </div>
-</div>
-
-<h2>Downloads</h2>
-<app-notice icon="info" mode="fill-dark">
-  The Zip archives contain the Paratext files for the project at the time of last sync. Any edits in Paratext that have
-  not been synced to Scripture Forge will not be included, and
-  <em>any edits made in Scripture Forge</em> since the last sync will not be included
-</app-notice>
-<div class="table-container">
-  <table mat-table [dataSource]="rows" class="draft-sources-table">
-    @for (column of columnsToDisplay | slice: 0 : columnsToDisplay.length - 1; track column) {
-      <ng-container [matColumnDef]="column">
-        <th mat-header-cell *matHeaderCellDef>{{ headingsToDisplay[column] }}</th>
-        <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
-      </ng-container>
-    }
-
-    <ng-container matColumnDef="id">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let row">
-        <button
-          mat-flat-button
-          color="primary"
-          (click)="downloadProject(row['id'], row['fileName'])"
-          [disabled]="!isOnline"
-        >
-          <mat-icon>download</mat-icon>
-          Download
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-    <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
-  </table>
-  @if (trainingDataFiles.length > 0) {
-    <h3>Training Files</h3>
-    <table mat-table [dataSource]="trainingDataFiles" class="training-data-table">
-      <ng-container matColumnDef="title">
-        <th mat-header-cell *matHeaderCellDef>File Name</th>
-        <td mat-cell *matCellDef="let file">
-          {{ file.title }}
-        </td>
-      </ng-container>
-
-      <ng-container matColumnDef="download">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let file">
-          <button mat-flat-button color="primary" (click)="downloadTrainingData(file.dataId)" [disabled]="!isOnline">
-            <mat-icon>download</mat-icon>
-            Download
-          </button>
-        </td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="['title', 'download']"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['title', 'download']"></tr>
-    </table>
-  }
-</div>
-
-<h2>Serval warnings from last build</h2>
-@if (rawLastCompletedBuild == null) {
-  <em>No completed builds</em>
-} @else {
-  @for (warning of rawLastCompletedBuild.executionData?.warnings ?? []; track $index) {
-    <p>
-      <app-notice icon="warning" mode="fill-dark" type="warning">{{ warning }}</app-notice>
-    </p>
-  } @empty {
-    <em>No warnings on latest build</em>
-  }
-}
-
-<h2>Additional Information</h2>
-
-<mat-accordion>
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>Last Draft Settings</mat-expansion-panel-header>
-    <h3>Training books</h3>
-    @for (book of trainingBooksByProject; track book.source) {
-      <div class="training">
-        <p>{{ book.source }}</p>
-        <p class="training-source-range">{{ book.scriptureRange }}</p>
-      </div>
-    } @empty {
-      <p class="training">None</p>
-    }
-    <h3>Training data files</h3>
-    <p>{{ trainingFiles.join(", ") || "None" }}</p>
-    <h3>Translation books</h3>
-    @for (book of translationBooksByProject; track book.source) {
-      <div class="translation">
-        <p>{{ book.source }}</p>
-        <p class="translation-range">{{ book.scriptureRange }}</p>
-      </div>
-    } @empty {
-      <p class="translation">None</p>
-    }
-  </mat-expansion-panel>
-
-  @if (draftJob$ | async; as draftJob) {
-    <mat-expansion-panel>
-      <mat-expansion-panel-header>Diagnostic Information</mat-expansion-panel-header>
-      <app-draft-information [draftJob]="draftJob"></app-draft-information>
-    </mat-expansion-panel>
-  }
 
   <mat-expansion-panel>
-    <mat-expansion-panel-header>Raw Scripture Forge Draft Configuration</mat-expansion-panel-header>
+    <mat-expansion-panel-header>Raw draft configuration JSON</mat-expansion-panel-header>
     <app-json-viewer [data]="draftConfig ?? {}"></app-json-viewer>
   </mat-expansion-panel>
-
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>Raw Serval Build Info</mat-expansion-panel-header>
-    <app-json-viewer [data]="rawLastCompletedBuild ?? {}"></app-json-viewer>
-  </mat-expansion-panel>
-</mat-accordion>
+</section>

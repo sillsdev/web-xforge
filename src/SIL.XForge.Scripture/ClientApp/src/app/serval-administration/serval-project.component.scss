@@ -1,15 +1,104 @@
-.admin-tool {
+:host {
+  display: block;
+  max-width: 1200px;
+  padding-bottom: 32px;
+}
+
+.page-header {
   display: flex;
   flex-direction: column;
-  row-gap: 32px;
+  align-items: flex-start;
+  gap: 4px;
+}
 
-  > .admin-tool-control {
-    display: flex;
-    flex-direction: row;
-    column-gap: 10px;
+.back-link {
+  margin-inline-start: -8px;
+}
 
-    .serval-config-field {
-      width: 100%;
+.title-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+
+  h1 {
+    margin: 0 0 4px;
+  }
+}
+
+.subtitle {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.language-tag,
+.project-id {
+  font-family: monospace;
+}
+
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 28px;
+
+  h2,
+  h3 {
+    margin: 0;
+  }
+
+  h3 {
+    margin-top: 12px;
+  }
+}
+
+.not-used {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.empty-state {
+  margin: 0;
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.build-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+
+  dt {
+    font-size: 0.85em;
+    color: var(--mat-sys-on-surface-variant);
+    margin-bottom: 2px;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 1.1em;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+// Build state colors are the ones the Serval Builds tab uses (see _serval-builds-theme.scss), so that a build's state
+// looks the same on both pages.
+.build-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  @each $state in queued, pending, active, finishing, completed, faulted, canceled {
+    &.status-is-#{$state} mat-icon {
+      color: var(--sf-serval-builds-status-#{$state});
     }
   }
 }
@@ -17,4 +106,75 @@
 .zip-progress {
   display: flex;
   align-items: center;
+  margin-inline-end: 8px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+#show-all-diagnostics {
+  align-self: flex-start;
+}
+
+.table-container {
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+  }
+
+  tr:nth-child(odd) {
+    background-color: var(--sf-serval-administration-table-row-background);
+  }
+}
+
+.cell-detail {
+  font-size: 0.85em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.former-source .role-cell {
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.download-cell {
+  text-align: end;
+  white-space: nowrap;
+}
+
+.table-caption {
+  margin: 0;
+  font-size: 0.9em;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.setting-title {
+  font-weight: 500;
+}
+
+.setting-description {
+  font-size: 0.9em;
+  max-width: 62ch;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.config-editors {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 12px;
+
+  .serval-config-field {
+    width: 100%;
+  }
 }

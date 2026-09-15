@@ -9,30 +9,31 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { BuildDto } from '../machine-api/build-dto';
+import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticSeverity } from '../machine-api/build-dto';
+import { BuildStates } from '../machine-api/build-states';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
-
-interface TestEnvironmentArgs {
-  preTranslate: boolean;
-  lastCompletedBuild?: BuildDto;
-  draftConfig?: Partial<DraftConfig>;
-}
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
@@ -40,9 +41,11 @@ const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockFileService = mock(FileService);
 const mockNoticeService = mock(NoticeService);
+const mockOnboardingRequestService = mock(OnboardingRequestService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
 const mockTrainingDataService = mock(TrainingDataService);
+const mockUserService = mock(UserService);
 
 describe('ServalProjectComponent', () => {
   configureTestingModule(() => ({
@@ -55,34 +58,73 @@ describe('ServalProjectComponent', () => {
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: FileService, useMock: mockFileService },
       { provide: NoticeService, useMock: mockNoticeService },
+      { provide: OnboardingRequestService, useMock: mockOnboardingRequestService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
-      { provide: SFProjectService, useMock: mockSFProjectService }
+      { provide: SFProjectService, useMock: mockSFProjectService },
+      { provide: UserService, useMock: mockUserService }
     ]
   }));
 
-  describe('pre-translation drafting checkbox', () => {
+  describe('header', () => {
+    it('shows the project label and language tag', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.heading.textContent).toBe('P1 - Project 01');
+      expect(env.languageTag.textContent).toBe('en');
+    }));
+
+    it('links to the onboarding request with its status when the project has one', fakeAsync(() => {
+      const env = new TestEnvironment({ onboardingRequest: { status: 'in_progress' } });
+      expect(env.onboardingRequestLink).not.toBeNull();
+      expect(env.onboardingRequestLink!.textContent).toContain('Onboarding request');
+      expect(env.onboardingRequestLink!.textContent).toContain('In Progress');
+      expect(env.component.onboardingRequestLink).toEqual([
+        '/serval-administration',
+        'onboarding-requests',
+        'request01'
+      ]);
+    }));
+
+    it('does not show an onboarding request link when the project has none', fakeAsync(() => {
+      const env = new TestEnvironment();
+      verify(mockOnboardingRequestService.getOpenOnboardingRequest(env.mockProjectId)).once();
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+
+    it('does not look up the onboarding request when offline', fakeAsync(() => {
+      const env = new TestEnvironment({ online: false, onboardingRequest: { status: 'new' } });
+      verify(mockOnboardingRequestService.getOpenOnboardingRequest(anything())).never();
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+
+    it('leaves out the onboarding request link when the lookup fails', fakeAsync(() => {
+      const env = new TestEnvironment({ onboardingRequestError: true });
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+  });
+
+  describe('pre-translation drafting toggle', () => {
     it('should allow enabling pre-translation drafting', fakeAsync(() => {
       const env = new TestEnvironment({ preTranslate: false });
-      expect(env.preTranslateCheckbox.checked).toBe(false);
-      env.clickElement(env.preTranslateCheckbox);
-      expect(env.preTranslateCheckbox.checked).toBe(true);
+      expect(env.preTranslateToggle.getAttribute('aria-checked')).toBe('false');
+      env.clickElement(env.preTranslateToggle);
+      expect(env.preTranslateToggle.getAttribute('aria-checked')).toBe('true');
       verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, true)).once();
     }));
 
     it('should allow disabling pre-translation drafting', fakeAsync(() => {
       const env = new TestEnvironment();
-      expect(env.preTranslateCheckbox.checked).toBe(true);
-      env.clickElement(env.preTranslateCheckbox);
-      expect(env.preTranslateCheckbox.checked).toBe(false);
+      expect(env.preTranslateToggle.getAttribute('aria-checked')).toBe('true');
+      env.clickElement(env.preTranslateToggle);
+      expect(env.preTranslateToggle.getAttribute('aria-checked')).toBe('false');
       verify(mockSFProjectService.onlineSetPreTranslate(env.mockProjectId, false)).once();
     }));
 
-    it('should disable the pre-translation drafting checkbox when offline', fakeAsync(() => {
+    it('should disable the pre-translation drafting toggle when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.preTranslateCheckbox.disabled).toBe(true);
+      expect(env.preTranslateToggle.disabled).toBe(true);
     }));
   });
 
@@ -120,8 +162,8 @@ describe('ServalProjectComponent', () => {
     it('should disable the download button when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
-      expect(env.firstSourceDownloadButton.disabled).toBe(true);
+      expect(env.sourceDownloadButtons[0].innerText).toContain('Download');
+      expect(env.sourceDownloadButtons[0].disabled).toBe(true);
     }));
 
     it('should display a notice if the project cannot be downloaded', fakeAsync(() => {
@@ -129,47 +171,60 @@ describe('ServalProjectComponent', () => {
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(
         throwError(() => new HttpErrorResponse({ status: 404 }))
       );
-      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
-      expect(env.firstSourceDownloadButton.disabled).toBe(false);
-      env.clickElement(env.firstSourceDownloadButton);
+      expect(env.sourceDownloadButtons[0].innerText).toContain('Download');
+      expect(env.sourceDownloadButtons[0].disabled).toBe(false);
+      env.clickElement(env.sourceDownloadButtons[0]);
       verify(mockNoticeService.showError(anything())).once();
     }));
 
-    it('should have a download button', fakeAsync(() => {
+    it('should have a download button for the target and every source', fakeAsync(() => {
       const env = new TestEnvironment();
       expect(env.sourceDownloadButtons.length).toBe(4);
-      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
-      expect(env.firstSourceDownloadButton.disabled).toBe(false);
+      expect(env.sourceDownloadButtons[0].innerText).toContain('Download');
+      expect(env.sourceDownloadButtons[0].disabled).toBe(false);
     }));
 
     it('should allow clicking of the button to download', fakeAsync(() => {
       const env = new TestEnvironment();
-      expect(env.firstSourceDownloadButton.innerText).toContain('Download');
-      expect(env.firstSourceDownloadButton.disabled).toBe(false);
-      env.clickElement(env.firstSourceDownloadButton);
+      expect(env.sourceDownloadButtons[0].innerText).toContain('Download');
+      expect(env.sourceDownloadButtons[0].disabled).toBe(false);
+      env.clickElement(env.sourceDownloadButtons[0]);
       expect(saveAs).toHaveBeenCalled();
     }));
   });
 
   describe('download draft button', () => {
     it('should disable the download button when offline', fakeAsync(() => {
-      const env = new TestEnvironment();
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
       env.onlineStatus = false;
       expect(env.downloadDraftButton.disabled).toBe(true);
     }));
 
     it('should disable the download button when there is no last completed build', fakeAsync(() => {
-      const env = new TestEnvironment();
+      const env = new TestEnvironment({
+        latestBuild: TestEnvironment.build({ id: 'build02', state: BuildStates.Faulted })
+      });
       expect(env.downloadDraftButton.disabled).toBe(true);
+      expect(env.downloadDraftButton.textContent).toContain('Download draft');
     }));
 
-    it('should have a download draft button when there is a last completed build', fakeAsync(() => {
-      const env = new TestEnvironment({ preTranslate: true, lastCompletedBuild: {} as BuildDto });
+    it('should have an enabled download draft button when there is a last completed build', fakeAsync(() => {
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
       expect(env.downloadDraftButton.disabled).toBe(false);
+      expect(env.downloadDraftButton.textContent!.trim()).toBe('download Download draft');
+    }));
+
+    it('says the draft is from a previous build when a newer build is running', fakeAsync(() => {
+      const env = new TestEnvironment({
+        lastCompletedBuild: TestEnvironment.completedBuild(),
+        latestBuild: TestEnvironment.build({ id: 'build02', state: BuildStates.Active })
+      });
+      expect(env.downloadDraftButton.disabled).toBe(false);
+      expect(env.downloadDraftButton.textContent).toContain('Download draft from previous build');
     }));
 
     it('should allow clicking of the download draft button to download a zip file', fakeAsync(() => {
-      const env = new TestEnvironment({ preTranslate: true, lastCompletedBuild: {} as BuildDto });
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
       when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(NEVER);
       expect(env.downloadDraftButton.disabled).toBe(false);
       env.clickElement(env.downloadDraftButton);
@@ -177,7 +232,7 @@ describe('ServalProjectComponent', () => {
     }));
 
     it('should display any errors when downloading a zip file', fakeAsync(() => {
-      const env = new TestEnvironment({ preTranslate: true, lastCompletedBuild: {} as BuildDto });
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
       when(mockDraftGenerationService.downloadDraft(anything(), anything())).thenReturn(throwError(() => new Error()));
       expect(env.downloadDraftButton.disabled).toBe(false);
       env.clickElement(env.downloadDraftButton);
@@ -186,7 +241,138 @@ describe('ServalProjectComponent', () => {
     }));
   });
 
-  describe('download training data', () => {
+  describe('latest build', () => {
+    it('says when no draft has been generated', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: false });
+      expect(env.noBuildsMessage).not.toBeNull();
+      expect(env.downloadDraftButton).toBeNull();
+    }));
+
+    it('does not get builds if project does not have draft books', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: false });
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.preTranslate).toBe(false);
+      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).never();
+      verify(mockDraftGenerationService.getLastPreTranslationBuild(anything())).never();
+    }));
+
+    it('gets the last completed and latest builds if drafting enabled and draft books exist', fakeAsync(() => {
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
+      tick();
+      env.fixture.detectChanges();
+      expect(env.component.preTranslate).toBe(true);
+      verify(mockDraftGenerationService.getLastCompletedBuild(env.mockProjectId)).once();
+      verify(mockDraftGenerationService.getLastPreTranslationBuild(env.mockProjectId)).once();
+      verify(mockDraftGenerationService.getRawBuild('build01')).once();
+    }));
+
+    it('summarizes a completed build', fakeAsync(() => {
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
+      expect(env.buildState.textContent!.trim()).toBe('Completed');
+      expect(env.buildStateIcon.textContent!.trim()).toBe('done');
+      expect(env.buildStateIcon.parentElement!.classList).toContain('status-is-completed');
+      expect(env.buildSummaryLabels).toEqual([
+        'State',
+        'Finished',
+        'Requested by',
+        'Training pairs',
+        'Verses drafted',
+        'Diagnostics'
+      ]);
+      expect(env.buildDate.textContent!.trim()).not.toBe('—');
+      expect(env.requestedByName!.textContent!.trim()).toBe('Ruth Banda');
+      expect(env.diagnosticCount.textContent!.trim()).toBe('2');
+    }));
+
+    it('shows progress instead of counts while a build is running', fakeAsync(() => {
+      const env = new TestEnvironment({
+        latestBuild: TestEnvironment.build({
+          id: 'build02',
+          state: BuildStates.Active,
+          percentCompleted: 0.42,
+          queueDepth: 1
+        })
+      });
+      expect(env.buildState.textContent!.trim()).toBe('Running');
+      expect(env.buildSummaryLabels).toEqual([
+        'State',
+        'Requested',
+        'Requested by',
+        'Progress',
+        'Queue depth',
+        'Diagnostics'
+      ]);
+    }));
+
+    it('shows a dash when the requester is unknown', fakeAsync(() => {
+      const env = new TestEnvironment({
+        lastCompletedBuild: TestEnvironment.build({
+          id: 'build01',
+          state: BuildStates.Completed,
+          requester: null
+        })
+      });
+      expect(env.requestedByName).toBeNull();
+      expect(env.requestedBy.textContent!.trim()).toBe('—');
+      verify(mockUserService.getProfile(anything())).never();
+    }));
+
+    it('shows only the first three diagnostics until asked for the rest', fakeAsync(() => {
+      const env = new TestEnvironment({
+        lastCompletedBuild: TestEnvironment.build({
+          id: 'build01',
+          state: BuildStates.Completed,
+          diagnostics: ['w1', 'w2', 'w3', 'w4', 'w5'].map(message => TestEnvironment.diagnostic(message))
+        })
+      });
+      expect(env.diagnosticNotices.length).toBe(3);
+      expect(env.showAllDiagnosticsButton).not.toBeNull();
+      expect(env.showAllDiagnosticsButton!.textContent).toContain('Show 2 more diagnostics');
+
+      // SUT
+      env.clickElement(env.showAllDiagnosticsButton!);
+      expect(env.diagnosticNotices.length).toBe(5);
+      expect(env.showAllDiagnosticsButton).toBeNull();
+    }));
+
+    it('shows all diagnostics without a button when there are few', fakeAsync(() => {
+      const env = new TestEnvironment({ lastCompletedBuild: TestEnvironment.completedBuild() });
+      expect(env.diagnosticNotices.length).toBe(2);
+      expect(env.showAllDiagnosticsButton).toBeNull();
+    }));
+
+    it('styles each diagnostic by its severity', fakeAsync(() => {
+      const env = new TestEnvironment({
+        lastCompletedBuild: TestEnvironment.build({
+          id: 'build01',
+          state: BuildStates.Completed,
+          diagnostics: [
+            TestEnvironment.diagnostic('Bad', ServalDiagnosticSeverity.Error),
+            TestEnvironment.diagnostic('Hmm', ServalDiagnosticSeverity.Warn),
+            TestEnvironment.diagnostic('FYI', ServalDiagnosticSeverity.Info)
+          ]
+        })
+      });
+      const notices: HTMLElement[] = Array.from(env.diagnosticNotices);
+      expect(notices.map(n => n.querySelector('.notice-content')!.textContent!.trim())).toEqual(['Bad', 'Hmm', 'FYI']);
+      expect(notices.map(n => n.querySelector('mat-icon')!.textContent!.trim())).toEqual(['error', 'warning', 'info']);
+    }));
+
+    it('marks the diagnostic count as a lower bound when Serval truncated the list', fakeAsync(() => {
+      const env = new TestEnvironment({
+        lastCompletedBuild: TestEnvironment.build({
+          id: 'build01',
+          state: BuildStates.Completed,
+          diagnostics: [TestEnvironment.diagnostic('w1')],
+          diagnosticsTruncated: true
+        })
+      });
+      expect(env.diagnosticCount.textContent!.trim()).toBe('1+');
+    }));
+  });
+
+  describe('training files', () => {
     it('should show training data saved on a project', fakeAsync(() => {
       const env = new TestEnvironment();
       tick();
@@ -195,78 +381,142 @@ describe('ServalProjectComponent', () => {
       expect(env.component.trainingDataFiles.length).toBe(1);
       expect(env.component.trainingDataFiles[0].dataId).toBe('dataId01');
       expect(env.component.trainingDataFiles[0].fileUrl).toBe('file-url');
+      expect(env.trainingFileNames).toEqual(['training-data-01.csv']);
+      verify(
+        mockTrainingDataService.getTrainingData(env.mockProjectId, anything(), deepEqual({ includeDeleted: true }))
+      ).once();
     }));
 
     it('should disable the download button when offline', fakeAsync(() => {
       const env = new TestEnvironment();
       env.onlineStatus = false;
-      expect(env.downloadTrainingDataButton.disabled).toBe(true);
+      expect(env.trainingDataDownloadButtons[0].disabled).toBe(true);
     }));
 
     it('can download the training data', fakeAsync(() => {
       const env = new TestEnvironment();
       tick();
       env.fixture.detectChanges();
-      expect(env.downloadTrainingDataButton).not.toBeNull();
-      env.clickElement(env.downloadTrainingDataButton);
+      expect(env.trainingDataDownloadButtons[0]).not.toBeNull();
+      env.clickElement(env.trainingDataDownloadButtons[0]);
       verify(mockFileService.onlineDownloadFile(FileType.TrainingData, 'file-url', 'training-data-01.csv')).once();
     }));
-  });
 
-  describe('get last completed build', () => {
-    it('does not get last completed build if project does not have draft books', fakeAsync(() => {
-      const env = new TestEnvironment({ preTranslate: false });
-      tick();
-      env.fixture.detectChanges();
-      expect(env.component.preTranslate).toBe(false);
-      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).never();
-      verify(mockDraftGenerationService.getBuildProgress(anything())).never();
-    }));
-
-    it('gets last completed build if drafting enabled and draft books exist', fakeAsync(() => {
-      const env = new TestEnvironment({ preTranslate: true, lastCompletedBuild: {} as BuildDto });
-      tick();
-      env.fixture.detectChanges();
-      expect(env.component.preTranslate).toBe(true);
-      verify(mockDraftGenerationService.getLastCompletedBuild(anything())).once();
-      verify(mockDraftGenerationService.getBuildProgress(anything())).once();
-    }));
-  });
-
-  describe('last draft configuration', () => {
-    it('shows the last draft configs no translation or training books', fakeAsync(() => {
-      const env = new TestEnvironment({ preTranslate: true, draftConfig: {} });
-      const trainingSources = env.trainingSources;
-      expect(trainingSources.length).toEqual(1);
-      expect(trainingSources[0].textContent).toEqual('None');
-      const translationSources = env.translationSources;
-      expect(translationSources.length).toEqual(1);
-      expect(translationSources[0].textContent).toEqual('None');
-    }));
-
-    it('shows the last draft configs multiple training sources', fakeAsync(() => {
+    it('says whether each file was used in the last draft', fakeAsync(() => {
       const env = new TestEnvironment({
-        preTranslate: true,
+        draftConfig: TestEnvironment.lastDraft({
+          lastSelectedTrainingDataFiles: ['dataId01']
+        })
+      });
+      expect(env.trainingFileUsedCells).toEqual(['Yes']);
+      expect(env.sourcesChangedNotice).toBeNull();
+    }));
+
+    it('does not call an unused file a change when it is not known whether it existed', fakeAsync(() => {
+      const env = new TestEnvironment({
+        draftConfig: TestEnvironment.lastDraft()
+      });
+      expect(env.trainingFileUsedCells).toEqual(['No']);
+      expect(env.sourcesChangedNotice).toBeNull();
+    }));
+
+    it('does not call a deliberately deselected file a change', fakeAsync(() => {
+      const env = new TestEnvironment({
+        draftConfig: TestEnvironment.lastDraft({
+          lastSelectedTrainingDataFiles: [],
+          lastAvailableTrainingDataFiles: ['dataId01']
+        })
+      });
+      expect(env.trainingFileUsedCells).toEqual(['No']);
+      expect(env.trainingFileNames).toEqual(['training-data-01.csv']);
+      expect(env.sourcesChangedNotice).toBeNull();
+    }));
+
+    it('says the sources changed when a file was uploaded after the last draft', fakeAsync(() => {
+      const env = new TestEnvironment({
+        draftConfig: TestEnvironment.lastDraft({
+          lastSelectedTrainingDataFiles: [],
+          lastAvailableTrainingDataFiles: []
+        })
+      });
+      expect(env.trainingFileUsedCells).toEqual(['No']);
+      expect(env.trainingFileNames[0]).toContain('Uploaded since the last draft');
+      expect(env.sourcesChangedNotice).not.toBeNull();
+      expect(env.sourcesChangedNotice!.textContent).toContain(
+        'A training file has been uploaded since the last draft.'
+      );
+      expect(env.sourcesChangedNotice!.textContent).not.toContain('former');
+    }));
+
+    it('lists a file the last draft used that has since been deleted', fakeAsync(() => {
+      const env = new TestEnvironment({
+        trainingDataFiles: [
+          { fileUrl: 'file-url', dataId: 'dataId01', title: 'training-data-01.csv' } as TrainingData,
+          { fileUrl: 'old-url', dataId: 'dataId02', title: 'old-glossary.csv', deleted: true } as TrainingData,
+          { fileUrl: 'unused-url', dataId: 'dataId03', title: 'never-used.csv', deleted: true } as TrainingData
+        ],
+        draftConfig: TestEnvironment.lastDraft({
+          lastSelectedTrainingDataFiles: ['dataId01', 'dataId02']
+        })
+      });
+      // The deleted file the last draft never used is not listed at all
+      expect(env.trainingFileNames.length).toBe(2);
+      expect(env.trainingFileNames[0]).toBe('training-data-01.csv');
+      expect(env.trainingFileNames[1]).toContain('old-glossary.csv');
+      expect(env.trainingFileNames[1]).toContain('Deleted since the last draft');
+      expect(env.trainingFileUsedCells).toEqual(['Yes', 'Yes']);
+      expect(env.trainingDataDownloadButtons.length).toBe(1);
+      expect(env.sourcesChangedNotice!.textContent).toContain(
+        'A training file the last draft used has since been deleted.'
+      );
+    }));
+
+    it('lists a file the last draft used by id when its record is gone', fakeAsync(() => {
+      const env = new TestEnvironment({
+        draftConfig: {
+          lastSelectedTrainingScriptureRanges: [{ projectId: 'project04', scriptureRange: 'GEN' }],
+          lastSelectedTrainingDataFiles: ['dataId01', 'goneDataId']
+        }
+      });
+      expect(env.trainingFileNames[1]).toContain('goneDataId');
+      expect(env.trainingFileNames[1]).toContain('Deleted since the last draft');
+      expect(env.trainingDataDownloadButtons.length).toBe(1);
+      expect(env.sourcesChangedNotice).not.toBeNull();
+    }));
+  });
+
+  describe('sources', () => {
+    it('lists the target, draft sources and reference projects', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.sourceRoles).toEqual(['Target', 'Draft source', 'Reference project', 'Reference project']);
+      expect(env.sourceLabels).toEqual(['P1 - Project 01', 'P3 - Project 03', 'P4 - Project 04', 'P5 - Project 05']);
+    }));
+
+    it('shows dashes when there has never been a draft', fakeAsync(() => {
+      const env = new TestEnvironment({ draftConfig: {} });
+      expect(env.trainingBooksCells).toEqual(['—', '—', '—', '—']);
+      expect(env.translationBooksCells).toEqual(['—', '—', '—', '—']);
+      expect(env.sourcesChangedNotice).toBeNull();
+    }));
+
+    it('shows the books the last draft used under each source', fakeAsync(() => {
+      const env = new TestEnvironment({
         draftConfig: {
           lastSelectedTrainingScriptureRanges: [
             { projectId: 'project04', scriptureRange: 'GEN;EXO' },
             { projectId: 'project05', scriptureRange: 'GEN' }
           ],
-          lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV;NUM' }]
-        } as DraftConfig
+          lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV;NUM' }],
+          lastSelectedTrainingDataFiles: ['dataId01']
+        }
       });
-      const trainingSources = env.trainingSources;
-      expect(trainingSources.length).toEqual(2);
-      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis and Exodus');
-      expect(env.getTrainingSourceBookNames(trainingSources[1])).toEqual('Genesis');
-      const translationSources = env.translationSources;
-      expect(translationSources.length).toEqual(1);
-      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus and Numbers');
+      expect(env.trainingBooksCells).toEqual(['—', '—', 'GEN; EXO', 'GEN']);
+      expect(env.translationBooksCells).toEqual(['—', 'LEV; NUM', '—', '—']);
+      expect(env.sourcesChangedNotice).toBeNull();
     }));
 
     it('folds the target training entry into the sources as chapter detail instead of listing it', fakeAsync(() => {
       const env = new TestEnvironment({
-        preTranslate: true,
         draftConfig: {
           lastSelectedTrainingScriptureRanges: [
             { projectId: 'project04', scriptureRange: 'GEN;EXO' },
@@ -274,68 +524,125 @@ describe('ServalProjectComponent', () => {
             { projectId: 'project01', scriptureRange: 'GEN1-3;EXO1-40' }
           ],
           lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV2-5' }]
-        } as DraftConfig
+        }
       });
-      const trainingSources = env.trainingSources;
-      expect(trainingSources.length).toEqual(1);
-      expect(env.getTrainingSourceBookNames(trainingSources[0])).toEqual('Genesis 1-3 and Exodus');
-      const translationSources = env.translationSources;
-      expect(translationSources.length).toEqual(1);
-      expect(env.getTranslationBookNames(translationSources[0])).toEqual('Leviticus 2-5');
+      expect(env.sourceRoles.length).toBe(4);
+      expect(env.trainingBooksCells).toEqual(['—', '—', 'GEN 1-3; EXO', 'Not used']);
+      expect(env.translationBooksCells).toEqual(['—', 'LEV 2-5', '—', '—']);
     }));
 
-    describe('serval configuration', () => {
-      it('should change serval config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.servalConfigTextArea.value).toBe('');
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+    it('marks a configured source the last draft did not use without calling that a change', fakeAsync(() => {
+      const env = new TestEnvironment({
+        draftConfig: {
+          lastSelectedTrainingScriptureRanges: [{ projectId: 'project04', scriptureRange: 'GEN' }],
+          lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV' }]
+        }
+      });
+      expect(env.trainingBooksCells).toEqual(['—', '—', 'GEN', 'Not used']);
+      expect(env.translationBooksCells).toEqual(['—', 'LEV', '—', '—']);
+      expect(env.sourcesChangedNotice).toBeNull();
+    }));
 
-        env.setServalConfigValue('{}');
-        env.clickElement(env.saveServalConfigButton);
+    it('attributes drafted books to the draft source role, never to a reference project', fakeAsync(() => {
+      // The last draft was drafted from project04, which is now configured only as a reference project
+      const env = new TestEnvironment({
+        draftConfig: TestEnvironment.lastDraft({
+          lastSelectedTranslationScriptureRanges: [{ projectId: 'project04', scriptureRange: 'LEV' }]
+        })
+      });
+      expect(env.sourceRoles).toEqual([
+        'Target',
+        'Draft source',
+        'Reference project',
+        'Reference project',
+        'Former draft source'
+      ]);
+      expect(env.trainingBooksCells).toEqual(['—', '—', 'GEN', 'GEN', '—']);
+      expect(env.translationBooksCells).toEqual(['—', 'Not used', '—', '—', 'LEV']);
+      expect(env.sourceLabels[4]).toBe('project04');
+    }));
 
-        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
-        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
-      }));
+    it('adds rows for projects the last draft used that are no longer configured', fakeAsync(() => {
+      const env = new TestEnvironment({
+        draftConfig: {
+          lastSelectedTrainingScriptureRanges: [
+            { projectId: 'project04', scriptureRange: 'GEN' },
+            { projectId: 'project05', scriptureRange: 'GEN' },
+            { projectId: 'project06', scriptureRange: 'EXO' }
+          ],
+          lastSelectedTranslationScriptureRanges: [{ projectId: 'project07', scriptureRange: 'LEV' }]
+        }
+      });
+      expect(env.sourceRoles).toEqual([
+        'Target',
+        'Draft source',
+        'Reference project',
+        'Reference project',
+        'Former draft source',
+        'Former reference project'
+      ]);
+      expect(env.sourceLabels[4]).toBe('project07');
+      expect(env.sourceLabelCells[4]).toContain('No longer configured as a source');
+      expect(env.sourceLabels[5]).toBe('project06');
+      expect(env.trainingBooksCells[5]).toBe('EXO');
+      expect(env.translationBooksCells[4]).toBe('LEV');
+      // Former sources can still be downloaded, so there is a button for every row
+      expect(env.sourceDownloadButtons.length).toBe(6);
+      expect(env.sourcesChangedNotice).not.toBeNull();
+    }));
+  });
 
-      it('should clear the serval config value', fakeAsync(() => {
-        const env = new TestEnvironment({ preTranslate: true, draftConfig: { servalConfig: '{}' } });
-        expect(env.servalConfigTextArea.value).toBe('{}');
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+  describe('serval configuration', () => {
+    it('should change serval config value', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.servalConfigTextArea.value).toBe('');
+      expect(env.statusDone(env.servalConfigStatus)).toBeNull();
 
-        env.setServalConfigValue('');
-        env.clickElement(env.saveServalConfigButton);
+      env.setServalConfigValue('{}');
+      env.clickElement(env.saveServalConfigButton);
 
-        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
-        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
-      }));
+      verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
+      expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
+    }));
 
-      it('should not update an unchanged serval config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.servalConfigTextArea.value).toBe('');
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+    it('should clear the serval config value', fakeAsync(() => {
+      const env = new TestEnvironment({ draftConfig: { servalConfig: '{}' } });
+      expect(env.servalConfigTextArea.value).toBe('{}');
+      expect(env.statusDone(env.servalConfigStatus)).toBeNull();
 
-        env.setServalConfigValue('');
-        env.clickElement(env.saveServalConfigButton);
+      env.setServalConfigValue('');
+      env.clickElement(env.saveServalConfigButton);
 
-        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).never();
-        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
-      }));
+      verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
+      expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
+    }));
 
-      it('should notify of a backend error', fakeAsync(() => {
-        const env = new TestEnvironment();
-        when(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).thenReject(
-          new CommandError(CommandErrorCode.InternalError, 'error')
-        );
-        expect(env.servalConfigTextArea.value).toBe('');
-        expect(env.statusError(env.servalConfigStatus)).toBeNull();
+    it('should not update an unchanged serval config value', fakeAsync(() => {
+      const env = new TestEnvironment();
+      expect(env.servalConfigTextArea.value).toBe('');
+      expect(env.statusDone(env.servalConfigStatus)).toBeNull();
 
-        env.setServalConfigValue('{}');
-        env.clickElement(env.saveServalConfigButton);
+      env.setServalConfigValue('');
+      env.clickElement(env.saveServalConfigButton);
 
-        verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
-        expect(env.statusError(env.servalConfigStatus)).not.toBeNull();
-      }));
-    });
+      verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).never();
+      expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+    }));
+
+    it('should notify of a backend error', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).thenReject(
+        new CommandError(CommandErrorCode.InternalError, 'error')
+      );
+      expect(env.servalConfigTextArea.value).toBe('');
+      expect(env.statusError(env.servalConfigStatus)).toBeNull();
+
+      env.setServalConfigValue('{}');
+      env.clickElement(env.saveServalConfigButton);
+
+      verify(mockSFProjectService.onlineSetServalConfig(env.mockProjectId, anything())).once();
+      expect(env.statusError(env.servalConfigStatus)).not.toBeNull();
+    }));
   });
 
   class TestEnvironment {
@@ -347,13 +654,104 @@ describe('ServalProjectComponent', () => {
 
     mockProjectId = 'project01';
 
-    constructor(args: TestEnvironmentArgs = { preTranslate: true }) {
+    /** A last draft trained on project04 and project05 and drafted from project03, with any overrides applied. */
+    static lastDraft(overrides: Partial<DraftConfig> = {}): Partial<DraftConfig> {
+      return {
+        lastSelectedTrainingScriptureRanges: [
+          { projectId: 'project04', scriptureRange: 'GEN' },
+          { projectId: 'project05', scriptureRange: 'GEN' }
+        ],
+        lastSelectedTranslationScriptureRanges: [{ projectId: 'project03', scriptureRange: 'LEV' }],
+        ...overrides
+      };
+    }
+
+    /** A completed build with two warning diagnostics, requested by user01. */
+    static completedBuild(): BuildDto {
+      return TestEnvironment.build({
+        id: 'build01',
+        state: BuildStates.Completed,
+        diagnostics: [TestEnvironment.diagnostic('Warning one'), TestEnvironment.diagnostic('Warning two')]
+      });
+    }
+
+    static diagnostic(
+      message: string,
+      severity: ServalDiagnosticSeverity = ServalDiagnosticSeverity.Warn
+    ): ServalBuildDiagnostic {
+      return { code: 'TEST-0001', category: 'TEST', message, severity, data: {} };
+    }
+
+    static build({
+      id,
+      state,
+      diagnostics = [],
+      diagnosticsTruncated,
+      percentCompleted = 1,
+      queueDepth = 0,
+      requester = 'user01'
+    }: {
+      id: string;
+      state: BuildStates;
+      diagnostics?: ServalBuildDiagnostic[];
+      diagnosticsTruncated?: boolean;
+      percentCompleted?: number;
+      queueDepth?: number;
+      /** The requesting user's id, or null for a build with no recorded requester. */
+      requester?: string | null;
+    }): BuildDto {
+      return {
+        id: id,
+        href: '',
+        revision: 1,
+        engine: { id: 'engine01', href: '' },
+        percentCompleted: percentCompleted,
+        message: '',
+        state: state,
+        queueDepth: queueDepth,
+        additionalInfo: {
+          buildId: id,
+          step: 1,
+          trainingScriptureRanges: [],
+          translationScriptureRanges: [],
+          trainingDataFileIds: [],
+          translationEngineId: 'engine01',
+          dateRequested: '2026-09-04T11:47:00Z',
+          dateFinished: '2026-09-04T14:12:00Z',
+          requestedByUserId: requester ?? undefined,
+          canDenormalizeQuotes: false
+        },
+        executionData: { trainCount: 31204, pretranslateCount: 1151, diagnostics, diagnosticsTruncated }
+      };
+    }
+
+    constructor({
+      preTranslate = true,
+      lastCompletedBuild,
+      latestBuild = lastCompletedBuild,
+      draftConfig = {},
+      trainingDataFiles = [{ fileUrl: 'file-url', dataId: 'dataId01', title: 'training-data-01.csv' } as TrainingData],
+      online = true,
+      onboardingRequest,
+      onboardingRequestError = false
+    }: {
+      preTranslate?: boolean;
+      lastCompletedBuild?: BuildDto;
+      /** Defaults to the last completed build, as it does when no newer build has started. */
+      latestBuild?: BuildDto;
+      draftConfig?: Partial<DraftConfig>;
+      trainingDataFiles?: TrainingData[];
+      online?: boolean;
+      onboardingRequest?: Partial<OpenOnboardingRequest>;
+      onboardingRequestError?: boolean;
+    } = {}) {
       const mockProjectId$ = new BehaviorSubject<string>(this.mockProjectId);
       const mockProjectDoc = {
         id: this.mockProjectId,
         data: createTestProjectProfile({
           name: 'Project 01',
           shortName: 'P1',
+          writingSystem: { tag: 'en' },
           texts: [
             { bookNum: 1, chapters: [{ number: 1 }] },
             { bookNum: 2, chapters: [{ number: 1 }] },
@@ -387,12 +785,13 @@ describe('ServalProjectComponent', () => {
                   writingSystem: { tag: 'en' }
                 }
               ],
-              lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
-              lastSelectedTranslationScriptureRanges:
-                args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined,
-              servalConfig: args.draftConfig?.servalConfig ?? undefined
+              lastSelectedTrainingScriptureRanges: draftConfig.lastSelectedTrainingScriptureRanges ?? undefined,
+              lastSelectedTranslationScriptureRanges: draftConfig.lastSelectedTranslationScriptureRanges ?? undefined,
+              lastSelectedTrainingDataFiles: draftConfig.lastSelectedTrainingDataFiles ?? [],
+              lastAvailableTrainingDataFiles: draftConfig.lastAvailableTrainingDataFiles ?? undefined,
+              servalConfig: draftConfig.servalConfig ?? undefined
             },
-            preTranslate: args.preTranslate,
+            preTranslate: preTranslate,
             source: {
               paratextId: 'ptproject02',
               projectRef: 'project02',
@@ -409,60 +808,160 @@ describe('ServalProjectComponent', () => {
       when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
       when(mockActivatedProjectService.projectDoc$).thenReturn(mockProjectDoc$);
 
-      when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(
-        of(args.lastCompletedBuild)
-      );
-      when(mockDraftGenerationService.getBuildProgress(this.mockProjectId)).thenReturn(of(args.lastCompletedBuild));
+      when(mockDraftGenerationService.getLastCompletedBuild(this.mockProjectId)).thenReturn(of(lastCompletedBuild));
+      when(mockDraftGenerationService.getLastPreTranslationBuild(this.mockProjectId)).thenReturn(of(latestBuild));
+      when(mockDraftGenerationService.getRawBuild(anything())).thenReturn(of({ raw: true }));
       when(mockServalAdministrationService.downloadProject(anything())).thenReturn(of(new Blob()));
       when(mockAuthService.currentUserRoles).thenReturn([SystemRole.ServalAdmin]);
-      when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
-      when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
+      when(mockSFProjectService.hasDraft(anything())).thenReturn(preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
-      const trainingData: TrainingData[] = [
-        {
-          fileUrl: 'file-url',
-          dataId: 'dataId01',
-          title: 'training-data-01.csv'
-        } as TrainingData
-      ];
-      when(mockTrainingDataService.getTrainingData(anything(), anything())).thenReturn(of(trainingData));
+      when(mockUserService.getProfile('user01')).thenResolve({
+        data: { displayName: 'Ruth Banda', avatarUrl: '' }
+      } as UserProfileDoc);
+      when(mockTrainingDataService.getTrainingData(anything(), anything(), anything())).thenReturn(
+        of(trainingDataFiles)
+      );
+      if (onboardingRequestError) {
+        when(mockOnboardingRequestService.getOpenOnboardingRequest(this.mockProjectId)).thenReject(
+          new CommandError(CommandErrorCode.Forbidden, 'forbidden')
+        );
+      } else {
+        when(mockOnboardingRequestService.getOpenOnboardingRequest(this.mockProjectId)).thenResolve(
+          onboardingRequest == null
+            ? null
+            : {
+                id: 'request01',
+                submittedAt: '2026-08-01T00:00:00Z',
+                submittedBy: { name: 'User One', email: 'user01@example.com' },
+                status: 'new',
+                contactEmail: null,
+                ...onboardingRequest
+              }
+        );
+      }
+      when(mockOnboardingRequestService.getStatus(anything())).thenCall((status: string) =>
+        status === 'in_progress' ? { value: 'in_progress', label: 'In Progress' } : { value: 'new', label: 'New' }
+      );
 
       spyOn(saveAs, 'saveAs').and.stub();
 
+      this.testOnlineStatusService.setIsOnline(online);
       this.fixture = TestBed.createComponent(ServalProjectComponent);
       this.component = this.fixture.componentInstance;
       this.fixture.detectChanges();
+      tick();
+      this.fixture.detectChanges();
     }
 
-    get preTranslateCheckbox(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('mat-checkbox input');
+    get heading(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('h1');
     }
 
-    get retrievePreTranslationsButton(): HTMLInputElement {
+    get languageTag(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('.language-tag');
+    }
+
+    get onboardingRequestLink(): HTMLAnchorElement | null {
+      return this.fixture.nativeElement.querySelector('#view-onboarding-request');
+    }
+
+    get preTranslateToggle(): HTMLButtonElement {
+      return this.fixture.nativeElement.querySelector('#pre-translate-toggle button');
+    }
+
+    get retrievePreTranslationsButton(): HTMLButtonElement {
       return this.fixture.nativeElement.querySelector('#retrieve-pre-translations');
     }
 
-    get viewEventLogButton(): HTMLAnchorElement {
+    get viewEventLogButton(): HTMLButtonElement {
       return this.fixture.nativeElement.querySelector('#view-event-log');
-    }
-
-    get firstSourceDownloadButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('.draft-sources-table td button');
     }
 
     get sourceDownloadButtons(): NodeListOf<HTMLButtonElement> {
       return this.fixture.nativeElement.querySelectorAll('.draft-sources-table td button');
     }
 
-    get downloadDraftButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('#download-draft')!;
+    get sourceRoles(): string[] {
+      return this.cellTexts('.draft-sources-table td.role-cell');
     }
 
-    get downloadTrainingDataButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('.training-data-table td button');
+    get sourceLabels(): string[] {
+      return this.cellTexts('.draft-sources-table td .source-label');
     }
 
-    get saveServalConfigButton(): HTMLInputElement {
+    get sourceLabelCells(): string[] {
+      return this.cellTexts('.draft-sources-table td.mat-column-label');
+    }
+
+    get trainingBooksCells(): string[] {
+      return this.cellTexts('.draft-sources-table td.training');
+    }
+
+    get translationBooksCells(): string[] {
+      return this.cellTexts('.draft-sources-table td.translation');
+    }
+
+    get sourcesChangedNotice(): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector('#sources-changed-notice');
+    }
+
+    get noBuildsMessage(): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector('#no-builds');
+    }
+
+    get buildState(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('#build-state .build-state-label');
+    }
+
+    get buildStateIcon(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('#build-state mat-icon');
+    }
+
+    get buildDate(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('#build-date');
+    }
+
+    get requestedBy(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('#requested-by');
+    }
+
+    get requestedByName(): HTMLElement | null {
+      return this.fixture.nativeElement.querySelector('#requested-by app-owner .name');
+    }
+
+    get diagnosticCount(): HTMLElement {
+      return this.fixture.nativeElement.querySelector('#diagnostic-count');
+    }
+
+    get buildSummaryLabels(): string[] {
+      return this.cellTexts('.build-summary dt');
+    }
+
+    get diagnosticNotices(): NodeListOf<HTMLElement> {
+      return this.fixture.nativeElement.querySelectorAll('.build-diagnostic');
+    }
+
+    get showAllDiagnosticsButton(): HTMLButtonElement | null {
+      return this.fixture.nativeElement.querySelector('#show-all-diagnostics');
+    }
+
+    get downloadDraftButton(): HTMLButtonElement {
+      return this.fixture.nativeElement.querySelector('#download-draft');
+    }
+
+    get trainingDataDownloadButtons(): NodeListOf<HTMLButtonElement> {
+      return this.fixture.nativeElement.querySelectorAll('.training-data-table td button');
+    }
+
+    get trainingFileNames(): string[] {
+      return this.cellTexts('.training-data-table td.mat-column-title');
+    }
+
+    get trainingFileUsedCells(): string[] {
+      return this.cellTexts('.training-data-table td.used-in-last-draft');
+    }
+
+    get saveServalConfigButton(): HTMLButtonElement {
       return this.fixture.nativeElement.querySelector('#save-serval-config');
     }
 
@@ -472,14 +971,6 @@ describe('ServalProjectComponent', () => {
 
     get servalConfigTextArea(): HTMLTextAreaElement {
       return this.fixture.nativeElement.querySelector('#serval-config') as HTMLTextAreaElement;
-    }
-
-    get trainingSources(): NodeListOf<HTMLElement> {
-      return this.fixture.nativeElement.querySelectorAll('.training');
-    }
-
-    get translationSources(): NodeListOf<HTMLElement> {
-      return this.fixture.nativeElement.querySelectorAll('.translation');
     }
 
     set onlineStatus(hasConnection: boolean) {
@@ -493,14 +984,6 @@ describe('ServalProjectComponent', () => {
       this.fixture.detectChanges();
       tick();
       this.fixture.detectChanges();
-    }
-
-    getTrainingSourceBookNames(node: HTMLElement): string {
-      return node.querySelector('.training-source-range')?.textContent ?? '';
-    }
-
-    getTranslationBookNames(node: HTMLElement): string {
-      return node.querySelector('.translation-range')?.textContent ?? '';
     }
 
     setServalConfigValue(value: string): void {
@@ -517,6 +1000,12 @@ describe('ServalProjectComponent', () => {
 
     statusError(element: DebugElement): HTMLElement {
       return element.nativeElement.querySelector('.error-icon') as HTMLElement;
+    }
+
+    /** The trimmed, whitespace-collapsed text of every element matching the selector. */
+    private cellTexts(selector: string): string[] {
+      const cells: NodeListOf<HTMLElement> = this.fixture.nativeElement.querySelectorAll(selector);
+      return Array.from(cells).map(cell => (cell.textContent ?? '').replace(/\s+/g, ' ').trim());
     }
   }
 });

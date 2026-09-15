@@ -73,9 +73,11 @@ export interface OnboardingRequest extends OnboardingRequestSummary {
 
 /**
  * The subset of an open onboarding request returned by getOpenOnboardingRequest. Only what the draft
- * generation page needs to tell users a request has already been submitted for the project.
+ * generation page needs to tell users a request has already been submitted for the project, plus the id so the
+ * Serval administration project page can link to the request.
  */
 export interface OpenOnboardingRequest {
+  id: string;
   submittedAt: string;
   submittedBy: { name: string; email: string };
   status: OnboardingRequestStatusOption;

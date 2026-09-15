@@ -81,14 +81,19 @@ public class OnboardingRequestRpcController(
     {
         try
         {
-            // Verify user is on the project and has a Paratext role
+            // Verify user is on the project and has a Paratext role, unless they are a Serval admin, who can
+            // see the request for any project from the Serval administration pages
             Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
             if (!attempt.TryResult(out SFProject projectDoc))
             {
                 return NotFoundError("Project not found");
             }
 
-            if (!projectDoc.UserRoles.TryGetValue(UserId, out string role) || !SFProjectRole.IsParatextRole(role))
+            bool isServalAdmin = SystemRoles.Contains(SystemRole.ServalAdmin);
+            if (
+                !isServalAdmin
+                && (!projectDoc.UserRoles.TryGetValue(UserId, out string role) || !SFProjectRole.IsParatextRole(role))
+            )
             {
                 return ForbiddenError();
             }

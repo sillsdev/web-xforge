@@ -63,6 +63,7 @@ import { DisplayConfidenceComponent } from '../translate/draft-generation/build-
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
+import { buildStatusIcon } from './build-status-icon';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
@@ -414,21 +415,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   protected statusIcon(status: DraftGenerationBuildStatus): string {
-    switch (status) {
-      case DraftGenerationBuildStatus.UserRequested:
-      case DraftGenerationBuildStatus.SubmittedToServal:
-      case DraftGenerationBuildStatus.Pending:
-      case DraftGenerationBuildStatus.Active:
-        return 'hourglass_top';
-      case DraftGenerationBuildStatus.Completed:
-        return 'done';
-      case DraftGenerationBuildStatus.Faulted:
-        return 'error';
-      case DraftGenerationBuildStatus.Canceled:
-        return 'cancel';
-      default:
-        return 'help';
-    }
+    return buildStatusIcon(status);
   }
 
   static formatStatusLabel(status: DraftGenerationBuildStatus): string {
