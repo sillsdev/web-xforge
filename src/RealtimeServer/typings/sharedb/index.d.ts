@@ -5,6 +5,7 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.1
 
+import { ConnectSession } from '../../common/connect-session';
 import { Connection, Query } from './lib/client';
 import * as common from './lib/common';
 
@@ -46,6 +47,28 @@ declare class ShareDB {
   addProjection(name: string, collection: string, fields: ShareDB.ProjectionFields): void;
   listen(stream: any, req?: any): void;
   close(callback?: (err?: Error) => any): void;
+  /**
+   * Reports how long a piece of work took. `action` names it: eg 'queryEmitter.poll'.
+   *
+   * Monitoring the 'timing' event can give us additional insight into the activity of ShareDB that might otherwise be
+   * hidden, such as when a subscription is being re-polled (those polls reach the database directly and no middleware
+   * runs for them).
+   */
+  on(event: 'timing', listener: (action: string, durationMs: number, context: ShareDB.TimingContext) => void): this;
+  /**
+   * Rebuilds a document by replaying operations onto a milestone snapshot. ShareDB calls this when a document is asked
+   * for at a past version or timestamp rather than at its current version. Declared here so that it can be overridden;
+   * it is not part of ShareDB's public API.
+   *
+   * startingSnapshot comes from the MilestoneDB, and is undefined when there is no milestone to start from. That is a
+   * convention every implementation follows rather than something ShareDB enforces.
+   */
+  _buildSnapshotFromOps(
+    id: string,
+    startingSnapshot: common.Snapshot | undefined,
+    ops: common.Op[],
+    callback: (err: Error, snapshot: common.Snapshot) => void
+  ): void;
   /**
    * Registers a server middleware function.
    *
@@ -120,10 +143,34 @@ declare namespace ShareDB {
 
   class MemoryDB extends DB {}
 
+  /**
+   * The third value a 'timing' event carries, being whichever object was doing the work: a QueryEmitter for the
+   * queryEmitter.* actions (which pass their own `this`), a request object for the others.
+   *
+   * Both name the collection, and both carry the agent when one asked for the work. A poll set off by another client's
+   * change carries the agent that subscribed, not the one that caused the change.
+   */
+  interface TimingContext {
+    collection?: string;
+    agent?: Agent;
+  }
+
   class Agent {
     constructor(backend: ShareDB, stream: any);
 
-    protected clientId: string;
+    /** Identifies this connection. ShareDB gives every agent one when it is created. */
+    clientId: string;
+    /** Map of collection -> document id -> stream. */
+    subscribedDocs: Record<string, Record<string, unknown>>;
+    /** Map of query id -> emitter. */
+    subscribedQueries: Record<string, { query: unknown | undefined; streams: unknown }>;
+    /** Map of channel -> stream. */
+    subscribedPresences: Record<string, unknown>;
+    /**
+     * This property is not a ShareDB property. This application attaches it in RealtimeServer.setConnectSession, once a
+     * connection's claims are known, and so it is absent on an agent whose connect middleware has not finished.
+     */
+    connectSession?: ConnectSession;
 
     close(err: any): void;
     _open(): void;
@@ -220,7 +267,8 @@ declare namespace ShareDB {
 
     interface BaseContext {
       action?: keyof ActionContextMap;
-      agent?: any;
+      // AI gave a lot of push-back on agent being optional. This may benefit from further investigation.
+      agent?: Agent;
       backend?: ShareDB;
     }
 
