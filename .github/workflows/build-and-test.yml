@@ -21,7 +21,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.10.0"]
+        pnpm_version: ["12.3.4"]
       # Continue building in other environments to see which are working.
       fail-fast: false
     runs-on: ${{matrix.os}}
@@ -87,6 +87,8 @@ jobs:
         run: dotnet tool install --global dotnet-reportgenerator-globaltool
       - name: "Deps: RealtimeServer pnpm"
         run: cd src/RealtimeServer && (pnpm ci || (sleep 3m && pnpm ci))
+      - name: "Build: RealtimeServer"
+        run: cd src/RealtimeServer  && pnpm run build
       - name: "Deps: Backend nuget"
         run: dotnet restore
       - name: "Deps: Frontend pnpm"
@@ -148,7 +150,7 @@ jobs:
         dotnet_version: ["10.0.x"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.10.0"]
+        pnpm_version: ["12.3.4"]
       fail-fast: false
     runs-on: ${{matrix.os}}
     steps:

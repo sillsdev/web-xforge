@@ -1,10 +1,5 @@
 minimumReleaseAge: 10080 # 7 days
 minimumReleaseAgeExclude:
-  - browserslist@4.28.7
-  - '@humanfs/node@0.16.8'
-  - qs@6.15.4
-  - qs@6.16.0
-  - '@xmldom/xmldom@0.9.12'
-  - fast-uri@3.1.6
-  - js-yaml@3.15.2
-  - js-yaml@4.3.2
+overrides:
+  qs@>=2.2.5 <6.16.0: ^6.16.0
+  qs@>=6.14.2 <=6.15.3: ^6.16.0

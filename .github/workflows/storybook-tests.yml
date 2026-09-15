@@ -16,7 +16,7 @@ jobs:
         os: ["ubuntu-24.04"]
         node_version: ["22.13.0"]
         npm_version: ["11.11.0"]
-        pnpm_version: ["11.10.0"]
+        pnpm_version: ["12.3.4"]
     runs-on: ${{matrix.os}}
     steps:
       - name: Checkout
@@ -66,11 +66,11 @@ jobs:
 
       - name: "Deps: RealtimeServer pnpm"
         run: cd src/RealtimeServer && (pnpm ci || (sleep 3m && pnpm ci))
+      - name: "Build: RealtimeServer"
+        run: cd src/RealtimeServer && pnpm run build
+
       - name: "Deps: Frontend pnpm"
         run: cd src/SIL.XForge.Scripture/ClientApp && (pnpm ci || (sleep 3m && pnpm ci))
-
-      - name: "Build: Backend, RealtimeServer"
-        run: cd src/RealtimeServer && pnpm run build
       - name: "Build: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && pnpm run build
 
