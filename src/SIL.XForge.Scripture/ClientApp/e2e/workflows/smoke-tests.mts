@@ -5,6 +5,7 @@ import { DEFAULT_PROJECT_SHORTNAME, preset, ptUsersByRole, ScreenshotContext, Us
 import {
   createShareLinksAsAdmin,
   ensureJoinedOrConnectedToProject,
+  freshlyConnectProject,
   installMouseFollower,
   logInAsPTUser,
   logOut,
@@ -17,6 +18,11 @@ import secrets from '../secrets.json' with { type: 'json' };
 // Note: This is one of the first e2e tests written, and therefore may not follow best practices.
 
 export async function runSmokeTests(page: Page, screenshotContext: ScreenshotContext) {
+  // Reset project state.
+  await logInAsPTUser(page, secrets.users[0]);
+  await freshlyConnectProject(page, DEFAULT_PROJECT_SHORTNAME);
+  await logOut(page);
+
   for (const [role, credentials] of Object.entries(ptUsersByRole)) {
     await joinAsUserAndTraversePages(page, credentials, { ...screenshotContext, role: role as UserRole });
   }
