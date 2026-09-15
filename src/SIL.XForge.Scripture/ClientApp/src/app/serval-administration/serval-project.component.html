@@ -1,7 +1,19 @@
 <app-mobile-not-supported></app-mobile-not-supported>
 
 @if (showProjectTitle) {
-  <h1>{{ projectName }}</h1>
+  <div class="header">
+    <h1>{{ projectName }}</h1>
+    <div class="header-actions">
+      <button id="view-event-log" matButton="tonal" [appRouterLink]="eventLogLink" [disabled]="!isOnline">
+        <mat-icon>history</mat-icon>
+        View Event Log
+      </button>
+      <button id="view-draft-jobs" matButton="tonal" (click)="navigateToDraftJobs()" [disabled]="!isOnline">
+        <mat-icon>construction</mat-icon>
+        View Serval Builds
+      </button>
+    </div>
+  </div>
 }
 
 <h2>Pre-Translation Configuration</h2>
@@ -13,34 +25,8 @@
   </div>
   <div class="admin-tool-control">
     <button
-      id="retrieve-pre-translations"
-      mat-flat-button
-      color="primary"
-      (click)="retrievePreTranslationStatus()"
-      [disabled]="!isOnline"
-    >
-      Force Pre-Translation Retrieval
-    </button>
-    <app-info
-      text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
-    ></app-info>
-  </div>
-  <div class="admin-tool-control">
-    <button id="view-event-log" mat-flat-button color="primary" [appRouterLink]="eventLogLink" [disabled]="!isOnline">
-      View Event Log
-    </button>
-  </div>
-  <div class="admin-tool-control">
-    <button id="view-draft-jobs" mat-flat-button color="primary" (click)="navigateToDraftJobs()" [disabled]="!isOnline">
-      View Serval Builds
-    </button>
-    <app-info text="View all Serval builds for this project in the Serval Administration page."></app-info>
-  </div>
-  <div class="admin-tool-control">
-    <button
       (click)="downloadDraft()"
       mat-flat-button
-      color="primary"
       [disabled]="!isOnline || lastCompletedBuild == null || downloadingDraft"
       id="download-draft"
     >
@@ -51,6 +37,20 @@
     @if (downloadingDraft) {
       <div class="zip-progress">Downloading draft...</div>
     }
+  </div>
+  <div class="admin-tool-control">
+    <button
+      id="retrieve-pre-translations"
+      mat-flat-button
+      (click)="retrievePreTranslationStatus()"
+      [disabled]="!isOnline"
+    >
+      <mat-icon>refresh</mat-icon>
+      Force Pre-Translation Retrieval
+    </button>
+    <app-info
+      text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
+    ></app-info>
   </div>
   <div class="admin-tool-control">
     <mat-card>
