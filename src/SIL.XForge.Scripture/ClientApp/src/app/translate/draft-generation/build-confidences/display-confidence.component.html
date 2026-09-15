@@ -1,12 +1,32 @@
 <ng-container *transloco="let t; read: 'draft_confidence'">
-  @if (lowConfidence) {
-    @if (showText) {
-      <div class="confidence red">
-        <mat-icon [matTooltip]="t('low_confidence')">warning</mat-icon>
-        <span>{{ t("low_confidence") }}</span>
-      </div>
-    } @else {
-      <mat-icon [matTooltip]="t('low_confidence')" class="red">warning</mat-icon>
+  @if (showNotice) {
+    @if (booksWithLowConfidence === 1) {
+      <app-notice type="error">
+        <transloco
+          key="draft_confidence.low_confidence_book"
+          [params]="{
+            book: bookNameWithLowConfidence ?? t('one_book'),
+            learnMoreLink: urlService.understandingDraftQuality
+          }"
+        ></transloco>
+      </app-notice>
+    } @else if (booksWithLowConfidence > 1) {
+      <app-notice type="error">
+        <transloco
+          key="draft_confidence.low_confidence_books"
+          [params]="{
+            number: booksWithLowConfidence,
+            learnMoreLink: urlService.understandingDraftQuality
+          }"
+        ></transloco>
+      </app-notice>
     }
+  } @else if (showIconAndText) {
+    <div class="confidence red">
+      <mat-icon [matTooltip]="t('low_confidence')">warning</mat-icon>
+      <span>{{ t("low_confidence") }}</span>
+    </div>
+  } @else if (showIcon) {
+    <mat-icon [matTooltip]="t('low_confidence')" class="red">warning</mat-icon>
   }
 </ng-container>

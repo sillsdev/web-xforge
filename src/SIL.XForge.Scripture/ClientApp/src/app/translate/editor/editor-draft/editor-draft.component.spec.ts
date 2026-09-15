@@ -17,7 +17,6 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -54,7 +53,6 @@ const mockNoticeService = mock(NoticeService);
 const mockProjectNotificationService = mock(ProjectNotificationService);
 const mockSFProjectService = mock(SFProjectService);
 const mockTextDocService = mock(TextDocService);
-const mockUrlService = mock(ExternalUrlService);
 
 describe('EditorDraftComponent', () => {
   let fixture: ComponentFixture<EditorDraftComponent>;
@@ -84,7 +82,6 @@ describe('EditorDraftComponent', () => {
       { provide: DraftHandlingService, useMock: mockDraftHandlingService },
       { provide: DraftNotificationService, useMock: mockDraftNotificationService },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
-      { provide: ExternalUrlService, useMock: mockUrlService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ProjectNotificationService, useMock: mockProjectNotificationService },
