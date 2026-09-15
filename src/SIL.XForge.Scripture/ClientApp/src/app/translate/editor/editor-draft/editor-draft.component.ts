@@ -10,7 +10,6 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
-import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -37,7 +36,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -62,6 +60,7 @@ import {
 import { DraftNotificationService } from '../../draft-generation/draft-notification.service';
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-generation/draft-preview-books/draft-preview-books.component';
+import { LowConfidenceNoticeComponent } from '../../draft-generation/build-confidences/low-confidence-notice.component';
 import { hasLowConfidence } from '../../draft-generation/draft-utils';
 import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/history-revision-format.pipe';
 
@@ -71,10 +70,10 @@ import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/his
   styleUrls: ['./editor-draft.component.scss'],
   imports: [
     TranslocoModule,
-    TranslocoMarkupModule,
     MatProgressBar,
     NoticeComponent,
     DraftPreviewBooksComponent,
+    LowConfidenceNoticeComponent,
     MatFormField,
     MatSelect,
     MatSelectTrigger,
@@ -154,7 +153,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly noticeService: NoticeService,
     private readonly router: Router,
     private readonly textDocService: TextDocService,
-    protected readonly urlService: ExternalUrlService,
     projectNotificationService: ProjectNotificationService
   ) {
     this.activatedProjectService.projectId$
@@ -508,14 +506,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     }
 
     return this.i18n.localizeBookChapter(this.bookNum, this.chapter);
-  }
-
-  protected getLocalizedBook(): string {
-    if (this.bookNum == null) {
-      return '';
-    }
-
-    return this.i18n.localizeBook(this.bookNum);
   }
 
   private getTargetOps(): Observable<DeltaOperation[]> {

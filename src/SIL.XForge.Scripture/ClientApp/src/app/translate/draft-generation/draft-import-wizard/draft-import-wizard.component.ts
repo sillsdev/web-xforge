@@ -23,7 +23,6 @@ import { BehaviorSubject, filter } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -45,6 +44,7 @@ import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-ran
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
 import { DraftNotificationService } from '../draft-notification.service';
+import { LowConfidenceNoticeComponent } from '../build-confidences/low-confidence-notice.component';
 import { hasLowConfidence } from '../draft-utils';
 
 /**
@@ -121,6 +121,7 @@ export enum DraftApplyStatus {
     MatStepperPrevious,
     TranslocoModule,
     TranslocoMarkupComponent,
+    LowConfidenceNoticeComponent,
     NoticeComponent,
     ProjectSelectComponent,
     SyncProgressComponent
@@ -147,10 +148,9 @@ export class DraftImportWizardComponent implements OnInit {
   projectLoadingFailed = false;
   sourceProjectId?: string;
   cannotAdvanceFromProjectSelection = false;
-  draftHasLowConfidence = false;
-  bookNameWithLowConfidence: string = '';
+  /** IDs of the drafted books that have low confidence, and the subset of them the user has selected to import. */
   booksWithLowConfidence: string[] = [];
-  selectedBooksWithLowConfidence = 0;
+  selectedBooksWithLowConfidence: string[] = [];
 
   // Step 2-3: Project connection (conditional)
   private _isConnecting = false;
@@ -319,7 +319,6 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly authService: AuthService,
-    protected readonly urlService: ExternalUrlService,
     private readonly userService: UserService
   ) {
     this.draftedScriptureRange = VerboseScriptureRange.fromCombinedRanges(
@@ -458,14 +457,9 @@ export class DraftImportWizardComponent implements OnInit {
     // Show book selection only if multiple books
     this.showBookSelection = this.availableBooksForImport.length > 1;
 
-    // Set up the low confidence flags for the project and books
-    this.draftHasLowConfidence = hasLowConfidence(this.data);
     this.booksWithLowConfidence = bookNums
       .map(bookNum => Canon.bookNumberToId(bookNum))
       .filter(bookId => hasLowConfidence(this.data, bookId));
-    if (this.booksWithLowConfidence.length > 0) {
-      this.bookNameWithLowConfidence = this.i18n.localizeBook(this.booksWithLowConfidence[0]);
-    }
   }
 
   async projectSelected(paratextId: string): Promise<void> {
@@ -614,7 +608,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.booksWithExistingText = [];
     const booksToCheck: BookForImport[] = this.booksToImport;
 
-    this.selectedBooksWithLowConfidence = 0;
+    this.selectedBooksWithLowConfidence = [];
     for (const book of booksToCheck) {
       let chapterNumbersWithText: number[] = await this.getChaptersWithText(book.bookNum);
       // Only warn about chapters we will actually overwrite: the drafted chapters that already have target text. For a
@@ -632,8 +626,7 @@ export class DraftImportWizardComponent implements OnInit {
       }
 
       if (this.booksWithLowConfidence.includes(book.bookId)) {
-        this.bookNameWithLowConfidence = this.i18n.localizeBook(book.bookId);
-        this.selectedBooksWithLowConfidence++;
+        this.selectedBooksWithLowConfidence.push(book.bookId);
       }
     }
 
@@ -902,6 +895,6 @@ export class DraftImportWizardComponent implements OnInit {
     this.importError = undefined;
     this.importComplete = false;
     this.importStepTriggered = false;
-    this.selectedBooksWithLowConfidence = 0;
+    this.selectedBooksWithLowConfidence = [];
   }
 }

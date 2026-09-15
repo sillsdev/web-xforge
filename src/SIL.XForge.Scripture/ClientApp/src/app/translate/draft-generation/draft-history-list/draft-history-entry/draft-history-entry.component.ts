@@ -26,14 +26,13 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Subject, takeUntil } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { BuildDto, ServalDiagnosticCode } from '../../../../machine-api/build-dto';
+import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../../../../shared/scripture-range';
@@ -44,7 +43,13 @@ import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
-import { DraftSourcesAsTranslateSourceArrays, hasLowConfidence, projectToDraftSources } from '../../draft-utils';
+import {
+  DraftSourcesAsTranslateSourceArrays,
+  hasLowConfidence,
+  lowConfidenceBookIds,
+  projectToDraftSources
+} from '../../draft-utils';
+import { LowConfidenceNoticeComponent } from '../../build-confidences/low-confidence-notice.component';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -80,6 +85,7 @@ interface SourceInfo {
   imports: [
     NgClass,
     DisplayConfidenceComponent,
+    LowConfidenceNoticeComponent,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,
@@ -339,7 +345,6 @@ export class DraftHistoryEntryComponent {
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    protected readonly urlService: ExternalUrlService,
     private readonly userService: UserService,
     private readonly trainingDataService: TrainingDataService,
     private readonly activatedProjectService: ActivatedProjectService,
@@ -402,19 +407,8 @@ export class DraftHistoryEntryComponent {
     return hasLowConfidence(build);
   }
 
-  protected booksWithLowConfidence(build: BuildDto): number {
-    return build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0;
-  }
-
-  protected lowConfidenceBookName(build: BuildDto): string {
-    const bookId: string | undefined = build?.executionData?.diagnostics?.find(
-      d => d.code === ServalDiagnosticCode.LowConfidence
-    )?.data?.bookId;
-    if (bookId != null) {
-      return this.i18n.localizeBook(bookId);
-    } else {
-      return this.i18n.translateStatic('draft_history_entry.one_book');
-    }
+  protected lowConfidenceBookIds(build: BuildDto): string[] {
+    return lowConfidenceBookIds(build);
   }
 
   private async getProjectSourceInfo(

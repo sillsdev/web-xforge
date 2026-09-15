@@ -300,7 +300,7 @@ describe('DraftImportWizardComponent', () => {
 
     // Step 1
     env.selectProject('paratext04');
-    expect(env.lowConfidenceWarning).not.toBeUndefined();
+    expect(env.lowConfidenceWarning).not.toBeNull();
     env.clickNextButton(1);
 
     // Step 5
@@ -332,7 +332,7 @@ describe('DraftImportWizardComponent', () => {
     env.clickNextButton(1);
 
     // Step 4
-    expect(env.lowConfidenceWarning).not.toBeUndefined();
+    expect(env.lowConfidenceWarning).not.toBeNull();
     env.clickNextButton(4);
 
     // Step 5
@@ -502,8 +502,8 @@ class TestEnvironment {
     this.wait();
   }
 
-  lowConfidenceWarning(): HTMLElement | null {
-    return this.fixture.nativeElement.querySelector(`[data-test-id="low-confidence-warning"]`);
+  get lowConfidenceWarning(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('app-low-confidence-notice app-notice');
   }
 
   selectProject(paratextId: string): void {

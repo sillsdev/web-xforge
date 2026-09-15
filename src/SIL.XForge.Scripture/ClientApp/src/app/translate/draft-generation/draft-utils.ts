@@ -102,3 +102,17 @@ export function hasLowConfidence(build: BuildDto | undefined, bookId: string | u
     ) ?? false
   );
 }
+
+/**
+ * Gets the IDs of the books in a build that have a low confidence diagnostic.
+ * @param build The build.
+ * @returns The book IDs, without duplicates; empty if the build has no low confidence diagnostics.
+ */
+export function lowConfidenceBookIds(build: BuildDto | undefined): string[] {
+  const bookIds: string[] =
+    build?.executionData?.diagnostics
+      ?.filter(d => d.code === ServalDiagnosticCode.LowConfidence)
+      .map(d => d.data?.bookId)
+      .filter((bookId): bookId is string => bookId != null) ?? [];
+  return [...new Set(bookIds)];
+}

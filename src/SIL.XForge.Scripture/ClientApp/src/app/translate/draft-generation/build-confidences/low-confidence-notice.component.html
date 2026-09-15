@@ -1,0 +1,15 @@
+@if (bookIds.length > 0) {
+  <app-notice type="error">
+    @if (bookIds.length === 1) {
+      <transloco
+        key="draft_confidence.low_confidence_book"
+        [params]="{ book: i18n.localizeBook(bookIds[0]), learnMoreLink: urlService.understandingDraftQuality }"
+      ></transloco>
+    } @else {
+      <transloco
+        key="draft_confidence.low_confidence_books"
+        [params]="{ number: bookIds.length, learnMoreLink: urlService.understandingDraftQuality }"
+      ></transloco>
+    }
+  </app-notice>
+}

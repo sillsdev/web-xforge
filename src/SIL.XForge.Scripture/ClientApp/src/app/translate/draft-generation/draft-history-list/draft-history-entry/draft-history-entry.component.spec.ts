@@ -576,8 +576,7 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).toBeNull();
+      expect(lowConfidenceNotice()).toBeNull();
     }));
 
     it('should show the single book low confidence warning if one book has low confidence', fakeAsync(() => {
@@ -600,8 +599,7 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).toBeNull();
+      expect(lowConfidenceNotice()!.textContent).toContain('Genesis');
     }));
 
     it('should show the multiple book low confidence warning if more than one book has low confidence', fakeAsync(() => {
@@ -631,9 +629,12 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).not.toBeNull();
+      expect(lowConfidenceNotice()!.textContent).toContain('2 books');
     }));
+
+    function lowConfidenceNotice(): HTMLElement | null {
+      return fixture.nativeElement.querySelector('app-low-confidence-notice app-notice');
+    }
   });
 
   describe('formatDate', () => {

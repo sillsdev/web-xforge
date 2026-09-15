@@ -45,29 +45,7 @@
                 </app-notice>
               </p>
             }
-            @if (hasLowConfidence(entry)) {
-              @if (booksWithLowConfidence(entry) > 1) {
-                <app-notice type="error" data-test-id="low-confidence-books">
-                  <transloco
-                    key="draft_history_entry.low_confidence_books"
-                    [params]="{
-                      number: booksWithLowConfidence(entry),
-                      learnMoreLink: urlService.understandingDraftQuality
-                    }"
-                  ></transloco
-                ></app-notice>
-              } @else {
-                <app-notice type="error" data-test-id="low-confidence-book"
-                  ><transloco
-                    key="draft_history_entry.low_confidence_book"
-                    [params]="{
-                      book: lowConfidenceBookName(entry),
-                      learnMoreLink: urlService.understandingDraftQuality
-                    }"
-                  ></transloco
-                ></app-notice>
-              }
-            }
+            <app-low-confidence-notice [bookIds]="lowConfidenceBookIds(entry)"></app-low-confidence-notice>
             <p>{{ t("click_book_to_preview_draft") }}</p>
             <p class="book-buttons">
               <app-draft-preview-books [build]="entry" />

@@ -62,16 +62,8 @@
             !projectSelectionForm.valid ? t("select_project_description") : t("waiting_for_project_to_load")
           }}</app-notice>
         }
-        @if (draftHasLowConfidence && !(needsConnection || showBookSelection)) {
-          <app-notice type="error" data-test-id="low-confidence-warning">
-            <transloco
-              key="draft_import_wizard.low_confidence_book"
-              [params]="{
-                book: bookNameWithLowConfidence,
-                learnMoreLink: urlService.understandingDraftQuality
-              }"
-            ></transloco>
-          </app-notice>
+        @if (!(needsConnection || showBookSelection)) {
+          <app-low-confidence-notice [bookIds]="booksWithLowConfidence"></app-low-confidence-notice>
         }
       </form>
 
@@ -175,16 +167,8 @@
               </app-notice>
             }
           }
-          @if (draftHasLowConfidence && !showBookSelection) {
-            <app-notice type="error" data-test-id="low-confidence-warning">
-              <transloco
-                key="draft_import_wizard.low_confidence_book"
-                [params]="{
-                  book: bookNameWithLowConfidence,
-                  learnMoreLink: urlService.understandingDraftQuality
-                }"
-              ></transloco>
-            </app-notice>
+          @if (!showBookSelection) {
+            <app-low-confidence-notice [bookIds]="booksWithLowConfidence"></app-low-confidence-notice>
           }
           <div class="button-strip">
             <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
@@ -221,27 +205,7 @@
           }
         </div>
 
-        @if (selectedBooksWithLowConfidence === 1) {
-          <app-notice type="error" data-test-id="low-confidence-warning">
-            <transloco
-              key="draft_import_wizard.low_confidence_book"
-              [params]="{
-                book: bookNameWithLowConfidence,
-                learnMoreLink: urlService.understandingDraftQuality
-              }"
-            ></transloco>
-          </app-notice>
-        } @else if (selectedBooksWithLowConfidence > 1) {
-          <app-notice type="error" data-test-id="low-confidence-warning">
-            <transloco
-              key="draft_import_wizard.low_confidence_books"
-              [params]="{
-                number: selectedBooksWithLowConfidence,
-                learnMoreLink: urlService.understandingDraftQuality
-              }"
-            ></transloco>
-          </app-notice>
-        }
+        <app-low-confidence-notice [bookIds]="selectedBooksWithLowConfidence"></app-low-confidence-notice>
 
         <div class="button-strip">
           <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
