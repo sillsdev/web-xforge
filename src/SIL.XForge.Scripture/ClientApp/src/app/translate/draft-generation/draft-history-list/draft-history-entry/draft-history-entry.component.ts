@@ -26,7 +26,6 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Subject, takeUntil } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -35,7 +34,6 @@ import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { BuildDto, ServalDiagnosticCode } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
-import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../../../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../../../shared/scripture-range-display';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
@@ -98,7 +96,6 @@ interface SourceInfo {
     MatHeaderRowDef,
     MatRow,
     MatRowDef,
-    NoticeComponent,
     RouterLink,
     TranslocoModule,
     TranslocoMarkupModule
@@ -334,7 +331,6 @@ export class DraftHistoryEntryComponent {
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
-    protected readonly urlService: ExternalUrlService,
     private readonly userService: UserService,
     private readonly trainingDataService: TrainingDataService,
     private readonly activatedProjectService: ActivatedProjectService,
@@ -380,22 +376,22 @@ export class DraftHistoryEntryComponent {
     });
   }
 
+  booksWithLowConfidence(build: BuildDto): number {
+    return build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0;
+  }
+
   protected hasLowConfidence(build: BuildDto): boolean {
     return hasLowConfidence(build);
   }
 
-  protected booksWithLowConfidence(build: BuildDto): number {
-    return build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0;
-  }
-
-  protected lowConfidenceBookName(build: BuildDto): string {
+  protected lowConfidenceBookName(build: BuildDto): string | undefined {
     const bookId: string | undefined = build?.executionData?.diagnostics?.find(
       d => d.code === ServalDiagnosticCode.LowConfidence
     )?.data?.bookId;
     if (bookId != null) {
       return this.i18n.localizeBook(bookId);
     } else {
-      return this.i18n.translateStatic('draft_history_entry.one_book');
+      return undefined;
     }
   }
 
