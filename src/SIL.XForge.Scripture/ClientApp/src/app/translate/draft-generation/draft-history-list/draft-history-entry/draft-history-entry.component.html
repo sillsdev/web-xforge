@@ -38,13 +38,6 @@
           </div>
         } @else {
           @if (draftIsAvailable) {
-            @if (timeframeForPerChapterRemarksNotice && versionIsAtLeast(entry.deploymentVersion, "1.18")) {
-              <p class="per-chapter-remarks-notice">
-                <app-notice type="success" icon="auto_awesome">
-                  <transloco key="draft_history_entry.per_chapter_remarks_notice"></transloco>
-                </app-notice>
-              </p>
-            }
             @if (hasLowConfidence(entry)) {
               @if (booksWithLowConfidence(entry) > 1) {
                 <app-notice type="error" data-test-id="low-confidence-books">{{

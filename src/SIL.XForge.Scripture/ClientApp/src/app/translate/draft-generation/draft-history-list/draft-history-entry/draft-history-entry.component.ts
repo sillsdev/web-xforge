@@ -330,11 +330,6 @@ export class DraftHistoryEntryComponent {
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
-  private readonly showPerChapterRemarksNoticeExpireDate: Date = new Date('2026-12-31T12:00:00.000Z');
-
-  readonly timeframeForPerChapterRemarksNotice: boolean =
-    Date.now() < this.showPerChapterRemarksNoticeExpireDate.getTime();
-
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -351,19 +346,6 @@ export class DraftHistoryEntryComponent {
     const formattedDate =
       date == null ? '' : this.i18n.formatDate(new Date(date), { showTime: true, showTimeZone: false });
     return formattedDate.indexOf(RIGHT_TO_LEFT_MARK) !== -1 ? RIGHT_TO_LEFT_MARK + formattedDate : formattedDate;
-  }
-
-  versionIsAtLeast(version: string | undefined, isAtLeast: string): boolean {
-    const parse = (v: string | undefined): [number, number] => {
-      const match = v?.match(/^(\d+)\.(\d+)/);
-      if (!match) return [0, 0];
-      return [Number(match[1]), Number(match[2])];
-    };
-
-    const [major1, minor1] = parse(version);
-    const [major2, minor2] = parse(isAtLeast);
-
-    return major1 !== major2 ? major1 > major2 : minor1 >= minor2;
   }
 
   getStatus(state: BuildStates): { icons: string; text: string; color: string } {
