@@ -37,7 +37,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -53,6 +52,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
+import { DisplayConfidenceComponent } from '../../draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 import {
@@ -74,6 +74,7 @@ import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/his
     TranslocoMarkupModule,
     MatProgressBar,
     NoticeComponent,
+    DisplayConfidenceComponent,
     DraftPreviewBooksComponent,
     MatFormField,
     MatSelect,
@@ -154,7 +155,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly noticeService: NoticeService,
     private readonly router: Router,
     private readonly textDocService: TextDocService,
-    protected readonly urlService: ExternalUrlService,
     projectNotificationService: ProjectNotificationService
   ) {
     this.activatedProjectService.projectId$

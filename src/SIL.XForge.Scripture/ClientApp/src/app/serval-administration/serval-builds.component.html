@@ -105,10 +105,7 @@
                   <mat-icon class="problem-badge" [matTooltip]="problemsBadgeTooltip(row)">warning</mat-icon>
                 }
               </div>
-              <app-display-confidence
-                [lowConfidence]="hasLowConfidence(row)"
-                [showText]="false"
-              ></app-display-confidence>
+              <app-display-confidence [showIcon]="hasLowConfidence(row)"></app-display-confidence>
             </div>
           </td>
         </ng-container>
@@ -594,10 +591,7 @@
                                       {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
                                     </span>
                                     <span class="detail-value">
-                                      <app-display-confidence
-                                        [lowConfidence]="true"
-                                        [showText]="true"
-                                      ></app-display-confidence>
+                                      <app-display-confidence [showIconAndText]="true"></app-display-confidence>
                                     </span>
                                   </div>
                                 }
