@@ -23,7 +23,6 @@ import { BehaviorSubject, filter } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -44,6 +43,7 @@ import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
+import { DisplayConfidenceComponent } from '../build-confidences/display-confidence.component';
 import { DraftNotificationService } from '../draft-notification.service';
 import { hasLowConfidence } from '../draft-utils';
 
@@ -121,6 +121,7 @@ export enum DraftApplyStatus {
     MatStepperPrevious,
     TranslocoModule,
     TranslocoMarkupComponent,
+    DisplayConfidenceComponent,
     NoticeComponent,
     ProjectSelectComponent,
     SyncProgressComponent
@@ -319,7 +320,6 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly authService: AuthService,
-    protected readonly urlService: ExternalUrlService,
     private readonly userService: UserService
   ) {
     this.draftedScriptureRange = VerboseScriptureRange.fromCombinedRanges(

@@ -15,10 +15,7 @@
         </mat-panel-title>
         <mat-panel-description>
           <span class="status" [ngClass]="getStatus(entry.state).color">
-            <app-display-confidence
-              [lowConfidence]="hasLowConfidence(entry)"
-              [showText]="true"
-            ></app-display-confidence>
+            <app-display-confidence [showIconAndText]="hasLowConfidence(entry)"></app-display-confidence>
             <mat-icon class="status-icon">{{ getStatus(entry.state).icons }}</mat-icon>
             {{ t(getStatus(entry.state).text) }}
           </span>
@@ -38,29 +35,11 @@
           </div>
         } @else {
           @if (draftIsAvailable) {
-            @if (hasLowConfidence(entry)) {
-              @if (booksWithLowConfidence(entry) > 1) {
-                <app-notice type="error" data-test-id="low-confidence-books">
-                  <transloco
-                    key="draft_history_entry.low_confidence_books"
-                    [params]="{
-                      number: booksWithLowConfidence(entry),
-                      learnMoreLink: urlService.understandingDraftQuality
-                    }"
-                  ></transloco
-                ></app-notice>
-              } @else {
-                <app-notice type="error" data-test-id="low-confidence-book"
-                  ><transloco
-                    key="draft_history_entry.low_confidence_book"
-                    [params]="{
-                      book: lowConfidenceBookName(entry),
-                      learnMoreLink: urlService.understandingDraftQuality
-                    }"
-                  ></transloco
-                ></app-notice>
-              }
-            }
+            <app-display-confidence
+              [bookNameWithLowConfidence]="lowConfidenceBookName(entry)"
+              [booksWithLowConfidence]="booksWithLowConfidence(entry)"
+              [showNotice]="true"
+            ></app-display-confidence>
             <p>{{ t("click_book_to_preview_draft") }}</p>
             <p class="book-buttons">
               <app-draft-preview-books [build]="entry" />
