@@ -34,7 +34,7 @@ function printUsage(): void {
 
   console.log(
     [
-      'Usage: ./e2e.mts [preset] [test ...]',
+      'Usage: ./e2e.mts [preset [test ...]]',
       '',
       'Runs all or the selected end-to-end tests against a running instance of Scripture Forge.',
       '',
