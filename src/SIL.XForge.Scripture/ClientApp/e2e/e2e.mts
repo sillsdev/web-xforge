@@ -81,7 +81,7 @@ try {
             );
           } catch (screenshotError) {
             // page.screenshot has itself been seem to timeout on a slow page that was not finished loading. Don't kill
-            // the run.
+            // the run over trouble taking the screenshot.
             console.error(`Could not capture a failure screenshot for ${test}:`, screenshotError);
           }
           if (preset.pauseOnFailure) await page.pause();
