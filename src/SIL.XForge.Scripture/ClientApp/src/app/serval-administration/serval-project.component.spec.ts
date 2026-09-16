@@ -24,6 +24,10 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
@@ -32,6 +36,8 @@ interface TestEnvironmentArgs {
   preTranslate: boolean;
   lastCompletedBuild?: BuildDto;
   draftConfig?: Partial<DraftConfig>;
+  onboardingRequest?: Partial<OpenOnboardingRequest>;
+  onboardingRequestError?: boolean;
 }
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
@@ -40,6 +46,7 @@ const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockFileService = mock(FileService);
 const mockNoticeService = mock(NoticeService);
+const mockOnboardingRequestService = mock(OnboardingRequestService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
 const mockTrainingDataService = mock(TrainingDataService);
@@ -55,12 +62,38 @@ describe('ServalProjectComponent', () => {
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: FileService, useMock: mockFileService },
       { provide: NoticeService, useMock: mockNoticeService },
+      { provide: OnboardingRequestService, useMock: mockOnboardingRequestService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
+
+  describe('onboarding request link', () => {
+    it('links to the onboarding request with its status when the project has one', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true, onboardingRequest: { status: 'in_progress' } });
+      expect(env.onboardingRequestLink).not.toBeNull();
+      expect(env.onboardingRequestLink!.textContent).toContain('Onboarding Request');
+      expect(env.onboardingRequestLink!.textContent).toContain('In Progress');
+      expect(env.component.onboardingRequestLink).toEqual([
+        '/serval-administration',
+        'onboarding-requests',
+        'request01'
+      ]);
+    }));
+
+    it('does not show an onboarding request link when the project has none', fakeAsync(() => {
+      const env = new TestEnvironment();
+      verify(mockOnboardingRequestService.getOpenOnboardingRequest(env.mockProjectId)).once();
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+
+    it('leaves out the onboarding request link when the lookup fails', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true, onboardingRequestError: true });
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+  });
 
   describe('pre-translation drafting checkbox', () => {
     it('should allow enabling pre-translation drafting', fakeAsync(() => {
@@ -426,11 +459,34 @@ describe('ServalProjectComponent', () => {
         } as TrainingData
       ];
       when(mockTrainingDataService.getTrainingData(anything(), anything())).thenReturn(of(trainingData));
+      if (args.onboardingRequestError) {
+        when(mockOnboardingRequestService.getOpenOnboardingRequest(this.mockProjectId)).thenReject(
+          new CommandError(CommandErrorCode.Forbidden, 'forbidden')
+        );
+      } else {
+        when(mockOnboardingRequestService.getOpenOnboardingRequest(this.mockProjectId)).thenResolve(
+          args.onboardingRequest == null
+            ? null
+            : {
+                id: 'request01',
+                submittedAt: '2026-08-01T00:00:00Z',
+                submittedBy: { name: 'User One', email: 'user01@example.com' },
+                status: 'new',
+                contactEmail: null,
+                ...args.onboardingRequest
+              }
+        );
+      }
+      when(mockOnboardingRequestService.getStatus(anything())).thenCall((status: string) =>
+        status === 'in_progress' ? { value: 'in_progress', label: 'In Progress' } : { value: 'new', label: 'New' }
+      );
 
       spyOn(saveAs, 'saveAs').and.stub();
 
       this.fixture = TestBed.createComponent(ServalProjectComponent);
       this.component = this.fixture.componentInstance;
+      this.fixture.detectChanges();
+      tick();
       this.fixture.detectChanges();
     }
 
@@ -440,6 +496,10 @@ describe('ServalProjectComponent', () => {
 
     get retrievePreTranslationsButton(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('#retrieve-pre-translations');
+    }
+
+    get onboardingRequestLink(): HTMLButtonElement | null {
+      return this.fixture.nativeElement.querySelector('#view-onboarding-request');
     }
 
     get viewEventLogButton(): HTMLAnchorElement {

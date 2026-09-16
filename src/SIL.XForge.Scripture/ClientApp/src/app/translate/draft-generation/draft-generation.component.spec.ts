@@ -806,6 +806,7 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = true;
       env.component.isPreTranslationApproved = false;
       env.component.onboardingRequest = {
+        id: 'request01',
         submittedAt: new Date().toISOString(),
         submittedBy: { name: 'User One', email: 'account@example.com' },
         status: 'new',
@@ -826,6 +827,7 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = true;
       env.component.isPreTranslationApproved = false;
       env.component.onboardingRequest = {
+        id: 'request01',
         submittedAt: new Date().toISOString(),
         submittedBy: { name: 'User One', email: 'account@example.com' },
         status: 'new',
