@@ -2,12 +2,16 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { BehaviorSubject, of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { ParatextService } from '../../core/paratext.service';
 import {
   FeedbackPermission,
   FeedbackType,
@@ -19,15 +23,21 @@ import {
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedBrandingService = mock(BrandingService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
+const mockedParatextService = mock(ParatextService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
+const mockedNoticeService = mock(NoticeService);
 
-fdescribe('UserFeedbackDialogComponent', () => {
+describe('UserFeedbackDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [getTestTranslocoModule(), UserFeedbackDialogComponent, ChildViewContainerComponent],
     providers: [
       provideNoopAnimations(),
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: BrandingService, useMock: mockedBrandingService },
-      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService }
+      { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: ParatextService, useMock: mockedParatextService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -42,10 +52,11 @@ fdescribe('UserFeedbackDialogComponent', () => {
     overlayContainer.ngOnDestroy();
   });
 
-  it('defaults the selected project to be the current active project', () => {
+  it('defaults the selected project to be the current active project', fakeAsync(() => {
     const env = new TestEnvironment('paratext01');
+    tick();
     expect(env.component.feedbackForm.controls.paratextId.value).toBe('paratext01');
-  });
+  }));
 
   it('shows no selected project if there is no currently active project', () => {
     const env = new TestEnvironment(undefined);
@@ -58,6 +69,7 @@ fdescribe('UserFeedbackDialogComponent', () => {
       data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
     } as SFProjectProfileDoc;
     const env = new TestEnvironment('paratext01', [projectDoc]);
+    tick();
 
     let result: UserFeedbackDialogResult | undefined;
     env.dialogRef.afterClosed().subscribe(r => (result = r));
@@ -109,6 +121,22 @@ fdescribe('UserFeedbackDialogComponent', () => {
     expect(closed).toBe(true);
     expect(result).toBeUndefined();
   }));
+
+  it('does not submit feedback if a user is offline', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment('paratext01', [projectDoc], false);
+
+    let result: UserFeedbackDialogResult | undefined;
+    env.dialogRef.afterClosed().subscribe(r => (result = r));
+
+    env.setFeedbackText('Some feedback that should not be submitted while offline');
+    env.clickSubmit();
+
+    expect(result).toBeUndefined();
+  }));
 });
 
 class TestEnvironment {
@@ -116,14 +144,18 @@ class TestEnvironment {
   readonly component: UserFeedbackDialogComponent;
   readonly dialogRef: MatDialogRef<UserFeedbackDialogComponent, UserFeedbackDialogResult>;
 
-  constructor(activeProjectParatextId: string | undefined, projectDocs: SFProjectProfileDoc[] = []) {
+  constructor(activeProjectParatextId: string | undefined, projectDocs: SFProjectProfileDoc[] = [], isOnline = true) {
     when(mockedBrandingService.siteName).thenReturn('Scripture Forge');
     when(mockedUserProjectsService.projectDocs).thenReturn(projectDocs);
-    when(mockedActivatedProjectService.projectDoc).thenReturn(
+    when(mockedOnlineStatusService.isOnline).thenReturn(isOnline);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(new BehaviorSubject(isOnline));
+    when(mockedParatextService.getProjects()).thenResolve([]);
+    const projectDoc: SFProjectProfileDoc | undefined =
       activeProjectParatextId == null
         ? undefined
-        : ({ data: { paratextId: activeProjectParatextId } } as SFProjectProfileDoc)
-    );
+        : ({ data: { paratextId: activeProjectParatextId } } as SFProjectProfileDoc);
+    when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
+    when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(UserFeedbackDialogComponent, {
