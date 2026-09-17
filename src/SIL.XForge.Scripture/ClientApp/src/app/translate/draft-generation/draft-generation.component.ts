@@ -138,12 +138,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   onboardingRequest?: OpenOnboardingRequest | null;
   responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
+  hasUserSubmittedFeedback = false;
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 1.5;
   /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 500;
-  private hasUserSubmittedFeedback = false;
 
   get draftEnabled(): boolean {
     return this.isBackTranslation || this.isPreTranslationApproved;
@@ -224,7 +224,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   private get hasUsedDraftGenerationThreeMonths(): boolean {
-    const dates = (this.draftHistoryList?.savedHistoricalBuilds ?? [])
+    const dates = (this.draftHistoryList?.history ?? [])
       .map(b => b.additionalInfo?.dateGenerated)
       .filter((d): d is string => d != null)
       .map(d => new Date(d).getTime());
@@ -328,7 +328,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       .subscribe(projectId => {
         void this.projectService
           .onlineHasUserSubmittedFeedback(projectId, PageSource.GenerateDraftPage)
-          .then(hasFeedback => (this.hasUserSubmittedFeedback = hasFeedback));
+          .then(hasFeedback => {
+            this.hasUserSubmittedFeedback = hasFeedback;
+          });
       });
   }
 

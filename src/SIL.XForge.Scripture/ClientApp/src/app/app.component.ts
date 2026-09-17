@@ -4,6 +4,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { AsyncPipe, DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, HostBinding, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
+import { MatDialogRef } from '@angular/material/dialog';
 import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
@@ -19,7 +20,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { Observable, Subscription } from 'rxjs';
+import { firstValueFrom, Observable, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -59,6 +60,10 @@ import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { NavigationComponent } from './navigation/navigation.component';
 import { GlobalNoticesComponent } from './shared/global-notices/global-notices.component';
+import {
+  UserFeedbackDialogComponent,
+  UserFeedbackDialogResult
+} from './shared/user-feedback/user-feedback-dialog.component';
 import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
@@ -494,6 +499,16 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   openDiagnosticOverlay(): void {
     this.diagnosticOverlayService.open();
+  }
+
+  async openUserFeedbackDialog(): Promise<void> {
+    const dialogRef: MatDialogRef<UserFeedbackDialogComponent, UserFeedbackDialogResult> =
+      this.dialogService.openMatDialog(UserFeedbackDialogComponent);
+    const feedback: UserFeedbackDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
+    if (feedback != null) {
+      void this.projectService.onlineAddUserFeedback(feedback);
+      void this.dialogService.message('user_feedback.thank_you_for_your_feedback', 'user_feedback.close');
+    }
   }
 
   versionNumberClicked(): void {
