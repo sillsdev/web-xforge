@@ -131,6 +131,14 @@ public class OnboardingRequestServiceTests
         Assert.That(GetProperty(result, "submittedBy"), Is.Not.Null);
     }
 
+    [Test]
+    public async Task GetOpenOnboardingRequestAsync_ReturnsRequestId()
+    {
+        object result = await GetOpenOnboardingRequestAsync(callingUserId: UserId);
+
+        Assert.That(GetProperty(result, "id"), Is.EqualTo("request01"));
+    }
+
     private static async Task<object> GetOpenOnboardingRequestAsync(string callingUserId)
     {
         var repository = new MemoryRepository<OnboardingRequest>([

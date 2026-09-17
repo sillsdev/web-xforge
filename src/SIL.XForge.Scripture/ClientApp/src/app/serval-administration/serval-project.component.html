@@ -6,12 +6,23 @@
     <div class="header-actions">
       <button id="view-event-log" matButton="tonal" [appRouterLink]="eventLogLink" [disabled]="!isOnline">
         <mat-icon>history</mat-icon>
-        View Event Log
+        Event Log
       </button>
       <button id="view-draft-jobs" matButton="tonal" (click)="navigateToDraftJobs()" [disabled]="!isOnline">
         <mat-icon>construction</mat-icon>
-        View Serval Builds
+        Serval Builds
       </button>
+      @if (onboardingRequestLink != null) {
+        <button
+          id="view-onboarding-request"
+          matButton="tonal"
+          [appRouterLink]="onboardingRequestLink"
+          [disabled]="!isOnline"
+        >
+          <mat-icon>description</mat-icon>
+          Onboarding Request ({{ onboardingRequestStatusLabel }})
+        </button>
+      }
     </div>
   </div>
 }

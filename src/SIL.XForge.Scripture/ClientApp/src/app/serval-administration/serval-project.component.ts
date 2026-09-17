@@ -51,6 +51,10 @@ import { projectLabel } from '../shared/utils';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 interface Row {
@@ -117,6 +121,9 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   @Input() showProjectTitle = true;
   preTranslate = false;
   projectName = '';
+  onboardingRequest: OpenOnboardingRequest | undefined;
+  onboardingRequestLink: string[] | undefined;
+  onboardingRequestStatusLabel = '';
 
   headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', languageCode: 'Language tag', id: '' };
   columnsToDisplay = ['category', 'type', 'name', 'languageCode', 'id'];
@@ -146,6 +153,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     private readonly draftGenerationService: DraftGenerationService,
     private readonly i18n: I18nService,
     noticeService: NoticeService,
+    private readonly onboardingRequestService: OnboardingRequestService,
     private readonly trainingDataService: TrainingDataService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
@@ -277,11 +285,31 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         filterNullish(),
-        switchMap(projectId => this.trainingDataService.getTrainingData(projectId, this.destroyRef))
+        switchMap(projectId => {
+          void this.loadOnboardingRequest(projectId);
+          return this.trainingDataService.getTrainingData(projectId, this.destroyRef);
+        })
       )
       .subscribe(activeFiles => {
         this.trainingDataFiles = activeFiles;
       });
+  }
+
+  private async loadOnboardingRequest(projectId: string): Promise<void> {
+    this.onboardingRequest = undefined;
+    try {
+      this.onboardingRequest = (await this.onboardingRequestService.getOpenOnboardingRequest(projectId)) ?? undefined;
+    } catch {
+      // The link is a convenience, so a failed lookup just leaves it out rather than blocking the page
+    }
+    this.onboardingRequestLink =
+      this.onboardingRequest == null
+        ? undefined
+        : ['/serval-administration', 'onboarding-requests', this.onboardingRequest.id];
+    this.onboardingRequestStatusLabel =
+      this.onboardingRequest == null
+        ? ''
+        : this.onboardingRequestService.getStatus(this.onboardingRequest.status).label;
   }
 
   async downloadDraft(): Promise<void> {
