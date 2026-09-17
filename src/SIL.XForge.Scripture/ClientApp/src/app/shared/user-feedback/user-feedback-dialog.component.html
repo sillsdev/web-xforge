@@ -13,10 +13,12 @@
         formControlName="paratextId"
         [placeholder]="t('project_placeholder')"
         [projects]="projects"
+        [value]="feedbackForm.controls.paratextId.value"
+        [isDisabled]="isLoadingData"
         class="project-select"
       ></app-project-select>
       <p class="feedback-description permission-control">{{ t("permission_question") }}</p>
-      <mat-radio-group formControlName="permission">
+      <mat-radio-group class="permission-options" formControlName="permission">
         <mat-radio-button [value]="publishPermission.PublishPublic">{{
           t("permission_public_label")
         }}</mat-radio-button>
@@ -26,9 +28,16 @@
         <mat-radio-button [value]="publishPermission.Private">{{ t("permission_private_label") }}</mat-radio-button>
       </mat-radio-group>
     </form>
+    @if (!isOnline) {
+      <app-notice id="offline-error" type="error" icon="cloud_off">
+        {{ t("connect_to_the_internet") }}
+      </app-notice>
+    }
   </mat-dialog-content>
   <mat-dialog-actions align="end">
     <button mat-button type="button" id="cancel-button" [mat-dialog-close]="undefined">{{ t("cancel") }}</button>
-    <button mat-flat-button color="primary" id="submit-button" (click)="submit()">{{ t("submit") }}</button>
+    <button mat-flat-button color="primary" id="submit-button" (click)="submit()" [disabled]="!isOnline">
+      {{ t("submit") }}
+    </button>
   </mat-dialog-actions>
 </ng-container>

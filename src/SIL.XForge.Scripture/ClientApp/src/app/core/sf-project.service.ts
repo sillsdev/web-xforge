@@ -438,7 +438,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return await this.onlineInvoke<BookProgressWithChapterProgress[]>('getProjectProgress', { projectId });
   }
 
-  async addUserFeedback(result: UserFeedbackDialogResult): Promise<void> {
+  async onlineAddUserFeedback(result: UserFeedbackDialogResult): Promise<void> {
     const params: any = {
       projectId: result.sfProjectId,
       feedbackParams: result.feedbackParams

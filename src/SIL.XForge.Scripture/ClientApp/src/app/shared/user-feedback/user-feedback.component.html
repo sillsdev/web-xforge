@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'user_feedback'">
   <app-notice type="primary" mode="basic" icon="feedback">
-    {{ t("message", { siteName }) }}
-    <a href="javascript:;" class="leave-feedback-link" (click)="onLeaveFeedback()">{{ t("leave_feedback") }}</a>
+    {{ t("how_has_drafting_helped_your_project", { siteName }) }}
+    <a href="javascript:;" class="send-feedback-link" (click)="onSendFeedback()">{{ t("send_feedback") }}</a>
   </app-notice>
 </ng-container>
