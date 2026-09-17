@@ -17,12 +17,12 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { combineLatest, filter, firstValueFrom, Subject } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AutofocusDirective } from 'xforge-common/autofocus.directive';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { isPopulatedString } from '../../../type-utils';
-import { DataLoadingComponent } from '../../../xforge-common/data-loading-component';
-import { quietTakeUntilDestroyed } from '../../../xforge-common/util/rxjs-util';
 import { BrandingService } from '../../core/branding.service';
 import { ParatextProject } from '../../core/models/paratext-project';
 import { ParatextService } from '../../core/paratext.service';
@@ -127,6 +127,10 @@ export class UserFeedbackDialogComponent extends DataLoadingComponent implements
     return this.onlineStatusService.isOnline;
   }
 
+  get selectedParatextId(): string | undefined {
+    return this.feedbackForm.controls.paratextId.value ?? undefined;
+  }
+
   async ngOnInit(): Promise<void> {
     combineLatest([this.activatedProjectService.projectDoc$, this.projectsLoaded$])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -141,7 +145,6 @@ export class UserFeedbackDialogComponent extends DataLoadingComponent implements
 
   submit(): void {
     if (!this.isOnline || this.feedbackForm.invalid) return;
-    const paratextId = this.feedbackForm.controls.paratextId.value;
     const feedback = this.feedbackForm.controls.feedback.value;
     if (!isPopulatedString(feedback)) return;
     const feedbackParams: UserFeedbackParams = {
@@ -151,9 +154,11 @@ export class UserFeedbackDialogComponent extends DataLoadingComponent implements
       permission: this.feedbackForm.controls.permission.value,
       feedback
     };
-    if (paratextId == null || feedback == null) return;
+    if (this.selectedParatextId == null || feedback == null) return;
 
-    const sfProjectId = this.userProjectsService.projectDocs?.find(p => p.data?.paratextId === paratextId)?.id;
+    const sfProjectId = this.userProjectsService.projectDocs?.find(
+      p => p.data?.paratextId === this.selectedParatextId
+    )?.id;
     if (sfProjectId == null) return;
 
     this.dialogRef.close({ sfProjectId, feedback, feedbackParams });
