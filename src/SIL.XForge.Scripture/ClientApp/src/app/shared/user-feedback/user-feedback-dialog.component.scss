@@ -14,4 +14,9 @@ form {
 
 .permission-control {
   margin-bottom: 0;
+
+  .permission-options {
+    display: flex;
+    flex-direction: column;
+  }
 }
