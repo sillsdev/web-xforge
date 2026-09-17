@@ -4148,7 +4148,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void AddUserFeedbackAsync_ProjectDoesNotExist()
+    public async Task AddUserFeedbackAsync_EmptyProjectString_Success()
     {
         var env = new TestEnvironment();
         var feedbackParams = new UserFeedbackParams
@@ -4156,31 +4156,11 @@ public class SFProjectServiceTests
             Type = FeedbackType.HowSfImpactedProject,
             Source = PageSource.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
-            Feedback = "feedback",
+            Feedback = "Great feature!",
         };
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.AddUserFeedbackAsync(User01, "invalid_project", feedbackParams)
-        );
-    }
-
-    [Test]
-    public void AddUserFeedbackAsync_UserNotOnProject()
-    {
-        var env = new TestEnvironment();
-        var feedbackParams = new UserFeedbackParams
-        {
-            Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
-            Permission = FeedbackPermission.PublishPublic,
-            Feedback = "feedback",
-        };
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.AddUserFeedbackAsync(User04, Project01, feedbackParams)
-        );
+        Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, string.Empty, feedbackParams));
     }
 
     [Test]

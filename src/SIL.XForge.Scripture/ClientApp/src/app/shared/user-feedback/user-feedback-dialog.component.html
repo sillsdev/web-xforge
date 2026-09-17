@@ -8,15 +8,17 @@
         <textarea appAutofocus matInput cdkTextareaAutosize id="feedback" formControlName="feedback"></textarea>
         <mat-error>{{ t("required") }}</mat-error>
       </mat-form-field>
-      <p class="feedback-description">{{ t("project_for_feedback") }}</p>
-      <app-project-select
-        formControlName="paratextId"
-        [placeholder]="t('project_placeholder')"
-        [projects]="projects"
-        [value]="selectedParatextId"
-        [isDisabled]="isLoadingData"
-        class="project-select"
-      ></app-project-select>
+      <div [ngClass]="{ 'project-field-hidden': !isParatextUser }">
+        <p class="feedback-description">{{ t("project_for_feedback") }}</p>
+        <app-project-select
+          formControlName="paratextId"
+          [placeholder]="t('project_placeholder')"
+          [projects]="projects"
+          [value]="selectedParatextId"
+          [isDisabled]="isLoadingData"
+          class="project-select"
+        ></app-project-select>
+      </div>
       <p class="feedback-description permission-control">{{ t("permission_question") }}</p>
       <mat-radio-group class="permission-options" formControlName="permission">
         <mat-radio-button [value]="publishPermission.PublishPublic">{{
