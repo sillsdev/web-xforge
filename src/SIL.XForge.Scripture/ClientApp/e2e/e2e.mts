@@ -72,12 +72,18 @@ try {
           results[test] = { success: true, attempts: i + 1 };
         } catch (e) {
           console.error(e);
-          await screenshot(
-            page,
-            { ...screenshotContext, pageName: `${test}_try_${i + 1}_failure` },
-            {},
-            { overrideScreenshotSkipping: true }
-          );
+          try {
+            await screenshot(
+              page,
+              { ...screenshotContext, pageName: `${test}_try_${i + 1}_failure` },
+              {},
+              { overrideScreenshotSkipping: true }
+            );
+          } catch (screenshotError) {
+            // page.screenshot has itself been seem to timeout on a slow page that was not finished loading. Don't kill
+            // the run over trouble taking the screenshot.
+            console.error(`Could not capture a failure screenshot for ${test}:`, screenshotError);
+          }
           if (preset.pauseOnFailure) await page.pause();
           console.log(`%c✗ Test ${test} failed on attempt ${i + 1} of ${attempts}.`, 'color: red');
           console.error(e);
