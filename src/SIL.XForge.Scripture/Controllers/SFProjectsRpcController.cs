@@ -608,14 +608,6 @@ public class SFProjectsRpcController(
             await projectService.AddUserFeedbackAsync(UserId, projectId, feedbackParams);
             return Ok();
         }
-        catch (ForbiddenException)
-        {
-            return ForbiddenError();
-        }
-        catch (DataNotFoundException dnfe)
-        {
-            return NotFoundError(dnfe.Message);
-        }
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
