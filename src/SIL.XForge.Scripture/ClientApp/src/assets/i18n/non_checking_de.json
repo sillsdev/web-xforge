@@ -392,7 +392,6 @@
     "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
     "low_confidence_books": "Die Entwurfsqulität für {{ number }} Bücher ist möglicherweise geringer als üblich.",
     "one_book": "1 Buch",
-    "per_chapter_remarks_notice": "[b]Neu![/b] Eine Benachrichtigung, dass der Entwurf von KI generiert wurde, wird nun in jedem Kapitel angezeigt anstatt am Anfang des Buches.",
     "requested_at": "Angefordert {{ requestedAtTime }}.",
     "requested_by": "Angefordert von {{ requestedByUserName }} um {{ requestedAtTime }}.",
     "select_formatting_options": "Der Entwurf wurde erstellt. Um fortzufahren, wähle Optionen für die Formatierung.",
