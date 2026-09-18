@@ -252,7 +252,7 @@ describe('DraftGenerationComponent', () => {
 
     setBuildHistory(dates: string[]): void {
       this.component.draftHistoryList = {
-        history: dates.map(date => ({ additionalInfo: { dateGenerated: date } }) as BuildDto)
+        history: dates.map(date => ({ additionalInfo: { dateRequested: date } }) as BuildDto)
       } as unknown as DraftHistoryListComponent;
     }
 
