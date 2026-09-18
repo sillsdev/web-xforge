@@ -111,11 +111,18 @@ public class AnonymousController(
                 request.DisplayName,
                 request.Language
             );
-            // Store credentials in a cookie as a fallback to the auth0 tokens expiring so the user can log in again
+            // Store credentials in a cookie as a fallback to the auth0 tokens expiring so the user can log in again.
+            // The cookie cannot be HttpOnly, as the Angular app reads it. Secure matches the scheme of the request,
+            // because a Secure cookie would be dropped in local development, which is served over plain HTTP.
             Response.Cookies.Append(
                 CookieConstants.TransparentAuthentication,
                 JsonConvert.SerializeObject(credentials),
-                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(2) }
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddYears(2),
+                    Secure = Request.IsHttps,
+                    SameSite = SameSiteMode.Strict,
+                }
             );
             return Ok(true);
         }
