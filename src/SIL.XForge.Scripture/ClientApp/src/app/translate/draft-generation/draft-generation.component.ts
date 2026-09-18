@@ -224,10 +224,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   private get hasUsedDraftGenerationThreeMonths(): boolean {
-    const dates = (this.draftHistoryList?.history ?? [])
-      .map(b => b.additionalInfo?.dateGenerated)
+    // search the dates that builds were requested. If a new build was just started
+    // its date would count towards the 90 day threshold
+    const dates: number[] = (this.draftHistoryList?.history ?? [])
+      .map(b => b.additionalInfo?.dateRequested)
       .filter((d): d is string => d != null)
       .map(d => new Date(d).getTime());
+
     if (dates.length === 0) return false;
     const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000;
     return Math.max(...dates) - Math.min(...dates) > threeMonthsInMs;
