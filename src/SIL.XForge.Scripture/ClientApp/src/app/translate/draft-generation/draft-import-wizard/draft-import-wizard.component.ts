@@ -43,6 +43,7 @@ import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
+import { DisplayConfidenceComponent } from '../build-confidences/display-confidence.component';
 import { DraftNotificationService } from '../draft-notification.service';
 import { hasLowConfidence } from '../draft-utils';
 
@@ -120,6 +121,7 @@ export enum DraftApplyStatus {
     MatStepperPrevious,
     TranslocoModule,
     TranslocoMarkupComponent,
+    DisplayConfidenceComponent,
     NoticeComponent,
     ProjectSelectComponent,
     SyncProgressComponent

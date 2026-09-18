@@ -534,8 +534,8 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).not.toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).toBeNull();
+      expect(component.booksWithLowConfidence(entry)).toBe(1);
+      expect(fixture.nativeElement.querySelector('app-display-confidence')).not.toBeNull();
     }));
 
     it('should show the multiple book low confidence warning if more than one book has low confidence', fakeAsync(() => {
@@ -565,8 +565,8 @@ describe('DraftHistoryEntryComponent', () => {
       tick();
       fixture.detectChanges();
 
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-book"]')).toBeNull();
-      expect(fixture.nativeElement.querySelector('[data-test-id="low-confidence-books"]')).not.toBeNull();
+      expect(component.booksWithLowConfidence(entry)).toBe(2);
+      expect(fixture.nativeElement.querySelector('app-display-confidence')).not.toBeNull();
     }));
   });
 

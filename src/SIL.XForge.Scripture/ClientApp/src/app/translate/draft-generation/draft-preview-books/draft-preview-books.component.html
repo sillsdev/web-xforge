@@ -8,7 +8,7 @@
           {{ "canon.book_names." + book.bookId | transloco }}
         }
       </span>
-      <app-display-confidence [lowConfidence]="book.lowConfidence"></app-display-confidence>
+      <app-display-confidence [showIcon]="book.lowConfidence"></app-display-confidence>
     </button>
   } @empty {
     <strong>{{ t("no_books_have_drafts") }}</strong>

@@ -63,9 +63,11 @@
           }}</app-notice>
         }
         @if (draftHasLowConfidence && !(needsConnection || showBookSelection)) {
-          <app-notice type="error" data-test-id="low-confidence-warning">
-            {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
-          </app-notice>
+          <app-display-confidence
+            [showNotice]="true"
+            [bookNameWithLowConfidence]="bookNameWithLowConfidence"
+            [booksWithLowConfidence]="1"
+          ></app-display-confidence>
         }
       </form>
 
@@ -170,9 +172,11 @@
             }
           }
           @if (draftHasLowConfidence && !showBookSelection) {
-            <app-notice type="error" data-test-id="low-confidence-warning">
-              {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
-            </app-notice>
+            <app-display-confidence
+              [showNotice]="true"
+              [bookNameWithLowConfidence]="bookNameWithLowConfidence"
+              [booksWithLowConfidence]="1"
+            ></app-display-confidence>
           }
           <div class="button-strip">
             <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
@@ -209,15 +213,11 @@
           }
         </div>
 
-        @if (selectedBooksWithLowConfidence === 1) {
-          <app-notice type="error" data-test-id="low-confidence-warning">
-            {{ t("low_confidence_book", { book: bookNameWithLowConfidence }) }}
-          </app-notice>
-        } @else if (selectedBooksWithLowConfidence > 1) {
-          <app-notice type="error" data-test-id="low-confidence-warning">
-            {{ t("low_confidence_books", { number: selectedBooksWithLowConfidence }) }}
-          </app-notice>
-        }
+        <app-display-confidence
+          [showNotice]="selectedBooksWithLowConfidence > 0"
+          [bookNameWithLowConfidence]="bookNameWithLowConfidence"
+          [booksWithLowConfidence]="selectedBooksWithLowConfidence"
+        ></app-display-confidence>
 
         <div class="button-strip">
           <button matButton="outlined" matStepperPrevious [disabled]="isConnecting || isImporting">
