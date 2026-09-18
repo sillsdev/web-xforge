@@ -169,7 +169,7 @@
         </section>
       }
       @if (isDraftJobFetched) {
-        <div>
+        <div class="draft-generation-header">
           @if (isGenerationSupported) {
             @if (isDraftFaulted(draftJob)) {
               <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
