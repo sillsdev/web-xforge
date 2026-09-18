@@ -155,6 +155,7 @@ public class AnonymousControllerTests
             var response = new HttpResponseFeature();
             var features = new FeatureCollection();
             features.Set<IHttpResponseFeature>(response);
+            features.Set<IHttpRequestFeature>(new HttpRequestFeature { Scheme = "http" });
             var context = new DefaultHttpContext(features);
             Controller.ControllerContext.HttpContext = context;
         }
