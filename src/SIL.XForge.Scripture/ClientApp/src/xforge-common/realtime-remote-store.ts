@@ -50,6 +50,8 @@ export interface RealtimeDocAdapter {
   exists(): Promise<boolean>;
   delete(): Promise<void>;
   updatePendingOps(ops: any[]): void;
+  pause(): void;
+  resume(): void;
   previousSnapshot(): Promise<Snapshot>;
 
   destroy(): Promise<void>;

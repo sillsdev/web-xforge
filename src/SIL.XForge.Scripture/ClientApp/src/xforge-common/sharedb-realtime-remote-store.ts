@@ -420,6 +420,14 @@ export class SharedbRealtimeDocAdapter implements RealtimeDocAdapter {
     this.doc.flush();
   }
 
+  pause(): void {
+    this.doc.pause();
+  }
+
+  resume(): void {
+    this.doc.resume();
+  }
+
   previousSnapshot(): Promise<DataSnapshot> {
     return new Promise((resolve, reject) => {
       this.doc.connection.fetchSnapshot(
