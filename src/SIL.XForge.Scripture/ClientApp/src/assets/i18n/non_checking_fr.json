@@ -392,7 +392,6 @@
     "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
     "low_confidence_books": "La qualité de l'ébauche des livres {{ number }} peut être inférieure à la normale.",
     "one_book": "1 livre",
-    "per_chapter_remarks_notice": "[b]Nouveau![/b] Un avis que l'ébauche est généré par l'IA est maintenant affiché sur chaque chapitre plutôt qu'au début du livre.",
     "requested_at": "Demandé {{ requestedAtTime }}.",
     "requested_by": "Demandé par {{ requestedByUserName }} à {{ requestedAtTime }}.",
     "select_formatting_options": "L'ébauche a été créée. Choisissez les options de formatage pour continuer.",

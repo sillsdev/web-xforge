@@ -392,7 +392,6 @@
     "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
     "low_confidence_books": "La calidad del borrador para {{ number }} libros puede ser inferior a la normal.",
     "one_book": "1 libro",
-    "per_chapter_remarks_notice": "[b]¡Novedad![/b] Ahora se muestra en cada capítulo un aviso indicando que el borrador ha sido generado por IA, en lugar de aparecer al principio del libro.",
     "requested_at": "Solicitado {{ requestedAtTime }}.",
     "requested_by": "Solicitado por {{ requestedByUserName }} en {{ requestedAtTime }}.",
     "select_formatting_options": "Se ha creado el borrador. Elija las opciones de formato para continuar.",
