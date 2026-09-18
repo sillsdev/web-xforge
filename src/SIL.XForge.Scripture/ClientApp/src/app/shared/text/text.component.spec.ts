@@ -1,5 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { QuillService } from 'ngx-quill';
@@ -13,9 +14,9 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, of } from 'rxjs';
 import { LocalPresence } from 'sharedb/lib/sharedb';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -1576,6 +1577,42 @@ describe('TextComponent', () => {
       note!.click();
     });
     verify(mockedDialogService.openMatDialog(TextNoteDialogComponent, anything())).thrice();
+  }));
+
+  it('returns focus to the editor without scrolling when the footnote dialog closes', fakeAsync(() => {
+    const chapterNum = 2;
+    const segmentRef: string = `verse_${chapterNum}_1`;
+    const textDocOps: RichText.DeltaOperation[] = [
+      { insert: { chapter: { number: chapterNum.toString(), style: 'c' } } },
+      { insert: { verse: { number: '1', style: 'v' } } },
+      { insert: 'quick brown', attributes: { segment: segmentRef } },
+      {
+        insert: {
+          note: { caller: '+', style: 'f', contents: { ops: [{ insert: 'footnote text' }] } }
+        },
+        attributes: { segment: segmentRef }
+      },
+      { insert: ' fox', attributes: { segment: segmentRef } }
+    ];
+    const env = new TestEnvironment({ chapterNum, textDoc: textDocOps });
+    env.waitForEditor();
+    when(mockedDialogService.openMatDialog(TextNoteDialogComponent, anything())).thenReturn({
+      afterClosed: () => of(undefined)
+    } as MatDialogRef<TextNoteDialogComponent>);
+
+    const editor: Quill = env.component.editor!;
+    editor.focus();
+    expect(editor.hasFocus()).withContext('setup').toBe(true);
+    const focusSpy: jasmine.Spy = spyOn(editor, 'focus');
+
+    const note = env.quillEditor.querySelector(`usx-note[data-style="${TextNoteType.Footnote}"]`) as HTMLElement;
+    note.click();
+    flush();
+
+    // The dialog must not restore focus itself, as that scrolls the editor to the top of the chapter
+    const [, config] = capture(mockedDialogService.openMatDialog as any).last();
+    expect((config as MatDialogConfig).restoreFocus).toBe(false);
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true });
   }));
 
   it('does not match segments when verse ref is from a different chapter', fakeAsync(() => {
