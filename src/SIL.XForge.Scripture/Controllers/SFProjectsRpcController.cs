@@ -601,6 +601,50 @@ public class SFProjectsRpcController(
         }
     }
 
+    public async Task<IRpcMethodResult> AddUserFeedback(string projectId, UserFeedbackParams feedbackParams)
+    {
+        try
+        {
+            await projectService.AddUserFeedbackAsync(UserId, projectId, feedbackParams);
+            return Ok();
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "AddUserFeedback" }, { "projectId", projectId } }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> HasUserSubmittedFeedback(string projectId, string source)
+    {
+        try
+        {
+            return Ok(await projectService.HasUserSubmittedFeedbackAsync(UserId, projectId, source));
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "HasUserSubmittedFeedback" },
+                    { "projectId", projectId },
+                    { "source", source },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> Sync(string projectId)
     {
         try

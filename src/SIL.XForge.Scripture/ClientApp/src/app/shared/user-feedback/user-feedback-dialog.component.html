@@ -1,0 +1,45 @@
+<ng-container *transloco="let t; read: 'user_feedback_dialog'">
+  <h1 mat-dialog-title>{{ t("feedback_title", { siteName }) }}</h1>
+  <mat-dialog-content>
+    <p class="feedback-description">{{ t("feedback_subtitle", { siteName }) }}</p>
+    <form [formGroup]="feedbackForm">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ t("feedback_label") }}</mat-label>
+        <textarea appAutofocus matInput cdkTextareaAutosize id="feedback" formControlName="feedback"></textarea>
+        <mat-error>{{ t("required") }}</mat-error>
+      </mat-form-field>
+      <div [ngClass]="{ 'project-field-hidden': !isParatextUser }">
+        <p class="feedback-description">{{ t("project_for_feedback") }}</p>
+        <app-project-select
+          formControlName="paratextId"
+          [placeholder]="t('project_placeholder')"
+          [projects]="projects"
+          [value]="selectedParatextId"
+          [isDisabled]="isLoadingData"
+          class="project-select"
+        ></app-project-select>
+      </div>
+      <p class="feedback-description permission-control">{{ t("permission_question") }}</p>
+      <mat-radio-group class="permission-options" formControlName="permission">
+        <mat-radio-button [value]="publishPermission.PublishPublic">{{
+          t("permission_public_label")
+        }}</mat-radio-button>
+        <mat-radio-button [value]="publishPermission.PublishAnonymous">{{
+          t("permission_anonymous_label")
+        }}</mat-radio-button>
+        <mat-radio-button [value]="publishPermission.Private">{{ t("permission_private_label") }}</mat-radio-button>
+      </mat-radio-group>
+    </form>
+    @if (!isOnline) {
+      <app-notice id="offline-error" type="error" icon="cloud_off">
+        {{ t("connect_to_the_internet") }}
+      </app-notice>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" id="cancel-button" [mat-dialog-close]="undefined">{{ t("cancel") }}</button>
+    <button mat-flat-button color="primary" id="submit-button" (click)="submit()" [disabled]="!isOnline">
+      {{ t("submit") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>
