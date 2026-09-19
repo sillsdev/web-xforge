@@ -18,8 +18,10 @@ import { isEqual, merge } from 'lodash-es';
 import { QuillEditorComponent } from 'ngx-quill';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
@@ -2003,7 +2005,13 @@ export class TextComponent implements AfterViewInit, OnDestroy {
 
   private async subscribeToTextDocumentCreationAsync(isOnline: boolean): Promise<void> {
     // If we are online, watch for the creation of the text document
-    if (isOnline && this._id != null && this._editor != null) {
+    if (
+      isOnline &&
+      this._id != null &&
+      this._editor != null &&
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
       const textDoc = await this.projectService.getText(this._id);
       this.onCreateSub?.unsubscribe();
       this.onCreateSub = textDoc.create$.subscribe(() => this.bindQuill());

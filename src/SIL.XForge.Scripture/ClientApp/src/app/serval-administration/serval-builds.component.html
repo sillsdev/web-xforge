@@ -484,57 +484,17 @@
                       </mat-card-title-group>
                     </mat-card-header>
                     <mat-card-content class="detail-card-content">
-                      @let sfErrors = problems(row, "local", "error");
-                      @let sfWarnings = problems(row, "local", "warning");
-                      @let servalErrors = problems(row, "serval", "error");
-                      @let servalWarnings = problems(row, "serval", "warning");
                       <div class="problems-sections">
                         @if (!hasAnyProblems(row)) {
                           <div class="problems-section">
                             <span class="problems-none">No problems detected</span>
                           </div>
                         }
-                        @if (sfErrors.length > 0) {
+                        @for (section of problemSections(row); track section.heading) {
                           <div class="problems-section">
-                            <span class="problems-section-header">SF errors</span>
+                            <span class="problems-section-header">{{ section.heading }}</span>
                             <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(sfErrors); track $index) {
-                                <li>
-                                  <span class="problem-message">{{ message }}</span>
-                                </li>
-                              }
-                            </ul>
-                          </div>
-                        }
-                        @if (sfWarnings.length > 0) {
-                          <div class="problems-section">
-                            <span class="problems-section-header">SF warnings</span>
-                            <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(sfWarnings); track $index) {
-                                <li>
-                                  <span class="problem-message">{{ message }}</span>
-                                </li>
-                              }
-                            </ul>
-                          </div>
-                        }
-                        @if (servalErrors.length > 0) {
-                          <div class="problems-section">
-                            <span class="problems-section-header">Serval errors</span>
-                            <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(servalErrors); track $index) {
-                                <li>
-                                  <span class="problem-message">{{ message }}</span>
-                                </li>
-                              }
-                            </ul>
-                          </div>
-                        }
-                        @if (servalWarnings.length > 0) {
-                          <div class="problems-section">
-                            <span class="problems-section-header">Serval warnings</span>
-                            <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(servalWarnings); track $index) {
+                              @for (message of renderProblemMessagesForCard(section.problems); track $index) {
                                 <li>
                                   <span class="problem-message">{{ message }}</span>
                                 </li>

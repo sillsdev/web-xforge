@@ -71,6 +71,7 @@ public class OnboardingRequestService(
 
         return new
         {
+            id = existingRequest.Id,
             submittedAt = existingRequest.Submission.Timestamp,
             submittedBy = new { name = submittingUser.Name, email = submittingUser.Email },
             status = existingRequest.Status,

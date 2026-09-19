@@ -1979,6 +1979,7 @@ describe('ServalBuildsComponent', () => {
     const headingSFWarnings: string = 'SF warnings';
     const headingServalErrors: string = 'Serval errors';
     const headingServalWarnings: string = 'Serval warnings';
+    const headingServalInformation: string = 'Serval information';
 
     const msgSFError: string = 'SF error';
     const msgSFWarning: string = 'SF warning';
@@ -1986,6 +1987,7 @@ describe('ServalBuildsComponent', () => {
     const msgFaulted: string = 'Faulted: Engine crashed';
     const msgMissingData: string = 'Missing data';
     const msgServalWarning: string = 'Serval warning';
+    const msgServalInfo: string = 'Serval information message';
     const msgMessage1: string = 'Message 1';
     const msgMessage2: string = 'Message 2';
 
@@ -2025,6 +2027,7 @@ describe('ServalBuildsComponent', () => {
       expect(env.component.problems(row, 'local', 'warning').length).toBe(2);
       expect(env.component.problems(row, 'serval', 'error').length).toBe(3);
       expect(env.component.problems(row, 'serval', 'warning').length).toBe(4);
+      expect(env.component.problems(row, 'serval', 'info').length).toBe(0);
     });
 
     it('problemsBadgeTooltip joins all problem messages', () => {
@@ -2051,16 +2054,29 @@ describe('ServalBuildsComponent', () => {
 
       const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component.problemSections(row);
 
+      // The sections with no problems, such as SF warnings and Serval errors, are left out.
+      expect(sections.length).toBe(2);
       expect(sections[0].heading).toBe(headingSFErrors);
       expect(sections[0].problems[0].message).toBe(msgSFError);
-      expect(sections[1].heading).toBe(headingSFWarnings);
-      // There are no SF warnings.
-      expect(sections[1].problems.length).toBe(0);
-      expect(sections[2].heading).toBe(headingServalErrors);
-      // There are no Serval errors.
-      expect(sections[2].problems.length).toBe(0);
-      expect(sections[3].heading).toBe(headingServalWarnings);
-      expect(sections[3].problems[0].message).toBe(fullMessage);
+      expect(sections[1].heading).toBe(headingServalWarnings);
+      expect(sections[1].problems[0].message).toBe(fullMessage);
+    });
+
+    it('problemSections includes information problems', () => {
+      const env = new TestEnvironment();
+      const problems: BuildReportProblem[] = [
+        { source: 'serval', severity: 'warning', message: msgServalWarning },
+        { source: 'serval', severity: 'info', message: msgServalInfo }
+      ];
+      const row: ServalBuildRow = env.createRow({ problems });
+
+      const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component.problemSections(row);
+
+      expect(sections.length).toBe(2);
+      expect(sections[0].heading).toBe(headingServalWarnings);
+      expect(sections[0].problems[0].message).toBe(msgServalWarning);
+      expect(sections[1].heading).toBe(headingServalInformation);
+      expect(sections[1].problems[0].message).toBe(msgServalInfo);
     });
 
     it('renderProblemMessagesForCard limits returned amount of problems', () => {
@@ -2118,11 +2134,9 @@ describe('ServalBuildsComponent', () => {
 
       verify(mockDialogService.openMatDialog(anything(), anything())).once();
       expect(componentArg).toBe(ServalBuildProblemsDialog);
-      expect(configArg.data.sections.length).toBe(4);
-      expect(configArg.data.sections[0].heading).toBe(headingSFErrors);
-      expect(configArg.data.sections[1].heading).toBe(headingSFWarnings);
-      expect(configArg.data.sections[2].heading).toBe(headingServalErrors);
-      expect(configArg.data.sections[3].heading).toBe(headingServalWarnings);
+      expect(configArg.data.sections.length).toBe(2);
+      expect(configArg.data.sections[0].heading).toBe(headingSFWarnings);
+      expect(configArg.data.sections[1].heading).toBe(headingServalErrors);
     });
   });
 });

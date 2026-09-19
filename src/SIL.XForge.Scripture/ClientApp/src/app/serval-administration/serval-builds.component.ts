@@ -1089,14 +1089,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return row.report.problems.length > 0;
   }
 
+  /** Problems grouped by source and severity, most severe first. Sections with no problems are omitted. */
   problemSections(row: ServalBuildRow): ServalBuildProblemsDialogSection[] {
     const sections: ServalBuildProblemsDialogSection[] = [
       { heading: 'SF errors', problems: this.problems(row, 'local', 'error') },
       { heading: 'SF warnings', problems: this.problems(row, 'local', 'warning') },
+      { heading: 'SF information', problems: this.problems(row, 'local', 'info') },
       { heading: 'Serval errors', problems: this.problems(row, 'serval', 'error') },
-      { heading: 'Serval warnings', problems: this.problems(row, 'serval', 'warning') }
+      { heading: 'Serval warnings', problems: this.problems(row, 'serval', 'warning') },
+      { heading: 'Serval information', problems: this.problems(row, 'serval', 'info') }
     ];
-    return sections;
+    return sections.filter((section: ServalBuildProblemsDialogSection) => section.problems.length > 0);
   }
 
   renderProblemMessagesForCard(problems: BuildReportProblem[]): string[] {
