@@ -116,18 +116,18 @@ class Program {
 
     const entries: Auth0LogEntry[] = [firstInWindow[0]];
     let lastLogId: string = firstInWindow[0].log_id;
-    let reachedEndOfWindow: boolean = false;
-    while (!reachedEndOfWindow) {
+    while (true) {
       const page: Auth0LogEntry[] = await this.getLogs(new URLSearchParams({ from: lastLogId, take: '100' }));
       if (page.length === 0) break;
       lastLogId = page[page.length - 1].log_id;
-      for (const entry of page) {
-        if (Date.parse(entry.date) > toTime) {
-          reachedEndOfWindow = true;
-          break;
-        }
-        entries.push(entry);
-      }
+
+      // Logs are not guaranteed to be in chronological order. And are observed to arrive up to a fraction of a second
+      // out of date order. So take every entry in a page rather than stopping at the first one past the requested date
+      // range, and read on until a whole page lies beyond the window.
+      const inWindow: Auth0LogEntry[] = page.filter(entry => Date.parse(entry.date) <= toTime);
+      entries.push(...inWindow);
+      if (inWindow.length === 0) break;
+
       console.error(`Fetched ${entries.length} entries, through ${entries[entries.length - 1].date}`);
     }
 
