@@ -14,7 +14,9 @@ Delete auth0 account:
   ./auth0-manage.ts delete --userId 'oauth2|paratext|ABCABC'
 
 Fetch tenant log entries in a time period. They are printed as JSON on stdout. Progress is written to stderr.
-  ./auth0-manage.ts fetchLogs --from 2025-12-31T12:34:56Z --to 2026-12-31T12:34:56Z > logs.json
+Because logs are not provided in chronological order, a small amount of relevant logs may be missing from the
+beginning or end of the printed logs.
+  ./auth0-manage.ts fetchLogs --from 2025-12-25T12:34:56Z --to 2026-12-31T12:34:56Z > logs.json
 `;
 
 import { parser } from 'https://deno.land/x/args_command_parser@v1.2.4/mod.js';
