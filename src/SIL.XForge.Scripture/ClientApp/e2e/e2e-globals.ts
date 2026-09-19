@@ -33,12 +33,17 @@ export const CHECKING_PROJECT_NAME = 'SEEC2';
 
 export const logger = new E2ETestRunLogger();
 
-console.log(Deno.args);
+export const helpRequested = Deno.args.includes('--help');
+
 function getPreset(): TestPreset {
+  // Make provision for this file to be imported by scripts, even if they are just processing "--help".
+  if (helpRequested) return presets.default;
+
+  console.log(Deno.args);
   const presetName = Deno.args[0] ?? 'default';
   const availablePresets = Object.keys(presets);
   if (!availablePresets.includes(presetName)) {
-    console.error(`Usage: ./e2e.mts <preset> <test1> <test2> ...`);
+    console.error(`Invalid preset "${presetName}". Run with --help to see the available presets and tests.`);
     throw new Error(`Invalid preset "${presetName}". Available presets: ${availablePresets.join(', ')}`);
   }
   const preset = (presets as any)[presetName];
