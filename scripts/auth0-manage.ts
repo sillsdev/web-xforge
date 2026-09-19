@@ -33,13 +33,15 @@ class Program {
   private args: any = parser().data;
   private authorizationBearerToken: string | undefined = undefined;
 
+  /** Reports a problem and exits. */
   fail(reason: string): never {
-    console.log(`Error: ${reason}`);
-    this.usage();
+    console.error(`Error: ${reason}`);
+    console.error(usage);
     Deno.exit(1);
   }
 
-  usage() {
+  /** Writes usage and exits. */
+  usage(): never {
     console.log(usage);
     Deno.exit(100);
   }
@@ -154,8 +156,7 @@ class Program {
     } else if (this.args.commands.includes('fetchLogs')) {
       await this.fetchLogs();
     } else {
-      console.log('No command specified.');
-      this.usage();
+      this.fail('No command specified.');
     }
   }
 }
