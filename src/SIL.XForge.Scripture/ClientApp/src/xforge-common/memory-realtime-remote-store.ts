@@ -91,6 +91,7 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
     on: (_event: string, _handler: Function) => {},
     off: (_event: string, _handler: Function) => {}
   } as Presence;
+  paused: boolean = false;
   submitSource: boolean = false;
   subscribed: boolean = false;
   version: number = -1;
@@ -125,6 +126,14 @@ export class MemoryRealtimeDocAdapter implements RealtimeDocAdapter {
 
   ingestSnapshot(_snapshot: Snapshot): Promise<void> {
     return Promise.resolve();
+  }
+
+  pause(): void {
+    this.paused = true;
+  }
+
+  resume(): void {
+    this.paused = false;
   }
 
   subscribe(): Promise<void> {
