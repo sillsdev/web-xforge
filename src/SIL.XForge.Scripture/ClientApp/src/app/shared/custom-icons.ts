@@ -15,6 +15,17 @@ const BIBLICAL_TERMS_ICON =
   ` 1.845 1.344 1.845 3.404 0 1.43-.629 2.202-.486.601-1.058.601-.315 0-.572-.486-.429-.787-1.187-1.444l-2.145 2.674 ` +
   `3.604 3.632q1.287 1.301 1.745 2.116.543 1.001.543 2.417z"/></svg>`;
 
+// The auto_awesome material icon with the stars pulsing in and out
+const DRAFT_GENERATING_ICON =
+  `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><style>.ai-star{` +
+  `transform-box:fill-box;transform-origin:center;animation:ai-pulse 2.4s ease-in-out infinite}.ai-star-1,.ai-star-3` +
+  `{animation-name:ai-pulse-small}.ai-star-1{animation-delay:0s}.ai-star-2{animation-delay:.8s}.ai-star-3` +
+  `{animation-delay:1.6s}@keyframes ai-pulse{0%,20%,100%{transform:scale(1)}50%{transform:scale(.6)}}@keyframes ` +
+  `ai-pulse-small{0%,20%,100%{transform:scale(1)}50%{transform:scale(1.5)}}</style><path class="ai-star ai-star-1" ` +
+  `d="M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9z"/><path class="ai-star ai-star-2" ` +
+  `d="M11.5 9.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5z"/><path class="ai-star ai-star-3" ` +
+  `d="M19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>`;
+
 /**
  * This registers custom SVG icons with Material Icon Registry.
  */
@@ -24,6 +35,7 @@ export function provideCustomIcons(): EnvironmentProviders {
     const sanitizer = inject(DomSanitizer);
 
     iconRegistry.addSvgIconLiteral('biblical_terms', sanitizer.bypassSecurityTrustHtml(BIBLICAL_TERMS_ICON));
+    iconRegistry.addSvgIconLiteral('draft_generating', sanitizer.bypassSecurityTrustHtml(DRAFT_GENERATING_ICON));
 
     for (const [name, svg] of Object.entries(lynxIcons)) {
       iconRegistry.addSvgIconLiteral(name, sanitizer.bypassSecurityTrustHtml(svg));
