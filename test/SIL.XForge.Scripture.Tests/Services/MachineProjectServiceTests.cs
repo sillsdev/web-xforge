@@ -141,6 +141,7 @@ public class MachineProjectServiceTests
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
+        Assert.IsFalse(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
     }
 
     [Test]
@@ -272,6 +273,8 @@ public class MachineProjectServiceTests
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
         Assert.AreEqual(ex.Message, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationErrorMessage);
+        Assert.IsFalse(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
+        Assert.IsFalse(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastDraftSuccessful);
     }
 
     [Test]

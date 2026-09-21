@@ -792,6 +792,19 @@ public partial class MachineApiService(
                 Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
             }
 
+            // Load the project from the realtime service
+            await using IConnection conn = await realtimeService.ConnectAsync();
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+            if (projectDoc.IsLoaded)
+            {
+                // Notify the UI that a draft is in progress
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, false);
+                    op.Set(pd => pd.TranslateConfig.DraftConfig.LastDraftSuccessful, buildState == JobState.Completed);
+                });
+            }
+
             // Retrieve the build started from the event metric. We do this as there may be multiple builds started,
             // and this ensures that only builds that want to send an email will have one sent.
             var eventMetrics = await eventMetricService.GetEventMetricsAsync(
@@ -875,6 +888,17 @@ public partial class MachineApiService(
                     u.Unset(p => p.ServalData!.PreTranslationQueuedAt);
                 },
                 cancellationToken: cancellationToken
+            );
+        }
+
+        // Load the project from the realtime service
+        await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+        if (projectDoc.IsLoaded)
+        {
+            // Notify the UI that the draft failed
+            await projectDoc.SubmitJson0OpAsync(op =>
+                op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, false)
             );
         }
 
@@ -3333,6 +3357,7 @@ public partial class MachineApiService(
                 [.. buildConfig.TranslationScriptureRanges],
                 _listProjectScriptureRangeComparer
             );
+            op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, true);
             op.Set(p => p.TranslateConfig.DraftConfig.FastTraining, buildConfig.FastTraining);
             op.Set(p => p.TranslateConfig.DraftConfig.SendEmailOnBuildFinished, buildConfig.SendEmailOnBuildFinished);
             op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.UseEcho);
