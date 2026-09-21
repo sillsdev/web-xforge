@@ -1,9 +1,12 @@
 name: Build Docker development images
 permissions: {}
 
-# Allow the images to be built manually until we have CI set up
+# Allow the images to be built manually or from tags starting with docker_
 on:
   workflow_dispatch:
+  push:
+    tags:
+      - "docker_*"
 
 jobs:
   build:
@@ -11,39 +14,74 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - linux/amd64
-          - linux/arm/v8
+
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - name: Build and tag Docker images
-        env:
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          docker build --tag ghcr.io/${REPOSITORY}/realtimeserver:latest \
-          --build-arg MIGRATOR_ENVIRONMENT=Development \
-          -f src/RealtimeServer/Dockerfile .
-          docker build --tag ghcr.io/${REPOSITORY}:latest \
-          --build-arg AngularConfig=development \
-          --build-arg configuration=Debug \
-          --build-arg version=9.9.9 \
-          -f src/SIL.XForge.Scripture/Dockerfile .
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: arm64
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Generate Docker metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+          tags: |
+            type=match,pattern=docker_(.*),group=1
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' }}
+          flavor: |
+            latest=false
+
+      - name: Generate RealtimeServer Docker metadata
+        id: realtime-meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/realtimeserver
+          tags: |
+            type=match,pattern=docker_(.*),group=1
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' }}
+          flavor: |
+            latest=false
+
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
-          username: ${{github.actor}}
-          password: ${{secrets.GITHUB_TOKEN}}
-      - name: Push Docker images
-        env:
-          REPOSITORY: ${{ github.repository }}
-        run: |
-          set -xueo pipefail
-          docker push ghcr.io/${REPOSITORY}/realtimeserver:latest
-          docker push ghcr.io/${REPOSITORY}:latest
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push RealtimeServer image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: src/RealtimeServer/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            MIGRATOR_ENVIRONMENT=Development
+          tags: ${{ steps.realtime-meta.outputs.tags }}
+          labels: ${{ steps.realtime-meta.outputs.labels }}
+
+      - name: Build and push Scripture Forge image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: src/SIL.XForge.Scripture/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            AngularConfig=development
+            configuration=Debug
+            version=9.9.9
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
