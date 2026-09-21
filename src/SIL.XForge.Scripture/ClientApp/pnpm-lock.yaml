@@ -18,7 +18,7 @@ overrides:
   webpack-dev-server@<=5.2.5: ^5.2.6
 
 patchedDependencies:
-  http-proxy@1.18.1: 34942a089432d32a961a3881a83f7312b9558b049f7c21c0f9d77edec45bb625
+  http-proxy@1.18.1: 37621d8b19aab9e57c922958e9c8de0287856d7e375237a9e0b662af1cfa88cb
 
 importers:
 
@@ -15322,7 +15322,7 @@ snapshots:
   http-proxy-middleware@2.0.10(@types/express@4.17.25)(debug@4.4.3(supports-color@8.1.1)):
     dependencies:
       '@types/http-proxy': 1.17.17
-      http-proxy: 1.18.1(patch_hash=34942a089432d32a961a3881a83f7312b9558b049f7c21c0f9d77edec45bb625)(debug@4.4.3(supports-color@8.1.1))
+      http-proxy: 1.18.1(patch_hash=37621d8b19aab9e57c922958e9c8de0287856d7e375237a9e0b662af1cfa88cb)(debug@4.4.3(supports-color@8.1.1))
       is-glob: 4.0.3
       is-plain-obj: 3.0.0
       micromatch: 4.0.8
@@ -15335,14 +15335,14 @@ snapshots:
     dependencies:
       '@types/http-proxy': 1.17.17
       debug: 4.4.3(supports-color@8.1.1)
-      http-proxy: 1.18.1(patch_hash=34942a089432d32a961a3881a83f7312b9558b049f7c21c0f9d77edec45bb625)(debug@4.4.3(supports-color@8.1.1))
+      http-proxy: 1.18.1(patch_hash=37621d8b19aab9e57c922958e9c8de0287856d7e375237a9e0b662af1cfa88cb)(debug@4.4.3(supports-color@8.1.1))
       is-glob: 4.0.3
       is-plain-object: 5.1.0
       micromatch: 4.0.8
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy@1.18.1(patch_hash=34942a089432d32a961a3881a83f7312b9558b049f7c21c0f9d77edec45bb625)(debug@4.4.3(supports-color@8.1.1)):
+  http-proxy@1.18.1(patch_hash=37621d8b19aab9e57c922958e9c8de0287856d7e375237a9e0b662af1cfa88cb)(debug@4.4.3(supports-color@8.1.1)):
     dependencies:
       eventemitter3: 4.0.7
       follow-redirects: 1.16.0(debug@4.4.3(supports-color@8.1.1))
@@ -16332,7 +16332,7 @@ snapshots:
       dom-serialize: 2.2.1
       glob: 7.2.3
       graceful-fs: 4.2.11
-      http-proxy: 1.18.1(patch_hash=34942a089432d32a961a3881a83f7312b9558b049f7c21c0f9d77edec45bb625)(debug@4.4.3(supports-color@8.1.1))
+      http-proxy: 1.18.1(patch_hash=37621d8b19aab9e57c922958e9c8de0287856d7e375237a9e0b662af1cfa88cb)(debug@4.4.3(supports-color@8.1.1))
       isbinaryfile: 4.0.10
       lodash: 4.18.1
       log4js: 6.9.1(supports-color@8.1.1)
