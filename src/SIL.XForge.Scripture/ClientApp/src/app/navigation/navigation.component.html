@@ -14,7 +14,15 @@
       </a>
       @if (canGenerateDraft$ | async) {
         <a mat-list-item [appRouterLink]="draftGenerationLink" [class.active]="draftGenerationActive">
-          <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
+          <mat-icon
+            aria-hidden="false"
+            class="mirror-rtl"
+            id="generate-draft-icon"
+            matBadge="error"
+            [matBadgeHidden]="!lastDraftFailed || draftInProgress"
+            [fontIcon]="!draftInProgress || featureFlags.stillness.enabled ? 'auto_awesome' : ''"
+            [svgIcon]="draftInProgress && !featureFlags.stillness.enabled ? 'draft_generating' : ''"
+          ></mat-icon>
           {{ t("generate_draft") }}
         </a>
       }

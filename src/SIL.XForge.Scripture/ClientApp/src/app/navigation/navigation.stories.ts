@@ -23,6 +23,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { provideCustomIcons } from '../shared/custom-icons';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
 
@@ -46,6 +47,12 @@ function setUpMocks(args: StoryState): void {
     sync: {
       queuedCount: args.syncInProgress ? 1 : 0,
       lastSyncSuccessful: args.lastSyncSuccessful
+    },
+    translateConfig: {
+      draftConfig: {
+        draftInProgress: args.draftInProgress,
+        lastDraftSuccessful: args.lastDraftSuccessful
+      }
     },
     userRoles: {
       [userId]: args.role
@@ -107,6 +114,9 @@ const meta: Meta = {
   render: args => {
     setUpMocks(args as StoryState);
     return {
+      applicationConfig: {
+        providers: [provideCustomIcons()]
+      },
       moduleMetadata: {
         providers: [
           { provide: AuthService, useValue: instance(mockedAuthService) },
@@ -162,6 +172,8 @@ export default meta;
 interface StoryState {
   role: SFProjectRole;
   online: boolean;
+  draftInProgress: boolean;
+  lastDraftSuccessful: boolean;
   syncInProgress: boolean;
   lastSyncSuccessful: boolean;
   checkingEnabled: boolean;
@@ -174,6 +186,8 @@ export const Default: Story = {
   args: {
     role: SFProjectRole.ParatextAdministrator,
     online: true,
+    draftInProgress: false,
+    lastDraftSuccessful: true,
     syncInProgress: false,
     lastSyncSuccessful: true,
     checkingEnabled: true,
@@ -243,6 +257,23 @@ export const Commenter: Story = {
   args: { ...Default.args, role: SFProjectRole.Commenter },
   play: async ({ canvasElement }) => {
     expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review']);
+  }
+};
+
+export const DraftInProgress: Story = {
+  args: { ...Default.args, draftInProgress: true },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('#generate-draft-icon svg')).toBeTruthy();
+  }
+};
+
+export const DraftFailed: Story = {
+  args: { ...Default.args, lastDraftSuccessful: false },
+  play: async ({ canvasElement }) => {
+    // The mat-badge is not rendered immediately, so we need to wait for it to appear
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(canvasElement.querySelector('#generate-draft-icon svg')).toBeNull();
+    expect(canvasElement.querySelector('#generate-draft-icon .mat-badge-active')).toBeInTheDocument();
   }
 };
 
