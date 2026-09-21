@@ -468,6 +468,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress, Is.False);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastDraftSuccessful, Is.True);
     }
 
     [Test]
@@ -488,6 +490,8 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.LogLevel == LogLevel.Information);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress, Is.False);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastDraftSuccessful, Is.True);
     }
 
     [Test]
@@ -510,6 +514,8 @@ public class MachineApiServiceTests
         );
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
         env.ExceptionHandler.Received().ReportException(ex);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress, Is.False);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastDraftSuccessful, Is.True);
     }
 
     [Test]
@@ -539,6 +545,8 @@ public class MachineApiServiceTests
                 env.SiteOptions.Value.WebsiteUrl,
                 CancellationToken.None
             );
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress, Is.False);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastDraftSuccessful, Is.True);
     }
 
     [Test]
@@ -568,6 +576,8 @@ public class MachineApiServiceTests
                 Arg.Any<Uri>(),
                 CancellationToken.None
             );
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress, Is.False);
+        Assert.That(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastDraftSuccessful, Is.True);
     }
 
     [Test]
@@ -691,6 +701,7 @@ public class MachineApiServiceTests
         env.BackgroundJobClient.Received(1).ChangeState(HangfireJobId, Arg.Any<DeletedState>(), null); // Same as Delete()
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+        Assert.IsFalse(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
     }
 
     [Test]
@@ -5138,6 +5149,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingScriptureRanges);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles);
         Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTranslationScriptureRanges);
@@ -5237,6 +5249,7 @@ public class MachineApiServiceTests
             Data01,
             env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedTrainingDataFiles.First()
         );
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
     }
 
     [Test]
