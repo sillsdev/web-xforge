@@ -119,6 +119,17 @@ public class MachineProjectService(
                 cancellationToken: cancellationToken
             );
 
+            // Load the project from the realtime service
+            await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
+            if (projectDoc.IsLoaded)
+            {
+                // Notify the UI that the draft is no longer in progress
+                await projectDoc.SubmitJson0OpAsync(op =>
+                    op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, false)
+                );
+            }
+
             // Send the cancellation email, if specified
             if (buildConfig.SendEmailOnBuildFinished)
             {
@@ -187,6 +198,19 @@ public class MachineProjectService(
                 },
                 cancellationToken: cancellationToken
             );
+
+            // Load the project from the realtime service
+            await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
+            if (projectDoc.IsLoaded)
+            {
+                // Notify the UI that the draft failed
+                await projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, false);
+                    op.Set(pd => pd.TranslateConfig.DraftConfig.LastDraftSuccessful, false);
+                });
+            }
 
             // Send the failure email, if specified
             if (buildConfig.SendEmailOnBuildFinished)
