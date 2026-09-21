@@ -1,0 +1,18 @@
+<mat-form-field
+  appearance="outline"
+  subscriptSizing="dynamic"
+  class="identifier-search-field"
+  [class.identifier-search-field-active]="searchControl.value.length > 0"
+>
+  <mat-label>{{ label }}</mat-label>
+  <mat-icon matPrefix>search</mat-icon>
+  <input matInput type="text" [formControl]="searchControl" />
+
+  @if (searchControl.value.length > 0) {
+    <button mat-icon-button matSuffix type="button" (click)="onClearSearch()">
+      <mat-icon>close</mat-icon>
+    </button>
+  } @else {
+    <app-info matSuffix class="identifier-search-info" [text]="infoText"></app-info>
+  }
+</mat-form-field>

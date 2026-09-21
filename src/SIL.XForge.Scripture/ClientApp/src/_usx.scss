@@ -398,7 +398,11 @@ usx-chapter {
 
 usx-verse {
   user-select: none;
-  unicode-bidi: embed;
+  // "isolate" (not "embed"): the verse number must not take part in the bidi ordering of the text
+  // around it. With "embed" the number stays at the same embedding level as adjacent digits in the
+  // text, so in an RTL project a number typed next to a verse marker is reordered together with it
+  // and the marker ends up on the wrong side of its verse (SF-2481).
+  unicode-bidi: isolate;
   > span > span > span {
     // superscript
     top: -0.5em;

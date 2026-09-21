@@ -197,7 +197,7 @@
     "format_draft": "Formater l'ébauche",
     "generate_back_translation_drafts_header": "Générer des ébauches de rétro-traduction",
     "generate_draft_button": "Générer une ébauche",
-    "generate_forward_translation_drafts_header": "Générer des ébauches de traduction.",
+    "generate_forward_translation_drafts_header": "Générer des ébauches de traduction",
     "generate_new_draft": "Nouvelle ébauche",
     "have_not_heard_back": "Vous n'avez pas reçu de réponse ? Vous pouvez nous contacter à l'adresse {{ issueEmail }} pour savoir où en est votre demande.",
     "info_alert_last_sync_failed": "Votre projet n'a pas réussi à se synchroniser. Il sera synchronisé lorsque vous générerez votre prochaine ébauche.",
@@ -223,6 +223,7 @@
     "quota_exceeded": "La génération d'ébauches est temporairement indisponible pour ce projet car son quota a été dépassé",
     "report_problem": "Signaler un problème",
     "signup_already_submitted": "{{ name }} a soumis une demande d'inscription à la rédaction sur {{ date }}. Un membre de l'équipe vous contactera dans les jours ouvrables {{ min }} à {{ max }} pour discuter de votre projet et des prochaines étapes.",
+    "signup_response_will_be_emailed": "La réponse sera envoyée par e-mail à [b]{{ email }}[/b].",
     "sign_up_for_drafting": "Inscrivez-vous pour la rédaction",
     "temporarily_unavailable": "La génération de l'ébauche est temporairement indisponible.",
     "problem_fetching_build_history": "Il y a eu un problème lors de la récupération de l'historique de compilation.",
@@ -261,7 +262,7 @@
     "fix_chapter_errors": "Veuillez corriger les erreurs concernant la plage de chapitres indiquées ci-dessus avant de continuer.",
     "no_drafting_books_selected": "Sélectionnez au moins un livre a ébauché avant de continuer.",
     "no_training_books_selected": "Sélectionnez les livres de formation de votre projet et au moins un projet source avant de continuer.",
-    "no_training_pair_selected": "Certains des ouvrages que vous avez choisis pour votre formation ne sont pas associés à un ouvrage de référence. Veuillez sélectionner un ouvrage de référence correspondant pour chacun d'entre eux.",
+    "no_training_pair_selected": "Certains des livres que vous avez choisis pour votre formation ne sont pas associés à un livre de référence. Veuillez sélectionner un livre de référence correspondant pour chacun d'entre eux.",
     "reference_books": "Livres de référence",
     "summary": {
       "example_translations": "Données de formation linguistique",
@@ -273,7 +274,7 @@
       "example_translations_subtitle": "Scripture Forge utilise des données de formation (exemples de traductions) pour apprendre à traduire de {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}.",
       "email_me": "Envoyez-moi un e-mail à {{ email }} lorsque l'ébauche est terminée.",
       "draft_title": "Ébauche {{ books }}",
-      "draft_title_n_books": "Draft {{ count }} books",
+      "draft_title_n_books": "Ébauche {{ count }} livres",
       "draft_books": "Ébauches de livres",
       "training_books": "Livres de formation",
       "draft_books_subtitle": "Les livres suivants, disponibles sur {{ boldStart }}{{ source }}{{ boldEnd }} , seront traduits depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}"
@@ -281,6 +282,7 @@
     "pending_updates": {
       "heading": "Synchroniser avant de rédiger",
       "body": "Ces projets ont des modifications dans Paratext qui ne sont pas encore reflétées ici. Le fait de rédiger sans synchroniser peut réduire la qualité des ébauches.",
+      "checking_projects": "Vérification de l'état d'avancement du projet...",
       "sync": "Synchroniser",
       "sync_all": "Tout synchroniser",
       "continue_anyway": "Continuer quand même",
@@ -288,11 +290,13 @@
       "sync_failed": "Échec de la synchronisation",
       "retry": "Réessayer",
       "cant_sync": "A des modifications — demander à un administrateur de projet de synchroniser",
-      "wait_for_sync": "Attendez que la synchronisation soit terminée avant de continuer."
+      "wait_for_sync": "Attendez que la synchronisation soit terminée avant de continuer.",
+      "sync_count_progress": "{{ completed }} des projets {{ total }} synchronisés",
+      "all_synced_continuing": "Tout est à jour. En cours..."
     },
     "draft_books": {
       "title": "Sélectionnez les livres à ébaucher",
-      "subtitle": "Les livres suivants, disponibles sur {{ boldStart }}{{ project }}{{ boldEnd }} , seront traduits depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "subtitle": "Quels livres disponibles sur {{ boldStart }}{{ project }}{{ boldEnd }} sont suffisamment pertinents pour entraîner le modèle à traduire depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
       "which_chapters": "Quels chapitres de chaque livre voulez-vous ébaucher ?",
       "partial_explanation": "Certains chapitres des livres que vous avez sélectionnés contiennent déjà du texte.",
       "excluded_no_source_content": "Ces livres ne sont pas disponibles pour ébaucher car ils sont vides dans {{ source }}: {{ books }}.",
@@ -301,9 +305,9 @@
     },
     "training_books": {
       "title": "Sélectionner des livres pour s'entraîner",
-      "subtitle": "Les livres suivants, disponibles sur {{ boldStart }}{{ project }}{{ boldEnd }} , seront traduits depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
+      "subtitle": "Quels livres disponibles sur {{ boldStart }}{{ project }}{{ boldEnd }} sont suffisamment pertinents pour entraîner le modèle à traduire depuis {{ boldStart }}{{ sourceLanguage }}{{ boldEnd }} vers {{ boldStart }}{{ targetLanguage }}{{ boldEnd }}?",
       "which_chapters": "Quels chapitres de chaque livre voulez-vous utiliser pour former le modèle ?",
-      "partial_explanation": "Chapters that you selected to be drafted cannot be used as training data.",
+      "partial_explanation": "Les chapitres que vous avez sélectionnés pour être rédigés ne peuvent pas être utilisés comme données d'entraînement.",
       "excluded_not_in_any_source": "Ces livres ne peuvent pas être utilisés pour l'apprentissage, car ils ne figurent dans aucun des projets de référence : {{ books }}.",
       "auto_selected": "Les livres qui semblent être complets ont été pré-sélectionnés. Veuillez consulter et mettre à jour les données de formation qui devraient être incluses.",
       "no_target_books": "Aucun ouvrage issu de votre projet n'est disponible à des fins de formation.",
@@ -314,6 +318,9 @@
       "next": "Suivant",
       "generate_draft": "Générer une ébauche"
     }
+  },
+  "draft_confidence": {
+    "low_confidence": "Fiabilité faible"
   },
   "draft_generation_steps": {
     "back": "Retour",
@@ -382,7 +389,9 @@
     "formatting_options": "Options de formatage",
     "formatting": "Mise en forme",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
-    "per_chapter_remarks_notice": "[b]Nouveau![/b] Un avis que l'ébauche est généré par l'IA est maintenant affiché sur chaque chapitre plutôt qu'au début du livre.",
+    "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
+    "low_confidence_books": "La qualité de l'ébauche des livres {{ number }} peut être inférieure à la normale.",
+    "one_book": "1 livre",
     "requested_at": "Demandé {{ requestedAtTime }}.",
     "requested_by": "Demandé par {{ requestedByUserName }} à {{ requestedAtTime }}.",
     "select_formatting_options": "L'ébauche a été créée. Choisissez les options de formatage pour continuer.",
@@ -433,6 +442,8 @@
     "import_some_chapters_failed": "Importation réussie du/des chapitre(s) de {{ successful }} . L'importation du/des chapitre(s) {{ failed }} a échoué. Voir les détails ci-dessus.",
     "importing_draft": "Importation de l'ébauche",
     "importing": "Importation en cours",
+    "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
+    "low_confidence_books": "La qualité de l'ébauche des livres {{ number }} peut être inférieure à la normale.",
     "next": "Suivant",
     "no_books_ready_for_import": "Aucun chapitre ébauche n'est prêt à être importé. Générez une ébauche et réessayez.",
     "overwrite_book_description": "Un ou plusieurs chapitres ont un contenu existant qui sera écrasé dans {{ bookName }} dans [b]{{ projectNameLabel }}[/b]. Les chapitres ayant un contenu existant sont listés ci-dessous. Cliquez sur chaque chapitre pour en afficher le contenu.",
@@ -552,7 +563,6 @@
     "text_doc_corrupted": "Ce chapitre ne peut pas être modifié car les données ont été corrompues.",
     "text_has_been_deleted": "Le livre a été supprimé ou n'est plus accessible.",
     "to_report_issue_email": "Pour signaler un problème, envoyez un e-mail à {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Ce verset est trop long pour générer des suggestions.",
     "your_comment": "Votre commentaire"
   },
   "editor_draft_tab": {
@@ -563,6 +573,7 @@
     "error_applying_draft": "Échec de l'ajout de l'ébauche au projet. Réessayez plus tard.",
     "format_draft": "Options de formatage",
     "format_draft_tooltip": "Personnaliser les options de mise en forme pour l'ébauche",
+    "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
     "no_draft_notice": "{{ bookChapterName }} n'a pas d'ébauche.",
     "offline_notice": "L'ébauche automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout d'une ébauche écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
@@ -865,9 +876,6 @@
     "source_projects_cannot_be_deleted": "Un autre projet est basé sur ce projet et donc il ne peut pas être supprimé.",
     "source_text_placeholder": "Texte source (facultatif)",
     "translate": "Traduire",
-    "translation_suggestions_require_source_text": "Note : Les suggestions de traduction ne sont disponibles que si un texte source est sélectionné.",
-    "translation_suggestions": "Activer les suggestions de traduction",
-    "translations_will_be_suggested": "Les traductions des mots et des phrases seront suggérées alors que vous modifiez le texte des Écritures, en fonction du projet ou de la ressource sélectionnés ci-dessus.",
     "hide_community_checking_text": "Masquer le texte des Écritures",
     "checkers_listen_to_scripture_audio": "Les vérificateurs devront écouter l'audio des Écritures.",
     "insights_settings_header": "Aperçus",
@@ -899,18 +907,12 @@
     "select": "Sélectionner"
   },
   "translator_settings_dialog": {
-    "better": "Meilleures",
     "close": "Fermer",
-    "editor_settings_title": "Editor",
-    "editor_tabs_in_single_pane": "Show editor tabs in a single pane",
+    "editor_settings_title": "Auteur",
+    "editor_tabs_in_single_pane": "Afficher les onglets de l'éditeur dans un seul panneau",
     "insights_enable_assessments": "Afficher les évaluations",
     "insights_enable_autocorrect": "Autoriser les corrections automatiques",
     "insights_settings_title": "Aperçus",
-    "more": "Plus",
-    "number_of_suggestions": "Nombre de suggestions",
-    "settings_not_available_offline": "Translator settings are not available while you are offline.",
-    "suggestion_confidence": "Confiance dans les suggestions",
-    "translation_suggestions_settings_title": "Suggestions de traduction",
     "translator_settings": "Paramètres du traducteur"
   },
   "supported_back_translation_languages_dialog": {
@@ -951,6 +953,19 @@
     "sync_user_permissions_failure_message": "Le dernier utilisateur à synchroniser ce projet n'a plus la permission de synchroniser. Veuillez contacter l'administrateur du projet.",
     "user_permissions_failure_dialog_message": "Vous n'avez plus la permission de synchroniser ce projet avec Paratext. Veuillez contacter l'administrateur du projet."
   },
+  "sync_log": {
+    "initiated_by": "Initiée par",
+    "no_syncs": "Ce projet n'a pas encore été synchronisé.",
+    "offline": "Connectez-vous à Internet pour consulter l'historique des synchronisations.",
+    "show_more": "Plus d'informations",
+    "status": "Statut",
+    "status_cancelled": "Annulé",
+    "status_failed": "Échoué",
+    "status_queued": "En file d'attente",
+    "status_running": "En cours",
+    "status_successful": "Opération réussie",
+    "sync_history": "Synchroniser l'historique"
+  },
   "tab_group_header": {
     "no_tabs_available": "Aucun onglet disponible."
   },
@@ -980,26 +995,11 @@
     "upload_training_data": "Téléverser les données de formation",
     "uploading": "Téléversement..."
   },
-  "training_progress": {
-    "completed_successfully": "Terminé avec succès",
-    "training_completed_successfully": "Formation teminée avec succès",
-    "training": "Formation"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Les suggestions de traduction ne sont pas disponibles. Veuillez sélectionner un projet source qui a des livres en commun avec ce projet pour obtenir des suggestions de traduction.",
-    "not_enough_verses_translated": "Les suggestions de traduction ne sont pas disponibles. Veuillez vous assurer qu'il y a au moins 10 versets correspondants traduits dans les projets source et cible.",
     "progress": "Avancement",
-    "progress_and_suggestions_not_available_offline": "L'état d'avancement de la traduction et les suggestions ne sont pas disponibles lorsque vous êtes hors connexion.",
     "progress_not_available_offline": "L'état d'avancement de la traduction n'est pas disponible lorsque vous êtes hors connexion.",
-    "quality": "Qualité",
-    "retrain": "Reformer",
-    "suggestion_engine": "Moteur de suggestions",
-    "trained_segments": "segments formés",
-    "training": "Formation...",
-    "training_unavailable": "La formation est temporairement indisponible",
     "translate_overview": "Vue d'ensemble de la traduction",
-    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}",
-    "translation_suggestions_will_be_removed": "Votre projet semble utiliser la fonctionnalité des suggestions de traduction. Les suggestions de traduction seront bientôt retirées {{ date }}. Veuillez contacter {{ email }} pour discuter des méthodes alternatives de traduction à l'aide de Scripture Forge."
+    "translated_segments": "{{ translatedSegments }} segments sur {{ total }}"
   },
   "draft_signup": {
     "additional_comments_label": "Commentaires supplémentaires",
@@ -1015,13 +1015,11 @@
     "bt_project_label": "Projet de retraduction",
     "bt_project_placeholder": "Sélectionnez votre projet de retraduction",
     "bt_stage_label": "Disposez-vous d'une traduction écrite ?",
-    "bt_stage_required": "Des informations sur la rétro-traduction sont nécessaires",
     "bt_written_incomplete": "Oui (Incomplet ou périmé)",
     "bt_written_uptodate": "Oui (à jour)",
     "cancel": "Annuler",
     "completed_books_hint": "Veuillez lister tous les livres de votre projet qui sont vérifiés et prêts à être inclus dans la formation. Ils n'ont pas besoin d'être consultés mais doivent être de bonne qualité.",
     "completed_books_label": "Livres terminés",
-    "completed_books_required": "Les livres complétés sont requis",
     "contact_section_title": "Information de contact",
     "draft_source_section_title": "Source d'ébauches",
     "drafting_source_project_hint": "Votre premier choix de texte source pour la création d'ébauches (idéalement similaire en termes de style et de choix exégétiques à vos objectifs de traduction). Doit être dans la même langue qu'au moins un projet de référence ou une rétro-traduction.",
@@ -1030,26 +1028,20 @@
     "email_invalid": "Merci de saisir une adresse e-mail valide",
     "email_label": "E-mail",
     "email_placeholder": "votre.email@exemple.com",
-    "email_required": "L'e-mail est obligatoire",
     "field_manager_label": "Responsable de terrain",
     "field_manager_placeholder": "Nom du responsable de terrain de Seed Company",
-    "field_manager_required": "Le gestionnaire de terrain est requis pour les projets de la société Seed Company",
     "first_reference_project_placeholder": "Premier projet de référence",
     "name_label": "Votre nom",
     "name_placeholder": "Votre nom",
-    "name_required": "Le nom est requis",
     "organization_label": "Votre organisation",
     "organization_placeholder": "Votre organisation",
-    "organization_required": "Votre organisation est requise",
     "partner_none": "Aucun ci-dessus",
     "partner_organization_hint": "L'une de ces organisations soutient-elle votre projet ?",
     "partner_organization_label": "Organisation partenaire",
-    "partner_organization_required": "La sélection de l'organisation partenaire est requise",
     "partner_organization_select_label": "Sélectionnez une organisation partenaire",
     "partner_section_title": "Organisation partenaire",
     "planned_books_hint": "Quels sont les prochains livres que vous aimeriez rédiger ? Choisissez-en jusqu'à 5.",
     "planned_books_label": "Planifié pour la traduction",
-    "planned_books_required": "Les livres prévus pour la traduction sont requis",
     "project_hint": "Le projet que vous souhaitez utiliser pour la rédaction de la traduction",
     "project_info_section_subtitle": "Parlez-nous de {{ project }}",
     "project_info_section_title": "Information sur le projet",
@@ -1057,6 +1049,7 @@
     "project_placeholder": "Sélectionnez votre projet",
     "reference_projects_description": "Ce sont les projets que vous référez le plus à la traduction. Veuillez en sélectionner au moins un.",
     "reference_projects_section_title": "Projets de référence",
+    "required": "Requis",
     "return_to_draft_generation": "Revenir à la génération d'ébauche",
     "second_reference_project_placeholder": "Deuxième projet de référence (facultatif)",
     "submission_success_message": "Votre demande a bien été reçue. Un membre de l'équipe vous contactera dans un délai de {{ min }} à {{ max }} jours ouvrables pour discuter de votre projet et des prochaines étapes.",

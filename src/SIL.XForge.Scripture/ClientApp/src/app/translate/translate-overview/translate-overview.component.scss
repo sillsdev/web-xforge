@@ -25,17 +25,19 @@
     padding-block-end: 10px;
   }
 
-  .translation-suggestions-info {
-    color: var(--sf-translate-suggestions-info-color);
-    padding: 16px;
-  }
-
   .books-card {
     width: 18rem;
 
     .progress-header {
       display: flex;
       place-content: center space-between;
+    }
+
+    .progress {
+      display: flex !important;
+      align-self: center !important;
+      width: 32px;
+      height: 32px;
     }
 
     .books-card-title ::ng-deep {
@@ -63,73 +65,6 @@
           align-self: center;
         }
       }
-    }
-  }
-
-  .progress {
-    display: flex !important;
-    align-self: center !important;
-    width: 32px;
-    height: 32px;
-  }
-
-  .engine-card {
-    width: 16rem;
-    overflow: hidden;
-
-    mat-card-header {
-      padding: 0 16px;
-    }
-
-    .engine-card-title {
-      margin-block: 8px;
-    }
-
-    .engine-card-content {
-      display: flex;
-      flex-direction: column;
-      padding: 0;
-      font-size: 14px;
-
-      .engine-card-quality {
-        display: flex;
-        flex-direction: column;
-        align-self: stretch;
-        background-color: var(--sf-translate-engine-card-background);
-        padding: 26px 16px 15px 16px;
-
-        .engine-card-quality-stars {
-          align-self: center;
-          mat-icon {
-            font-size: 3.5em;
-            height: unset;
-            width: unset;
-          }
-
-          // the half star icon doesn't render reversed in RTL, so render the stars LTR and then rotate them
-          direction: ltr;
-        }
-
-        .engine-card-quality-subtitle {
-          align-self: flex-end;
-          padding-right: 28px;
-        }
-      }
-
-      .engine-card-segments {
-        align-self: center;
-        padding: 15px 16px;
-
-        .engine-card-segments-count {
-          font-size: 2.25em;
-          margin-right: 8px;
-        }
-      }
-    }
-
-    .mat-card-actions {
-      margin: 0;
-      padding: 8px;
     }
   }
 }

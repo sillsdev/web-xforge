@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,40 +15,8 @@ namespace SIL.XForge.Scripture.Services;
 public class PreTranslationServiceTests
 {
     private const string Project01 = "project01";
-    private const string Corpus01 = "corpus01";
     private const string ParallelCorpus01 = "parallelCorpus01";
     private const string TranslationEngine01 = "translationEngine01";
-
-    [Test]
-    public async Task GetPreTranslationParametersAsync_CompatibleWithLegacyCorpora()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        await env.SetupProjectSecretAsync(
-            new ServalData
-            {
-                PreTranslationEngineId = TranslationEngine01,
-                Corpora = new Dictionary<string, ServalCorpus>
-                {
-                    {
-                        "another_corpus",
-                        new ServalCorpus { PreTranslate = false }
-                    },
-                    {
-                        Corpus01,
-                        new ServalCorpus { PreTranslate = true }
-                    },
-                },
-            }
-        );
-
-        // SUT
-        (string translationEngineId, string? corpusId, string? parallelCorpusId) =
-            await env.Service.GetPreTranslationParametersAsync(Project01);
-        Assert.AreEqual(TranslationEngine01, translationEngineId);
-        Assert.AreEqual(Corpus01, corpusId);
-        Assert.IsNull(parallelCorpusId);
-    }
 
     [Test]
     public async Task GetPreTranslationParametersAsync_CompatibleWithParallelCorpora()
@@ -65,10 +32,10 @@ public class PreTranslationServiceTests
         );
 
         // SUT
-        (string translationEngineId, string? corpusId, string? parallelCorpusId) =
-            await env.Service.GetPreTranslationParametersAsync(Project01);
+        (string translationEngineId, string parallelCorpusId) = await env.Service.GetPreTranslationParametersAsync(
+            Project01
+        );
         Assert.AreEqual(TranslationEngine01, translationEngineId);
-        Assert.IsNull(corpusId);
         Assert.AreEqual(ParallelCorpus01, parallelCorpusId);
     }
 
@@ -115,37 +82,6 @@ public class PreTranslationServiceTests
         Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetPreTranslationParametersAsync("invalid_project_id")
         );
-    }
-
-    [Test]
-    [Obsolete("Uses legacy corpus")]
-    public async Task GetPreTranslationUsfmAsync_LegacyCorpus()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true });
-        env.TranslationEnginesClient.GetCorpusPretranslatedUsfmAsync(
-                id: Arg.Any<string>(),
-                corpusId: Arg.Any<string>(),
-                textId: "MAT",
-                textOrigin: PretranslationUsfmTextOrigin.OnlyPretranslated,
-                template: PretranslationUsfmTemplate.Source,
-                paragraphMarkerBehavior: Arg.Any<PretranslationUsfmMarkerBehavior>(),
-                embedBehavior: PretranslationUsfmMarkerBehavior.Strip,
-                styleMarkerBehavior: PretranslationUsfmMarkerBehavior.Strip,
-                quoteNormalizationBehavior: Arg.Any<PretranslationNormalizationBehavior>(),
-                cancellationToken: CancellationToken.None
-            )
-            .Returns(TestEnvironment.MatthewBookUsfm);
-
-        // SUT
-        string usfm = await env.Service.GetPreTranslationUsfmAsync(
-            Project01,
-            40,
-            0,
-            new DraftUsfmConfig(),
-            CancellationToken.None
-        );
-        Assert.AreEqual(TestEnvironment.MatthewBookUsfm, usfm);
     }
 
     [Test]
@@ -346,20 +282,6 @@ public class PreTranslationServiceTests
     }
 
     [Test]
-    public async Task GetVerseConfidencesAsync_LegacyCorpus()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { MockLegacyPreTranslationParameters = true });
-
-        // SUT
-        IEnumerable<VerseConfidence> actual = await env.Service.GetVerseConfidencesAsync(
-            Project01,
-            CancellationToken.None
-        );
-        Assert.IsEmpty(actual);
-    }
-
-    [Test]
     public async Task GetVerseConfidencesAsync_Success()
     {
         // Set up test environment
@@ -377,7 +299,6 @@ public class PreTranslationServiceTests
 
     private class TestEnvironmentOptions
     {
-        public bool MockLegacyPreTranslationParameters { get; init; }
         public bool MockPreTranslationParameters { get; init; }
     }
 
@@ -467,21 +388,12 @@ public class PreTranslationServiceTests
                     ])
                 );
             Service = Substitute.ForPartsOf<PreTranslationService>(ProjectSecrets, TranslationEnginesClient);
-            if (options.MockLegacyPreTranslationParameters)
+            if (options.MockPreTranslationParameters)
             {
                 Service
                     .Configure()
                     .GetPreTranslationParametersAsync(Project01)
-                    .Returns(Task.FromResult<(string, string?, string?)>((TranslationEngine01, Corpus01, null)));
-            }
-            else if (options.MockPreTranslationParameters)
-            {
-                Service
-                    .Configure()
-                    .GetPreTranslationParametersAsync(Project01)
-                    .Returns(
-                        Task.FromResult<(string, string?, string?)>((TranslationEngine01, null, ParallelCorpus01))
-                    );
+                    .Returns(Task.FromResult<(string, string)>((TranslationEngine01, ParallelCorpus01)));
             }
         }
 

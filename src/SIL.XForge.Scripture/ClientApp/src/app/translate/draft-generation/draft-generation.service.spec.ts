@@ -52,7 +52,8 @@ describe('DraftGenerationService', () => {
     projectId,
     buildId,
     bookConfidences: [],
-    chapterConfidences: []
+    chapterConfidences: [],
+    verseConfidences: []
   };
   const buildConfig: BuildConfig = {
     projectId,
@@ -129,9 +130,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/id:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush(buildDto);
       tick();
@@ -360,9 +359,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/project:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush([buildDto]);
       tick();
@@ -384,9 +381,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/project:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush([legacyBuildDto, buildDto]);
       tick();
@@ -401,9 +396,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/project:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.Unauthorized, statusText: 'Unauthorized' });
       tick();
@@ -418,9 +411,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/project:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/project:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
       tick();
@@ -540,9 +531,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/id:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush(buildDto);
       tick();
@@ -557,9 +546,7 @@ describe('DraftGenerationService', () => {
       tick();
 
       // Setup the HTTP request
-      const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/id:${projectId}?preTranslate=true`
-      );
+      const req = httpTestingController.expectOne(`${MACHINE_API_BASE_URL}translation/builds/id:${projectId}`);
       expect(req.request.method).toEqual('GET');
       req.flush(faultedBuild);
       tick();

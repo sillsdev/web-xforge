@@ -1,7 +1,30 @@
 <app-mobile-not-supported></app-mobile-not-supported>
 
 @if (showProjectTitle) {
-  <h1>{{ projectName }}</h1>
+  <div class="header">
+    <h1>{{ projectName }}</h1>
+    <div class="header-actions">
+      <button id="view-event-log" matButton="tonal" [appRouterLink]="eventLogLink" [disabled]="!isOnline">
+        <mat-icon>history</mat-icon>
+        Event Log
+      </button>
+      <button id="view-draft-jobs" matButton="tonal" (click)="navigateToDraftJobs()" [disabled]="!isOnline">
+        <mat-icon>construction</mat-icon>
+        Serval Builds
+      </button>
+      @if (onboardingRequestLink != null) {
+        <button
+          id="view-onboarding-request"
+          matButton="tonal"
+          [appRouterLink]="onboardingRequestLink"
+          [disabled]="!isOnline"
+        >
+          <mat-icon>description</mat-icon>
+          Onboarding Request ({{ onboardingRequestStatusLabel }})
+        </button>
+      }
+    </div>
+  </div>
 }
 
 <h2>Pre-Translation Configuration</h2>
@@ -13,34 +36,8 @@
   </div>
   <div class="admin-tool-control">
     <button
-      id="retrieve-pre-translations"
-      mat-flat-button
-      color="primary"
-      (click)="retrievePreTranslationStatus()"
-      [disabled]="!isOnline"
-    >
-      Force Pre-Translation Retrieval
-    </button>
-    <app-info
-      text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
-    ></app-info>
-  </div>
-  <div class="admin-tool-control">
-    <button id="view-event-log" mat-flat-button color="primary" [appRouterLink]="eventLogLink" [disabled]="!isOnline">
-      View Event Log
-    </button>
-  </div>
-  <div class="admin-tool-control">
-    <button id="view-draft-jobs" mat-flat-button color="primary" (click)="navigateToDraftJobs()" [disabled]="!isOnline">
-      View Serval Builds
-    </button>
-    <app-info text="View all Serval builds for this project in the Serval Administration page."></app-info>
-  </div>
-  <div class="admin-tool-control">
-    <button
       (click)="downloadDraft()"
       mat-flat-button
-      color="primary"
       [disabled]="!isOnline || lastCompletedBuild == null || downloadingDraft"
       id="download-draft"
     >
@@ -51,6 +48,20 @@
     @if (downloadingDraft) {
       <div class="zip-progress">Downloading draft...</div>
     }
+  </div>
+  <div class="admin-tool-control">
+    <button
+      id="retrieve-pre-translations"
+      mat-flat-button
+      (click)="retrievePreTranslationStatus()"
+      [disabled]="!isOnline"
+    >
+      <mat-icon>refresh</mat-icon>
+      Force Pre-Translation Retrieval
+    </button>
+    <app-info
+      text="This will check Serval for any draft pre-translations for this project and update the project's chapters."
+    ></app-info>
   </div>
   <div class="admin-tool-control">
     <mat-card>
@@ -75,38 +86,6 @@
       </mat-card-content>
       <mat-card-actions>
         <button mat-flat-button id="save-serval-config" color="primary" (click)="updateServalConfig()">Save</button>
-      </mat-card-actions>
-    </mat-card>
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Quality Estimation Configuration</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p>This value must be valid JSON, and will be in the file linregress.json created by quality_estimation.py.</p>
-        <mat-form-field [formGroup]="form" appearance="outline" class="quality-estimation-config-field">
-          <mat-label>Quality Estimation Configuration (JSON)</mat-label>
-          <textarea
-            matInput
-            cdkTextareaAutosize
-            id="quality-estimation-config"
-            formControlName="qualityEstimationConfig"
-          ></textarea>
-          <app-write-status
-            [state]="qualityEstimationConfigUpdateState"
-            [formGroup]="form"
-            id="quality-estimation-config-status"
-          ></app-write-status>
-        </mat-form-field>
-      </mat-card-content>
-      <mat-card-actions>
-        <button
-          mat-flat-button
-          id="save-quality-estimation-config"
-          color="primary"
-          (click)="updateQualityEstimationConfig()"
-        >
-          Save
-        </button>
       </mat-card-actions>
     </mat-card>
   </div>

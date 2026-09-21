@@ -1,3 +1,21 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  column-gap: 16px;
+  row-gap: 8px;
+
+  h1 {
+    margin: 0;
+  }
+
+  .header-actions {
+    display: flex;
+    column-gap: 10px;
+  }
+}
+
 .admin-tool {
   display: flex;
   flex-direction: column;
@@ -8,8 +26,7 @@
     flex-direction: row;
     column-gap: 10px;
 
-    .serval-config-field,
-    .quality-estimation-config-field {
+    .serval-config-field {
       width: 100%;
     }
   }

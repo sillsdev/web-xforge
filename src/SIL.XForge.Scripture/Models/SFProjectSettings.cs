@@ -10,6 +10,7 @@ namespace SIL.XForge.Scripture.Models;
 public class SFProjectSettings
 {
     // translate settings
+    [Obsolete("For backwards compatibility with older frontend clients. Deprecated August 2026.")]
     public bool? TranslationSuggestionsEnabled { get; set; }
     public string? SourceParatextId { get; set; }
     public bool? BiblicalTermsEnabled { get; set; }

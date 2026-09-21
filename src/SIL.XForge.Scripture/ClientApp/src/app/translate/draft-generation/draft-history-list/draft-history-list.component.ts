@@ -24,7 +24,8 @@ export class DraftHistoryListComponent {
   showOlderDraftsNotSupportedWarning: boolean = false;
   history: BuildDto[] = [];
   readonly draftHistoryCutOffDateFormatted: string = this.i18n.formatDate(
-    this.draftGenerationService.draftHistoryCutOffDate
+    this.draftGenerationService.draftHistoryCutOffDate,
+    { showTime: false, showTimeZone: false }
   );
   private readonly notifyBuildProgressHandler = (projectId: string): void => {
     this.loadHistory(projectId);

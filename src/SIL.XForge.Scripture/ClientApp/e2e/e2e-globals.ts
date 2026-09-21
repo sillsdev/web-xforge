@@ -17,6 +17,9 @@ export type UserRole = (typeof allRoles)[number];
 
 export const E2E_SYNC_DEFAULT_TIMEOUT = 120_000;
 
+// Timeout for Playwright to launch browser. Default is 3 minutes.
+export const BROWSER_LAUNCH_TIMEOUT_MS = 30_000;
+
 export interface ScreenshotContext {
   engine: BrowserName;
   role?: UserRole;

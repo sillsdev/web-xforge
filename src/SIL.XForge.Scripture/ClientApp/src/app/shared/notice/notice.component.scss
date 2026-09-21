@@ -94,10 +94,12 @@ $colors: (
   &.mode-fill-light {
     border-color: var(--notice-color-outline);
     background-color: var(--notice-color-light);
+    color: var(--notice-color-text);
   }
   &.mode-fill-dark {
     border-color: var(--notice-color);
     background-color: var(--notice-color);
+    color: var(--notice-color-text);
   }
   &.mode-fill-extra-dark {
     border-color: var(--notice-color-extra-dark);

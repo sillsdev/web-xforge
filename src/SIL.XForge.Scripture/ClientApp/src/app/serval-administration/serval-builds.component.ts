@@ -54,13 +54,19 @@ import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
 import { ChapterSet, trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
 import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
-import { BookConfidence, ChapterConfidence } from '../translate/draft-generation/build-confidences/build-confidences';
+import {
+  BookConfidence,
+  ChapterConfidence,
+  VerseConfidence
+} from '../translate/draft-generation/build-confidences/build-confidences';
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
+import { SearchRecordsComponent } from './search-records.component';
 import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
@@ -190,7 +196,8 @@ export interface BuildInputItem {
     DisplayConfidenceComponent,
     MatFormFieldModule,
     MatInputModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    SearchRecordsComponent
   ]
 })
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
@@ -273,7 +280,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       });
   }
 
-  protected onDateRangeChange(range: NormalizedDateRange): void {
+  protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
+    if (range == null) return;
     this.dateRange$.next(range);
   }
 
@@ -312,7 +320,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return this.expandedRows.has(id);
   }
 
-  protected exportCsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+  protected exportCsv(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[] | undefined = undefined): void {
     if (rows == null) {
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportCsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
@@ -321,7 +329,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     }
   }
 
-  protected exportRsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+  protected exportRsv(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[] | undefined = undefined): void {
     if (rows == null) {
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
@@ -330,13 +338,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     }
   }
 
-  protected exportTsv(rows: (BookConfidence | ChapterConfidence)[] | undefined = undefined): void {
+  protected exportTsv(rows: (BookConfidence | ChapterConfidence | VerseConfidence)[] | undefined = undefined): void {
     if (rows == null) {
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
     } else {
       this.buildConfidencesExportService.exportTsv(rows, this.dateRange$.value);
     }
+  }
+
+  protected hasLowConfidence(row: ServalBuildRow | undefined, bookId: string | undefined = undefined): boolean {
+    return hasLowConfidence(row?.report.build, bookId);
   }
 
   private createSpreadsheetData(): {
@@ -372,7 +384,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       row.durationMs != null ? this.formatDurationHours(row.durationMs) : undefined;
     const servalCreated: Date | undefined = row.report.timeline.servalCreated;
     const createdDisplay: string | undefined =
-      servalCreated != null ? this.i18n.formatDate(servalCreated, { showTimeZone: true }) : undefined;
+      servalCreated != null ? this.i18n.formatDate(servalCreated, { showTime: true, showTimeZone: true }) : undefined;
 
     const buildsCreatedSince: number = this.rows.filter(other => {
       if (other.report.project?.sfProjectId !== sfProjectId) return false;
@@ -680,6 +692,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       row.report.project?.shortName,
       row.report.project?.name,
       row.report.project?.ptProjectId,
+      row.report.build?.executionData?.sourceLanguageTag,
+      row.report.build?.executionData?.targetLanguageTag,
       requesterId,
       requesterIdentity?.name,
       requesterIdentity?.displayName,
@@ -1075,14 +1089,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return row.report.problems.length > 0;
   }
 
+  /** Problems grouped by source and severity, most severe first. Sections with no problems are omitted. */
   problemSections(row: ServalBuildRow): ServalBuildProblemsDialogSection[] {
     const sections: ServalBuildProblemsDialogSection[] = [
       { heading: 'SF errors', problems: this.problems(row, 'local', 'error') },
       { heading: 'SF warnings', problems: this.problems(row, 'local', 'warning') },
+      { heading: 'SF information', problems: this.problems(row, 'local', 'info') },
       { heading: 'Serval errors', problems: this.problems(row, 'serval', 'error') },
-      { heading: 'Serval warnings', problems: this.problems(row, 'serval', 'warning') }
+      { heading: 'Serval warnings', problems: this.problems(row, 'serval', 'warning') },
+      { heading: 'Serval information', problems: this.problems(row, 'serval', 'info') }
     ];
-    return sections;
+    return sections.filter((section: ServalBuildProblemsDialogSection) => section.problems.length > 0);
   }
 
   renderProblemMessagesForCard(problems: BuildReportProblem[]): string[] {

@@ -61,8 +61,7 @@ enum ActivityType {
   Backspace,
   Char,
   Navigation,
-  Click,
-  Suggestion
+  Click
 }
 
 interface Activity {
@@ -80,9 +79,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
   metrics!: TranslateMetrics;
 
   private prevMetrics?: TranslateMetrics;
-  private readonly suggestionAccepted$ = new Subject<Activity>();
   private readonly endActiveEdit$ = new Subject<void>();
-  private navigateSuggestionShown: boolean = false;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -122,8 +119,6 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       this.metrics.keyNavigationCount == null &&
       this.metrics.mouseClickCount == null &&
       this.metrics.productiveCharacterCount == null &&
-      this.metrics.suggestionAcceptedCount == null &&
-      this.metrics.suggestionTotalCount == null &&
       this.metrics.timeEditActive == null
     );
   }
@@ -135,18 +130,6 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       this.metrics.editEndEvent = 'task-exit';
     }
     void this.sendMetrics(this.target == null ? undefined : this.target.segment);
-  }
-
-  onSuggestionShown(): void {
-    if (this.metrics.type === 'navigate') {
-      this.navigateSuggestionShown = true;
-    } else {
-      this.incrementMetric('suggestionTotalCount');
-    }
-  }
-
-  onSuggestionAccepted(event: Event): void {
-    this.suggestionAccepted$.next({ type: ActivityType.Suggestion, event, whenStarted: Date.now() });
   }
 
   private setupSubscriptions(): void {
@@ -187,7 +170,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     // active edit activity
     const activeEditKeyDowns$ = keyDowns$.pipe(filter(activity => isActiveEditKeyActivity(activity.type)));
     const activeEditKeyUps$ = keyUps$.pipe(filter(activity => isActiveEditKeyActivity(activity.type)));
-    const activeEditActivity$ = merge(activeEditKeyDowns$, activeEditKeyUps$, this.suggestionAccepted$);
+    const activeEditActivity$ = merge(activeEditKeyDowns$, activeEditKeyUps$);
     this.subscribe(
       activeEditActivity$.pipe(
         tap(activity => this.startEditIfNecessary(activity)),
@@ -256,9 +239,6 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
           case ActivityType.Char:
             this.incrementMetric('keyCharacterCount');
             break;
-          case ActivityType.Suggestion:
-            this.incrementMetric('suggestionAcceptedCount');
-            break;
         }
       }
     }
@@ -296,7 +276,6 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       this.metrics.editEndEvent = editEndEvent;
       void this.sendMetrics(segment);
       this.createMetrics('navigate');
-      this.navigateSuggestionShown = false;
     }
   }
 
@@ -312,11 +291,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       if (this.target.segment != null) {
         this.metrics.segment = this.target.segment.ref;
       }
-      if (this.navigateSuggestionShown) {
-        this.metrics.suggestionTotalCount = 1;
-      }
     }
-    this.navigateSuggestionShown = false;
   }
 
   private incrementMetric(metric: Extract<keyof TranslateMetrics, string>, amount: number = 1): void {

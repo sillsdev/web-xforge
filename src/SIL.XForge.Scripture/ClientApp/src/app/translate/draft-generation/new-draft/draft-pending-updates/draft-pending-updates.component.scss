@@ -1,18 +1,47 @@
+:host {
+  display: block;
+  max-width: 40em;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
 .pending-project-rows {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
+  margin: 8px 0 16px;
 }
 
 .pending-project-row {
   display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+  padding: 8px 0;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+  }
+}
+
+.row-main {
+  display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  column-gap: 16px;
+  // Tallest status content is a button; reserving its height keeps rows from jumping as states change.
+  min-height: 40px;
 }
 
 .project-name {
-  min-width: 160px;
   font-weight: 500;
 }
 
@@ -30,14 +59,47 @@
   gap: 4px;
 }
 
+.sync-done {
+  color: var(--sf-draft-pending-updates-synced-color);
+}
+
+.sync-failed {
+  color: var(--mat-sys-error);
+}
+
+.cant-sync {
+  color: var(--sf-draft-pending-updates-attention-color);
+}
+
+app-sync-progress {
+  display: block;
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+.status-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  color: var(--mat-sys-on-surface-variant);
+
+  .status-synced-icon {
+    color: var(--sf-draft-pending-updates-synced-color);
+  }
+}
+
 .pending-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 16px;
 }
 
 .wait-for-sync {
+  // On narrow screens the buttons leave too little room; take a full line instead of squeezing.
+  flex-basis: 100%;
   color: var(--mat-sys-on-surface-variant);
   font-size: 0.85em;
-  margin: 8px 0 0;
 }

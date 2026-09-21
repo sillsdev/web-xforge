@@ -41,6 +41,8 @@ enum SyncPhase {
 })
 export class SyncProgressComponent {
   @Input() showSyncStatus: boolean = true;
+  /** Renders a single small phase-message line above the progress bar, for embedding in a list row. */
+  @Input() compact: boolean = false;
   @Output() inProgress: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   syncPhase?: SyncPhase;
@@ -145,20 +147,27 @@ export class SyncProgressComponent {
   }
 
   protected updateProgressState(projectId: string, progressState: ProgressState): void {
-    const hasSourceProject = this.sourceProjectDoc?.data != null;
-    this.syncPhase = progressState.syncPhase;
-    this.syncProgress = Math.floor(progressState.syncProgress ?? 0);
-    this.phasePercentage =
-      progressState.syncProgress != null ? Math.round((progressState.syncProgress - this.syncProgress) * 100) : 0;
-    if (projectId === this._projectDoc?.id) {
+    const changeIsForTargetProject: boolean = projectId === this._projectDoc?.id;
+    const hasSourceProject: boolean = this.sourceProjectDoc?.data != null;
+    const changeIsForSourceProject: boolean = hasSourceProject && projectId === this.sourceProjectDoc?.id;
+
+    if (changeIsForTargetProject) {
       this.activeSyncProjectDoc = this._projectDoc;
       this.progressPercent$.next(
         hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue
       );
-    } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
+    } else if (changeIsForSourceProject) {
       this.activeSyncProjectDoc = this.sourceProjectDoc;
       this.progressPercent$.next(progressState.progressValue * 0.5);
+    } else {
+      // Progress event does not pertain to this project or its source; ignore it
+      return;
     }
+
+    this.syncPhase = progressState.syncPhase;
+    this.syncProgress = Math.floor(progressState.syncProgress ?? 0);
+    this.phasePercentage =
+      progressState.syncProgress != null ? Math.round((progressState.syncProgress - this.syncProgress) * 100) : 0;
   }
 
   private checkSyncStatus(): void {

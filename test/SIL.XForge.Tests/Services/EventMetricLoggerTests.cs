@@ -12,6 +12,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services;
@@ -259,6 +260,7 @@ public class EventMetricLoggerTests
             DateAndTime = DateTime.UtcNow,
             DecimalNumber = 12.34M,
             DoubleFloat = 56.78,
+            Enum = TestEnum.TestValue,
             Integer = 1234,
             LongInteger = 5678L,
             ProjectId = Project01,
@@ -618,6 +620,7 @@ public class EventMetricLoggerTests
             var services = new ServiceCollection();
             services.AddSingleton<TestClass>();
             services.AddSingleton<EventMetricLogger>();
+            services.AddSingleton<IExceptionHandler, MemoryExceptionHandler>();
             var containerBuilder = new ContainerBuilder();
             containerBuilder.Populate(services);
             containerBuilder.RegisterEventMetrics();

@@ -1,5 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,6 +23,51 @@ public class StartupTests
         // SUT
         env.Startup.ConfigureServices(env.Services);
         Assert.That(env.Services, Is.Not.Empty);
+    }
+
+    [Test]
+    public async Task PreventBackForwardCaching_SpaHtmlPage_NoStore()
+    {
+        var env = new TestEnvironment();
+        HttpContext context = TestEnvironment.CreateContextWithResponse("/projects");
+
+        // SUT
+        await env.Startup.PreventBackForwardCaching(context, () => Task.CompletedTask);
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        context.Response.Headers.CacheControl = "must-revalidate";
+        await TestEnvironment.StartResponse(context);
+        Assert.AreEqual("no-store", context.Response.Headers.CacheControl.ToString());
+    }
+
+    [Test]
+    public async Task PreventBackForwardCaching_SpaScript_CacheHeaderUnchanged()
+    {
+        var env = new TestEnvironment();
+        HttpContext context = TestEnvironment.CreateContextWithResponse("/main.js");
+
+        // SUT
+        await env.Startup.PreventBackForwardCaching(context, () => Task.CompletedTask);
+
+        context.Response.ContentType = "text/javascript";
+        context.Response.Headers.CacheControl = "must-revalidate";
+        await TestEnvironment.StartResponse(context);
+        Assert.AreEqual("must-revalidate", context.Response.Headers.CacheControl.ToString());
+    }
+
+    [Test]
+    public async Task PreventBackForwardCaching_NotSpaRoute_CacheHeaderUnchanged()
+    {
+        var env = new TestEnvironment();
+        HttpContext context = TestEnvironment.CreateContextWithResponse("/");
+
+        // SUT
+        await env.Startup.PreventBackForwardCaching(context, () => Task.CompletedTask);
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        context.Response.Headers.CacheControl = "must-revalidate";
+        await TestEnvironment.StartResponse(context);
+        Assert.AreEqual("must-revalidate", context.Response.Headers.CacheControl.ToString());
     }
 
     [Test]
@@ -271,5 +320,34 @@ public class StartupTests
         public HttpContext Context { get; } = Substitute.For<HttpContext>();
         public IServiceCollection Services { get; } = new ServiceCollection();
         public Startup Startup { get; }
+
+        /// <summary>Creates a GET request context whose response runs OnStarting callbacks in StartResponse.</summary>
+        public static HttpContext CreateContextWithResponse(string path)
+        {
+            var context = new DefaultHttpContext();
+            context.Features.Set<IHttpResponseFeature>(new StartingResponseFeature());
+            context.Request.Method = HttpMethods.Get;
+            context.Request.Path = new PathString(path);
+            return context;
+        }
+
+        public static Task StartResponse(HttpContext context) =>
+            ((StartingResponseFeature)context.Features.Get<IHttpResponseFeature>()!).StartAsync();
+
+        private class StartingResponseFeature : HttpResponseFeature
+        {
+            private readonly List<(Func<object, Task> Callback, object State)> _onStarting = [];
+
+            public override void OnStarting(Func<object, Task> callback, object state) =>
+                _onStarting.Add((callback, state));
+
+            public async Task StartAsync()
+            {
+                foreach ((Func<object, Task> callback, object state) in _onStarting)
+                {
+                    await callback(state);
+                }
+            }
+        }
     }
 }

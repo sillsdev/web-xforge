@@ -128,6 +128,32 @@ describe('ServalBuildsComponent', () => {
       expect(env.component['rows']).toEqual([matchingRow]);
     }));
 
+    it('filters rows by target language code', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createRow({ targetLanguageTag: 'abc' });
+      const otherRow: ServalBuildRow = env.createRow({ targetLanguageTag: 'def' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('abc');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('filters rows by source language code', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createRow({ sourceLanguageTag: 'cba' });
+      const otherRow: ServalBuildRow = env.createRow({ sourceLanguageTag: 'fed' });
+      env.component['allRows'] = [matchingRow, otherRow];
+
+      // SUT
+      env.component['searchControl'].setValue('cba');
+      env.waitForRowUpdate();
+
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
     it('filters rows by Serval build ID', fakeAsync(() => {
       // Suppose a user searches for a Serval build ID. It should match. And the matching
       // for this and any other searchable fields is both case insensitive and partial,
@@ -1953,6 +1979,7 @@ describe('ServalBuildsComponent', () => {
     const headingSFWarnings: string = 'SF warnings';
     const headingServalErrors: string = 'Serval errors';
     const headingServalWarnings: string = 'Serval warnings';
+    const headingServalInformation: string = 'Serval information';
 
     const msgSFError: string = 'SF error';
     const msgSFWarning: string = 'SF warning';
@@ -1960,6 +1987,7 @@ describe('ServalBuildsComponent', () => {
     const msgFaulted: string = 'Faulted: Engine crashed';
     const msgMissingData: string = 'Missing data';
     const msgServalWarning: string = 'Serval warning';
+    const msgServalInfo: string = 'Serval information message';
     const msgMessage1: string = 'Message 1';
     const msgMessage2: string = 'Message 2';
 
@@ -1999,6 +2027,7 @@ describe('ServalBuildsComponent', () => {
       expect(env.component.problems(row, 'local', 'warning').length).toBe(2);
       expect(env.component.problems(row, 'serval', 'error').length).toBe(3);
       expect(env.component.problems(row, 'serval', 'warning').length).toBe(4);
+      expect(env.component.problems(row, 'serval', 'info').length).toBe(0);
     });
 
     it('problemsBadgeTooltip joins all problem messages', () => {
@@ -2025,16 +2054,29 @@ describe('ServalBuildsComponent', () => {
 
       const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component.problemSections(row);
 
+      // The sections with no problems, such as SF warnings and Serval errors, are left out.
+      expect(sections.length).toBe(2);
       expect(sections[0].heading).toBe(headingSFErrors);
       expect(sections[0].problems[0].message).toBe(msgSFError);
-      expect(sections[1].heading).toBe(headingSFWarnings);
-      // There are no SF warnings.
-      expect(sections[1].problems.length).toBe(0);
-      expect(sections[2].heading).toBe(headingServalErrors);
-      // There are no Serval errors.
-      expect(sections[2].problems.length).toBe(0);
-      expect(sections[3].heading).toBe(headingServalWarnings);
-      expect(sections[3].problems[0].message).toBe(fullMessage);
+      expect(sections[1].heading).toBe(headingServalWarnings);
+      expect(sections[1].problems[0].message).toBe(fullMessage);
+    });
+
+    it('problemSections includes information problems', () => {
+      const env = new TestEnvironment();
+      const problems: BuildReportProblem[] = [
+        { source: 'serval', severity: 'warning', message: msgServalWarning },
+        { source: 'serval', severity: 'info', message: msgServalInfo }
+      ];
+      const row: ServalBuildRow = env.createRow({ problems });
+
+      const sections: { heading: string; problems: BuildReportProblem[] }[] = env.component.problemSections(row);
+
+      expect(sections.length).toBe(2);
+      expect(sections[0].heading).toBe(headingServalWarnings);
+      expect(sections[0].problems[0].message).toBe(msgServalWarning);
+      expect(sections[1].heading).toBe(headingServalInformation);
+      expect(sections[1].problems[0].message).toBe(msgServalInfo);
     });
 
     it('renderProblemMessagesForCard limits returned amount of problems', () => {
@@ -2092,11 +2134,9 @@ describe('ServalBuildsComponent', () => {
 
       verify(mockDialogService.openMatDialog(anything(), anything())).once();
       expect(componentArg).toBe(ServalBuildProblemsDialog);
-      expect(configArg.data.sections.length).toBe(4);
-      expect(configArg.data.sections[0].heading).toBe(headingSFErrors);
-      expect(configArg.data.sections[1].heading).toBe(headingSFWarnings);
-      expect(configArg.data.sections[2].heading).toBe(headingServalErrors);
-      expect(configArg.data.sections[3].heading).toBe(headingServalWarnings);
+      expect(configArg.data.sections.length).toBe(2);
+      expect(configArg.data.sections[0].heading).toBe(headingSFWarnings);
+      expect(configArg.data.sections[1].heading).toBe(headingServalErrors);
     });
   });
 });
@@ -2220,7 +2260,9 @@ class TestEnvironment {
     projectDeleted = false,
     hasServalBuild = true,
     hasEvents = true,
-    buildConfidences = undefined
+    buildConfidences = undefined,
+    sourceLanguageTag = undefined,
+    targetLanguageTag = undefined
   }: {
     projectId?: string | null;
     ptProjectId?: string;
@@ -2238,6 +2280,8 @@ class TestEnvironment {
     status?: DraftGenerationBuildStatus;
     problems?: BuildReportProblem[];
     projectDeleted?: boolean;
+    sourceLanguageTag?: string;
+    targetLanguageTag?: string;
     /** Whether or not there is a Serval build that this row is based on. Records that correspond to no Serval build
      * aren't able to have certain kinds of data. */
     hasServalBuild?: boolean;
@@ -2296,7 +2340,17 @@ class TestEnvironment {
             trainingDataFileIds: [],
             canDenormalizeQuotes: true,
             requestedByUserId: requesterId ?? undefined
-          }
+          },
+          executionData:
+            sourceLanguageTag != null || targetLanguageTag != null
+              ? {
+                  trainCount: 0,
+                  pretranslateCount: 0,
+                  diagnostics: [],
+                  sourceLanguageTag: sourceLanguageTag,
+                  targetLanguageTag: targetLanguageTag
+                }
+              : undefined
         }
       : undefined;
 

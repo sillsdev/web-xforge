@@ -334,12 +334,9 @@
   },
   "error_messages": {
     "error_occurred_login": "लगइन गर्दा त्रुटि भयो।",
-    "failed_to_retrieve_suggestions": "अनुवाद सुझावहरू प्राप्त गर्न सकिएन।",
     "failed_to_update_avatar": "तपाईंको अवतार तस्बिर अद्यावधिक गर्न सकिएन।",
     "login": "Log in",
     "login_expired": "Your log in has expired. Please log in again.",
-    "suggestion_engine_requires_retrain": "अनुवादको लागि सुझावहरू प्राप्त भएन। कृपया संक्षिप्‍त विवरण पृष्ठमा दिइएको सुझावहरूलाई पुनः तालिम दिनुहोस्।",
-    "go_to_retrain": "संक्षिप्‍त विवरणमा जानुहोस्",
     "try_again": "पुन: प्रयास गर्नुहोस्"
   },
   "exception_handling_service": {

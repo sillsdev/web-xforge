@@ -130,7 +130,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         }
 
         // Generate the event metric
-        EventMetric eventMetric = new()
+        EventMetric eventMetric = new EventMetric
         {
             Id = ObjectId.GenerateNewId().ToString(),
             EventType = eventType,
@@ -171,6 +171,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
             decimal value => new BsonDecimal128(value),
             DateTime value => new BsonDateTime(value),
             Uri value => new BsonString(value.ToString()),
+            Enum value => new BsonString(value.ToString()),
             null => BsonNull.Value,
             _ => BsonDocument.Parse(JsonConvert.SerializeObject(objectValue)),
         };

@@ -54,7 +54,7 @@ import { DraftOptionsService } from './draft-options.service';
 import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-onboarding-form.component';
 import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
-import { OnboardingRequest, OnboardingRequestService } from './onboarding-request.service';
+import { OnboardingRequestService, OpenOnboardingRequest } from './onboarding-request.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
 @Component({
@@ -131,7 +131,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   hasDraftBooksAvailable = false;
 
   isPreTranslationApproved = false;
-  onboardingRequest?: OnboardingRequest | null;
+  onboardingRequest?: OpenOnboardingRequest | null;
   responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
   cancelDialogRef?: MatDialogRef<any>;
@@ -192,7 +192,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return issuesEmailTemplate();
   }
 
-  onboardingRequestAged(onboardingRequest: OnboardingRequest): boolean {
+  onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
     const elapsedTime = new Date().getTime() - new Date(onboardingRequest.submittedAt).getTime();
     const elapsedDays = elapsedTime / (1000 * 60 * 60 * 24);
     return elapsedDays > this.responseDays.max;

@@ -96,8 +96,8 @@ export class JobDetailsDialogComponent implements OnInit {
       }
     });
 
-    // Fetch raw engine data (pre-translate is true for draft jobs)
-    this.draftGenerationService.getRawEngine(this.data.projectId, true).subscribe({
+    // Fetch raw engine data
+    this.draftGenerationService.getRawEngine(this.data.projectId).subscribe({
       next: data => {
         this.engine = data;
         this.isLoadingEngine = false;
@@ -199,7 +199,7 @@ export class JobDetailsDialogComponent implements OnInit {
   }
 
   formatDate(timestamp: string): string {
-    return this.i18n.formatDate(new Date(timestamp), { showTimeZone: true });
+    return this.i18n.formatDate(new Date(timestamp), { showTime: true, showTimeZone: true });
   }
 
   hasPayload(payload: any): boolean {

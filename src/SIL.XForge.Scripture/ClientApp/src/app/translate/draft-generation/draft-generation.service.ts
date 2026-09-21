@@ -70,7 +70,7 @@ export class DraftGenerationService {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?preTranslate=true`).pipe(
+    return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}`).pipe(
       map(res => res.data),
       catchError(err => {
         // If no build has ever been started, return undefined
@@ -118,7 +118,7 @@ export class DraftGenerationService {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient.get<BuildDto[]>(`translation/builds/project:${projectId}?preTranslate=true`).pipe(
+    return this.httpClient.get<BuildDto[]>(`translation/builds/project:${projectId}`).pipe(
       map(res => res.data),
       map(res =>
         res?.filter(
@@ -227,23 +227,21 @@ export class DraftGenerationService {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient.get<Object>(`translation/builds/id:${buildId}/raw?preTranslate=true`).pipe(
+    return this.httpClient.get<Object>(`translation/builds/id:${buildId}/raw`).pipe(
       map(res => res.data),
       catchError(() => of(undefined))
     );
   }
 
   /** Gets the engine exactly as Serval returns it */
-  getRawEngine(projectId: string, preTranslate: boolean): Observable<Object | undefined> {
+  getRawEngine(projectId: string): Observable<Object | undefined> {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
-    return this.httpClient
-      .get<Object>(`translation/engines/project:${projectId}/raw?pretranslate=${preTranslate}`)
-      .pipe(
-        map(res => res.data),
-        catchError(() => of(undefined))
-      );
+    return this.httpClient.get<Object>(`translation/engines/project:${projectId}/raw`).pipe(
+      map(res => res.data),
+      catchError(() => of(undefined))
+    );
   }
 
   /**

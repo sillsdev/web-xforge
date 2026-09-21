@@ -1,5 +1,4 @@
 import { DestroyRef, Injectable } from '@angular/core';
-import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { DeltaOperation } from 'rich-text';
@@ -7,12 +6,9 @@ import { firstValueFrom } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { TextDocId } from '../../core/models/text-doc';
-import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
 import { isBadDelta } from '../../shared/utils';
 import { DraftGenerationService } from './draft-generation.service';
-
-const VERSE_NUM_REGEX = /(\d+)\w?$/;
 
 @Injectable({
   providedIn: 'root'
@@ -21,7 +17,6 @@ export class DraftHandlingService {
   private readonly bookDraftCache = new Map<string, Map<string, DeltaOperation[]>>();
 
   constructor(
-    private readonly projectService: SFProjectService,
     private readonly textDocService: TextDocService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
@@ -77,41 +72,11 @@ export class DraftHandlingService {
   ): boolean {
     return (
       this.textDocService.userHasGeneralEditRight(targetProject) &&
-      this.textDocService.hasChapterEditPermission(targetProject, bookNum, chapterNum) &&
+      this.textDocService.hasChapterEditPermission(targetProject, bookNum, chapterNum) !== false &&
       this.textDocService.isDataInSync(targetProject) &&
       !this.textDocService.isEditingDisabled(targetProject) &&
       !isBadDelta(draftOps)
     );
-  }
-
-  /**
-   * Applies the draft to the text document.
-   * @param textDocId The text doc identifier.
-   * @param draftDelta The draft delta to overwrite the current text document with.
-   */
-  async applyChapterDraftAsync(textDocId: TextDocId, draftDelta: Delta): Promise<void> {
-    const verseOps: DeltaOperation[] = draftDelta.ops.filter(
-      op => typeof op.insert === 'object' && op.insert.verse != null
-    );
-
-    let lastVerse: number = 0;
-    if (verseOps.length > 0 && verseOps[verseOps.length - 1].insert!['verse']['number'] != null) {
-      let lastVerseStr: string = verseOps[verseOps.length - 1].insert!['verse']['number'].toString();
-      const match: RegExpExecArray | null = VERSE_NUM_REGEX.exec(lastVerseStr);
-      if (match != null) {
-        lastVerseStr = match[1];
-      }
-      lastVerse = parseInt(lastVerseStr, 10);
-    }
-    await this.projectService.onlineSetDraftApplied(
-      textDocId.projectId,
-      textDocId.bookNum,
-      textDocId.chapterNum,
-      true,
-      lastVerse
-    );
-    await this.projectService.onlineSetIsValid(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum, true);
-    await this.textDocService.overwrite(textDocId, draftDelta, 'Draft');
   }
 
   /**

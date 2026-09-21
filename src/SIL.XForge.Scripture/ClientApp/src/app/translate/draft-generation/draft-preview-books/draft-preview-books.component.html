@@ -1,11 +1,14 @@
 <ng-container *transloco="let t; read: 'draft_preview_books'">
   @for (book of booksWithDrafts$ | async; track book.bookId) {
     <button mat-stroked-button class="draft-book-button" (click)="navigate(book)">
-      @if (book.draftedChapterRange != null) {
-        {{ i18n.localizeBookWithChapters(book.bookId, book.draftedChapterRange) }}
-      } @else {
-        {{ "canon.book_names." + book.bookId | transloco }}
-      }
+      <span>
+        @if (book.draftedChapterRange != null) {
+          {{ i18n.localizeBookWithChapters(book.bookId, book.draftedChapterRange) }}
+        } @else {
+          {{ "canon.book_names." + book.bookId | transloco }}
+        }
+      </span>
+      <app-display-confidence [lowConfidence]="book.lowConfidence"></app-display-confidence>
     </button>
   } @empty {
     <strong>{{ t("no_books_have_drafts") }}</strong>

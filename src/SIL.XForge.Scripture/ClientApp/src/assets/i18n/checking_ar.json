@@ -4,8 +4,8 @@
     "mic_not_found": "لم يتم العثور على ميكروفون. يرجى توصيل ميكروفون بجهازك.",
     "record": "سجِّل",
     "re_record": "إعادة التسجيل",
-    "save": "حفظ الإجابة",
-    "stop_recording": "إيقاف التسجيل"
+    "save": "حفظ ",
+    "stop_recording": "إيقاف تسجيل الدخول "
   },
   "app": {
     "action_not_available_offline": "هذا الإجراء غير متوفر عندما تكون غير متصل بالإنترنت.",
@@ -13,8 +13,8 @@
     "announcements": "إعلانات",
     "cannot_change_password": "لا يمكن تغيير كلمة المرور في هذا الوقت. حاول مرة أخرى لاحقاً أو أبلغ عن مشكلة في قائمة المساعدة.",
     "change_password": "تغيير كلمة المرور",
-    "community_checking": "المراجعة المجتمعية",
-    "community_support": "دعم المجتمع",
+    "community_checking": "التدقيق المجتمعي",
+    "community_support": "الدعم المجتمعي",
     "help": "المساعدة",
     "install_on_device": "التثبيت على الجهاز",
     "language": "اللغة",
@@ -45,7 +45,7 @@
   "attach_audio": {
     "tooltip_record": "تسجيل الصوت",
     "tooltip_stop": "إيقاف التسجيل",
-    "tooltip_upload": "تحميل الصوت"
+    "tooltip_upload": "رفع الصوت"
   },
   "canon": {
     "book_names": {
@@ -54,15 +54,15 @@
       "LEV": "اللاويين",
       "NUM": "العدد",
       "DEU": "التثنية",
-      "JOS": "هوشع",
+      "JOS": "يشوع",
       "JDG": "القضاة",
       "RUT": "راعوث",
       "1SA": "1 صموئيل",
       "2SA": "2 صموئيل",
-      "1KI": "1 الملوك الأول",
-      "2KI": "الملوك الثاني",
-      "1CH": "أخبار الأيام الأول",
-      "2CH": "أخبار الأيام الثاني",
+      "1KI": "1 الملوك",
+      "2KI": "2 الملوك",
+      "1CH": "1 أخبار الأيام",
+      "2CH": "2 أخبار الأيام",
       "EZR": "عزرا",
       "NEH": "نحميا",
       "EST": "أستير (عبري)",
@@ -76,7 +76,7 @@
       "LAM": "مراثي إرميا",
       "EZK": "حزقيال",
       "DAN": "دانيال (عبري)",
-      "HOS": "هوشع",
+      "HOS": "يشوع",
       "JOL": "يوئيل",
       "AMO": "عاموس",
       "OBA": "عوبديا",
@@ -177,19 +177,19 @@
     "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
-    "previous_chapter": "الإصحاح / الفصل السابق",
-    "next_chapter": "الإصحاح / الفصل التالي"
+    "previous_chapter": "الإصحاح السابق",
+    "next_chapter": "الإصحاح التالي"
   },
   "checking": {
     "filter_questions": "تصفية الأسئلة",
     "input_required_before_saving": "أدخل نصًا أو مقطعًا صوتيًا قبل الحفظ",
     "manage_audio": "إدارة الصوت",
-    "me": "إجابتي",
+    "me": "أنا",
     "next": "التالي",
     "play_chapter": "تشغيل الإصحاح",
     "previous": "السابق",
     "questions": "أسئلة",
-    "question_does_not_have_audio": "لم يتم تحميل أي تسجيلات صوتية لهذا الإصحاح. يرجى الاتصال بمسؤول المشروع لتحميل التسجيلات الصوتية.",
+    "question_does_not_have_audio": "لم يتم رفع أي تسجيلات صوتية لهذا الإصحاح. يرجى الاتصال بمسؤول المشروع لرفع التسجيلات الصوتية.",
     "question_filter_none": "إظهار الكل",
     "question_filter_exportable": "تم الإبلاغ عن الإجابات للمراجعة",
     "question_filter_has_answers": "يحتوي على إجابات",
@@ -198,14 +198,14 @@
     "question_filter_not_answered": "لم يجب عنه",
     "question_filter_not_reviewed": "الإجابات التي لم تتم مراجعتها",
     "question_filter_resolved": "الإجابات التي تم وضع علامة «تم حلها» عليها",
-    "questions_on_chapters_no_audio": "تتعلق بعض الأسئلة بإصحاحات لا توجد لها تسجيلات صوتية. يرجى تحميل التسجيلات الصوتية لهذه الإصحاحات.",
-    "question_scope_all": "جميع الكتب",
-    "question_scope_book": "الكتاب الحالي",
-    "question_scope_chapter": "الفصل الحالي",
+    "questions_on_chapters_no_audio": "تتعلق بعض الأسئلة بإصحاحات لا توجد لها تسجيلات صوتية. يرجى رفع التسجيلات الصوتية لهذه الإصحاحات.",
+    "question_scope_all": "جميع الأسفار",
+    "question_scope_book": "السِّفْر الحالي",
+    "question_scope_chapter": "الإصحاح الحالي",
     "questions_range": "الأسئلة تتنوع",
     "tooltip_questions_filter": "تصفية الأسئلة",
     "unknown_author": "مؤلف غير معروف",
-    "upload_audio_file": "تحميل الصوت",
+    "upload_audio_file": "رفع الصوت",
     "view_questions": "إظهار الأسئلة"
   },
   "checking_answers": {
@@ -213,17 +213,17 @@
     "answers": "{{ count }} إجابات",
     "cancel": "إلغاء",
     "cannot_like_own_answer": "لا يمكنك أن تسجِّل إعجاباً بإجابتك.",
-    "confirm_delete": "هل ترغب حقّــا بحذف هذه الإجابة؟",
+    "confirm_delete": "هل ترغب حقًّا بحذف هذه الإجابة؟",
     "delete": "حذف",
-    "edit": "تعديل",
+    "edit": "تحرير ",
     "marked_for_export": "وُضِعَت علامة على هذا المحتوى للمراجعة",
     "mark_for_export": "ضَع علامة على هذا المحتوى للمراجعة",
-    "no_scripture_selected": "لم يتمّ تحديد مقطع كتابي بعد.",
-    "record_question": "سجّل السؤال",
+    "no_scripture_selected": "لم يتمّ اختيار مقطع كتابي بعد.",
+    "record_question": "تسجيل السؤال",
     "resolve": "تسوية",
     "resolved": "تم الحل",
-    "save_answer": "حفظ الإجابة",
-    "select_verses": "اختر الآيات الكتابية",
+    "save_answer": "حفظ ",
+    "select_verses": "اختيار الآيات الكتابية",
     "show_more_unread": "إظهار {{ count }} أسئلة لم يُجَب عنها",
     "tooltip_status_export": "التصدير إلى Paratext إذا تم تجهيزه في «الإعدادات»",
     "tooltip_status_resolve": "ضَع علامة على الإجابة على أنها «تم حلها»",
@@ -234,7 +234,7 @@
     "audio_already_exists": "يوجد مِلَفّ صوتي بالفعل لهذا الاختيار.",
     "audio_file_less_than_one_hundred_mb": "الملفات الصوتية التي يقل حجمها عن 95 ميغابايت فقط",
     "browse_files": "تصفح",
-    "browse_files_tooltip": "تحميل ملفات الصوت والتوقيت",
+    "browse_files_tooltip": "رفع ملفات الصوت والتوقيت",
     "cancel": "إلغاء",
     "delete": "حذف الصوت...",
     "delete_audio": "حذف الصوت",
@@ -244,26 +244,26 @@
     "drag_and_drop_overlay": "أسقط الملفات هنا لرفعها",
     "from_timing_past_to_timing": "قيمة الانتهاء تنتهي قبل قيمة البَدْء في عنصر واحد أو أكثر.",
     "help": "المساعدة",
-    "no_audio_file_uploaded": "لم يتم تحميل أي مِلَفّ صوتي",
-    "no_timing_data_uploaded": "لم يتم تحميل بيانات التوقيت",
-    "not_upload_audio_offline": "لا يمكن تحميل الملفات الصوتية دون الاتصال بالإنترنت.",
+    "no_audio_file_uploaded": "لم يتم رفع أي مِلَفّ صوتي",
+    "no_timing_data_uploaded": "لم يتم رفع بيانات التوقيت",
+    "not_upload_audio_offline": "لا يمكن رفع الملفات الصوتية دون الاتصال بالإنترنت.",
     "save": "حفظ",
     "segments_found": "تم العثور على {{ segments }} مقطعًا",
     "timing": "التوقيت",
     "timing_past_audio_length": "قيمة توقيت عنصر أو أكثر تتجاوز نهاية المِلَفّ الصوتي.",
     "unrecognized_time_format": "صيغة الوقت غير معتمدة",
     "unrecognized_timing_file_format": "صيغة مِلَفّ التوقيت غير معتمدة",
-    "upload": "تحميل",
-    "upload_failed": "تعذر تحميل المِلَفّ الصوتي. يرجى المحاولة مرة أخرى أو استخدام مِلَفّ آخر.",
-    "upload_timing_file": "تحميل مِلَفّ التوقيت",
-    "uploading": "جارٍ تحميل...",
+    "upload": "رفع ",
+    "upload_failed": "تعذر رفع المِلَفّ الصوتي. يرجى المحاولة مرة أخرى أو استخدام مِلَفّ آخر.",
+    "upload_timing_file": "رفع مِلَفّ التوقيت",
+    "uploading": "جاري الرفع...",
     "zero_segments": "لم يتم العثور على أي مقاطع."
   },
   "checking_audio_player": {
     "audio_unavailable": "المادة الصوتية غير متوفرة.",
-    "audio_cannot_be_accessed": "حدث خطأ في محاولة الوصول إلى الملف الصوتي. إن استمرّ الخطأ، الرجاء تحميل ملفٍ آخر.",
+    "audio_cannot_be_accessed": "حدث خطأ في محاولة الوصول إلى الملف الصوتي. إن استمرّ الخطأ، الرجاء رفع ملفٍ آخر.",
     "audio_cannot_be_played": "لا يمكن تشغيل هذا الملف الصوتي حين تكون غير متّل بالإنترنت لأنّه لم يتم تنزيله. اتّصل بالإنترنت لتشغيله.",
-    "audio_cannot_be_previewed": "الملف الصوتي في صيغة لا يمكن عرضها. احفظ أية تعديلات وكُنْ متّصلاة بالإنترنت لتشغيله.",
+    "audio_cannot_be_previewed": "الملف الصوتي في صيغة لا يمكن عرضها. احفظ أية تعديلات وكُنْ متّصلًا بالإنترنت لتشغيله.",
     "segment": "مقطع"
   },
   "checking_audio_recorder": {
@@ -277,7 +277,7 @@
   "checking_input_form": {
     "attach": "إرفاق الآية",
     "cancel": "إلغاء",
-    "save": "حفظ الإجابة",
+    "save": "حفظ ",
     "your_answer": "إجابتك",
     "your_comment": "تعليقك"
   },
@@ -285,7 +285,7 @@
     "add_a_comment": "أضِف تعليقاً",
     "delete": "حذف",
     "confirm_delete": "هل حقا تريد حذف هذا التعليق؟",
-    "edit": "تعديل",
+    "edit": "تحرير ",
     "show_more_comments_and_unread": "إظهار {{ count }} تعليقات أخرى - {{ unread }} غير مقروءة",
     "show_more_comments": "إظهار {{ count }} تعليقات أخرى"
   },
@@ -299,12 +299,12 @@
     "my_progress": "مستوى التقدُّم",
     "project_stats": "تحديثات المشروع",
     "questions": "أسئلة",
-    "tooltip_edit": "تعديل"
+    "tooltip_edit": "تحرير "
   },
   "checking_questions": {
     "go_to": "الانتقال إلى الأسئلة",
     "listen_to_question": "استمع إلى السؤال المتعلق بـ {{ referenceForDisplay }}",
-    "loading": "التحميل جارٍ...",
+    "loading": "جارٍ التحميل…",
     "no_questions_found": "لم يتم العثور على أي أسئلة تتعلق بالإعدادات الواردة أعلاه.",
     "scripture_audio_label": "استمع إلى {{ referenceForDisplay }} للإجابة عن السؤال التالي.",
     "view_answers": "عرض الإجابات"
@@ -334,17 +334,14 @@
   },
   "error_messages": {
     "error_occurred_login": "حدث خطأ أثناء تسجيل الدخول.",
-    "failed_to_retrieve_suggestions": "تعذر الحصول على اقتراحات التَّرْجَمَة.",
     "failed_to_update_avatar": "لا يمكن تحديث الصورة الرمزية الخاصة بك.",
     "login": "تسجيل الدخول",
     "login_expired": "انتهت صَلاحِيَة تسجيل دخولك. يرجى تسجيل الدخول مرة أخرى.",
-    "suggestion_engine_requires_retrain": "تعذر الحصول على اقتراحات التَّرْجَمَة. الرجاء إعادة تدريب الاقتراحات على صفحة «نظرة عامة».",
-    "go_to_retrain": "انتقل إلى «نظرة عامة»",
     "try_again": "حاول ثانيةً"
   },
   "exception_handling_service": {
     "firefox_private_browsing_or_no_space": "حدث خطأ ما. احرص على ألا تستخدم متصفّح فايرفوكس تصفُّحاً خاصاً غير مدعوم، وعلى أن يكون في جهازك مساحة حرة للـ 500 ميغابايت الموصى بها.",
-    "network_request_failed": "فشل في طلب الشبكة. قد تكون بعض الوظائف غير متاحة.",
+    "network_request_failed": "تعذّر طلب الشبكة. قد تكون بعض الوظائف غير متاحة.",
     "out_of_space": "حدث خطأ لأن جهازك لا يحتوي على مساحة التخزين اللازمة.",
     "unknown_error": "خطأ مجهول"
   },
@@ -363,13 +360,13 @@
   "global_notices": {
     "close": "إغلاق",
     "hour_range": "{{ min }} إلى {{ max }} ساعات",
-    "learn_more": "اعرف أكثر",
+    "learn_more": "اعرف المزيد",
     "minute_range": "{{ min }} إلى {{ max }} دقائق",
     "upcoming_maintenance": "سيتم إيقاف موقع «Scripture Forge» للصيانة لمدة تبلغ حوالي {{ duration }} بدءًا من {{ startTime }}."
   },
   "issue_email": {
     "heading": "صِف ما كنت تفعله عندما حدث هذا الخطأ. يرجى تضمين ما يلي:\n- ما كنت تحاول عمله\n- ما كنت تتوقع حدوثه\n- ما حدث فعليًّا\n- إذا كان يحدث في كل مرة أم مرة واحدة فقط",
-    "technical_details": "تفاصيل تقنية",
+    "technical_details": "التفاصيل الفنية",
     "unknown": "غير معروف"
   },
   "join": {
@@ -427,13 +424,13 @@
     "sf_community_checker": "الإجابة على الأسئلة - التعليق على الإجابات"
   },
   "scripture_chooser_dialog": {
-    "choose_book": "اختيار سفر/ كتاب",
-    "choose_chapter": "اختيار فصل/ أصحاح",
+    "choose_book": "اختيار سِفْر ",
+    "choose_chapter": "اختيار إصحاح",
     "choose_end_verse": "اختيار الآية الأخيرة",
     "choose_verse": "اختيار آية"
   },
   "share": {
-    "share": "شارك"
+    "share": "مشاركة "
   },
   "share_control": {
     "copy_link": "نسخ الرابط",
@@ -480,7 +477,7 @@
     "recipient": "مستلم واحد",
     "recipient_can": "يمكن للمستلم أن",
     "recipient_only_notice": "لا يمكن استخدام كل رابط إلا مرة واحدة، وستنتهي صلاحيته بعد {{ shareExpiration }} يومًا. انقر على الزر مرة أخرى لإنشاء رابط جديد ومشاركته.",
-    "share": "شارك",
+    "share": "مشاركة ",
     "share_project": "مشاركة {{ project }}",
     "share_with_others": "مشاركة مع الآخرين",
     "will_expire_in": "تنتهي صَلاحِيَة الرابط بعد [b]{{ count }} يومًا[/b]"
@@ -495,10 +492,10 @@
     "upgrade_safari": "{{ newLine }} نوصي بتحديث متصفّح الإنترنت بالضغط على {{ safariLink }}."
   },
   "text": {
-    "book_is_empty": "هذا السفر/ الكتاب فارغ. أضِف فصولاً في Paratext.",
-    "chapter_does_not_exist": "هذا الفصل/الإصحاح غير موجود في {{ projectName }}",
+    "book_is_empty": "هذا السِّفْر فارغ. أضِف إصحاحات في Paratext.",
+    "chapter_does_not_exist": "هذا الإصحاح غير موجود في {{ projectName }}",
     "error": "حدث خطأ أثناء تحميل النص",
-    "loading": "التحميل جارٍ...",
+    "loading": "جارٍ التحميل…",
     "not_available_offline": "هذا النص غير متوفر دون اتّصال بالإنترنت. اتصل بالإنترنت للوصول إلى النص.",
     "permission_denied": "ليس لديك إذن لمطالعة هذا النص. يرجى الاتصال بمسؤول المشروع للحصول على الإذن.",
     "this_book_does_not_exist": "{{ bookName }} لا يوجد في {{ projectName }}"
@@ -506,7 +503,7 @@
   "text_chooser_dialog": {
     "cancel": "إلغاء",
     "save": "حفظ",
-    "select_scripture": "اختر المقطع الكتابي لإرفاقه بإجابتك",
-    "select_text_error_message": "ختر الآيات الكتابية لإرفاقها بإجابتك."
+    "select_scripture": "اختيار المقطع الكتابي لإرفاقه بإجابتك",
+    "select_text_error_message": "اختر الآيات الكتابية لإرفاقها بإجابتك."
   }
 }

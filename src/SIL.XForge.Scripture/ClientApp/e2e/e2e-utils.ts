@@ -1,9 +1,24 @@
 /// <reference lib="dom" />
-import { Browser, chromium, Locator, Page, PageScreenshotOptions } from 'npm:playwright';
+import { Browser, BrowserType, chromium, LaunchOptions, Locator, Page, PageScreenshotOptions } from 'npm:playwright';
 import { expect } from 'npm:playwright/test';
 import locales from '../../locales.json' with { type: 'json' };
-import { E2E_SYNC_DEFAULT_TIMEOUT, logger, preset, ScreenshotContext } from './e2e-globals.ts';
+import {
+  BROWSER_LAUNCH_TIMEOUT_MS,
+  E2E_SYNC_DEFAULT_TIMEOUT,
+  logger,
+  preset,
+  ScreenshotContext
+} from './e2e-globals.ts';
 import secrets from './secrets.json' with { type: 'json' };
+
+export async function launchBrowser(engine: BrowserType, options: LaunchOptions): Promise<Browser> {
+  try {
+    return await engine.launch({ timeout: BROWSER_LAUNCH_TIMEOUT_MS, ...options });
+  } catch (cause) {
+    // A browser that cannot start is a problem with the environment rather than with a test.
+    throw new Error(`Unable to start ${engine.name()}.`, { cause: cause });
+  }
+}
 
 export async function waitForAppLoad(page: Page): Promise<void> {
   // FIXME This is hideous, but the progress bar doesn't open instantly. Also, even waiting for it to close isn't
@@ -388,18 +403,6 @@ export function isRootUrl(url: string): boolean {
   return a === b;
 }
 
-async function setLocatorToValue(page: Page, locator: string, value: string): Promise<void> {
-  return await page.evaluate(
-    ({ locator, value }) => {
-      const element = document.querySelector(locator);
-      if (element == null) throw new Error(`Element not found for locator: ${locator}`);
-      // @ts-ignore Property 'value' does not exist on type 'Element'.
-      element.value = value;
-    },
-    { locator, value }
-  );
-}
-
 export async function logInAsPTUser(page: Page, user: { email: string; password: string }): Promise<void> {
   await page.goto(preset.rootUrl);
   if (!isRootUrl(page.url())) await logOut(page);
@@ -412,16 +415,7 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
   for (attempt = 1; !loginSuccessful && attempt <= 5; attempt++) {
     await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
 
-    // Paratext Registry login
-
-    // Type fake username so it won't detect a Google account
-    await page.fill('input[name="email"]', 'user@example.com');
-    // Click the next arrow button
-    await page.locator('#password-group').getByRole('button').click();
-    await page.fill('input[name="password"]', user.password);
-    // change the value of email without triggering user input detection
-    await setLocatorToValue(page, 'input[name="email"]', user.email);
-    await page.locator('#password-group').getByRole('button').click();
+    await logInToPTRegistry(page, user);
 
     // The first login requires authorizing Scripture Forge to access the Paratext account
     if ((await page.title()).startsWith('Authorise Application')) {
@@ -431,19 +425,12 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
     // On localhost only, Auth0 requires accepting access to the account
     // Wait until back in the app, or on the authorization page
     const auth0AuthorizeUrl = 'https://sil-appbuilder.auth0.com/decision';
-    const googleLoginPage = 'https://accounts.google.com/';
     await page.waitForURL(url =>
-      [auth0AuthorizeUrl, googleLoginPage, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
+      [auth0AuthorizeUrl, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
     );
 
     if (page.url().startsWith(auth0AuthorizeUrl)) {
       await page.locator('#allow').click();
-    }
-
-    if (page.url().startsWith(googleLoginPage)) {
-      // FIXME Sometimes Google account selection appears despite attempted workaround
-      await page.goto(preset.rootUrl + '/login');
-      continue;
     }
 
     try {
@@ -465,6 +452,51 @@ export async function logInAsPTUser(page: Page, user: { email: string; password:
   if (!loginSuccessful) throw new Error(`Failed to log in after ${attempts} attempts`);
 
   console.log(`Logged in as ${user.email} after ${attempts} attempts`);
+}
+
+/**
+ * Log in to SF via Paratext Registry.
+ *
+ * The test email address ends in @sil.org but uses password (not Google) authentication. The Registry auth page tries
+ * to use Google authentication for @sil.org email addresses. There are different solutions to this. Other than using a
+ * different email address, all remaining solutions rely on specific structure and behaviour of the login page.
+ *
+ * For example, setting a non-sil.org address first, and then switching to an sil.org address without firing input
+ * events can succeed. This method can fail if the Registry server is being slow and its `guessLoginType` does not
+ * respond (and result in `loginType` being set to "password") before the e2e code submits the sil.org address. This
+ * could no doubt be remediated by further watching and responding to the situation.
+ *
+ * This function uses another method that also relies on the specific structure and behaviour of the Registry auth page.
+ * Namely, if the local storage contains the specified email address, then the loginType is set to the type recorded in
+ * local storage. This happens without consulting the Google list, without relying on `guessLoginType` timing, and
+ * without re-adjusting the email address without letting events fire. The local storage items being stored are what the
+ * Registry auth page's "Remember me" checkbox causes to be written. In a way, the Registry auth page supports this
+ * pathway to use password authentication, though would not have recorded a typed @sil.org address as a password type.
+ */
+async function logInToPTRegistry(page: Page, user: { email: string; password: string }): Promise<void> {
+  // Make sure we are at the *Registry* login page, not the Auth0 page which also has an email input.
+  await page.waitForURL(url => url.host.endsWith('.paratext.org'));
+  await page.locator('input[name="email"]').waitFor({ state: 'visible' });
+
+  await page.evaluate((email: string) => {
+    // Set some "Remember me" data.
+    localStorage.setItem('email', email);
+    localStorage.setItem('loginType', 'password');
+  }, user.email);
+
+  await page.fill('input[name="email"]', user.email);
+
+  // Filling the address makes the page read the login type from local storage.
+  try {
+    await page.locator('#google-or').waitFor({ state: 'hidden' });
+  } catch (cause) {
+    throw new Error('The Registry page did not switch to remembered password login type.', {
+      cause: cause
+    });
+  }
+
+  await page.fill('input[name="password"]', user.password);
+  await page.locator('#password-group').getByRole('button').click();
 }
 
 function siteAdminCredentials(): { email: string; password: string } {
@@ -510,7 +542,7 @@ export async function enableDraftingOnProjectAsServalAdmin(page: Page, shortName
  * perform some action in the background to create a particular state)
  */
 export async function getNewBrowserForSideWork(): Promise<{ page: Page; browser: Browser }> {
-  const browser = await chromium.launch({ headless: preset.headless });
+  const browser = await launchBrowser(chromium, { headless: preset.headless });
   const context = await browser.newContext();
   const page = await context.newPage();
   return { page, browser };

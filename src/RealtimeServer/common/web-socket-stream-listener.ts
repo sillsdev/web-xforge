@@ -7,6 +7,7 @@ import jwks from 'jwks-rsa';
 import ShareDB from 'sharedb';
 import WebSocketJSONStream from 'websocket-json-stream';
 import ws from 'ws';
+import { ActivityLogger } from './activity-logger';
 import { ExceptionReporter } from './exception-reporter';
 
 function isLocalRequest(request: http.IncomingMessage): boolean {
@@ -61,6 +62,9 @@ export class WebSocketStreamListener {
     });
 
     wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
+      ActivityLogger.instance.log('webSocketConnected', {
+        origin: req.headers.origin
+      });
       const stream = new WebSocketJSONStream(webSocket);
       backend.listen(stream, req);
     });
@@ -94,6 +98,9 @@ export class WebSocketStreamListener {
         (err, decoded: any) => {
           if (err) {
             // unable to verify access token
+            ActivityLogger.instance.log('webSocketRejected', {
+              reason: 'invalid access token'
+            });
             done(false, 401, 'Unauthorized');
           } else {
             // check that the access token was granted xForge API scope
@@ -102,6 +109,9 @@ export class WebSocketStreamListener {
               (req as any).user = decoded;
               done(true);
             } else {
+              ActivityLogger.instance.log('webSocketRejected', {
+                reason: 'missing required scope'
+              });
               done(false, 401, 'A required scope has not been granted.');
             }
           }
@@ -112,6 +122,9 @@ export class WebSocketStreamListener {
       done(true);
     } else {
       // no access token and not local, so it is unauthorized
+      ActivityLogger.instance.log('webSocketRejected', {
+        reason: 'unauthorized request'
+      });
       done(false, 401, 'Unauthorized');
     }
   }
@@ -133,6 +146,10 @@ export class WebSocketStreamListener {
     callback: (res: boolean, code?: number, message?: string, headers?: http.OutgoingHttpHeaders) => void
   ): void => {
     if (!this.origin.includes(info.origin)) {
+      ActivityLogger.instance.log('webSocketRejected', {
+        origin: info.origin,
+        reason: 'origin not allowed'
+      });
       callback(false, 401, 'Unauthorized');
     } else {
       this.verifyToken(info.req, callback);

@@ -12,6 +12,8 @@ import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { expectedBookChapters } from '../../../shared/progress-service/progress.service';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
+import { DisplayConfidenceComponent } from '../build-confidences/display-confidence.component';
+import { hasLowConfidence } from '../draft-utils';
 
 export interface BookWithDraft {
   bookNumber: number;
@@ -21,13 +23,15 @@ export interface BookWithDraft {
   draftedChapters: number[];
   /** Compact range of drafted chapters (e.g. "30-32"), set only when part of the book was drafted. */
   draftedChapterRange?: string;
+  /** Whether or not the build is low quality */
+  lowConfidence?: boolean;
 }
 
 @Component({
   selector: 'app-draft-preview-books',
   templateUrl: './draft-preview-books.component.html',
   styleUrls: ['./draft-preview-books.component.scss'],
-  imports: [AsyncPipe, MatButton, TranslocoModule]
+  imports: [AsyncPipe, DisplayConfidenceComponent, MatButton, TranslocoModule]
 })
 export class DraftPreviewBooksComponent {
   @Input() build: BuildDto | undefined;
@@ -95,7 +99,8 @@ export class DraftPreviewBooksComponent {
         bookId: bookId,
         chaptersInBook: chaptersInBook,
         draftedChapters: draftedChapters,
-        draftedChapterRange: onlyPartDrafted ? new ChapterSet(draftedChapters).toStringForDisplay() : undefined
+        draftedChapterRange: onlyPartDrafted ? new ChapterSet(draftedChapters).toStringForDisplay() : undefined,
+        lowConfidence: hasLowConfidence(this.build, bookId)
       });
     }
     return books.sort((a, b) => a.bookNumber - b.bookNumber);

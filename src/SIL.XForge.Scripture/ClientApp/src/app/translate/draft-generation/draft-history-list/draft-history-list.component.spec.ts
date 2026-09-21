@@ -265,7 +265,7 @@ describe('DraftHistoryListComponent', () => {
       this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
       if (isOnline === false) this.onlineStatusService.setIsOnline(false);
       when(mockedDraftGenerationService.draftHistoryCutOffDate).thenReturn(new Date('2025-06-04T00:00:00.000Z'));
-      when(mockedI18nService.formatDate(anything())).thenCall(date => date.toLocaleString(['en']));
+      when(mockedI18nService.formatDate(anything(), anything())).thenCall(date => date.toLocaleString(['en']));
 
       this.fixture = TestBed.createComponent(DraftHistoryListComponent);
       this.component = this.fixture.componentInstance;

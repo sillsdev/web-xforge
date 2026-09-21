@@ -18,8 +18,10 @@ import { isEqual, merge } from 'lodash-es';
 import { QuillEditorComponent } from 'ngx-quill';
 import Quill, { Delta, EmitterSource, Range } from 'quill';
 import QuillCursors from 'quill-cursors';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { StringMap } from 'rich-text';
@@ -152,8 +154,10 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   private _isReadOnly: boolean = true;
   private _editorStyles: any = { fontSize: '1rem' };
   private activePresenceSubscription?: Subscription;
+  private onCreateSub?: Subscription;
   private onDeleteSub?: Subscription;
   private localSystemChangesSub?: Subscription;
+  private onlineSubscription?: Subscription;
   private readonly DEFAULT_MODULES: any = {
     toolbar: false,
     keyboard: {
@@ -575,12 +579,15 @@ export class TextComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(isOnline => {
+    this.onlineStatusService.onlineStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async isOnline => {
       this.changeDetector.detectChanges();
 
       if (!isOnline && this._editor != null) {
         this.clearCursors(false); // Don't clear the local cursor
       }
+
+      // If we have come online, watch for the creation of the text document
+      await this.subscribeToTextDocumentCreationAsync(isOnline);
     });
 
     // Listening to document 'selectionchange' event allows local cursor to change position on mousedown,
@@ -674,6 +681,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.viewModel?.unbind();
     this.loadingState = 'unloaded';
     void this.dismissPresences();
+    this.onCreateSub?.unsubscribe();
     this.onDeleteSub?.unsubscribe();
     this.localSystemChangesSub?.unsubscribe();
   }
@@ -1204,6 +1212,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
 
     if (!(await this.projectHasText())) {
+      // If we are online, watch for the creation of the text document
+      await this.subscribeToTextDocumentCreationAsync(this.onlineStatusService.isOnline);
       this.loaded.emit();
       return;
     }
@@ -1213,6 +1223,23 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     // But if getText does not return, then we are showing a good message.
     this.loadingState = 'offline-or-loading';
     const textDoc = await this.projectService.getText(this._id);
+
+    // When the user appears offline, ensure that the user's ops are not sent to ShareDB by pausing sending.
+    // This will prevent the ViewModel's fixSegment offline-specific logic causing issues with a flaky connection.
+    this.onlineSubscription?.unsubscribe();
+    this.onlineSubscription = this.onlineStatusService.onlineStatus$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(isOnline => {
+        if (isOnline) {
+          textDoc.adapter.resume();
+        } else {
+          textDoc.adapter.pause();
+        }
+      });
+    if (!this.onlineStatusService.isOnline) {
+      textDoc.adapter.pause();
+    }
+
     this.loadingState = 'loading';
     this.viewModel.bind(this._id, textDoc, this.subscribeToUpdates);
     if (this.viewModel.isEmpty) this.loadingState = 'empty-viewModel';
@@ -1992,6 +2019,21 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.highlightMarkerHeight = bounds.height;
     this.highlightMarker.style.top = this._selectionBoundsTop + 'px';
     this.updateHighlightMarkerVisibility();
+  }
+
+  private async subscribeToTextDocumentCreationAsync(isOnline: boolean): Promise<void> {
+    // If we are online, watch for the creation of the text document
+    if (
+      isOnline &&
+      this._id != null &&
+      this._editor != null &&
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
+      const textDoc = await this.projectService.getText(this._id);
+      this.onCreateSub?.unsubscribe();
+      this.onCreateSub = textDoc.create$.subscribe(() => this.bindQuill());
+    }
   }
 
   private updateHighlightMarkerVisibility(): void {

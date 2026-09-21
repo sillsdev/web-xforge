@@ -19,6 +19,6 @@ export class HistoryRevisionFormatPipe implements PipeTransform {
    */
   transform(revision: Revision | string, _locale: Locale | null): string {
     const revisionKey = typeof revision === 'string' ? revision : revision.timestamp;
-    return this.i18n.formatDate(new Date(revisionKey));
+    return this.i18n.formatDate(new Date(revisionKey), { showTime: true, showTimeZone: false });
   }
 }

@@ -23,14 +23,9 @@ import {
 } from '@angular/material/table';
 import { Router } from '@angular/router';
 import { saveAs } from 'file-saver';
-import { cloneDeep } from 'lodash-es';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import {
-  DraftConfig,
-  QualityEstimationConfig,
-  TranslateSource
-} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftConfig, TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { catchError, firstValueFrom, lastValueFrom, Observable, of, Subscription, switchMap, throwError } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -56,6 +51,10 @@ import { projectLabel } from '../shared/utils';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 interface Row {
@@ -122,18 +121,18 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
   @Input() showProjectTitle = true;
   preTranslate = false;
   projectName = '';
+  onboardingRequest: OpenOnboardingRequest | undefined;
+  onboardingRequestLink: string[] | undefined;
+  onboardingRequestStatusLabel = '';
 
   headingsToDisplay = { category: 'Category', type: 'Type', name: 'Project', languageCode: 'Language tag', id: '' };
   columnsToDisplay = ['category', 'type', 'name', 'languageCode', 'id'];
   rows: Row[] = [];
 
   servalConfig = new FormControl<string | undefined>(undefined);
-  qualityEstimationConfig = new FormControl<string | undefined>(undefined);
   form = new FormGroup({
-    servalConfig: this.servalConfig,
-    qualityEstimationConfig: this.qualityEstimationConfig
+    servalConfig: this.servalConfig
   });
-  qualityEstimationConfigUpdateState = ElementState.InSync;
   servalConfigUpdateState = ElementState.InSync;
 
   trainingBooksByProject: ProjectAndRange[] = [];
@@ -154,6 +153,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     private readonly draftGenerationService: DraftGenerationService,
     private readonly i18n: I18nService,
     noticeService: NoticeService,
+    private readonly onboardingRequestService: OnboardingRequestService,
     private readonly trainingDataService: TrainingDataService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
@@ -262,16 +262,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           this.draftConfig = draftConfig;
           this.draftJob$ = this.projectService.hasDraft(project) ? this.getDraftJob(projectDoc.id) : of(undefined);
 
-          // Setup the serval config and quality estimation config values
+          // Setup the serval config values
           this.servalConfig.setValue(project.translateConfig.draftConfig.servalConfig);
-
-          // Clone the quality estimation config and remove the last saved date,
-          // as that is right now only used in the backend, and is not a part of the config entered by the user.
-          const qualityEstimationConfig: QualityEstimationConfig | undefined = cloneDeep(
-            project.translateConfig.draftConfig.qualityEstimationConfig
-          );
-          delete qualityEstimationConfig?.dateUpdated;
-          this.qualityEstimationConfig.setValue(JSON.stringify(qualityEstimationConfig));
 
           // Get the last completed build
           if (this.isOnline && this.projectService.hasDraft(project)) {
@@ -293,11 +285,31 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         filterNullish(),
-        switchMap(projectId => this.trainingDataService.getTrainingData(projectId, this.destroyRef))
+        switchMap(projectId => {
+          void this.loadOnboardingRequest(projectId);
+          return this.trainingDataService.getTrainingData(projectId, this.destroyRef);
+        })
       )
       .subscribe(activeFiles => {
         this.trainingDataFiles = activeFiles;
       });
+  }
+
+  private async loadOnboardingRequest(projectId: string): Promise<void> {
+    this.onboardingRequest = undefined;
+    try {
+      this.onboardingRequest = (await this.onboardingRequestService.getOpenOnboardingRequest(projectId)) ?? undefined;
+    } catch {
+      // The link is a convenience, so a failed lookup just leaves it out rather than blocking the page
+    }
+    this.onboardingRequestLink =
+      this.onboardingRequest == null
+        ? undefined
+        : ['/serval-administration', 'onboarding-requests', this.onboardingRequest.id];
+    this.onboardingRequestStatusLabel =
+      this.onboardingRequest == null
+        ? ''
+        : this.onboardingRequestService.getStatus(this.onboardingRequest.status).label;
   }
 
   async downloadDraft(): Promise<void> {
@@ -367,66 +379,6 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
         q: this.activatedProjectService.projectId!
       }
     });
-  }
-
-  updateQualityEstimationConfig(): void {
-    // Do not save if we do not have the project doc or if the configuration was and is empty
-    const projectId: string | undefined = this.activatedProjectService.projectId;
-    const project: SFProjectProfile | undefined = this.activatedProjectService.projectDoc?.data;
-    if (
-      project == null ||
-      projectId == null ||
-      (this.form.value.qualityEstimationConfig ?? '') ===
-        (project.translateConfig.draftConfig.qualityEstimationConfig == null
-          ? ''
-          : JSON.stringify(project.translateConfig.draftConfig.qualityEstimationConfig))
-    ) {
-      this.qualityEstimationConfigUpdateState = ElementState.InSync;
-      return;
-    }
-
-    // Get the quality estimation config from the JSON
-    let qualityEstimationConfig: QualityEstimationConfig | null = null;
-    const qualityEstimationConfigJsonString: string | null | undefined = this.form.value.qualityEstimationConfig;
-    if (qualityEstimationConfigJsonString != null && qualityEstimationConfigJsonString.trim().length > 0) {
-      try {
-        qualityEstimationConfig = JSON.parse(qualityEstimationConfigJsonString);
-      } catch {
-        this.qualityEstimationConfigUpdateState = ElementState.Error;
-        return;
-      }
-    }
-
-    // Ensure the JSON is valid
-    if (
-      qualityEstimationConfig != null &&
-      (typeof qualityEstimationConfig.version !== 'string' ||
-        typeof qualityEstimationConfig.slope !== 'number' ||
-        typeof qualityEstimationConfig.intercept !== 'number' ||
-        qualityEstimationConfig.version !== '0.1')
-    ) {
-      this.qualityEstimationConfigUpdateState = ElementState.Error;
-      return;
-    }
-
-    // Do not update if the values did not change
-    const existingQualityEstimationConfig: QualityEstimationConfig | undefined =
-      project.translateConfig.draftConfig.qualityEstimationConfig;
-    if (
-      qualityEstimationConfig?.version === existingQualityEstimationConfig?.version &&
-      qualityEstimationConfig?.slope === existingQualityEstimationConfig?.slope &&
-      qualityEstimationConfig?.intercept === existingQualityEstimationConfig?.intercept
-    ) {
-      this.qualityEstimationConfigUpdateState = ElementState.InSync;
-      return;
-    }
-
-    // Update the Quality Estimation Configuration
-    this.qualityEstimationConfigUpdateState = ElementState.Submitting;
-    void this.projectService
-      .onlineSetQualityEstimationConfig(projectId, qualityEstimationConfig)
-      .then(() => (this.qualityEstimationConfigUpdateState = ElementState.Submitted))
-      .catch(() => (this.qualityEstimationConfigUpdateState = ElementState.Error));
   }
 
   updateServalConfig(): void {

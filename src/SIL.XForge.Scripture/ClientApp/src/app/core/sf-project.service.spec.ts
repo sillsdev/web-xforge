@@ -137,15 +137,6 @@ describe('SFProjectService', () => {
     }));
   });
 
-  describe('onlineSetDraftApplied', () => {
-    it('should invoke the command service', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.service.onlineSetDraftApplied('project01', 1, 1, true, 25);
-      verify(mockedCommandService.onlineInvoke(anything(), 'setDraftApplied', anything())).once();
-      expect().nothing();
-    }));
-  });
-
   describe('onlineEventMetrics', () => {
     it('should invoke the command service', fakeAsync(async () => {
       const env = new TestEnvironment();
@@ -177,19 +168,6 @@ describe('SFProjectService', () => {
       );
       verify(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).once();
       expect(actual).toBe(jobId);
-    }));
-  });
-
-  describe('onlineSetQualityEstimationConfig', () => {
-    it('should invoke the command service', fakeAsync(async () => {
-      const env = new TestEnvironment();
-      await env.service.onlineSetQualityEstimationConfig('project01', {
-        version: '0.1',
-        slope: 109.6145,
-        intercept: -14.0633
-      });
-      verify(mockedCommandService.onlineInvoke(anything(), 'setQualityEstimationConfig', anything())).once();
-      expect().nothing();
     }));
   });
 

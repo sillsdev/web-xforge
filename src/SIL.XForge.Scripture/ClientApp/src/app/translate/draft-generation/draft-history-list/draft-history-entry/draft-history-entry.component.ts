@@ -32,17 +32,18 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { BuildDto } from '../../../../machine-api/build-dto';
+import { BuildDto, ServalDiagnosticCode } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { NoticeComponent } from '../../../../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../../../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../../../shared/scripture-range-display';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
+import { DisplayConfidenceComponent } from '../../build-confidences/display-confidence.component';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
-import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../../draft-utils';
+import { DraftSourcesAsTranslateSourceArrays, hasLowConfidence, projectToDraftSources } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
@@ -77,6 +78,7 @@ interface SourceInfo {
   selector: 'app-draft-history-entry',
   imports: [
     NgClass,
+    DisplayConfidenceComponent,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,
@@ -328,11 +330,6 @@ export class DraftHistoryEntryComponent {
 
   readonly columnsToDisplay: string[] = ['scriptureRange', 'source', 'target'];
 
-  private readonly showPerChapterRemarksNoticeExpireDate: Date = new Date('2026-12-31T12:00:00.000Z');
-
-  readonly timeframeForPerChapterRemarksNotice: boolean =
-    Date.now() < this.showPerChapterRemarksNoticeExpireDate.getTime();
-
   constructor(
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -346,21 +343,9 @@ export class DraftHistoryEntryComponent {
   ) {}
 
   formatDate(date?: string): string {
-    const formattedDate = date == null ? '' : this.i18n.formatDate(new Date(date));
+    const formattedDate =
+      date == null ? '' : this.i18n.formatDate(new Date(date), { showTime: true, showTimeZone: false });
     return formattedDate.indexOf(RIGHT_TO_LEFT_MARK) !== -1 ? RIGHT_TO_LEFT_MARK + formattedDate : formattedDate;
-  }
-
-  versionIsAtLeast(version: string | undefined, isAtLeast: string): boolean {
-    const parse = (v: string | undefined): [number, number] => {
-      const match = v?.match(/^(\d+)\.(\d+)/);
-      if (!match) return [0, 0];
-      return [Number(match[1]), Number(match[2])];
-    };
-
-    const [major1, minor1] = parse(version);
-    const [major2, minor2] = parse(isAtLeast);
-
-    return major1 !== major2 ? major1 > major2 : minor1 >= minor2;
   }
 
   getStatus(state: BuildStates): { icons: string; text: string; color: string } {
@@ -391,6 +376,25 @@ export class DraftHistoryEntryComponent {
       disableClose: false,
       panelClass: 'use-application-text-color'
     });
+  }
+
+  protected hasLowConfidence(build: BuildDto): boolean {
+    return hasLowConfidence(build);
+  }
+
+  protected booksWithLowConfidence(build: BuildDto): number {
+    return build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0;
+  }
+
+  protected lowConfidenceBookName(build: BuildDto): string {
+    const bookId: string | undefined = build?.executionData?.diagnostics?.find(
+      d => d.code === ServalDiagnosticCode.LowConfidence
+    )?.data?.bookId;
+    if (bookId != null) {
+      return this.i18n.localizeBook(bookId);
+    } else {
+      return this.i18n.translateStatic('draft_history_entry.one_book');
+    }
   }
 
   private async getProjectSourceInfo(

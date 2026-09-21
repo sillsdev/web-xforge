@@ -26,12 +26,6 @@ mat-card:last-of-type {
   }
 }
 
-.offline {
-  .card-title {
-    opacity: $disabledTextOpacity;
-  }
-}
-
 .settings-content {
   padding-inline-start: 1em;
 }
@@ -43,28 +37,6 @@ mat-card:last-of-type {
     &:last-child {
       margin-bottom: 0;
     }
-  }
-}
-
-.slider-labels {
-  margin-top: 15px;
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-}
-
-.suggestions-confidence-field {
-  display: flex;
-  flex-direction: column;
-  margin-top: 1em;
-}
-
-.minor-header {
-  font-size: 0.875rem;
-  font-weight: 500;
-
-  &.disabled {
-    opacity: $disabledTextOpacity;
   }
 }
 

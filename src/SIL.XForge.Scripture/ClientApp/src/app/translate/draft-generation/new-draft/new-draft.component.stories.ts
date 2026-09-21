@@ -276,7 +276,14 @@ function setUpMocks(args: StoryArgs): void {
   when(mockedNllbLanguageService.isNllbLanguageAsync(anything())).thenResolve(false);
 
   const pendingProjects = args.hasPendingUpdates
-    ? [makeParatextProject({ projectId: DRAFT_SOURCE_ID, name: 'Spanish Draft Source', hasUpdate: true })]
+    ? [
+        makeParatextProject({
+          projectId: DRAFT_SOURCE_ID,
+          shortName: 'DS1',
+          name: 'Spanish Draft Source',
+          hasUpdate: true
+        })
+      ]
     : [];
   when(mockedParatextService.getProjects()).thenResolve(pendingProjects);
 
@@ -384,7 +391,7 @@ export const PendingUpdates: Story = {
   args: { hasPendingUpdates: true },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await canvas.findByText('Spanish Draft Source');
+    await canvas.findByText('DS1 - Spanish Draft Source');
     // The continue-anyway action is always offered; the wizard's own step buttons are hidden here.
     expect(canvas.queryByTestId('next-button')).toBeNull();
   }

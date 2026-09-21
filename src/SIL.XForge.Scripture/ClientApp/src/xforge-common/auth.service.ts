@@ -358,7 +358,7 @@ export class AuthService {
     return path[1];
   }
 
-  private async getTokenDetails(): Promise<GetTokenSilentlyVerboseResponse> {
+  private async getTokenDetails(): Promise<GetTokenSilentlyVerboseResponse | undefined> {
     return await this.auth0.getTokenSilently({ detailedResponse: true });
   }
 
@@ -596,7 +596,7 @@ export class AuthService {
   private async checkSession(retryUponTimeout: boolean = true): Promise<GetTokenSilentlyVerboseResponse | null> {
     this.checkSessionPromise ??= new Promise<GetTokenSilentlyVerboseResponse | null>(async (resolve, reject) => {
       try {
-        const tokenResponse = await this.getTokenDetails();
+        const tokenResponse = (await this.getTokenDetails()) ?? null;
         resolve(tokenResponse);
       } catch (err) {
         if (

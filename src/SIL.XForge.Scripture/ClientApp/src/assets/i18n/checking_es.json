@@ -334,12 +334,9 @@
   },
   "error_messages": {
     "error_occurred_login": "Se produjo un error durante el inicio de sesión.",
-    "failed_to_retrieve_suggestions": "No pude conseguir sugerencias de traducción.",
     "failed_to_update_avatar": "No se ha podido actualizar la imagen de su avatar.",
     "login": "Iniciar sesión",
     "login_expired": "Su sesión ha caducado. Por favor, inicie sesión de nuevo.",
-    "suggestion_engine_requires_retrain": "No se han podido obtener sugerencias de traducción. Por favor, vuelva a entrenar las sugerencias en la página Resumen.",
-    "go_to_retrain": "Ir al resumen",
     "try_again": "Inténtelo de nuevo"
   },
   "exception_handling_service": {

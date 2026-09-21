@@ -50,7 +50,7 @@
     "deuterocanon": "Deuterocanónico",
     "new_testament": "Nuevo Testamento",
     "old_testament": "Antiguo Testamento",
-    "book_progress": "‎{{ percent }} traducido"
+    "book_progress": "{{ percent }} traducido"
   },
   "checking": {
     "add_question": "Agregar pregunta"
@@ -223,6 +223,7 @@
     "quota_exceeded": "La función de creación de borradores no está disponible temporalmente para este proyecto, ya que se ha superado su cuota",
     "report_problem": "Reportar problema",
     "signup_already_submitted": "{{ name }} envió una solicitud para inscribirse en la redacción en {{ date }}. Un miembro del equipo se pondrá en contacto con usted en un plazo de entre {{ min }} y {{ max }} para hablar de su proyecto y de los pasos a seguir.",
+    "signup_response_will_be_emailed": "La respuesta se enviará por correo electrónico a [b]{{ email }}[/b].",
     "sign_up_for_drafting": "Inscríbase para redactar",
     "temporarily_unavailable": "La generación de borradores está temporalmente no disponible.",
     "problem_fetching_build_history": "Ha surgido un problema al recuperar el historial de compilaciones.",
@@ -281,6 +282,7 @@
     "pending_updates": {
       "heading": "Sincronizar antes de redactar",
       "body": "Estos proyectos presentan cambios en Paratext que aún no se han reflejado aquí. Redactar sin sincronizar puede reducir la calidad del borrador.",
+      "checking_projects": "Comprobando el estado del proyecto...",
       "sync": "Sincronizar",
       "sync_all": "Sincronizar todo",
       "continue_anyway": "Continuar de todos modos",
@@ -288,7 +290,9 @@
       "sync_failed": "Sincronización fallida",
       "retry": "Reintentar",
       "cant_sync": "Hay cambios: pide a un administrador del proyecto que lo sincronice",
-      "wait_for_sync": "Espera a que termine la sincronización antes de continuar."
+      "wait_for_sync": "Espera a que termine la sincronización antes de continuar.",
+      "sync_count_progress": "{{ completed }} de {{ total }} proyectos sincronizados",
+      "all_synced_continuing": "Todo está al día. Continuando..."
     },
     "draft_books": {
       "title": "Seleccionar libros para el borrador",
@@ -314,6 +318,9 @@
       "next": "Siguiente",
       "generate_draft": "Generar borrador"
     }
+  },
+  "draft_confidence": {
+    "low_confidence": "Baja confianza"
   },
   "draft_generation_steps": {
     "back": "Atrás",
@@ -382,7 +389,9 @@
     "formatting_options": "Opciones de formato",
     "formatting": "Formato",
     "hide_model_training_configuration": "Ocultar la configuración de entrenamiento del modelo",
-    "per_chapter_remarks_notice": "[b]¡Novedad![/b] Ahora se muestra en cada capítulo un aviso indicando que el borrador ha sido generado por IA, en lugar de aparecer al principio del libro.",
+    "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
+    "low_confidence_books": "La calidad del borrador para {{ number }} libros puede ser inferior a la normal.",
+    "one_book": "1 libro",
     "requested_at": "Solicitado {{ requestedAtTime }}.",
     "requested_by": "Solicitado por {{ requestedByUserName }} en {{ requestedAtTime }}.",
     "select_formatting_options": "Se ha creado el borrador. Elija las opciones de formato para continuar.",
@@ -433,6 +442,8 @@
     "import_some_chapters_failed": "Importado(s) {{ successful }} capítulo(s) con éxito. No se pudo importar capítulos {{ failed }} . Ver detalles arriba.",
     "importing_draft": "Importando borrador",
     "importing": "Importando",
+    "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
+    "low_confidence_books": "La calidad del borrador para {{ number }} libros puede ser inferior a la normal.",
     "next": "Siguiente",
     "no_books_ready_for_import": "No hay borradores de capítulos listos para importar. Genere un borrador e inténtelo de nuevo.",
     "overwrite_book_description": "Uno o más capítulos tienen contenido existente que se sobrescribirá en {{ bookName }} en [b]{{ projectNameLabel }}[/b]. Los capítulos con contenido existente se enumeran a continuación. Haga clic en cada capítulo para ver el contenido.",
@@ -552,7 +563,6 @@
     "text_doc_corrupted": "Este capítulo no se puede editar porque los datos se han corrompido.",
     "text_has_been_deleted": "El libro ha sido eliminado o ya no está disponible.",
     "to_report_issue_email": "Para informar de un problema, envíe un correo electrónico {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Este versículo es demasiado largo para generar sugerencias.",
     "your_comment": "Su comentario"
   },
   "editor_draft_tab": {
@@ -563,6 +573,7 @@
     "error_applying_draft": "No se ha podido añadir el borrador al proyecto. Vuelva a intentarlo más tarde.",
     "format_draft": "Opciones de formato",
     "format_draft_tooltip": "Personalizar las opciones de formato del borrador",
+    "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
     "no_draft_notice": "{{ bookChapterName }} no tiene borrador.",
     "offline_notice": "Los borradores generados no están disponibles sin conexión.",
     "overwrite": "Añadir el borrador sobrescribirá el capítulo actual. ¿Está seguro de que desea continuar?",
@@ -865,9 +876,6 @@
     "source_projects_cannot_be_deleted": "Otro proyecto está basado en este proyecto y por lo tanto no puede ser eliminado.",
     "source_text_placeholder": "Texto original (opcional)",
     "translate": "Traducir",
-    "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
-    "translation_suggestions": "Habilitar las sugerencias de traducción",
-    "translations_will_be_suggested": "Las traducciones de las palabras y frases se sugerirán a medida que edite las Escrituras basadas en el proyecto o recurso seleccionado anteriormente.",
     "hide_community_checking_text": "Ocultar el texto de las Escrituras",
     "checkers_listen_to_scripture_audio": "Los Revisores tendrán que escuchar el audio de las Escrituras.",
     "insights_settings_header": "Insights",
@@ -899,18 +907,12 @@
     "select": "Seleccionar"
   },
   "translator_settings_dialog": {
-    "better": "Mejor",
     "close": "Cerrar",
     "editor_settings_title": "Editor",
     "editor_tabs_in_single_pane": "Mostrar pestañas del editor en un solo panel",
     "insights_enable_assessments": "Mostrar evaluaciones",
     "insights_enable_autocorrect": "Permitir autocorrecciones",
     "insights_settings_title": "Insights",
-    "more": "Más",
-    "number_of_suggestions": "Número de sugerencias",
-    "settings_not_available_offline": "Las opciones del traductor no están disponibles cuando no tiene conexión a Internet.",
-    "suggestion_confidence": "Confianza en la sugerencia",
-    "translation_suggestions_settings_title": "Sugerencias de traducción",
     "translator_settings": "Configuración del traductor"
   },
   "supported_back_translation_languages_dialog": {
@@ -951,6 +953,19 @@
     "sync_user_permissions_failure_message": "El último usuario que sincronizó este proyecto ya no tiene permiso para sincronizar. Póngase en contacto con el administrador del proyecto.",
     "user_permissions_failure_dialog_message": "Ya no tiene permiso para sincronizar este proyecto con Paratext. Póngase en contacto con el administrador del proyecto."
   },
+  "sync_log": {
+    "initiated_by": "Iniciado por",
+    "no_syncs": "Este proyecto aún no ha sido sincronizado.",
+    "offline": "Conéctate a Internet para ver el historial de sincronización.",
+    "show_more": "Mostrar más",
+    "status": "Estado",
+    "status_cancelled": "Cancelado",
+    "status_failed": "Fallido",
+    "status_queued": "En cola",
+    "status_running": "En curso",
+    "status_successful": "Exitoso",
+    "sync_history": "Historial de sincronización"
+  },
   "tab_group_header": {
     "no_tabs_available": "No hay pistañas disponibles."
   },
@@ -980,26 +995,11 @@
     "upload_training_data": "Cargar datos de entrenamiento",
     "uploading": "Subiendo..."
   },
-  "training_progress": {
-    "completed_successfully": "Completado con éxito",
-    "training_completed_successfully": "Entrenamiento completado con éxito",
-    "training": "Entrenamiento"
-  },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Las sugerencias de traducción no están disponibles. Por favor, seleccione un proyecto fuente que comparta libros en común con este proyecto para obtener sugerencias de traducción.",
-    "not_enough_verses_translated": "Las sugerencias de traducción no están disponibles. Asegúrese de que hay al menos 10 versículos traducidos que coincidan en los proyectos de origen y destino.",
     "progress": "Progreso",
-    "progress_and_suggestions_not_available_offline": "El progreso de la traducción y las sugerencias no están disponibles cuando no se está conectado.",
     "progress_not_available_offline": "El progreso de la traducción no está disponible cuando no se está conectado.",
-    "quality": "Calidad",
-    "retrain": "Volver a entrenar",
-    "suggestion_engine": "Motor de sugerencias",
-    "trained_segments": "segmentos entrenados",
-    "training": "Entrenamiento...",
-    "training_unavailable": "La formación no está disponible temporalmente",
     "translate_overview": "Resumen de la traducción",
-    "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos",
-    "translation_suggestions_will_be_removed": "Parece que su proyecto utiliza la función de sugerencias de traducción. Las sugerencias de traducción se eliminarán {{ date }}. Póngase en contacto con {{ email }} para hablar sobre formas alternativas de traducir utilizando Scripture Forge."
+    "translated_segments": "{{ translatedSegments }} de {{ total }} segmentos"
   },
   "draft_signup": {
     "additional_comments_label": "Comentarios adicionales",
@@ -1015,13 +1015,11 @@
     "bt_project_label": "Proyecto de retrotraducción",
     "bt_project_placeholder": "Seleccione su proyecto de retrotraducción",
     "bt_stage_label": "¿Tiene una retrotraducción escrita?",
-    "bt_stage_required": "Se requiere información de la retrotraducción",
     "bt_written_incomplete": "Sí (incompleto o fuera de fecha)",
     "bt_written_uptodate": "Sí (actualizado)",
     "cancel": "Cancelar",
     "completed_books_hint": "Por favor, enumere todos los libros en su proyecto que estén revisados y listos para incluir en la formación. No es necesario que hayan sido revisados por un consultor, pero deben ser de buena calidad.",
     "completed_books_label": "Libros completados",
-    "completed_books_required": "Se requieren libros completos",
     "contact_section_title": "Información de contacto",
     "draft_source_section_title": "Fuente del borrador",
     "drafting_source_project_hint": "Su primera elección de texto fuente para crear borradores (idealmente similar en estilo y opciones exegéticas a sus objetivos de traducción). Debe estar en la misma lengua que al menos un proyecto de referencia o traducción retrospectiva.",
@@ -1030,26 +1028,20 @@
     "email_invalid": "Por favor ingrese un correo electrónico válido",
     "email_label": "Correo electrónico",
     "email_placeholder": "su.email@ejemplo.com",
-    "email_required": "El correo electrónico es obligatorio",
     "field_manager_label": "Administrador de campo",
     "field_manager_placeholder": "Nombre de su administrador de campo de Seed Company",
-    "field_manager_required": "Se requiere un administrador de campos para los proyectos de la Seed Company",
     "first_reference_project_placeholder": "Primer proyecto de referencia",
     "name_label": "Su nombre",
     "name_placeholder": "Su nombre",
-    "name_required": "Se requiere un nombre",
     "organization_label": "Su organización",
     "organization_placeholder": "Su organización",
-    "organization_required": "Se requiere su organización",
     "partner_none": "Ninguna de los anteriores",
     "partner_organization_hint": "¿Alguna de estas organizaciones colabora con su proyecto?",
     "partner_organization_label": "Organización asociada",
-    "partner_organization_required": "Se requiere la selección de una organización asociada",
     "partner_organization_select_label": "Seleccionar una organización asociada",
     "partner_section_title": "Organización asociada",
     "planned_books_hint": "¿Qué libros le gustaría redactar a continuación? Seleccione hasta 5.",
     "planned_books_label": "Planeado para traducción",
-    "planned_books_required": "Se requieren libros planificados para su traducción",
     "project_hint": "El proyecto que desea utilizar para la redacción de la traducción",
     "project_info_section_subtitle": "Cuéntanos sobre {{ project }}",
     "project_info_section_title": "Información del Proyecto",
@@ -1057,6 +1049,7 @@
     "project_placeholder": "Seleccione su proyecto",
     "reference_projects_description": "Estos son los proyectos a los que más se refiere cuando traduce. Por favor, seleccione al menos uno.",
     "reference_projects_section_title": "Proyectos de referencia",
+    "required": "Requerido",
     "return_to_draft_generation": "Volver a la generación de borradores",
     "second_reference_project_placeholder": "Segundo proyecto de referencia (opcional)",
     "submission_success_message": "Hemos recibido su solicitud. Un miembro del equipo se pondrá en contacto con usted en un plazo de {{ min }} a {{ max }} días laborables para hablar de su proyecto y de los siguientes pasos.",

@@ -17,6 +17,7 @@ public class ServalData
     /// <remarks>
     /// The user should not interact with the translation engine directly by ID.
     /// </remarks>
+    [Obsolete("SMT suggestions are no longer supported. Deprecated August 2026")]
     public string? TranslationEngineId { get; set; }
 
     /// <summary>
@@ -29,11 +30,13 @@ public class ServalData
     /// <para>If this is null, no error has been yet reported.</para>
     /// <para>This property should be set to null if a build starts.</para>
     /// </remarks>
+    [Obsolete("SMT suggestions are no longer supported. Deprecated August 2026")]
     public string? TranslationErrorMessage { get; set; }
 
     /// <summary>
     /// Gets or sets the Hangfire Job identifier for the Translation job.
     /// </summary>
+    [Obsolete("SMT suggestions are no longer supported. Deprecated August 2026")]
     public string? TranslationJobId { get; set; }
 
     /// <summary>
@@ -47,6 +50,7 @@ public class ServalData
     /// This is used to keep track of whether a build and its corpus is currently uploading to Serval.
     /// If this is longer than 6 hours ago (UTC), there will have been a crash, so an error should be reported.
     /// </remarks>
+    [Obsolete("SMT suggestions are no longer supported. Deprecated August 2026")]
     public DateTime? TranslationQueuedAt { get; set; }
 
     /// <summary>
@@ -83,6 +87,7 @@ public class ServalData
     /// <summary>
     /// Gets or sets the Identifier of the Parallel Corpus to be used for translation (SMT) builds.
     /// </summary>
+    [Obsolete("SMT suggestions are no longer supported. Deprecated August 2026")]
     public string? ParallelCorpusIdForSmt { get; set; }
 
     /// <summary>
@@ -127,6 +132,7 @@ public class ServalData
     /// <remarks>
     /// The dictionary key is the corpus ID.
     /// </remarks>
+    [Obsolete("Legacy corpora are longer supported. Deprecated August 2026")]
     public Dictionary<string, ServalCorpus>? Corpora { get; set; }
 
     /// <summary>
@@ -137,8 +143,5 @@ public class ServalData
     /// <summary>
     /// Gets or sets the corpus and data files configuration.
     /// </summary>
-    /// <remarks>
-    /// These are shared by translation (SMT) and pre-translation (NMT) translation engines.
-    /// </remarks>
     public List<ServalCorpusFile> CorpusFiles { get; set; } = [];
 }

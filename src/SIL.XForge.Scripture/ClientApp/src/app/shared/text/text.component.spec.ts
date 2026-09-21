@@ -261,6 +261,30 @@ describe('TextComponent', () => {
     expect(env.fixture.nativeElement.querySelector('quill-editor[dir="auto"]')).not.toBeNull();
   }));
 
+  it('keeps a verse marker beside its own verse when a number is typed in a right to left text', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.hostComponent.isTextRightToLeft = true;
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+
+    // put right to left text on both sides of verse 2, then type a number into verse 2, which is blank
+    const arabicText = '\u0646\u0635';
+    const verse1Range: QuillRange = env.component.getSegmentRange('verse_1_1')!;
+    env.insertText(verse1Range.index + verse1Range.length, arabicText);
+    env.insertText(env.component.getSegmentRange('verse_1_3')!.index, arabicText);
+    env.insertText(env.component.getSegmentRange('verse_1_2')!.index + 1, '500');
+
+    // in a right to left text the verse 2 marker is to the right of the number, and verse 3's to the left of it
+    const verse2: DOMRect = env.getSegment('verse_1_2')!.getBoundingClientRect();
+    const verse2Marker: DOMRect = env.getVerseMarker('2')!.getBoundingClientRect();
+    const verse3Marker: DOMRect = env.getVerseMarker('3')!.getBoundingClientRect();
+    expect(verse2Marker.top).withContext('setup: verse 2 is all on one line').toEqual(verse2.top);
+    expect(verse3Marker.top).withContext('setup: verse 2 is all on one line').toEqual(verse2.top);
+    expect(verse2Marker.left).toBeGreaterThanOrEqual(verse2.right);
+    expect(verse3Marker.right).toBeLessThanOrEqual(verse2.left);
+  }));
+
   it('handles a null style on a paragraph', fakeAsync(() => {
     const env: TestEnvironment = new TestEnvironment();
     const mockedQuill = new MockQuill('quill-editor');
@@ -510,6 +534,53 @@ describe('TextComponent', () => {
     expect(contents.ops![0].insert).toEqual(pasteText + 'target: ');
 
     TestEnvironment.waitForPresenceTimer();
+  }));
+
+  it('applies edits made next to a note at the start of a segment to the correct position', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+    // A note anchored to the start of the first segment puts the note icon at editor position 0
+    env.embedThreadAt('MAT 1:0', { start: 0, length: 0 });
+    tick();
+    env.fixture.detectChanges();
+    expect(Array.from(env.component.embeddedElements.values())).toEqual([0]);
+
+    const textDoc: TextDoc = env.realtimeService.get<TextDoc>(TextDoc.COLLECTION, 'project01:MAT:1:target');
+    const submittedOps: any[] = [];
+    const submit = textDoc.submit.bind(textDoc);
+    spyOn(textDoc, 'submit').and.callFake((op: any, source?: any) => {
+      submittedOps.push(...(op.ops ?? []));
+      return submit(op, source);
+    });
+
+    // The user types immediately after the note icon
+    env.component.editor!.updateContents(new Delta().retain(1).insert('X'), 'user');
+    tick();
+    env.fixture.detectChanges();
+
+    // The retain that only covered the note icon must not be submitted as a zero-length retain, which would cause
+    // the ops that follow it to be applied one op too late in the text doc
+    expect(submittedOps.filter(op => op.retain != null && op.retain < 1)).toEqual([]);
+    expect(env.component.getSegmentText('s_1')).toEqual('XTitle for chapter 1');
+    expect(textDoc.data!.ops![0].insert).toEqual('XTitle for chapter 1');
+
+    submittedOps.length = 0;
+
+    // The user deletes the character they just typed
+    env.component.editor!.updateContents(new Delta().retain(1).delete(1), 'user');
+    tick();
+    env.fixture.detectChanges();
+
+    expect(submittedOps.filter(op => op.retain != null && op.retain < 1)).toEqual([]);
+    expect(env.component.getSegmentText('s_1')).toEqual('Title for chapter 1');
+    // the paragraph break following the segment must still be intact
+    expect(textDoc.data!.ops![0].insert).toEqual('Title for chapter 1');
+    expect(textDoc.data!.ops![1].insert).toEqual('\n');
+
+    TestEnvironment.waitForPresenceTimer();
+    flush();
   }));
 
   it('allows cut when valid selection', fakeAsync(() => {
@@ -1994,6 +2065,12 @@ class TestEnvironment {
 
   getUserDoc(userId: string): UserDoc {
     return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
+  }
+
+  getVerseMarker(verseNumber: string): HTMLElement | undefined {
+    return Array.from(this.quillEditor.querySelectorAll('usx-verse')).find(
+      verse => verse.textContent?.trim() === verseNumber
+    ) as HTMLElement | undefined;
   }
 
   getSegment(segmentRef: string): HTMLElement | null {

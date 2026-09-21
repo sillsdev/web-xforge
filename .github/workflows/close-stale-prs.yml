@@ -1,0 +1,45 @@
+name: Close stale PRs
+permissions: {}
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # Run daily
+  workflow_dispatch:
+
+jobs:
+  close-stale-prs:
+    name: "Close stale PRs"
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Close PRs with no activity for 21 days
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const cutoff = new Date(Date.now() - 21 * 24 * 60 * 60 * 1000);
+
+            const openPullRequests = await github.paginate(github.rest.pulls.list, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const stalePullRequests = openPullRequests.filter(pr => new Date(pr.updated_at) < cutoff);
+            core.info(`${openPullRequests.length} open PRs, ${stalePullRequests.length} with no activity since ${cutoff.toISOString()}`);
+
+            for (const pr of stalePullRequests) {
+              core.info(`Closing #${pr.number} "${pr.title}" (last updated ${pr.updated_at})`);
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: 'This PR was closed automatically because it had no activity for 21 days. It can be reopened if the work is still wanted.',
+              });
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                state: 'closed',
+              });
+            }

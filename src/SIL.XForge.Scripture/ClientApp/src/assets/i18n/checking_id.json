@@ -334,12 +334,9 @@
   },
   "error_messages": {
     "error_occurred_login": "Terjadi kesalahan saat masuk.",
-    "failed_to_retrieve_suggestions": "Tidak bisa mendapatkan saran terjemahan.",
     "failed_to_update_avatar": "Gambar avatar Anda tidak dapat diperbarui.",
     "login": "Masuk",
     "login_expired": "Sesi masuk Anda telah kedaluwarsa. Silakan masuk kembali.",
-    "suggestion_engine_requires_retrain": "Tidak bisa mendapatkan saran terjemahan. Harap latih kembali saran di halaman Ringkasan.",
-    "go_to_retrain": "Buka Ringkasan",
     "try_again": "Coba Lagi"
   },
   "exception_handling_service": {

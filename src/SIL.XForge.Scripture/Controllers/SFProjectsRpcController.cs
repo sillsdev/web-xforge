@@ -215,7 +215,6 @@ public class SFProjectsRpcController(
                             : string.Join(',', settings.TrainingSourcesParatextIds)
                     },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
-                    { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
                     { "HideCommunityCheckingText", settings?.HideCommunityCheckingText?.ToString() },
                 }
@@ -543,7 +542,7 @@ public class SFProjectsRpcController(
     }
 
     [Obsolete(
-        "New endpoints require the share link type. Old clients would only ever request a recipient link for email"
+        "New endpoints require the share link type. Old clients would only ever request a recipient link for email. Deprecated 2023-04"
     )]
     public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role) =>
         await LinkSharingKey(projectId, role, ShareLinkType.Recipient, 14);
@@ -885,7 +884,7 @@ public class SFProjectsRpcController(
     }
 
     [Obsolete(
-        "Use OnboardingRequestRpcController.GetProjectMetadata with either paratextId or scriptureForgeId instead for more flexible querying"
+        "Use OnboardingRequestRpcController.GetProjectMetadata with either paratextId or scriptureForgeId instead for more flexible querying. Deprecated 2026-02"
     )]
     public async Task<IRpcMethodResult> GetProjectIdByParatextId(string paratextId)
     {
@@ -942,49 +941,6 @@ public class SFProjectsRpcController(
                     { "method", "SetServalConfig" },
                     { "projectId", projectId },
                     { "servalConfig", servalConfig },
-                }
-            );
-            throw;
-        }
-    }
-
-    public async Task<IRpcMethodResult> SetQualityEstimationConfig(
-        string projectId,
-        QualityEstimationConfig? qualityEstimationConfig
-    )
-    {
-        try
-        {
-            await projectService.SetQualityEstimationConfigAsync(
-                UserId,
-                SystemRoles,
-                projectId,
-                qualityEstimationConfig
-            );
-            return Ok();
-        }
-        catch (ForbiddenException)
-        {
-            return ForbiddenError();
-        }
-        catch (InvalidOperationException e)
-        {
-            return InvalidParamsError(e.Message);
-        }
-        catch (DataNotFoundException dnfe)
-        {
-            return NotFoundError(dnfe.Message);
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "SetQualityEstimationConfig" },
-                    { "projectId", projectId },
-                    { "version", qualityEstimationConfig?.Version },
-                    { "slope", qualityEstimationConfig?.Slope.ToString(CultureInfo.InvariantCulture) },
-                    { "intercept", qualityEstimationConfig?.Intercept.ToString(CultureInfo.InvariantCulture) },
                 }
             );
             throw;
@@ -1211,7 +1167,7 @@ public class SFProjectsRpcController(
         }
     }
 
-    [Obsolete("Use ApplyPreTranslationToProject instead. Deprecated 2025-12")]
+    [Obsolete("Use ApplyPreTranslationToProject instead. Deprecated 2026-03")]
     public async Task<IRpcMethodResult> AddChapters(string projectId, int book, int[] chapters)
     {
         try
@@ -1242,7 +1198,7 @@ public class SFProjectsRpcController(
         }
     }
 
-    [Obsolete("New endpoints require lastVerse. Old clients do not provide lastVerse")]
+    [Obsolete("New endpoints require lastVerse. Old clients do not provide lastVerse. Deprecated 2025-03")]
     public async Task<IRpcMethodResult> SetDraftApplied(string projectId, int book, int chapter, bool draftApplied)
     {
         try
@@ -1274,6 +1230,7 @@ public class SFProjectsRpcController(
         }
     }
 
+    [Obsolete("Use ApplyPreTranslationToProject instead. Deprecated 2026-08")]
     public async Task<IRpcMethodResult> SetDraftApplied(
         string projectId,
         int book,

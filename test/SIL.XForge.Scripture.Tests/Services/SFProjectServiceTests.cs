@@ -2541,12 +2541,6 @@ public class SFProjectServiceTests
         Assert.That(draftingSourceProject.ParatextId, Is.EqualTo(newResourceParatextId));
         Assert.That(draftingSourceProject.Name, Is.EqualTo("ResourceProject"));
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
@@ -2628,12 +2622,6 @@ public class SFProjectServiceTests
         Assert.That(project.ParatextId, Is.EqualTo(paratextId));
         Assert.That(project.TranslateConfig.DraftConfig.DraftingSources, Is.Empty);
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2670,12 +2658,6 @@ public class SFProjectServiceTests
         Assert.That(draftingSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
         Assert.That(draftingSourceProject.Name, Is.EqualTo("NewSource"));
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
@@ -2737,12 +2719,6 @@ public class SFProjectServiceTests
         Assert.That(project.ParatextId, Is.EqualTo(paratextId));
         Assert.That(project.TranslateConfig.DraftConfig.TrainingSources, Is.Empty);
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2778,12 +2754,6 @@ public class SFProjectServiceTests
         Assert.That(trainingSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
         Assert.That(trainingSourceProject.Name, Is.EqualTo("NewSource"));
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
 
         // Check that the project was created
@@ -2889,22 +2859,18 @@ public class SFProjectServiceTests
         await env.Service.UpdateSettingsAsync(
             User01,
             Project01,
-            new SFProjectSettings { SourceParatextId = "changedId", TranslationSuggestionsEnabled = true }
+            new SFProjectSettings { SourceParatextId = "changedId" }
         );
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
         Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-        await env
-            .MachineProjectService.Received()
-            .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
-        await env.MachineProjectService.Received().AddSmtProjectAsync(Project01, CancellationToken.None);
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_SelectSourceProject_NoMachineProjectAndSync()
+    public async Task UpdateSettingsAsync_SelectSourceProject_Sync()
     {
         var env = new TestEnvironment();
         await env.Service.UpdateSettingsAsync(
@@ -2914,64 +2880,25 @@ public class SFProjectServiceTests
         );
 
         SFProject project = env.GetProject(Project02);
-        Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
-        Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(project.TranslateConfig.Source!.ParatextId, Is.EqualTo("changedId"));
         Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_EnableTranslate_CreateMachineProjectAndSync()
-    {
-        var env = new TestEnvironment();
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project03,
-            new SFProjectSettings { TranslationSuggestionsEnabled = true }
-        );
-
-        SFProject project = env.GetProject(Project03);
-        Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.True);
-        Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("Source Only Project"));
-
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.MachineProjectService.Received().AddSmtProjectAsync(Project03, CancellationToken.None);
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
-    }
-
-    [Test]
-    public async Task UpdateSettingsAsync_UnsetSourceProject_RemoveMachineProjectAndSync()
+    public async Task UpdateSettingsAsync_UnsetSourceProject_Sync()
     {
         var env = new TestEnvironment();
         await env.Service.UpdateSettingsAsync(
             User01,
             Project01,
-            new SFProjectSettings
-            {
-                SourceParatextId = SFProjectService.ProjectSettingValueUnset,
-                TranslationSuggestionsEnabled = false,
-            }
+            new SFProjectSettings { SourceParatextId = SFProjectService.ProjectSettingValueUnset }
         );
 
         SFProject project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.TranslationSuggestionsEnabled, Is.False);
         Assert.That(project.TranslateConfig.Source, Is.Null);
 
-        await env
-            .MachineProjectService.Received()
-            .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -2985,12 +2912,6 @@ public class SFProjectServiceTests
         SFProject project = env.GetProject(Project01);
         Assert.That(project.CheckingConfig.CheckingEnabled, Is.True);
 
-        await env
-            .MachineProjectService.DidNotReceive()
-            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env
-            .MachineProjectService.DidNotReceive()
-            .AddSmtProjectAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
@@ -3044,9 +2965,7 @@ public class SFProjectServiceTests
         Assert.That(env.ContainsProject(Project01), Is.False);
         User user = env.GetUser(User01);
         Assert.That(user.Sites[SiteId].Projects, Does.Not.Contain(Project01));
-        await env
-            .MachineProjectService.Received()
-            .RemoveProjectAsync(Project01, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received().RemoveProjectAsync(Project01, CancellationToken.None);
         env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.False);
 
@@ -3073,9 +2992,7 @@ public class SFProjectServiceTests
                 Arg.Any<TimeSpan?>(),
                 Arg.Any<Exception?>()
             );
-        await env
-            .MachineProjectService.Received()
-            .RemoveProjectAsync(SourceOnly, preTranslate: false, CancellationToken.None);
+        await env.MachineProjectService.Received().RemoveProjectAsync(SourceOnly, CancellationToken.None);
         env.FileSystemService.Received().DeleteDirectory(ptProjectDir);
         Assert.That(env.ContainsProject(SourceOnly), Is.False);
         Assert.That(env.GetUser(User01).Sites[SiteId].Projects, Does.Not.Contain(SourceOnly));
@@ -3312,7 +3229,7 @@ public class SFProjectServiceTests
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
             User03,
-            new SFProjectCreateSettings() { ParatextId = targetProjectPTId, SourceParatextId = sourceProjectPTId }
+            new SFProjectCreateSettings { ParatextId = targetProjectPTId, SourceParatextId = sourceProjectPTId }
         );
 
         SFProject project = env.GetProject(sfProjectId);
@@ -3329,7 +3246,7 @@ public class SFProjectServiceTests
         // permissions on them.
         await env
             .SyncService.Received()
-            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && !s.TrainEngine && s.UserId == User03));
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && s.UserId == User03));
 
         // Don't check that permissions were added to the target project, because we mock the Sync functionality.
         // But we can show that source resource permissions were set:
@@ -4027,117 +3944,6 @@ public class SFProjectServiceTests
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetServalConfigAsync(User01, [SystemRole.User], Project01, servalConfig)
-        );
-    }
-
-    [Test]
-    public async Task SetQualityEstimationConfigAsync_AllowsNull()
-    {
-        var env = new TestEnvironment();
-
-        // SUT
-        await env.Service.SetQualityEstimationConfigAsync(
-            User01,
-            [SystemRole.ServalAdmin],
-            Project01,
-            qualityEstimationConfig: null
-        );
-
-        // Verify project document
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.DraftConfig!.QualityEstimationConfig, Is.Null);
-    }
-
-    [Test]
-    public void SetQualityEstimationConfigAsync_ProjectMustExist()
-    {
-        var env = new TestEnvironment();
-        var qualityEstimationConfig = new QualityEstimationConfig
-        {
-            Version = "0.1",
-            Slope = 109.6145,
-            Intercept = -14.0633,
-        };
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.SetQualityEstimationConfigAsync(
-                User01,
-                [SystemRole.ServalAdmin],
-                "invalid_project",
-                qualityEstimationConfig
-            )
-        );
-    }
-
-    [Test]
-    public async Task SetQualityEstimationConfigAsync_UpdatesProjectDocument()
-    {
-        var env = new TestEnvironment();
-        var qualityEstimationConfig = new QualityEstimationConfig
-        {
-            Version = "0.1",
-            Slope = 109.6145,
-            Intercept = -14.0633,
-        };
-
-        // Verify project document
-        SFProject project = env.GetProject(Project01);
-        Assert.IsNotNull(project.TranslateConfig.DraftConfig.QualityEstimationConfig);
-
-        // SUT
-        await env.Service.SetQualityEstimationConfigAsync(
-            User01,
-            [SystemRole.ServalAdmin],
-            Project01,
-            qualityEstimationConfig
-        );
-
-        // Verify project document
-        project = env.GetProject(Project01);
-        Assert.That(
-            project.TranslateConfig.DraftConfig.QualityEstimationConfig,
-            Is.EqualTo(qualityEstimationConfig)
-                .UsingPropertiesComparer<QualityEstimationConfig>(c => c.Excluding(p => p.DateUpdated))
-        );
-    }
-
-    [Test]
-    public void SetQualityEstimationConfigAsync_UnsupportedVersion()
-    {
-        var env = new TestEnvironment();
-        var qualityEstimationConfig = new QualityEstimationConfig
-        {
-            Version = "11.0",
-            Slope = 109.6145,
-            Intercept = -14.0633,
-        };
-
-        // SUT
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
-            env.Service.SetQualityEstimationConfigAsync(
-                User01,
-                [SystemRole.ServalAdmin],
-                Project01,
-                qualityEstimationConfig
-            )
-        );
-    }
-
-    [Test]
-    public void SetQualityEstimationConfigAsync_UserMustBeServalAdmin()
-    {
-        var env = new TestEnvironment();
-        var qualityEstimationConfig = new QualityEstimationConfig
-        {
-            Version = "0.1",
-            Slope = 109.6145,
-            Intercept = -14.0633,
-        };
-
-        // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.SetQualityEstimationConfigAsync(User01, [SystemRole.User], Project01, qualityEstimationConfig)
         );
     }
 
@@ -5490,7 +5296,6 @@ public class SFProjectServiceTests
                         TranslateConfig = new TranslateConfig
                         {
                             PreTranslate = true,
-                            TranslationSuggestionsEnabled = true,
                             Source = new TranslateSource
                             {
                                 ProjectRef = Resource01,
@@ -5503,12 +5308,6 @@ public class SFProjectServiceTests
                             {
                                 UsfmConfig = new DraftUsfmConfig(),
                                 ServalConfig = "{ existingConfig: true }",
-                                QualityEstimationConfig = new QualityEstimationConfig
-                                {
-                                    Version = string.Empty,
-                                    Slope = 0.0,
-                                    Intercept = 0.0,
-                                },
                             },
                         },
                         CheckingConfig = new CheckingConfig { CheckingEnabled = true },
@@ -5655,7 +5454,6 @@ public class SFProjectServiceTests
                         CheckingConfig = new CheckingConfig { CheckingEnabled = true },
                         TranslateConfig =
                         {
-                            TranslationSuggestionsEnabled = false,
                             Source = new TranslateSource
                             {
                                 ProjectRef = SourceOnly,
@@ -5683,7 +5481,6 @@ public class SFProjectServiceTests
                         ParatextId = "paratext_" + Project04,
                         TranslateConfig = new TranslateConfig
                         {
-                            TranslationSuggestionsEnabled = true,
                             Source = new TranslateSource { ProjectRef = "Invalid_Source", ParatextId = "P04" },
                         },
                         RolePermissions =
@@ -5707,7 +5504,6 @@ public class SFProjectServiceTests
                         ShortName = "P05",
                         TranslateConfig = new TranslateConfig
                         {
-                            TranslationSuggestionsEnabled = true,
                             Source = new TranslateSource
                             {
                                 ProjectRef = Resource01,

@@ -354,7 +354,6 @@ class TestEnvironment {
       const newProject: SFProject = createTestProject({
         paratextId: settings.paratextId,
         translateConfig: {
-          translationSuggestionsEnabled: false,
           source:
             settings.sourceParatextId == null
               ? undefined

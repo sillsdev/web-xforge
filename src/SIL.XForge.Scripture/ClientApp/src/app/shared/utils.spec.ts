@@ -1,9 +1,15 @@
+import { Router } from '@angular/router';
 import { VerseRef } from '@sillsdev/scripture';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { DeltaOperation } from 'rich-text';
+import { anything, instance, mock, verify } from 'ts-mockito';
 import { SelectableProject } from '../core/models/selectable-project';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import {
   booksFromScriptureRange,
+  checkAppAccess,
   compareProjectsForSorting,
   expandNumbers,
   getBookFileNameDigits,
@@ -306,6 +312,65 @@ describe('shared utils', () => {
     it('returns undefined for values that are not strings, numbers, or Dates', () => {
       expect(parseDate({})).toBeUndefined();
       expect(parseDate(true)).toBeUndefined();
+    });
+  });
+  describe('checkAppAccess function', () => {
+    const userId = 'user01';
+    const projectRoute = '/projects/project01';
+
+    function createProjectDoc(role: SFProjectRole, checkingEnabled: boolean): SFProjectProfileDoc {
+      return {
+        id: 'project01',
+        data: createTestProjectProfile({ userRoles: { [userId]: role }, checkingConfig: { checkingEnabled } })
+      } as SFProjectProfileDoc;
+    }
+
+    it('leaves the community checking area when checking is disabled', () => {
+      const router = mock(Router);
+      checkAppAccess(
+        createProjectDoc(SFProjectRole.ParatextAdministrator, false),
+        userId,
+        `${projectRoute}/checking`,
+        instance(router)
+      );
+      verify(router.navigateByUrl(projectRoute, anything())).once();
+      expect().nothing();
+    });
+
+    it('stays in the community checking area when checking is enabled', () => {
+      const router = mock(Router);
+      checkAppAccess(
+        createProjectDoc(SFProjectRole.ParatextAdministrator, true),
+        userId,
+        `${projectRoute}/checking`,
+        instance(router)
+      );
+      verify(router.navigateByUrl(anything(), anything())).never();
+      expect().nothing();
+    });
+
+    it('leaves the community checking area when the role cannot access checking', () => {
+      const router = mock(Router);
+      checkAppAccess(
+        createProjectDoc(SFProjectRole.Commenter, true),
+        userId,
+        `${projectRoute}/checking`,
+        instance(router)
+      );
+      verify(router.navigateByUrl(projectRoute, anything())).once();
+      expect().nothing();
+    });
+
+    it('stays in the translate area when checking is disabled', () => {
+      const router = mock(Router);
+      checkAppAccess(
+        createProjectDoc(SFProjectRole.ParatextAdministrator, false),
+        userId,
+        `${projectRoute}/translate/MAT/1`,
+        instance(router)
+      );
+      verify(router.navigateByUrl(anything(), anything())).never();
+      expect().nothing();
     });
   });
 });

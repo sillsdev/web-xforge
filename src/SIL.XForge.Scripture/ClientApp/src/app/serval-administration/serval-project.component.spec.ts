@@ -24,6 +24,10 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { BuildDto } from '../machine-api/build-dto';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalProjectComponent } from './serval-project.component';
@@ -32,6 +36,8 @@ interface TestEnvironmentArgs {
   preTranslate: boolean;
   lastCompletedBuild?: BuildDto;
   draftConfig?: Partial<DraftConfig>;
+  onboardingRequest?: Partial<OpenOnboardingRequest>;
+  onboardingRequestError?: boolean;
 }
 
 const mockActivatedProjectService = mock(ActivatedProjectService);
@@ -40,6 +46,7 @@ const mockAuthService = mock(AuthService);
 const mockDraftGenerationService = mock(DraftGenerationService);
 const mockFileService = mock(FileService);
 const mockNoticeService = mock(NoticeService);
+const mockOnboardingRequestService = mock(OnboardingRequestService);
 const mockSFProjectService = mock(SFProjectService);
 const mockServalAdministrationService = mock(ServalAdministrationService);
 const mockTrainingDataService = mock(TrainingDataService);
@@ -55,12 +62,38 @@ describe('ServalProjectComponent', () => {
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
       { provide: FileService, useMock: mockFileService },
       { provide: NoticeService, useMock: mockNoticeService },
+      { provide: OnboardingRequestService, useMock: mockOnboardingRequestService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       { provide: TrainingDataService, useMock: mockTrainingDataService },
       { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
+
+  describe('onboarding request link', () => {
+    it('links to the onboarding request with its status when the project has one', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true, onboardingRequest: { status: 'in_progress' } });
+      expect(env.onboardingRequestLink).not.toBeNull();
+      expect(env.onboardingRequestLink!.textContent).toContain('Onboarding Request');
+      expect(env.onboardingRequestLink!.textContent).toContain('In Progress');
+      expect(env.component.onboardingRequestLink).toEqual([
+        '/serval-administration',
+        'onboarding-requests',
+        'request01'
+      ]);
+    }));
+
+    it('does not show an onboarding request link when the project has none', fakeAsync(() => {
+      const env = new TestEnvironment();
+      verify(mockOnboardingRequestService.getOpenOnboardingRequest(env.mockProjectId)).once();
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+
+    it('leaves out the onboarding request link when the lookup fails', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true, onboardingRequestError: true });
+      expect(env.onboardingRequestLink).toBeNull();
+    }));
+  });
 
   describe('pre-translation drafting checkbox', () => {
     it('should allow enabling pre-translation drafting', fakeAsync(() => {
@@ -336,105 +369,6 @@ describe('ServalProjectComponent', () => {
         expect(env.statusError(env.servalConfigStatus)).not.toBeNull();
       }));
     });
-
-    describe('quality estimation configuration', () => {
-      it('should change quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).once();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should clear the quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment({
-          preTranslate: true,
-          draftConfig: { qualityEstimationConfig: { version: '0.1', slope: 109.6145, intercept: -14.0633 } }
-        });
-        expect(env.qualityEstimationConfigTextArea.value).toBe(
-          '{"version":"0.1","slope":109.6145,"intercept":-14.0633}'
-        );
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).once();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should not update an unchanged quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment({
-          preTranslate: true,
-          draftConfig: { qualityEstimationConfig: { version: '0.1', slope: 109.6145, intercept: -14.0633 } }
-        });
-        expect(env.qualityEstimationConfigTextArea.value).toBe(
-          '{"version":"0.1","slope":109.6145,"intercept":-14.0633}'
-        );
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-      }));
-
-      it('should not update an unchanged empty quality estimation config value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusDone(env.qualityEstimationConfigStatus)).toBeNull();
-      }));
-
-      it('should not update a non-JSON value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusError(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('test');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusError(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should not update an invalid value', fakeAsync(() => {
-        const env = new TestEnvironment();
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusError(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{"prop": "value"}');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).never();
-        expect(env.statusError(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-
-      it('should notify of a backend error', fakeAsync(() => {
-        const env = new TestEnvironment();
-        when(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).thenReject(
-          new CommandError(CommandErrorCode.InternalError, 'error')
-        );
-        expect(env.qualityEstimationConfigTextArea.value).toBe('');
-        expect(env.statusError(env.qualityEstimationConfigStatus)).toBeNull();
-
-        env.setQualityEstimationConfigValue('{ "version": "0.1", "slope": 109.6145, "intercept": -14.0633 }');
-        env.clickElement(env.saveQualityEstimationConfigButton);
-
-        verify(mockSFProjectService.onlineSetQualityEstimationConfig(env.mockProjectId, anything())).once();
-        expect(env.statusError(env.qualityEstimationConfigStatus)).not.toBeNull();
-      }));
-    });
   });
 
   class TestEnvironment {
@@ -489,8 +423,7 @@ describe('ServalProjectComponent', () => {
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
               lastSelectedTranslationScriptureRanges:
                 args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined,
-              servalConfig: args.draftConfig?.servalConfig ?? undefined,
-              qualityEstimationConfig: args.draftConfig?.qualityEstimationConfig ?? undefined
+              servalConfig: args.draftConfig?.servalConfig ?? undefined
             },
             preTranslate: args.preTranslate,
             source: {
@@ -518,7 +451,6 @@ describe('ServalProjectComponent', () => {
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
       when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
-      when(mockSFProjectService.onlineSetQualityEstimationConfig(this.mockProjectId, anything())).thenResolve();
       const trainingData: TrainingData[] = [
         {
           fileUrl: 'file-url',
@@ -527,11 +459,34 @@ describe('ServalProjectComponent', () => {
         } as TrainingData
       ];
       when(mockTrainingDataService.getTrainingData(anything(), anything())).thenReturn(of(trainingData));
+      if (args.onboardingRequestError) {
+        when(mockOnboardingRequestService.getOpenOnboardingRequest(this.mockProjectId)).thenReject(
+          new CommandError(CommandErrorCode.Forbidden, 'forbidden')
+        );
+      } else {
+        when(mockOnboardingRequestService.getOpenOnboardingRequest(this.mockProjectId)).thenResolve(
+          args.onboardingRequest == null
+            ? null
+            : {
+                id: 'request01',
+                submittedAt: '2026-08-01T00:00:00Z',
+                submittedBy: { name: 'User One', email: 'user01@example.com' },
+                status: 'new',
+                contactEmail: null,
+                ...args.onboardingRequest
+              }
+        );
+      }
+      when(mockOnboardingRequestService.getStatus(anything())).thenCall((status: string) =>
+        status === 'in_progress' ? { value: 'in_progress', label: 'In Progress' } : { value: 'new', label: 'New' }
+      );
 
       spyOn(saveAs, 'saveAs').and.stub();
 
       this.fixture = TestBed.createComponent(ServalProjectComponent);
       this.component = this.fixture.componentInstance;
+      this.fixture.detectChanges();
+      tick();
       this.fixture.detectChanges();
     }
 
@@ -541,6 +496,10 @@ describe('ServalProjectComponent', () => {
 
     get retrievePreTranslationsButton(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('#retrieve-pre-translations');
+    }
+
+    get onboardingRequestLink(): HTMLButtonElement | null {
+      return this.fixture.nativeElement.querySelector('#view-onboarding-request');
     }
 
     get viewEventLogButton(): HTMLAnchorElement {
@@ -561,18 +520,6 @@ describe('ServalProjectComponent', () => {
 
     get downloadTrainingDataButton(): HTMLInputElement {
       return this.fixture.nativeElement.querySelector('.training-data-table td button');
-    }
-
-    get qualityEstimationConfigStatus(): DebugElement {
-      return this.fixture.debugElement.query(By.css('#quality-estimation-config-status'));
-    }
-
-    get qualityEstimationConfigTextArea(): HTMLTextAreaElement {
-      return this.fixture.nativeElement.querySelector('#quality-estimation-config') as HTMLTextAreaElement;
-    }
-
-    get saveQualityEstimationConfigButton(): HTMLInputElement {
-      return this.fixture.nativeElement.querySelector('#save-quality-estimation-config');
     }
 
     get saveServalConfigButton(): HTMLInputElement {
@@ -614,14 +561,6 @@ describe('ServalProjectComponent', () => {
 
     getTranslationBookNames(node: HTMLElement): string {
       return node.querySelector('.translation-range')?.textContent ?? '';
-    }
-
-    setQualityEstimationConfigValue(value: string): void {
-      this.qualityEstimationConfigTextArea.value = value;
-      this.qualityEstimationConfigTextArea.dispatchEvent(new Event('input'));
-      this.fixture.detectChanges();
-      tick();
-      this.fixture.detectChanges();
     }
 
     setServalConfigValue(value: string): void {

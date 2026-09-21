@@ -1,17 +1,34 @@
 @if (isOnline) {
   <div class="filter-controls">
-    <app-date-range-picker [showReset]="true" (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
-    <div class="export-button-group">
-      <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
-        <mat-icon>download</mat-icon>
-        <span class="export-item-label">
-          Export CSV <app-info text="Download a .csv (comma-separated values) spreadsheet of the table data"></app-info>
-        </span>
-      </button>
-      <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
-        <mat-icon>arrow_drop_down</mat-icon>
-      </button>
+    <div class="filter-group">
+      <app-date-range-picker [showReset]="true" (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+      <div class="duration-area-toggle">
+        <mat-slide-toggle [checked]="includeDeleted" (change)="onIncludeDeletedChange($event.checked)">
+          Include deleted projects
+        </mat-slide-toggle>
+        <app-info
+          text="Include builds in the list that do not correspond to any projects that are currently in this site database."
+        ></app-info>
+      </div>
     </div>
+    <div class="identifier-search-group">
+      <app-search-records
+        [searchControl]="searchControl"
+        [infoText]="'Search builds by project ID, name, language code, books, user ID, name, email.'"
+        (clearSearch)="clearSearch()"
+      ></app-search-records>
+    </div>
+  </div>
+  <div class="export-button-group">
+    <button mat-raised-button color="primary" class="export-csv-button" (click)="exportCsv()">
+      <mat-icon>download</mat-icon>
+      <span class="export-item-label">
+        Export CSV <app-info text="Download a .csv (comma-separated values) spreadsheet of the table data"></app-info>
+      </span>
+    </button>
+    <button mat-raised-button color="primary" class="export-menu-button" [matMenuTriggerFor]="exportMenu">
+      <mat-icon>arrow_drop_down</mat-icon>
+    </button>
     <mat-menu #exportMenu="matMenu" xPosition="before">
       <button mat-menu-item (click)="exportTsv()">
         <mat-icon>download</mat-icon>
@@ -30,39 +47,6 @@
         </span>
       </button>
     </mat-menu>
-    <div class="duration-area-toggle">
-      <mat-slide-toggle [checked]="includeDeleted" (change)="onIncludeDeletedChange($event.checked)">
-        Include deleted projects
-      </mat-slide-toggle>
-      <app-info
-        text="Include builds in the list that do not correspond to any projects that are currently in this site database."
-      ></app-info>
-    </div>
-
-    <div class="identifier-search-group">
-      <mat-form-field
-        appearance="outline"
-        subscriptSizing="dynamic"
-        class="identifier-search-field"
-        [class.identifier-search-field-active]="searchControl.value.length > 0"
-      >
-        <mat-label>Search</mat-label>
-        <mat-icon matPrefix>search</mat-icon>
-        <input matInput type="text" [formControl]="searchControl" />
-
-        @if (searchControl.value.length > 0) {
-          <button mat-icon-button matSuffix type="button" (click)="clearSearch()" aria-label="Clear search">
-            <mat-icon>close</mat-icon>
-          </button>
-        } @else {
-          <app-info
-            matSuffix
-            class="identifier-search-info"
-            text="Search builds by project ID, name, books, user ID, name, email."
-          ></app-info>
-        }
-      </mat-form-field>
-    </div>
   </div>
 
   @if (summaryDisplayItems.length > 0) {
@@ -122,7 +106,7 @@
                 }
               </div>
               <app-display-confidence
-                [confidence]="row.report.buildConfidences?.lowestConfidence"
+                [lowConfidence]="hasLowConfidence(row)"
                 [showText]="false"
               ></app-display-confidence>
             </div>
@@ -500,57 +484,17 @@
                       </mat-card-title-group>
                     </mat-card-header>
                     <mat-card-content class="detail-card-content">
-                      @let sfErrors = problems(row, "local", "error");
-                      @let sfWarnings = problems(row, "local", "warning");
-                      @let servalErrors = problems(row, "serval", "error");
-                      @let servalWarnings = problems(row, "serval", "warning");
                       <div class="problems-sections">
                         @if (!hasAnyProblems(row)) {
                           <div class="problems-section">
                             <span class="problems-none">No problems detected</span>
                           </div>
                         }
-                        @if (sfErrors.length > 0) {
+                        @for (section of problemSections(row); track section.heading) {
                           <div class="problems-section">
-                            <span class="problems-section-header">SF errors</span>
+                            <span class="problems-section-header">{{ section.heading }}</span>
                             <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(sfErrors); track $index) {
-                                <li>
-                                  <span class="problem-message">{{ message }}</span>
-                                </li>
-                              }
-                            </ul>
-                          </div>
-                        }
-                        @if (sfWarnings.length > 0) {
-                          <div class="problems-section">
-                            <span class="problems-section-header">SF warnings</span>
-                            <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(sfWarnings); track $index) {
-                                <li>
-                                  <span class="problem-message">{{ message }}</span>
-                                </li>
-                              }
-                            </ul>
-                          </div>
-                        }
-                        @if (servalErrors.length > 0) {
-                          <div class="problems-section">
-                            <span class="problems-section-header">Serval errors</span>
-                            <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(servalErrors); track $index) {
-                                <li>
-                                  <span class="problem-message">{{ message }}</span>
-                                </li>
-                              }
-                            </ul>
-                          </div>
-                        }
-                        @if (servalWarnings.length > 0) {
-                          <div class="problems-section">
-                            <span class="problems-section-header">Serval warnings</span>
-                            <ul class="problems-list">
-                              @for (message of renderProblemMessagesForCard(servalWarnings); track $index) {
+                              @for (message of renderProblemMessagesForCard(section.problems); track $index) {
                                 <li>
                                   <span class="problem-message">{{ message }}</span>
                                 </li>
@@ -632,7 +576,7 @@
                     <mat-card-header>
                       <mat-card-title-group>
                         <mat-icon>traffic</mat-icon>
-                        <mat-card-title>Quality Estimation</mat-card-title>
+                        <mat-card-title>Build Confidence</mat-card-title>
                       </mat-card-title-group>
                     </mat-card-header>
                     <mat-card-content class="detail-card-content">
@@ -644,31 +588,24 @@
                               track bookConfidence.bookNum
                             ) {
                               <div class="book-confidence">
-                                <div class="detail-keyvalue">
-                                  <span class="detail-key">
-                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
-                                  </span>
-                                  <span class="detail-value">
-                                    <app-display-confidence [confidence]="bookConfidence"></app-display-confidence>
-                                  </span>
-                                </div>
-                                <div class="detail-keyvalue">
-                                  <span class="detail-key">
-                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Projected ChrF3
-                                  </span>
-                                  <span class="detail-value">{{ bookConfidence.projectedChrF3.toFixed(3) }}</span>
-                                </div>
+                                @if (hasLowConfidence(row, getBookId(bookConfidence))) {
+                                  <div class="detail-keyvalue">
+                                    <span class="detail-key">
+                                      {{ "canon.book_names." + getBookId(bookConfidence) | transloco }}
+                                    </span>
+                                    <span class="detail-value">
+                                      <app-display-confidence
+                                        [lowConfidence]="true"
+                                        [showText]="true"
+                                      ></app-display-confidence>
+                                    </span>
+                                  </div>
+                                }
                                 <div class="detail-keyvalue">
                                   <span class="detail-key">
                                     {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Confidence
                                   </span>
-                                  <span class="detail-value">{{ bookConfidence.confidence.toFixed(3) }}</span>
-                                </div>
-                                <div class="detail-keyvalue">
-                                  <span class="detail-key">
-                                    {{ "canon.book_names." + getBookId(bookConfidence) | transloco }} - Usability
-                                  </span>
-                                  <span class="detail-value">{{ bookConfidence.usability.toFixed(3) }}</span>
+                                  <span class="detail-value">{{ bookConfidence.confidence.toFixed(4) }}</span>
                                 </div>
                               </div>
                             }
@@ -681,7 +618,7 @@
                               (click)="exportCsv(row.report.buildConfidences.bookConfidences)"
                             >
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Book Usability CSV </span>
+                              <span class="export-item-label"> Export Book Confidence CSV </span>
                             </button>
                             <button
                               mat-raised-button
@@ -695,11 +632,11 @@
                           <mat-menu #exportBookMenu="matMenu" xPosition="before">
                             <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.bookConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Book Usability TSV </span>
+                              <span class="export-item-label"> Export Book Confidence TSV </span>
                             </button>
                             <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.bookConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Book Usability RSV </span>
+                              <span class="export-item-label"> Export Book Confidence RSV </span>
                             </button>
                           </mat-menu>
                           <div class="export-button-group">
@@ -710,7 +647,7 @@
                               (click)="exportCsv(row.report.buildConfidences.chapterConfidences)"
                             >
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Chapter Usability CSV </span>
+                              <span class="export-item-label"> Export Chapter Confidence CSV </span>
                             </button>
                             <button
                               mat-raised-button
@@ -724,11 +661,40 @@
                           <mat-menu #exportChapterMenu="matMenu" xPosition="before">
                             <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.chapterConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Chapter Usability TSV </span>
+                              <span class="export-item-label"> Export Chapter Confidence TSV </span>
                             </button>
                             <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.chapterConfidences)">
                               <mat-icon>download</mat-icon>
-                              <span class="export-item-label"> Export Chapter Usability RSV </span>
+                              <span class="export-item-label"> Export Chapter Confidence RSV </span>
+                            </button>
+                          </mat-menu>
+                          <div class="export-button-group">
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-csv-button"
+                              (click)="exportCsv(row.report.buildConfidences.verseConfidences)"
+                            >
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence CSV </span>
+                            </button>
+                            <button
+                              mat-raised-button
+                              color="primary"
+                              class="export-menu-button"
+                              [matMenuTriggerFor]="exportVerseMenu"
+                            >
+                              <mat-icon>arrow_drop_down</mat-icon>
+                            </button>
+                          </div>
+                          <mat-menu #exportVerseMenu="matMenu" xPosition="before">
+                            <button mat-menu-item (click)="exportTsv(row.report.buildConfidences.verseConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence TSV </span>
+                            </button>
+                            <button mat-menu-item (click)="exportRsv(row.report.buildConfidences.verseConfidences)">
+                              <mat-icon>download</mat-icon>
+                              <span class="export-item-label"> Export Verse Confidence RSV </span>
                             </button>
                           </mat-menu>
                         } @else {

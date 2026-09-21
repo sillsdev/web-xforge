@@ -19,6 +19,60 @@ describe('DateRangePickerComponent', () => {
     expect(formValue.start!.getTime()).toBeLessThan(formValue.end!.getTime());
   });
 
+  it('can initiate with an empty range when set', () => {
+    const env = new TestEnvironment({ startWithEmptyRange: true });
+    env.component.showReset = true;
+    env.fixture.detectChanges();
+
+    const initialFormValue = env.component.dateRangeForm.value;
+    expect(initialFormValue.start).toBeNull();
+    expect(initialFormValue.end).toBeNull();
+    // Initialization with an empty range does not tell the parent about a range.
+    expect(env.emitSpy).not.toHaveBeenCalled();
+    expect(env.component.isDefaultRange).toBe(true);
+
+    const endDate = new Date(env.component.maxSelectableDate);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - 1);
+
+    env.component.dateRangeForm.setValue({ start: startDate, end: endDate });
+    env.fixture.detectChanges();
+    // The range has been updated
+    expect(env.emitSpy).toHaveBeenCalled();
+    expect(env.component.isDefaultRange).toBe(false);
+
+    // Clear the range
+    expect(env.component.showReset).toBe(true);
+    const clearButton = env.fixture.nativeElement.querySelector('[data-test-id="reset-button"]');
+    clearButton.click();
+    env.fixture.detectChanges();
+    // Clearing the range tells the parent that no range is in effect.
+    expect(env.emitSpy).toHaveBeenCalledWith(/* nothing */);
+    expect(env.component.dateRangeForm.value).toEqual({ start: null, end: null });
+    expect(env.component.isDefaultRange).toBe(true);
+  });
+
+  it('should not emit undefined for a range if the default is defined', () => {
+    const env = new TestEnvironment({ startWithEmptyRange: false });
+    env.component.showReset = true;
+    env.fixture.detectChanges();
+
+    const initialFormValue = env.component.dateRangeForm.value;
+    expect(initialFormValue.start).not.toBeNull();
+    expect(initialFormValue.end).not.toBeNull();
+    // Initialization tells the parent about the default range.
+    expect(env.emitSpy).toHaveBeenCalledTimes(1);
+    expect(env.emitSpy).toHaveBeenCalledWith({ start: initialFormValue.start!, end: initialFormValue.end! });
+    expect(env.component.isDefaultRange).toBe(true);
+
+    env.emitSpy.calls.reset();
+    env.component.dateRangeForm.setValue({ start: null, end: null });
+    env.fixture.detectChanges();
+    // If the default range is defined, the date range picker should not consider a null range as valid
+    expect(env.emitSpy).not.toHaveBeenCalled();
+    expect(env.component.isDefaultRange).toBe(true);
+  });
+
   it('should disable future dates', () => {
     const env = new TestEnvironment();
     const today = new Date();
@@ -62,8 +116,13 @@ class TestEnvironment {
   readonly i18nStub: Partial<I18nService>;
   readonly fixture: ComponentFixture<DateRangePickerComponent>;
   readonly component: DateRangePickerComponent;
+  readonly emitSpy: jasmine.Spy<DateRangePickerComponent['dateRangeChange']['emit']>;
 
-  constructor() {
+  constructor({
+    startWithEmptyRange = false
+  }: {
+    startWithEmptyRange?: boolean;
+  } = {}) {
     const initialLocale: Locale = {
       canonicalTag: 'en-US',
       direction: 'ltr',
@@ -87,6 +146,9 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(DateRangePickerComponent);
     this.component = this.fixture.componentInstance;
+    this.component.startWithEmptyRange = startWithEmptyRange;
+    // Spy before the first change detection so that emissions from ngOnInit are recorded.
+    this.emitSpy = spyOn(this.component.dateRangeChange, 'emit').and.callThrough();
     this.fixture.detectChanges();
   }
 }

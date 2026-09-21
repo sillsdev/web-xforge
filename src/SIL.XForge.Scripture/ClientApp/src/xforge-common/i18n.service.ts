@@ -76,11 +76,10 @@ export class I18nService {
     'en-GB': { month: 'short', hour12: true },
     // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
     az: (d: Date, options) => {
-      let s = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      if (options.showTimeZone) {
-        s += ` ${I18nService.getHumanReadableTimeZoneOffset('az', d)}`;
-      }
-      return s;
+      let result = `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+      if (options.showTime) result += ` ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      if (options.showTimeZone) result += ` ${I18nService.getHumanReadableTimeZoneOffset('az', d)}`;
+      return result;
     },
     npi: (d: Date, options) => {
       const o = {
@@ -103,7 +102,10 @@ export class I18nService {
       const hour = parts.find(p => p.type === 'hour')?.value;
       const minute = parts.find(p => p.type === 'minute')?.value;
 
-      return `${year}-${month}-${day}, ${hour}:${minute}`;
+      let result = `${year}-${month}-${day}`;
+      if (options.showTime) result += ` ${hour}:${minute}`;
+      if (options.showTimeZone) result += ` ${I18nService.getHumanReadableTimeZoneOffset('npi', d)}`;
+      return result;
     },
     [PseudoLocalization.locale.canonicalTag]: PseudoLocalization.dateFormat
   };
@@ -331,7 +333,7 @@ export class I18nService {
     });
   }
 
-  formatDate(date: Date, options: { showTimeZone?: boolean; showTime?: boolean } = {}): string {
+  formatDate(date: Date, options: { showTimeZone: boolean; showTime: boolean }): string {
     const showTime = 'showTime' in options ? options.showTime : true;
     // fall back to en in the event the language code isn't valid
     const format = I18nService.customDateFormats[this.localeCode] || {};

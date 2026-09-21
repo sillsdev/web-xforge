@@ -84,20 +84,7 @@ describe('SyncProgressComponent', () => {
   it('show progress as source and target combined', fakeAsync(() => {
     const env = new TestEnvironment({
       userId: 'user01',
-      sourceProject: 'sourceProject02',
-      translationSuggestionsEnabled: true
-    });
-    env.setupProjectDoc();
-    env.checkCombinedProgress();
-    expect(env.syncStatus).not.toBeNull();
-    tick();
-  }));
-
-  it('show source and target progress combined when translation suggestions disabled', fakeAsync(() => {
-    const env = new TestEnvironment({
-      userId: 'user01',
-      sourceProject: 'sourceProject02',
-      translationSuggestionsEnabled: false
+      sourceProject: 'sourceProject02'
     });
     env.setupProjectDoc();
     env.checkCombinedProgress();
@@ -115,6 +102,21 @@ describe('SyncProgressComponent', () => {
     env.updateSyncProgress(0.5, 'testProject01');
     expect(await env.getPercent()).toEqual(50);
     expect(env.syncStatus).not.toBeNull();
+    env.emitSyncComplete(true, 'testProject01');
+  }));
+
+  it('ignores progress notifications for unrelated projects', fakeAsync(async () => {
+    const env = new TestEnvironment({ userId: 'user01' });
+    env.setupProjectDoc();
+    env.updateSyncProgress(0.5, 'testProject01');
+    expect(await env.getPercent()).toEqual(50);
+
+    // The SignalR connection is shared, so another component's project can emit through the same handler.
+    env.host.syncProgress['updateProgressState']('otherProject99', new ProgressState(0.9, undefined, undefined, 3.5));
+
+    expect(await env.getPercent()).toEqual(50);
+    expect(env.host.syncProgress.syncProgress).toBe(0);
+    expect(env.host.syncProgress.phasePercentage).toBe(0);
     env.emitSyncComplete(true, 'testProject01');
   }));
 
@@ -149,7 +151,6 @@ class HostComponent {
 interface TestEnvArgs {
   userId: string;
   sourceProject?: string;
-  translationSuggestionsEnabled?: boolean;
   isInProgress?: boolean;
 }
 
@@ -170,7 +171,6 @@ class TestEnvironment {
       data: createTestProject(
         {
           translateConfig: {
-            translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
             source:
               args.sourceProject != null
                 ? {

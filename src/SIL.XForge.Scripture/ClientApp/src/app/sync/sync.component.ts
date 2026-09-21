@@ -110,7 +110,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       return this.i18n.translateStatic('sync.never_been_synced');
     } else {
       return this.i18n.translateStatic('sync.last_synced_time_stamp', {
-        timeStamp: this.i18n.formatDate(new Date(dateLastSynced))
+        timeStamp: this.i18n.formatDate(new Date(dateLastSynced), { showTime: true, showTimeZone: false })
       });
     }
   }

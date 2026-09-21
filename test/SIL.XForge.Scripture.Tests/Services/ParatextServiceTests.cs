@@ -7199,7 +7199,6 @@ public class ParatextServiceTests
                 WritingSystem = new WritingSystem { Tag = "en" },
                 TranslateConfig = new TranslateConfig
                 {
-                    TranslationSuggestionsEnabled = true,
                     Source = new TranslateSource
                     {
                         ParatextId = "paratextId",
