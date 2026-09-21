@@ -73,6 +73,8 @@ export interface DraftConfig {
   sendEmailOnBuildFinished?: boolean;
   currentScriptureRange?: string;
   draftedScriptureRange?: string;
+  draftInProgress?: boolean;
+  lastDraftSuccessful?: boolean;
 }
 
 export interface TranslateConfig {
