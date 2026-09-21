@@ -135,9 +135,7 @@ function fetchTranslateMetrics() {
 }
 
 function fetchEventMetrics() {
-  return db.event_metrics
-    .find(inPeriod('timeStamp'), { eventType: 1, projectId: 1, scope: 1, timeStamp: 1, userId: 1, exception: 1 })
-    .toArray();
+  return db.event_metrics.find(inPeriod('timeStamp')).toArray();
 }
 
 // --- Building the records ---
@@ -239,7 +237,12 @@ function eventMetricRecord(doc) {
     ['scope', doc.scope],
     ['timeStamp', isoDate(doc.timeStamp)],
     ['userId', doc.userId],
-    ['failed', doc.exception != null]
+    ['failed', doc.exception != null],
+    ['exception', doc.exception],
+    ['executionTime', doc.executionTime],
+    ['payload', doc.payload],
+    ['result', doc.result],
+    ['tags', doc.tags]
   ]);
 }
 
