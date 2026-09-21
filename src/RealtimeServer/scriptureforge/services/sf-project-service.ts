@@ -280,6 +280,12 @@ export class SFProjectService extends ProjectService<SFProject> {
               },
               draftedScriptureRange: {
                 bsonType: 'string'
+              },
+              lastDraftSuccessful: {
+                bsonType: 'bool'
+              },
+              draftInProgress: {
+                bsonType: 'bool'
               }
             },
             additionalProperties: false

@@ -34,4 +34,6 @@ public class DraftConfig
     /// This is a combination of the scripture ranges of previous drafts.
     /// </remarks>
     public string? DraftedScriptureRange { get; set; }
+    public bool? DraftInProgress { get; set; }
+    public bool? LastDraftSuccessful { get; set; }
 }
