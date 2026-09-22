@@ -81,13 +81,27 @@ export class UserEmulator {
     if (preset.defaultUserDelay !== 0) await this.page.waitForTimeout(time);
   }
 
+  /**
+   * Moves the pointer onto the element, so that the on-screen cursor is where a user's would be.
+   *
+   * Gracefully fail by leaving the pointer alone if page elements are being removed and added too rapidly for this to
+   * work.
+   */
   private async beforeAction(locator: Locator): Promise<void> {
-    await locator.scrollIntoViewIfNeeded();
-    const rect = await locator.boundingBox();
-    if (rect == null) throw new Error('Bounding client rect not found');
-    await this.page.waitForTimeout(this.clickDelay / 2);
-    await this.page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
-    await this.page.waitForTimeout(this.clickDelay);
+    try {
+      // scrollIntoViewIfNeeded waits for the element to be stable, meaning an unchanged bounding box over two
+      // consecutive animation frames. An element detached before that finishes makes it throw. Unlike performing a
+      // click, it does not search again for the element that replaced the one it lost.
+      await locator.scrollIntoViewIfNeeded();
+      // boundingBox throws if the element stops matching the locator, or returns null if it is not rendered.
+      const rect = await locator.boundingBox();
+      if (rect == null) return;
+      await this.page.waitForTimeout(this.clickDelay / 2);
+      await this.page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      await this.page.waitForTimeout(this.clickDelay);
+    } catch {
+      // The element moved or was replaced while we were working.
+    }
   }
 
   private async afterAction(): Promise<void> {

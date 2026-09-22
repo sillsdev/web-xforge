@@ -12,8 +12,6 @@ import {
 } from '../e2e-utils.ts';
 import { UserEmulator } from '../user-emulator.mts';
 
-const NOTE_PRE_CLICK_TIMEOUT = 0;
-
 type Side = 'source' | 'target';
 
 export async function editTranslation(
@@ -139,11 +137,9 @@ function getSegment(page: Page, side: Side, chapter: number, verse: number): Loc
   return getEditor(page, side).locator(`[data-segment="verse_${chapter}_${verse}"]`).filter({ visible: true });
 }
 
+/** Clicks the note icon in a verse. */
 async function openNote(page: Page, user: UserEmulator, side: Side, chapter: number, verse: number): Promise<void> {
-  // FIXME(application-bug) we shouldn't have to wait
-  const noteLocator = getSegment(page, side, chapter, verse).locator('display-note');
-  await noteLocator.waitFor({ state: 'attached' });
-  await page.waitForTimeout(NOTE_PRE_CLICK_TIMEOUT / 10);
+  const noteLocator: Locator = getSegment(page, side, chapter, verse).locator('display-note');
   await noteLocator.waitFor({ state: 'attached' });
   await user.click(noteLocator);
 }
