@@ -26,6 +26,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { hasData, notNull } from '../../../../type-utils';
+import { DraftSourceConfiguration } from '../../../core/models/draft-source-configuration';
 import { SelectableProject, SelectableProjectWithLanguageCode } from '../../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
@@ -380,7 +381,7 @@ export class ConfigureSourcesComponent extends DataLoadingComponent implements O
     const additions: Promise<void>[] = addedFiles.map(f => this.trainingDataService.createTrainingDataAsync(f));
     await Promise.all([...removals, ...additions]);
 
-    const sourcesSettingsChange: DraftSourcesSettingsChange = sourceArraysToSettingsChange(
+    const draftSourceConfiguration: DraftSourceConfiguration = sourceArraysToSettingsChange(
       definedReferences,
       definedSources,
       this.trainingTargets,
@@ -389,7 +390,7 @@ export class ConfigureSourcesComponent extends DataLoadingComponent implements O
     );
     await this.checkUpdateStatus(
       'projectSettings',
-      this.projectService.onlineUpdateSettings(currentProjectDoc.id, sourcesSettingsChange)
+      this.projectService.onlineUpdateDraftSources(currentProjectDoc.id, draftSourceConfiguration)
     );
     this.monitorSyncStatus();
   }
@@ -453,12 +454,6 @@ export class ConfigureSourcesComponent extends DataLoadingComponent implements O
   }
 }
 
-export interface DraftSourcesSettingsChange {
-  additionalTrainingDataFiles: string[];
-  draftingSourcesParatextIds: string[];
-  trainingSourcesParatextIds: string[];
-}
-
 /** Convert some arrays of drafting sources to a settings object that can be applied to a SF project. */
 export function sourceArraysToSettingsChange(
   trainingSources: SelectableProject[],
@@ -468,7 +463,7 @@ export function sourceArraysToSettingsChange(
   trainingTargets: SelectableProject[],
   selectedTrainingFileIds: string[],
   currentProjectParatextId: string
-): DraftSourcesSettingsChange {
+): DraftSourceConfiguration {
   // Extra precaution on array lengths for now in case the type system is being bypassed.
   if (draftingSources.length > 1) {
     throw new Error('Drafting sources array must contain 0 or 1 source');
@@ -486,8 +481,8 @@ export function sourceArraysToSettingsChange(
   }
 
   return {
-    additionalTrainingDataFiles: selectedTrainingFileIds,
+    draftingSourcesParatextIds: draftingSources.map(s => s.paratextId),
     trainingSourcesParatextIds: trainingSources.map(s => s.paratextId),
-    draftingSourcesParatextIds: draftingSources.map(s => s.paratextId)
+    selectedTrainingDataFiles: selectedTrainingFileIds
   };
 }
