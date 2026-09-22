@@ -10,15 +10,18 @@ namespace SIL.XForge.Scripture.Models;
 public class SFProjectSettings
 {
     // translate settings
-    [Obsolete("For backwards compatibility with older frontend clients. Deprecated August 2026.")]
+    [Obsolete("To prevent serialization errors for settings from older frontend clients. Deprecated August 2026.")]
     public bool? TranslationSuggestionsEnabled { get; set; }
     public string? SourceParatextId { get; set; }
     public bool? BiblicalTermsEnabled { get; set; }
+
+    [Obsolete("To prevent serialization errors for settings from older frontend clients. Deprecated September 2026.")]
     public IEnumerable<string>? AdditionalTrainingDataFiles { get; set; }
 
-    [Obsolete("For backwards compatibility with older frontend clients. Deprecated October 2025.")]
-    public bool? AlternateSourceEnabled { get; set; }
+    [Obsolete("To prevent serialization errors for settings from older frontend clients. Deprecated September 2026.")]
     public IEnumerable<string>? DraftingSourcesParatextIds { get; set; }
+
+    [Obsolete("To prevent serialization errors for settings from older frontend clients. Deprecated September 2026.")]
     public IEnumerable<string>? TrainingSourcesParatextIds { get; set; }
 
     // checking settings

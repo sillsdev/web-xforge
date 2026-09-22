@@ -2457,13 +2457,14 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         const string paratextId = "paratext_" + Project01;
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [paratextId],
+            TrainingSourcesParatextIds = [Resource01],
+        };
         Assert.That(env.Service.IsSourceProject(Project01), Is.False);
 
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project03,
-            new SFProjectSettings { DraftingSourcesParatextIds = [paratextId] }
-        );
+        await env.Service.UpdateDraftSourcesAsync(User01, Project03, draftSourceConfiguration);
 
         // SUT
         Assert.That(env.Service.IsSourceProject(Project01), Is.True);
@@ -2474,13 +2475,14 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         const string paratextId = "paratext_" + Project01;
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [Resource01],
+            TrainingSourcesParatextIds = [paratextId],
+        };
         Assert.That(env.Service.IsSourceProject(Project01), Is.False);
 
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project03,
-            new SFProjectSettings { TrainingSourcesParatextIds = [paratextId] }
-        );
+        await env.Service.UpdateDraftSourcesAsync(User01, Project03, draftSourceConfiguration);
 
         // SUT
         Assert.That(env.Service.IsSourceProject(Project01), Is.True);
@@ -2497,10 +2499,15 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_ChangeAllDraftSources_CreatesResourceProject()
+    public async Task UpdateDraftSourcesAsync_CreatesResourceProject()
     {
         var env = new TestEnvironment();
         const string newResourceParatextId = "resource_project";
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [newResourceParatextId],
+            TrainingSourcesParatextIds = [newResourceParatextId],
+        };
         env.ParatextService.GetResourcePermissionAsync(newResourceParatextId, Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(TextInfoPermission.Read));
 
@@ -2511,15 +2518,7 @@ public class SFProjectServiceTests
         );
 
         // SUT
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings
-            {
-                DraftingSourcesParatextIds = [newResourceParatextId],
-                TrainingSourcesParatextIds = [newResourceParatextId],
-            }
-        );
+        await env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.TranslateConfig.DraftConfig.DraftingSources[0].ProjectRef, Is.Not.Null);
@@ -2554,10 +2553,15 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_ChangeDraftingSources_AnotherUserOnTheProjectCannotRefreshToken()
+    public async Task UpdateDraftSourcesAsync_AnotherUserOnTheProjectCannotRefreshToken()
     {
         var env = new TestEnvironment();
         const string newProjectParatextId = "changedId";
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [newProjectParatextId],
+            TrainingSourcesParatextIds = [newProjectParatextId],
+        };
         env.ParatextService.TryGetProjectRoleAsync(
                 Arg.Is<UserSecret>(u => u.Id == User02),
                 newProjectParatextId,
@@ -2572,11 +2576,7 @@ public class SFProjectServiceTests
         );
 
         // SUT
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { DraftingSourcesParatextIds = [newProjectParatextId] }
-        );
+        await env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
 
         // Verify the drafting source property of the target project
         SFProject project = env.GetProject(Project01);
@@ -2607,16 +2607,18 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_ChangeDraftingSources_CannotUseTargetProject()
+    public async Task UpdateDraftSourcesAsync_SourcesCannotUseTargetProject()
     {
         var env = new TestEnvironment();
         const string paratextId = "paratext_" + Project01;
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [paratextId],
+            TrainingSourcesParatextIds = [paratextId],
+        };
 
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { DraftingSourcesParatextIds = [paratextId] }
-        );
+        // SUT
+        await env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.ParatextId, Is.EqualTo(paratextId));
@@ -2626,10 +2628,15 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_ChangeDraftingSources_CreatesProject()
+    public async Task UpdateDraftSourcesAsync_SourcesCreatesProject()
     {
         var env = new TestEnvironment();
         const string newProjectParatextId = "changedId";
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [newProjectParatextId],
+            TrainingSourcesParatextIds = [newProjectParatextId],
+        };
 
         // Ensure that the new project does not exist
         Assert.That(
@@ -2638,11 +2645,7 @@ public class SFProjectServiceTests
         );
 
         // SUT
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { DraftingSourcesParatextIds = [newProjectParatextId] }
-        );
+        await env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.TranslateConfig.DraftConfig.DraftingSources[0].ProjectRef, Is.Not.Null);
@@ -2668,10 +2671,15 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_ChangeDraftingSources_SyncProjectWhenSyncFailed()
+    public async Task UpdateDraftSourcesAsync_SyncSourceProjectWhenSyncFailed()
     {
         var env = new TestEnvironment();
         const string newProjectParatextId = ResourceNeedsSyncPTId;
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [newProjectParatextId],
+            TrainingSourcesParatextIds = [newProjectParatextId],
+        };
 
         // Ensure that the resource project exists in the database
         Assert.That(
@@ -2680,11 +2688,7 @@ public class SFProjectServiceTests
         );
 
         // SUT
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { DraftingSourcesParatextIds = [newProjectParatextId] }
-        );
+        await env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
 
         SFProject project = env.GetProject(Project01);
         Assert.That(project.TranslateConfig.DraftConfig.DraftingSources[0].ProjectRef, Is.Not.Null);
@@ -2704,76 +2708,172 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateSettingsAsync_ChangeTrainingSources_CannotUseTargetProject()
+    public async Task UpdateDraftSourcesAsync_SyncTargetProjectWhenSyncFailed()
     {
         var env = new TestEnvironment();
-        const string paratextId = "paratext_" + Project01;
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [Resource01PTId],
+            TrainingSourcesParatextIds = [Resource01PTId],
+        };
+        await env
+            .RealtimeService.GetRepository<SFProject>()
+            .UpdateAsync(Project01, u => u.Set(p => p.Sync.LastSyncSuccessful, false));
 
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { TrainingSourcesParatextIds = [paratextId] }
-        );
-
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
-        Assert.That(project.TranslateConfig.DraftConfig.TrainingSources, Is.Empty);
-
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
-    }
-
-    [Test]
-    public async Task UpdateSettingsAsync_ChangeTrainingSources_CreatesProject()
-    {
-        var env = new TestEnvironment();
-        const string newProjectParatextId = "changedId";
-
-        // Ensure that the new project does not exist
-        Assert.That(
-            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
-            Is.False
-        );
-
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { TrainingSourcesParatextIds = [newProjectParatextId] }
-        );
-
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.DraftConfig.TrainingSources[0].ProjectRef, Is.Not.Null);
-        Assert.That(
-            project.TranslateConfig.DraftConfig.TrainingSources[0].ParatextId,
-            Is.EqualTo(newProjectParatextId)
-        );
-        Assert.That(project.TranslateConfig.DraftConfig.TrainingSources[0].Name, Is.EqualTo("NewSource"));
-
-        SFProject trainingSourceProject = env.GetProject(
-            project.TranslateConfig.DraftConfig.TrainingSources[0].ProjectRef
-        );
-        Assert.That(trainingSourceProject.ParatextId, Is.EqualTo(newProjectParatextId));
-        Assert.That(trainingSourceProject.Name, Is.EqualTo("NewSource"));
+        // SUT
+        await env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
 
         await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+    }
 
-        // Check that the project was created
-        Assert.That(
-            env.RealtimeService.GetRepository<SFProject>().Query().Any(p => p.ParatextId == newProjectParatextId),
-            Is.True
+    [Test]
+    public void UpdateDraftSourcesAsync_NoDraftingSources()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [],
+            TrainingSourcesParatextIds = [Resource01],
+        };
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration)
         );
     }
 
     [Test]
-    public void UpdateSettingsAsync_AlternateSourceEnabled_Forbidden()
+    public void UpdateDraftSourcesAsync_NoTrainingSources()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration
+        {
+            DraftingSourcesParatextIds = [Resource01],
+            TrainingSourcesParatextIds = [],
+        };
+
+        // SUT
+        Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration)
+        );
+    }
+
+    [Test]
+    public void UpdateDraftSourcesAsync_UserIsConsultant_Forbidden()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.UpdateDraftSourcesAsync(User03, Project01, draftSourceConfiguration)
+        );
+    }
+
+    [Test]
+    public void UpdateDraftSourcesAsync_ProjectDoesNotExist()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdateDraftSourcesAsync(User01, "invalid_project", draftSourceConfiguration)
+        );
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_TranslationSuggestionsEnabled_Forbidden()
     {
         var env = new TestEnvironment();
 
         // SUT
 #pragma warning disable CS0618 // Type or member is obsolete
         Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { AlternateSourceEnabled = true })
+            env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings { TranslationSuggestionsEnabled = true }
+            )
         );
 #pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_DraftingSourcesParatextIds_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings { DraftingSourcesParatextIds = ["paratext_" + Project02] }
+            )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_TrainingSourcesParatextIds_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings { TrainingSourcesParatextIds = ["paratext_" + Project02] }
+            )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_AdditionalTrainingDataFiles_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+#pragma warning disable CS0618 // Type or member is obsolete
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.UpdateSettingsAsync(
+                User01,
+                Project01,
+                new SFProjectSettings { AdditionalTrainingDataFiles = ["paratext_" + Project02] }
+            )
+        );
+#pragma warning restore CS0618 // Type or member is obsolete
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_UserIsTranslator_Forbidden()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.UpdateSettingsAsync(User05, Project01, new SFProjectSettings { LynxAssessmentsEnabled = true })
+        );
+    }
+
+    [Test]
+    public void UpdateSettingsAsync_ProjectDoesNotExist()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.UpdateSettingsAsync(
+                User01,
+                "invalid_project",
+                new SFProjectSettings { LynxAssessmentsEnabled = true }
+            )
+        );
     }
 
     [Test]
@@ -2849,24 +2949,6 @@ public class SFProjectServiceTests
         Assert.That(resource.UserRoles.ContainsKey(User01), Is.True);
         // Book and chapter level read permissions are not written for resources
         Assert.That(resource.Texts.All(t => t.Permissions.ContainsKey(User01)), Is.False);
-    }
-
-    [Test]
-    public async Task UpdateSettingsAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
-    {
-        var env = new TestEnvironment();
-
-        await env.Service.UpdateSettingsAsync(
-            User01,
-            Project01,
-            new SFProjectSettings { SourceParatextId = "changedId" }
-        );
-
-        SFProject project = env.GetProject(Project01);
-        Assert.That(project.TranslateConfig.Source.ParatextId, Is.EqualTo("changedId"));
-        Assert.That(project.TranslateConfig.Source.Name, Is.EqualTo("NewSource"));
-
-        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
