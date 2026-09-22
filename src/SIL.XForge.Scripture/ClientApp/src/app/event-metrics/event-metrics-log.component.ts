@@ -201,6 +201,7 @@ export class EventMetricsLogComponent extends DataLoadingComponent implements On
       StartBuildAsync: 'Begin training translation suggestions',
       StartPreTranslationBuildAsync: 'Request draft generation',
       SyncAsync: 'Start synchronization with Paratext',
+      UpdateDraftSourcesAsync: 'Update draft sources',
       UpdateSettingsAsync: 'Update Scripture Forge settings'
     };
 
