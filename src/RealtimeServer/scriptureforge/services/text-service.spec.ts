@@ -13,6 +13,9 @@ import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TextService } from './text-service';
+import { UserService } from '../../common/services/user-service';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
+import { SFProjectService } from './sf-project-service';
 
 ShareDB.types.register(RichText.type);
 
@@ -107,7 +110,7 @@ class TestEnvironment {
       'TEST',
       false,
       false,
-      [this.service],
+      [this.service, new UserService(), new SFProjectService(SF_PROJECT_MIGRATIONS)],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)
