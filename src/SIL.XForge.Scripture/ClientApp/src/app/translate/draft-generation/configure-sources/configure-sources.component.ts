@@ -389,7 +389,12 @@ export class ConfigureSourcesComponent extends DataLoadingComponent implements O
     );
     await this.checkUpdateStatus(
       'projectSettings',
-      this.projectService.onlineUpdateSettings(currentProjectDoc.id, sourcesSettingsChange)
+      this.projectService.onlineUpdateDraftSources(
+        currentProjectDoc.id,
+        sourcesSettingsChange.draftingSourcesParatextIds,
+        sourcesSettingsChange.trainingSourcesParatextIds,
+        sourcesSettingsChange.additionalTrainingDataFiles
+      )
     );
     this.monitorSyncStatus();
   }
@@ -453,7 +458,7 @@ export class ConfigureSourcesComponent extends DataLoadingComponent implements O
   }
 }
 
-export interface DraftSourcesSettingsChange {
+interface DraftSourcesSettingsChange {
   additionalTrainingDataFiles: string[];
   draftingSourcesParatextIds: string[];
   trainingSourcesParatextIds: string[];
