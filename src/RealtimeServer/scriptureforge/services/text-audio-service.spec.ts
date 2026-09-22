@@ -12,6 +12,9 @@ import { createTestProject } from '../models/sf-project-test-data';
 import { TEXT_AUDIO_COLLECTION, TextAudio } from '../models/text-audio';
 import { getTextDocId } from '../models/text-data';
 import { TextAudioService } from './text-audio-service';
+import { UserService } from '../../common/services/user-service';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
+import { SFProjectService } from './sf-project-service';
 
 describe('TextAudioService', () => {
   it('allows member to view text audio timings', async () => {
@@ -77,7 +80,7 @@ class TestEnvironment {
       'TEST',
       false,
       false,
-      [this.service],
+      [this.service, new UserService(), new SFProjectService(SF_PROJECT_MIGRATIONS)],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)

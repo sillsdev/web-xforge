@@ -16,6 +16,95 @@ import { createFetchQuery, docFetch } from './utils/sharedb-utils';
 export const XF_USER_ID_CLAIM = 'http://xforge.org/userid';
 export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 
+/** The actions sent by `Connection.fetchSnapshot` (`nf`, by version) and `fetchSnapshotByTimestamp` (`nt`). */
+const SNAPSHOT_REQUEST_ACTIONS: string[] = ['nf', 'nt'];
+
+/**
+ * The only operators a query may use. The read rules see nothing but the snapshots a query produces, so an
+ * operator that answers some other way, as `$distinct` and `$explain` do, bypasses them entirely. Allowing a fixed
+ * list rather than refusing a known list means an operator MongoDB or sharedb-mongo adds later is refused until
+ * someone decides it is safe. To add one, check that MongoDB answers it with matching documents and nothing more.
+ *
+ * `$count` also answers without snapshots, so it counts documents the user may not read. It is allowed because the
+ * client sends a `$count` alongside every paged query; making counts respect the read rules is separate work.
+ */
+const CURSOR_QUERY_OPERATORS: Set<string> = new Set(['$sort', '$limit', '$skip', '$count']);
+const LOGICAL_QUERY_OPERATORS: Set<string> = new Set(['$or', '$and', '$nor']);
+const FIELD_QUERY_OPERATORS: Set<string> = new Set([
+  '$eq',
+  '$ne',
+  '$gt',
+  '$gte',
+  '$lt',
+  '$lte',
+  '$in',
+  '$nin',
+  '$exists',
+  '$regex',
+  '$options',
+  '$not',
+  '$elemMatch',
+  '$all',
+  '$size'
+]);
+
+/**
+ * Returns the first operator in a query that is not allowed, or undefined when every operator is. Each element
+ * of a logical operator is itself a query; a field condition holds field operators, which can nest.
+ */
+export function findDisallowedQueryOperator(query: unknown): string | undefined {
+  if (query == null || typeof query !== 'object' || Array.isArray(query)) {
+    return undefined;
+  }
+  for (const [key, value] of Object.entries(query)) {
+    if (!key.startsWith('$')) {
+      const disallowed: string | undefined = findDisallowedFieldOperator(value);
+      if (disallowed != null) {
+        return disallowed;
+      }
+    } else if (LOGICAL_QUERY_OPERATORS.has(key)) {
+      if (!Array.isArray(value)) {
+        return key;
+      }
+      for (const subQuery of value) {
+        const disallowed: string | undefined = findDisallowedQueryOperator(subQuery);
+        if (disallowed != null) {
+          return disallowed;
+        }
+      }
+    } else if (!CURSOR_QUERY_OPERATORS.has(key)) {
+      return key;
+    }
+  }
+  return undefined;
+}
+
+/** The field-condition half of findDisallowedQueryOperator. */
+function findDisallowedFieldOperator(condition: unknown): string | undefined {
+  if (condition == null || typeof condition !== 'object') {
+    return undefined;
+  }
+  if (Array.isArray(condition)) {
+    for (const element of condition) {
+      const disallowed: string | undefined = findDisallowedFieldOperator(element);
+      if (disallowed != null) {
+        return disallowed;
+      }
+    }
+    return undefined;
+  }
+  for (const [key, value] of Object.entries(condition)) {
+    if (key.startsWith('$') && !FIELD_QUERY_OPERATORS.has(key)) {
+      return key;
+    }
+    const disallowed: string | undefined = findDisallowedFieldOperator(value);
+    if (disallowed != null) {
+      return disallowed;
+    }
+  }
+  return undefined;
+}
+
 export type RealtimeServerConstructor = new (
   siteId: string,
   migrationsDisabled: boolean,
@@ -167,6 +256,45 @@ export class RealtimeServer extends ShareDB {
           ActivityLogger.instance.log('connectionRejected', { errorMessage: `${err}` });
           done(err);
         });
+    });
+
+    // Checks every message that names a collection before ShareDB acts on it.
+    this.use('receive', (context, done) => {
+      const request: any = context.data;
+      const session: ConnectSession = context.agent.connectSession;
+      const collection: unknown = request?.c;
+      if (typeof collection !== 'string') {
+        done();
+      } else if (!this.docServices.has(collection) && this.projections[collection] == null) {
+        // ShareDB would pass any name on to the database, where the read rules cannot help because they only see the
+        // snapshots a request produces. The collections kept out of ShareDB on purpose, such as the secrets, stay out.
+        done(`403: Unknown collection: ${collection}`);
+      } else if (SNAPSHOT_REQUEST_ACTIONS.includes(request.a)) {
+        // A snapshot request can read any past version of a doc. For a projection it answers with the whole backing
+        // document: ShareDB fetches it without the projection's field list and then skips its own projection step,
+        // because sharedb-mongo declares that it projects snapshots itself (Backend.fetchSnapshot and
+        // fetchSnapshotByTimestamp). The read rules cannot help with either: they decide whether the user may read the
+        // document now, not which versions or properties they may see.
+        const isServerRequestForCollection: boolean = session.isServer && this.docServices.has(collection);
+        // The translate editor fetches a note thread's previous version when undoing.
+        const isNoteThreadVersionRequest: boolean = request.a === 'nf' && collection === 'note_threads';
+        if (isServerRequestForCollection || isNoteThreadVersionRequest) {
+          done();
+        } else {
+          done(`403: Snapshot request ${request.a} is not allowed for collection: ${collection}`);
+        }
+      } else {
+        done();
+      }
+    });
+
+    this.use('query', (context, done) => {
+      const disallowed: string | undefined = findDisallowedQueryOperator(context.query);
+      if (disallowed != null) {
+        done(`403: Query operator is not allowed: ${disallowed}`);
+      } else {
+        done();
+      }
     });
 
     // Configure op, snapshot, or milestone changes to be made just before the op is committed to the database

@@ -44,6 +44,8 @@ declare class ShareDB {
    * @param fields field whitelist for the projection
    */
   addProjection(name: string, collection: string, fields: ShareDB.ProjectionFields): void;
+  /** Every projection addProjection has registered, keyed by the name clients address it by. */
+  readonly projections: { [name: string]: ShareDB.Projection };
   listen(stream: any, req?: any): void;
   close(callback?: (err?: Error) => any): void;
   /**

@@ -16,10 +16,22 @@ import { SchemaVersionRepository } from './schema-version-repository';
 import { ProjectService } from './services/project-service';
 import { UserService } from './services/user-service';
 import { Json0OpBuilder } from './utils/json0-op-builder';
-import { docFetch, docSubmitOp } from './utils/sharedb-utils';
-import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from './utils/test-utils';
+import { createFetchQuery, docFetch, docSubmitOp } from './utils/sharedb-utils';
+import {
+  allowAll,
+  clientConnect,
+  createDoc,
+  fetchDoc,
+  fetchQuery,
+  fetchSnapshot,
+  fetchSnapshotByTimestamp,
+  submitJson0Op,
+  submitOp
+} from './utils/test-utils';
 
 const PROJECTS_COLLECTION = 'projects';
+/** A projection of the projects collection that leaves out the roles, registered by the test environment. */
+const PROJECT_PROFILES_COLLECTION = 'project_profiles';
 
 /** An ActivityLogger.log call captured by TestEnvironment.captureActivityLog. */
 interface LoggedActivity {
@@ -561,6 +573,175 @@ describe('RealtimeServer', () => {
     verify(env.mockedUserService.createIndexes(env.mongo)).once();
   });
 
+  describe('collections a client may address', () => {
+    it('refuses a fetch, subscribe and query of a collection that is not registered', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      await expect(fetchDoc(conn, 'user_secrets', 'user01')).rejects.toThrow('Unknown collection: user_secrets');
+      await expect(
+        new Promise<void>((resolve, reject) =>
+          conn.get('user_secrets', 'user01').subscribe(err => (err ? reject(err) : resolve()))
+        )
+      ).rejects.toThrow('Unknown collection: user_secrets');
+      await expect(fetchQuery(conn, 'user_secrets', {})).rejects.toThrow('Unknown collection: user_secrets');
+    });
+
+    it('serves registered collections and their projections to a client', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      const project = await fetchDoc(conn, PROJECTS_COLLECTION, 'project01');
+      expect(project.data.name).toBe('Project 01');
+      const profile = await fetchDoc(conn, PROJECT_PROFILES_COLLECTION, 'project01');
+      expect(profile.data).toEqual({ name: 'Project 01' });
+      const results = await fetchQuery(conn, PROJECT_PROFILES_COLLECTION, { name: 'Project 01' });
+      expect(results.map(d => d.id)).toEqual(['project01']);
+    });
+
+    it('refuses the server a collection that is not registered', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = env.server.connect();
+
+      await expect(fetchDoc(conn, 'user_secrets', 'user01')).rejects.toThrow('Unknown collection: user_secrets');
+    });
+  });
+
+  describe('query operators', () => {
+    it('refuses an operator that answers without producing snapshots', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { $distinct: { field: 'name' } })).rejects.toThrow(
+        'Query operator is not allowed: $distinct'
+      );
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { $explain: true })).rejects.toThrow(
+        'Query operator is not allowed: $explain'
+      );
+      await expect(
+        fetchQuery(conn, PROJECTS_COLLECTION, { $aggregate: [{ $match: { name: 'Project 01' } }] })
+      ).rejects.toThrow('Query operator is not allowed: $aggregate');
+    });
+
+    it('refuses an operator that runs code or is not on the allowed list, wherever it sits', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { $where: 'true' })).rejects.toThrow(
+        'Query operator is not allowed: $where'
+      );
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { $or: [{ name: 'x' }, { $where: 'true' }] })).rejects.toThrow(
+        'Query operator is not allowed: $where'
+      );
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { name: { $mod: [2, 0] } })).rejects.toThrow(
+        'Query operator is not allowed: $mod'
+      );
+      await expect(
+        fetchQuery(conn, PROJECTS_COLLECTION, { userRoles: { $elemMatch: { $expr: { $eq: [1, 1] } } } })
+      ).rejects.toThrow('Query operator is not allowed: $expr');
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { $or: { name: 'x' } })).rejects.toThrow(
+        'Query operator is not allowed: $or'
+      );
+    });
+
+    it('answers a paged query and the count the client pairs it with', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      const page = await fetchQuery(conn, PROJECTS_COLLECTION, { $sort: { name: 1 }, $skip: 0, $limit: 1 });
+      expect(page.map(d => d.id)).toEqual(['project01']);
+      const countQuery = await createFetchQuery(conn, PROJECTS_COLLECTION, { $count: { applySkipLimit: false } });
+      expect(countQuery.extra).toBe(1);
+    });
+
+    it('answers a query built from the allowed operators', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      const results = await fetchQuery(conn, PROJECTS_COLLECTION, {
+        $or: [{ name: { $regex: '^Project', $options: 'i' } }, { name: { $in: ['none'] } }],
+        $and: [{ name: { $ne: 'other' } }, { 'userRoles.user01': { $exists: true } }],
+        name: { $not: { $eq: 'other' } },
+        $sort: { name: 1 },
+        $skip: 0,
+        $limit: 5
+      });
+      expect(results.map(d => d.id)).toEqual(['project01']);
+    });
+
+    it('refuses the server an operator that is not allowed', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = env.server.connect();
+
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { name: { $type: 'string' } })).rejects.toThrow(
+        'Query operator is not allowed: $type'
+      );
+    });
+  });
+
+  describe('snapshot requests', () => {
+    it('refuses a snapshot request that names a projection', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      await expect(fetchSnapshot(conn, PROJECT_PROFILES_COLLECTION, 'project01', null)).rejects.toThrow(
+        'Snapshot request nf is not allowed for collection: project_profiles'
+      );
+      await expect(fetchSnapshot(conn, PROJECT_PROFILES_COLLECTION, 'project01', 1)).rejects.toThrow(
+        'Snapshot request nf is not allowed for collection: project_profiles'
+      );
+      await expect(
+        fetchSnapshotByTimestamp(conn, PROJECT_PROFILES_COLLECTION, 'project01', Date.now())
+      ).rejects.toThrow('Snapshot request nt is not allowed for collection: project_profiles');
+    });
+
+    it('refuses the server a snapshot request that names a projection', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = env.server.connect();
+
+      await expect(fetchSnapshot(conn, PROJECT_PROFILES_COLLECTION, 'project01', null)).rejects.toThrow(
+        'Snapshot request nf is not allowed for collection: project_profiles'
+      );
+    });
+
+    it('refuses a client a snapshot request of a collection other than note threads', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+
+      await expect(fetchSnapshot(conn, PROJECTS_COLLECTION, 'project01', 1)).rejects.toThrow(
+        'Snapshot request nf is not allowed for collection: projects'
+      );
+      await expect(fetchSnapshotByTimestamp(conn, PROJECTS_COLLECTION, 'project01', Date.now())).rejects.toThrow(
+        'Snapshot request nt is not allowed for collection: projects'
+      );
+    });
+
+    it('serves the server a snapshot request that names a collection', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = env.server.connect();
+      await submitJson0Op<Project>(conn, PROJECTS_COLLECTION, 'project01', op =>
+        op.set<string>(p => p.name, 'Renamed')
+      );
+
+      const earlier = await fetchSnapshot(conn, PROJECTS_COLLECTION, 'project01', 1);
+      expect(earlier.data.name).toBe('Project 01');
+      const byTimestamp = await fetchSnapshotByTimestamp(conn, PROJECTS_COLLECTION, 'project01', Date.now());
+      expect(byTimestamp.data.name).toBe('Renamed');
+    });
+  });
+
   describe('activity logging', () => {
     it('reports the interop handle that a connection was made for', () => {
       const env = new TestEnvironment();
@@ -787,6 +968,7 @@ class TestEnvironment {
     );
     allowAll(this.server, USERS_COLLECTION);
     allowAll(this.server, PROJECTS_COLLECTION);
+    this.server.addProjection(PROJECT_PROFILES_COLLECTION, PROJECTS_COLLECTION, { name: true });
   }
 
   async createData(): Promise<void> {

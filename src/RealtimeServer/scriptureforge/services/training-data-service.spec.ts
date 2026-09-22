@@ -12,6 +12,9 @@ import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import { getTrainingDataId, TRAINING_DATA_COLLECTION, TrainingData } from '../models/training-data';
 import { TrainingDataService } from './training-data-service';
+import { UserService } from '../../common/services/user-service';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
+import { SFProjectService } from './sf-project-service';
 
 describe('TrainingDataService', () => {
   it('allows translator to view training data', async () => {
@@ -72,7 +75,7 @@ class TestEnvironment {
       'TEST',
       false,
       false,
-      [this.service],
+      [this.service, new UserService(), new SFProjectService(SF_PROJECT_MIGRATIONS)],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)
