@@ -196,24 +196,6 @@ public class SFProjectsRpcController(
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                     { "SourceParatextId", settings?.SourceParatextId },
                     { "BiblicalTermsEnabled", settings?.BiblicalTermsEnabled?.ToString() },
-                    {
-                        "AdditionalTrainingDataFiles",
-                        settings?.AdditionalTrainingDataFiles is null
-                            ? null
-                            : string.Join(',', settings.AdditionalTrainingDataFiles)
-                    },
-                    {
-                        "DraftingSourcesParatextIds",
-                        settings?.DraftingSourcesParatextIds is null
-                            ? null
-                            : string.Join(',', settings.DraftingSourcesParatextIds)
-                    },
-                    {
-                        "TrainingSourcesParatextIds",
-                        settings?.TrainingSourcesParatextIds is null
-                            ? null
-                            : string.Join(',', settings.TrainingSourcesParatextIds)
-                    },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
                     { "HideCommunityCheckingText", settings?.HideCommunityCheckingText?.ToString() },
@@ -985,6 +967,48 @@ public class SFProjectsRpcController(
                     { "projectId", projectId },
                     { "draftingSourcesParatextIds", string.Join(',', draftingSourcesParatextIds) },
                     { "trainingSourcesParatextIds", string.Join(',', trainingSourcesParatextIds) },
+                }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> UpdateDraftSources(
+        string projectId,
+        string[] draftingSourcesParatextIds,
+        string[] trainingSourcesParatextIds,
+        string[] additionalTrainingDataFiles
+    )
+    {
+        try
+        {
+            await projectService.UpdateDraftSourcesAsync(
+                UserId,
+                projectId,
+                draftingSourcesParatextIds,
+                trainingSourcesParatextIds,
+                additionalTrainingDataFiles
+            );
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", nameof(UpdateDraftSources) },
+                    { "projectId", projectId },
+                    { "draftingSourcesParatextIds", string.Join(',', draftingSourcesParatextIds) },
+                    { "trainingSourcesParatextIds", string.Join(',', trainingSourcesParatextIds) },
+                    { "additionalTrainingDataFiles", string.Join(',', additionalTrainingDataFiles) },
                 }
             );
             throw;

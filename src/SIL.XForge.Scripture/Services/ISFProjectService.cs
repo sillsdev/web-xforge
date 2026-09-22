@@ -104,6 +104,15 @@ public interface ISFProjectService : IProjectService
         IEnumerable<string> trainingSourcesParatextIds
     );
 
+    [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
+    Task UpdateDraftSourcesAsync(
+        string curUserId,
+        string projectId,
+        string[] draftingSourcesParatextIds,
+        string[] trainingSourcesParatextIds,
+        string[] additionalTrainingDataFiles
+    );
+
     Task<string> GetProjectIdFromParatextIdAsync(string[] systemRoles, string paratextId);
 
     Task SetUsfmConfigAsync(string curUserId, string projectId, DraftUsfmConfig config);
