@@ -9,6 +9,7 @@ import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from '../utils/test-utils';
 import { ProjectService } from './project-service';
+import { UserService } from './user-service';
 
 const PROJECTS_COLLECTION = 'projects';
 
@@ -115,7 +116,7 @@ class TestEnvironment {
       'TEST',
       false,
       false,
-      [this.service],
+      [this.service, new UserService()],
       PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)

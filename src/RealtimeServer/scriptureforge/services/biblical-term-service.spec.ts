@@ -19,6 +19,11 @@ import {
 } from '../models/sf-project-user-config';
 import { createTestProjectUserConfig } from '../models/sf-project-user-config-test-data';
 import { BiblicalTermService } from './biblical-term-service';
+import { UserService } from '../../common/services/user-service';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
+import { SFProjectService } from './sf-project-service';
+import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';
+import { SFProjectUserConfigService } from './sf-project-user-config-service';
 
 describe('BiblicalTermService', () => {
   it('the model builds an id as expected', () => {
@@ -64,7 +69,12 @@ class TestEnvironment {
       'TEST',
       false,
       false,
-      [this.service],
+      [
+        this.service,
+        new UserService(),
+        new SFProjectService(SF_PROJECT_MIGRATIONS),
+        new SFProjectUserConfigService(SF_PROJECT_USER_CONFIG_MIGRATIONS)
+      ],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)

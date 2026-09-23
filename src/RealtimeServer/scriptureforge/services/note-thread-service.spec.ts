@@ -12,6 +12,8 @@ import {
   createDoc,
   deleteDoc,
   fetchDoc,
+  fetchSnapshot,
+  fetchSnapshotByTimestamp,
   flushPromises,
   hasDoc,
   submitJson0Op
@@ -37,6 +39,11 @@ import { createTestProjectUserConfig } from '../models/sf-project-user-config-te
 import { TextAnchor } from '../models/text-anchor';
 import { VerseRefData } from '../models/verse-ref-data';
 import { NoteThreadService } from './note-thread-service';
+import { UserService } from '../../common/services/user-service';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
+import { SFProjectService } from './sf-project-service';
+import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';
+import { SFProjectUserConfigService } from './sf-project-user-config-service';
 
 describe('NoteThreadService', () => {
   it('the model builds an id as expected', () => {
@@ -47,7 +54,8 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.projectAdminId);
-    await env.setHaveReadNoteRefs(conn);
+    // Seed the have-read refs as the server, like createData does. They are test setup, not the behavior under test.
+    await env.setHaveReadNoteRefs(env.server.connect());
 
     // Assert that data is set up as expected for testing.
     const noteThread01: NoteThread =
@@ -107,6 +115,19 @@ describe('NoteThreadService', () => {
     const conn: Connection = clientConnect(env.server, env.projectAdminId);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1));
     expect(doc).not.toBeNull();
+  });
+
+  it('lets a client fetch a previous version of a note thread, but not a version by timestamp', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, env.projectAdminId);
+    const noteThreadId: string = getNoteThreadDocId('project01', env.dataId1);
+
+    const snapshot = await fetchSnapshot(conn, NOTE_THREAD_COLLECTION, noteThreadId, 1);
+    expect(snapshot.data.dataId).toEqual(env.dataId1);
+    await expect(fetchSnapshotByTimestamp(conn, NOTE_THREAD_COLLECTION, noteThreadId, Date.now())).rejects.toThrow(
+      'Snapshot request nt is not allowed for collection: note_threads'
+    );
   });
 
   it('allows translators to edit note thread position', async () => {
@@ -256,7 +277,8 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.projectAdminId);
-    await env.setHaveReadNoteRefs(conn);
+    // Seed the have-read refs as the server, like createData does. They are test setup, not the behavior under test.
+    await env.setHaveReadNoteRefs(env.server.connect());
 
     // Assert that data is set up as expected for testing.
     expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1))).toEqual(true);
@@ -316,7 +338,12 @@ class TestEnvironment {
       'TEST',
       false,
       false,
-      [this.service],
+      [
+        this.service,
+        new UserService(),
+        new SFProjectService(SF_PROJECT_MIGRATIONS),
+        new SFProjectUserConfigService(SF_PROJECT_USER_CONFIG_MIGRATIONS)
+      ],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)
