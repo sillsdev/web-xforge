@@ -666,9 +666,9 @@ describe('RealtimeServer', () => {
       const conn = clientConnect(env.server, 'user01');
 
       const results = await fetchQuery(conn, PROJECTS_COLLECTION, {
-        $or: [{ name: { $regex: '^Project', $options: 'i' } }, { name: { $in: ['none'] } }],
-        $and: [{ name: { $ne: 'other' } }, { 'userRoles.user01': { $exists: true } }],
-        name: { $not: { $eq: 'other' } },
+        $or: [{ name: { $regex: '^Project', $options: 'i' } }, { tags: { $elemMatch: { $in: ['none'] } } }],
+        $and: [{ name: { $ne: 'other' } }, { name: { $gte: 'A', $lt: 'Z' } }],
+        name: { $gt: '', $not: { $regex: 'other' } },
         $sort: { name: 1 },
         $skip: 0,
         $limit: 5
