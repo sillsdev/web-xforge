@@ -60,6 +60,17 @@ export class TrainingDataService extends SFProjectDataService<TrainingData> {
     return super.allowRead(docId, doc, session);
   }
 
+  /**
+   * Draft generation queries a project's training data files. So does the Serval project page, for Serval admins who
+   * need not be members of the project, which is why they may read the files too.
+   */
+  protected async allowQuery(query: unknown, session: ConnectSession): Promise<boolean> {
+    if (session.roles.includes(SystemRole.ServalAdmin) && this.getQueriedProjectId(query) != null) {
+      return true;
+    }
+    return await this.allowProjectQuery(query, session);
+  }
+
   protected setupDomains(): ProjectDomainConfig[] {
     return [
       {

@@ -97,6 +97,41 @@ function findDisallowedFieldOperator(condition: unknown): string | undefined {
   return undefined;
 }
 
+/** The keys of a doc ID existence query. See isDocIdExistenceQuery. */
+const DOC_ID_EXISTENCE_QUERY_KEYS: Set<string> = new Set(['_id', '$limit', '$count']);
+
+/**
+ * Whether a query is the check the frontend sends to find out whether the doc with a given ID exists:
+ * `{ _id: <string>, $limit: 1, $count: { applySkipLimit: true } }`, with nothing else. It sends this for a doc loaded
+ * from its offline store, to find out whether the doc was deleted while the client was away (RealtimeDoc.checkExists).
+ * It answers with a count of 0 or 1 and no snapshots.
+ */
+export function isDocIdExistenceQuery(query: unknown): boolean {
+  if (query == null || typeof query !== 'object' || Array.isArray(query)) {
+    return false;
+  }
+  const keys: string[] = Object.keys(query);
+  if (keys.length !== DOC_ID_EXISTENCE_QUERY_KEYS.size || !keys.every(key => DOC_ID_EXISTENCE_QUERY_KEYS.has(key))) {
+    return false;
+  }
+  const { _id: id, $limit: limit, $count: count } = query as Record<string, unknown>;
+  if (typeof id !== 'string' || limit !== 1 || count == null || typeof count !== 'object' || Array.isArray(count)) {
+    return false;
+  }
+  const countKeys: string[] = Object.keys(count);
+  return (
+    countKeys.length === 1 &&
+    countKeys[0] === 'applySkipLimit' &&
+    (count as Record<string, unknown>).applySkipLimit === true
+  );
+}
+
+/**
+ * Decides whether a client may run a query. `query` is the query as the client sent it, which the rule may inspect,
+ * for example to check which project it is limited to.
+ */
+export type QueryRule = (query: unknown, session: ConnectSession) => boolean | Promise<boolean>;
+
 export type RealtimeServerConstructor = new (
   siteId: string,
   migrationsDisabled: boolean,
@@ -218,6 +253,8 @@ export interface RealtimeServer extends ShareDB, shareDBAccess.AccessControlBack
 export class RealtimeServer extends ShareDB {
   /* eslint-enable @typescript-eslint/no-unsafe-declaration-merging */
   private readonly docServices = new Map<string, DocService>();
+  /** Keyed by the name a client addresses, which is a collection or a projection. See allowQuery. */
+  private readonly queryRules = new Map<string, QueryRule>();
   private defaultConnection?: Connection;
 
   constructor(
@@ -281,11 +318,21 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.use('query', (context, done) => {
+      const session: ConnectSession = context.agent.connectSession;
       const disallowed: string | undefined = findDisallowedQueryOperator(context.query);
       if (disallowed != null) {
         done(`403: Query operator is not allowed: ${disallowed}`);
-      } else {
+      } else if (session.isServer || isDocIdExistenceQuery(context.query)) {
+        // The existence check is not up to the query rules, because the client sends it for a doc of any collection it
+        // subscribes to. Clients still in use send it, so refusing it would break them.
         done();
+      } else {
+        // context.index is the name the client addressed, so a projection is checked by its own rule rather than
+        // by the rule of the collection behind it.
+        const rule: QueryRule | undefined = this.queryRules.get(context.index);
+        Promise.resolve(rule == null ? false : rule(context.query, session))
+          .then(allowed => done(allowed ? undefined : `403: Query is not allowed for collection: ${context.index}`))
+          .catch(err => done(err));
       }
     });
 
@@ -599,6 +646,16 @@ export class RealtimeServer extends ShareDB {
         owner: 'RealtimeServer.defaultConnection'
       });
     }
+  }
+
+  /**
+   * Lets clients query a collection or projection when the rule returns true. Clients cannot query a name that has no
+   * rule; the server can query any name. Unlike the read rules, which check each doc a query returns, this decides
+   * whether the client may run a query there at all. It limits what a client can reach, so a rule should allow only
+   * the sessions whose client code sends such queries.
+   */
+  allowQuery(collection: string, rule: QueryRule): void {
+    this.queryRules.set(collection, rule);
   }
 
   async addValidationSchema(db: Db): Promise<void> {

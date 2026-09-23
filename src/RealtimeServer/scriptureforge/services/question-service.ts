@@ -1,4 +1,5 @@
 import { Doc } from 'sharedb/lib/client';
+import { ConnectSession } from '../../common/connect-session';
 import { OwnedData } from '../../common/models/owned-data';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
@@ -214,6 +215,11 @@ export class QuestionService extends SFProjectDataService<Question> {
       this.pathTemplate(q => q.answers[ANY_INDEX].likes[ANY_INDEX].ownerRef)
     ];
     this.immutableProps.push(...immutableProps);
+  }
+
+  /** The checking tool and the question import dialog query a project's questions. */
+  protected allowQuery(query: unknown, session: ConnectSession): Promise<boolean> {
+    return this.allowProjectQuery(query, session);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {

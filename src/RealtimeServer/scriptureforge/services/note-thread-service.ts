@@ -1,4 +1,5 @@
 import { Connection, Doc } from 'sharedb/lib/client';
+import { ConnectSession } from '../../common/connect-session';
 import { OwnedData } from '../../common/models/owned-data';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
@@ -185,6 +186,11 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       this.pathTemplate(t => t.extraHeadingInfo)
     ];
     this.immutableProps.push(...immutableProps);
+  }
+
+  /** The translate editor, the Biblical Terms panel and the checking tool query a project's note threads. */
+  protected allowQuery(query: unknown, session: ConnectSession): Promise<boolean> {
+    return this.allowProjectQuery(query, session);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {

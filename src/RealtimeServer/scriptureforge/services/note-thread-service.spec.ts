@@ -2,6 +2,7 @@ import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { Connection } from 'sharedb/lib/client';
 import { instance, mock } from 'ts-mockito';
+import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
@@ -12,6 +13,7 @@ import {
   createDoc,
   deleteDoc,
   fetchDoc,
+  fetchQuery,
   fetchSnapshot,
   fetchSnapshotByTimestamp,
   flushPromises,
@@ -115,6 +117,47 @@ describe('NoteThreadService', () => {
     const conn: Connection = clientConnect(env.server, env.projectAdminId);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1));
     expect(doc).not.toBeNull();
+  });
+
+  it('lets project members who can view note threads query them', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const adminConn: Connection = clientConnect(env.server, env.projectAdminId);
+    expect((await fetchQuery(adminConn, NOTE_THREAD_COLLECTION, { projectRef: 'project01' })).length).toBeGreaterThan(
+      0
+    );
+    // Commenters can view only the note threads published to SF, but that is enough to query them.
+    const commenterConn: Connection = clientConnect(env.server, env.commenterId);
+    const results = await fetchQuery(commenterConn, NOTE_THREAD_COLLECTION, {
+      projectRef: 'project01',
+      publishedToSF: true
+    });
+    expect(results.length).toBeGreaterThan(0);
+  });
+
+  it('does not let community checkers query note threads', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, env.checkerId);
+
+    await expect(fetchQuery(conn, NOTE_THREAD_COLLECTION, { projectRef: 'project01' })).rejects.toThrow(
+      'Query is not allowed for collection: note_threads'
+    );
+  });
+
+  it('does not let a query of note threads leave out the project or name one the user is not on', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, env.projectAdminId, SystemRole.SystemAdmin);
+
+    await expect(fetchQuery(conn, NOTE_THREAD_COLLECTION, {})).rejects.toThrow('Query is not allowed');
+    await expect(
+      fetchQuery(conn, NOTE_THREAD_COLLECTION, { projectRef: { $in: ['project01', 'project02'] } })
+    ).rejects.toThrow('Query is not allowed');
+    await expect(fetchQuery(conn, NOTE_THREAD_COLLECTION, { projectRef: 'project02' })).rejects.toThrow(
+      'Query is not allowed'
+    );
   });
 
   it('lets a client fetch a previous version of a note thread, but not a version by timestamp', async () => {

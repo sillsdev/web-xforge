@@ -7,7 +7,7 @@ import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user
 import { createTestUser } from '../models/user-test-data';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
-import { clientConnect, createDoc, fetchDoc, submitJson0Op, submitOp } from '../utils/test-utils';
+import { clientConnect, createDoc, fetchDoc, fetchQuery, submitJson0Op, submitOp } from '../utils/test-utils';
 import { UserService } from './user-service';
 
 describe('UserService', () => {
@@ -97,6 +97,26 @@ describe('UserService', () => {
         ops.set<string[]>(u => u.roles, [SystemRole.SystemAdmin])
       )
     ).rejects.toThrow();
+  });
+
+  it('lets only system admins query users', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const sysAdminConn = clientConnect(env.server, 'user01', SystemRole.SystemAdmin);
+    expect((await fetchQuery(sysAdminConn, USERS_COLLECTION, {})).length).toBeGreaterThan(0);
+    const servalAdminConn = clientConnect(env.server, 'user02', SystemRole.ServalAdmin);
+    await expect(fetchQuery(servalAdminConn, USERS_COLLECTION, {})).rejects.toThrow('Query is not allowed');
+    const userConn = clientConnect(env.server, 'user02', SystemRole.User);
+    await expect(fetchQuery(userConn, USERS_COLLECTION, {})).rejects.toThrow('Query is not allowed');
+  });
+
+  it('does not let clients query user profiles', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'user01', SystemRole.SystemAdmin);
+    await expect(fetchQuery(conn, USER_PROFILES_COLLECTION, {})).rejects.toThrow('Query is not allowed');
   });
 
   it('adds the validation schema to an existing collection', async () => {

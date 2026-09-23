@@ -7,7 +7,7 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op } from '../../common/utils/test-utils';
+import { allowAll, clientConnect, createDoc, fetchDoc, fetchQuery, submitJson0Op } from '../../common/utils/test-utils';
 import { BIBLICAL_TERM_COLLECTION, BiblicalTerm, getBiblicalTermDocId } from '../models/biblical-term';
 import { SF_PROJECTS_COLLECTION, SFProjectProfile } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -51,6 +51,27 @@ describe('BiblicalTermService', () => {
       op.set(b => b.description, content.toString())
     );
     expect(doc.data.description).toEqual('edited content');
+  });
+
+  it('lets users who can view biblical terms query them', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, env.projectAdminId);
+
+    const results = await fetchQuery(conn, BIBLICAL_TERM_COLLECTION, { projectRef: 'project01' });
+    expect(results.map(d => d.id)).toEqual([getBiblicalTermDocId('project01', 'biblicalTerm01')]);
+  });
+
+  it('does not let community checkers or commenters query biblical terms', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    for (const userId of ['checker', 'commenter']) {
+      const conn: Connection = clientConnect(env.server, userId);
+      await expect(fetchQuery(conn, BIBLICAL_TERM_COLLECTION, { projectRef: 'project01' })).rejects.toThrow(
+        'Query is not allowed for collection: biblical_terms'
+      );
+    }
   });
 });
 

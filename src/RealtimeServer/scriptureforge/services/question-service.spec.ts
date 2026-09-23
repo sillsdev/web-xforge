@@ -5,7 +5,14 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
+import {
+  allowAll,
+  clientConnect,
+  createDoc,
+  fetchQuery,
+  flushPromises,
+  submitJson0Op
+} from '../../common/utils/test-utils';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -66,6 +73,15 @@ describe('QuestionService', () => {
     ].data as SFProjectUserConfig;
     expect(checkerProjectUserConfig.answerRefsRead).toContain('answer01');
     expect(checkerProjectUserConfig.commentRefsRead).not.toContain('comment01');
+  });
+
+  it('lets community checkers query questions', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn = clientConnect(env.server, 'checker');
+
+    const results = await fetchQuery(conn, QUESTIONS_COLLECTION, { projectRef: 'project01', isArchived: false });
+    expect(results.map(d => d.id)).toEqual([getQuestionDocId('project01', 'question01')]);
   });
 });
 

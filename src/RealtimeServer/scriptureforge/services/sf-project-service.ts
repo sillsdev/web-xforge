@@ -2,6 +2,7 @@ import ShareDB from 'sharedb';
 import { ConnectSession } from '../../common/connect-session';
 import { MigrationConstructor } from '../../common/migration';
 import { Operation } from '../../common/models/project-rights';
+import { SystemRole } from '../../common/models/system-role';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { RealtimeServer } from '../../common/realtime-server';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
@@ -573,7 +574,18 @@ export class SFProjectService extends ProjectService<SFProject> {
 
   init(server: RealtimeServer): void {
     server.addProjection(SF_PROJECT_PROFILES_COLLECTION, this.collection, SF_PROJECT_PROFILE_FIELDS);
+    server.allowQuery(SF_PROJECT_PROFILES_COLLECTION, (_query, session) => this.allowProfileQuery(session));
     super.init(server);
+  }
+
+  /** The system administration page lists and searches projects, and looks up the projects of a user. */
+  protected allowQuery(_query: unknown, session: ConnectSession): boolean {
+    return session.roles.includes(SystemRole.SystemAdmin);
+  }
+
+  /** The Serval administration pages list and search projects, and look one up by its Paratext ID. */
+  private allowProfileQuery(session: ConnectSession): boolean {
+    return session.roles.includes(SystemRole.ServalAdmin);
   }
 
   protected allowRead(docId: string, doc: SFProject, session: ConnectSession): boolean {

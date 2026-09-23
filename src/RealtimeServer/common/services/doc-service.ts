@@ -81,6 +81,7 @@ export abstract class DocService<T = any> {
     server.allowUpdate(this.collection, (docId, oldDoc, newDoc, ops, session) =>
       this.allowUpdate(docId, oldDoc, newDoc, ops, session)
     );
+    server.allowQuery(this.collection, (query, session) => this.allowQuery(query, session));
   }
 
   getMigration(version: number): Migration {
@@ -141,6 +142,15 @@ export abstract class DocService<T = any> {
 
   protected allowRead(_docId: string, _doc: T, session: ConnectSession): Promise<boolean> | boolean {
     return session.isServer;
+  }
+
+  /**
+   * Whether a client with this session may run this query of the collection. The server may always query. Allow only
+   * the queries that client code sends, and only for the users it sends them for, so that the rest cannot reach the
+   * collection through a query at all.
+   */
+  protected allowQuery(_query: unknown, _session: ConnectSession): Promise<boolean> | boolean {
+    return false;
   }
 
   protected allowUpdate(

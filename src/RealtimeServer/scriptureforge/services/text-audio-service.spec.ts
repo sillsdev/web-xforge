@@ -5,7 +5,7 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op } from '../../common/utils/test-utils';
+import { allowAll, clientConnect, createDoc, fetchDoc, fetchQuery, submitJson0Op } from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
@@ -63,6 +63,25 @@ describe('TextAudioService', () => {
         })
       )
     ).rejects.toThrow();
+  });
+
+  it('lets members query text audio', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'observer');
+    const results = await fetchQuery(conn, TEXT_AUDIO_COLLECTION, { projectRef: 'project01' });
+    expect(results.map(d => d.id)).toEqual([getTextDocId('project01', 40, 1)]);
+  });
+
+  it('does not let non-members query text audio', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'nonmember');
+    await expect(fetchQuery(conn, TEXT_AUDIO_COLLECTION, { projectRef: 'project01' })).rejects.toThrow(
+      'Query is not allowed for collection: text_audio'
+    );
   });
 });
 
