@@ -8,10 +8,9 @@ import { Duplex } from 'stream';
 import v8 from 'v8';
 import vm from 'vm';
 import { ActivityLogger } from './activity-logger';
-import { ConnectSession } from './connect-session';
 import { resolveLogPath } from './utils/utils';
 
-function sizeof(obj: unknown): number {
+export function sizeof(obj: unknown): number {
   if (obj == null) return 0;
   return jsonSizeOf(obj);
 }
@@ -67,16 +66,20 @@ export interface ConnectionCollectionInfo {
 }
 
 /**
- * Defines some fields on the ShareDB Agent type in agent.js, used for measuring purposes.
+ * Fields of a ShareDB Agent that only the measuring here reads.
  */
-export interface AgentInternal {
+export interface AgentInternal extends ShareDB.Agent {
+  /**
+   * The id the client asked to keep, from its handshake, and the source recorded on its ops. Null until a handshake
+   * supplies one, so a client connecting for the first time has none and its ops fall back to clientId.
+   */
   src: string | null;
-  clientId: string;
   connectTime: number;
-  subscribedDocs: Record<string, Record<string, unknown>>;
-  subscribedQueries: Record<string, { query: unknown | undefined; streams: unknown }>;
-  subscribedPresences: Record<string, unknown>;
-  connectSession: ConnectSession | undefined;
+  /**
+   * The stream the agent sends over. For a frontend client this is a WebSocketJSONStream, which has a `ws` beneath it;
+   * but for this server's own connections and for the dotnet process it is a plain in-process stream.
+   */
+  stream: Duplex & { ws?: { bufferedAmount?: number } };
 }
 
 /**
@@ -91,11 +94,30 @@ export interface AgentInfo {
   connectTime: number;
   connectSessionUserId: string | undefined;
   subscribedDocsCount: number;
-  subscribedDocsBytes: number;
+  /**
+   * Bytes of operations sitting unread in this agent's document subscription streams. An agent holds no document
+   * content, only a stream per subscribed document, and ShareDB pushes operations into those streams as they happen
+   * (OpStream in op-stream.js relies on the stream's own buffer). So this is memory held for a client that is not
+   * reading its subscriptions fast enough.
+   *
+   * outboundBufferedBytes below is the same concern one layer down, at the socket.
+   */
+  subscribedDocsOpsBytes: number;
   subscribedPresencesCount: number;
   subscribedPresencesBytes: number;
   subscribedQueriesCount: number;
   subscribedQueriesBytes: number;
+  /**
+   * Bytes written towards this agent's client that the operating system has not yet taken, so memory the server is
+   * still holding on the client's behalf. Only web socket clients have this; it is undefined for the in-process
+   * streams.
+   */
+  outboundBufferedBytes: number | undefined;
+  /**
+   * For in-process, this is messages queued in the agent's stream itself.
+   * For a web socket client, this stays at zero.
+   */
+  outboundQueuedCount: number;
 }
 
 /**
@@ -183,6 +205,139 @@ interface FetchOperationState {
   inFlightAtStart: number;
 }
 
+/**
+ * What one read of documents returned.
+ *
+ * FetchInfo covers only the bulk fetches that the dotnet process makes, since those are the only ones wrapped by
+ * beginFetchOperation. This covers every read of documents, whoever asked for it: a frontend client fetching or
+ * subscribing to a document, a query's results, and the reads made by this server's own connections. It is recorded
+ * from the 'readSnapshots' middleware, which every such read passes through.
+ */
+export interface SnapshotReadInfo {
+  type: 'snapshotRead';
+  reportBatchId: string;
+  triggerType: ReportTriggerType;
+  timestamp: string;
+  /** The connection that read. */
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  /** Whether the reads were of the current documents, or of an earlier version or time. */
+  snapshotType: string;
+  /** How many reads were made since the previous report. */
+  readsCount: number;
+  docsCount: number;
+  docsBytes: number;
+}
+
+/**
+ * What one connection caused to be loaded from one document as operations, since the last report.
+ */
+export interface OpsLoadedInfo {
+  type: 'opsLoaded';
+  reportBatchId: string;
+  triggerType: ReportTriggerType;
+  timestamp: string;
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  docId: string;
+  opsCount: number;
+  opsBytes: number;
+  largestOpBytes: number;
+}
+
+/**
+ * How often a connection asked for a query, by fetching one or subscribing to one, since the last report. The re-polls
+ * that a subscription then causes are not included; queryPolled counts those.
+ */
+export interface QueryRunInfo {
+  type: 'queryRun';
+  reportBatchId: string;
+  triggerType: ReportTriggerType;
+  timestamp: string;
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  runsCount: number;
+}
+
+/**
+ * How often a subscribed query was polled again, for one connection, since the last report.
+ *
+ * A subscription is re-polled whenever a document that might match it changes, so one subscription on a busy
+ * collection can put an unbounded number of queries on the database. Those polls reach the database directly, without
+ * passing through any middleware, so queryRun does not see them and this is the only count of them.
+ */
+export interface QueryPolledInfo {
+  type: 'queryPolled';
+  reportBatchId: string;
+  triggerType: ReportTriggerType;
+  timestamp: string;
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  /**
+   * 'queryEmitter.poll' for the whole query being run again, 'queryEmitter.pollDoc' for a single document being
+   * checked against it. The first is the expensive one.
+   */
+  pollType: string;
+  pollsCount: number;
+  /** How long those polls took in total, as measured by ShareDB. */
+  totalMs: number;
+}
+
+/** Running totals of the polls of one connection's subscribed queries on one collection since the last report. */
+interface QueryPolledTotals {
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  pollType: string;
+  pollsCount: number;
+  totalMs: number;
+}
+
+/** Running totals of the operations one connection has loaded from one document since the last report. */
+interface OpsLoadedTotals {
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  docId: string;
+  opsCount: number;
+  opsBytes: number;
+  largestOpBytes: number;
+}
+
+/** Running totals of the queries run for one connection on one collection since the last report. */
+interface QueryRunTotals {
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  runsCount: number;
+}
+
+/** Running totals of what one connection has read in an area since the last report. */
+interface SnapshotReadTotals {
+  clientId: string;
+  userId: string | undefined;
+  isServer: boolean | undefined;
+  collection: string;
+  snapshotType: string;
+  readsCount: number;
+  docsCount: number;
+  docsBytes: number;
+}
+
+/**
+ * One bulk fetch made by the dotnet process: who asked for it, how long it took, and how much else was in flight.
+ */
 export interface FetchInfo {
   timestamp: string;
   operationId: string;
@@ -192,7 +347,6 @@ export interface FetchInfo {
   collection: string;
   requestedIdsCount: number;
   returnedDocsCount: number;
-  returnedDocsBytes: number;
   durationMs: number;
   inFlightAtStart: number;
   inFlightAtEnd: number;
@@ -211,6 +365,14 @@ export class ResourceMonitor {
   private readonly connections: Set<Connection> = new Set<Connection>();
   private readonly connectionStates = new Map<Connection, ConnectionMonitorState>();
   private readonly activeFetches = new Map<string, FetchOperationState>();
+  /** What each connection has read since the last report, keyed by connection, collection and snapshot type. */
+  private readonly snapshotReads = new Map<string, SnapshotReadTotals>();
+  /** Ops loaded for each connection since the last report, keyed by connection, collection and document. */
+  private readonly opsLoaded = new Map<string, OpsLoadedTotals>();
+  /** Queries run for each connection since the last report, keyed by connection and collection. */
+  private readonly queriesRun = new Map<string, QueryRunTotals>();
+  /** Polls of subscribed queries since the last report, keyed by connection, collection and poll type. */
+  private readonly queriesPolled = new Map<string, QueryPolledTotals>();
   private inFlightFetchCount = 0;
   private pubSub: PubSub | undefined;
   private readonly heapInfoPath: string;
@@ -220,10 +382,30 @@ export class ResourceMonitor {
   private readonly agentInfoPath: string;
   private readonly pubSubInfoPath: string;
   private readonly fetchInfoPath: string;
+  private readonly resourceUsagePath: string;
+  private periodicRecordingStarted = false;
+  /**
+   * Whether the application is listening for resource usage report requests via signaling.
+   */
+  private readonly reportsCanBeSignalledFor: boolean;
 
   /** Singleton. */
   public static get instance(): ResourceMonitor {
     return (ResourceMonitor._instance ??= new ResourceMonitor());
+  }
+
+  /**
+   * Whether to accumulate what connections are causing, between reports.
+   *
+   * True when a report can actually be asked for: either periodic recording has been started, or SIGUSR2 has been set
+   * up to produce one. Accumulating otherwise costs a walk of every operation and every document read, on every
+   * connection, to fill maps that nothing will ever empty or read.
+   *
+   * This does not gate the reports themselves. The rest of a report is sampled when it is taken, so it costs nothing
+   * in between and is always available.
+   */
+  public get enabled(): boolean {
+    return this.periodicRecordingStarted || this.reportsCanBeSignalledFor;
   }
 
   private constructor() {
@@ -235,12 +417,15 @@ export class ResourceMonitor {
     this.agentInfoPath = path.join(baseOutputPath, 'agent-info.csv');
     this.pubSubInfoPath = path.join(baseOutputPath, 'pubsub-info.csv');
     this.fetchInfoPath = path.join(baseOutputPath, 'fetch-info.csv');
+    this.resourceUsagePath = path.join(baseOutputPath, 'resource-usage.jsonl');
     const minutes: number = 30;
     this.intervalMs = minutes * 60 * 1000;
+    this.reportsCanBeSignalledFor = process.env['SF_SIGUSR2_ACTION'] === 'resourceUsage';
   }
 
   /** Begin periodic recording. */
   public start(): void {
+    this.periodicRecordingStarted = true;
     setInterval(() => void this.record('periodic'), this.intervalMs);
     void this.record('periodic');
   }
@@ -252,8 +437,9 @@ export class ResourceMonitor {
    * complete list. Only index.ts for connections made for dotnet ('interop'), and
    * RealtimeServer's constructor for defaultConnection ('default'), make connections that are included here. Connections made elsewhere, such as those
    * QuestionService and NoteThreadService make while cleaning up references, are absent from those files entirely.
+   * The defaultConnection is registered only when data validation is enabled, so it is absent during a migration run.
    *
-   * agent-info.csv does cover every connection, because monitorAgent below is called from RealtimeServer.listen, which
+   * agent-info.csv does cover every connection (at the moment in time), because monitorAgent below is called from RealtimeServer.listen, which
    * every connection goes through. So agent-info.csv is the file to use when asking "what connections existed"; the
    * connection files answer "what were the interop and default connections holding". See rts-diagnostics.md.
    */
@@ -284,7 +470,7 @@ export class ResourceMonitor {
   public monitorAgent(agent: ShareDB.Agent, stream: Duplex): void {
     if (this.agents.has(agent)) return;
     this.agents.add(agent);
-    // When the agent's stream closes, stop monitoring the agent.
+    stream.once('end', () => this.agents.delete(agent));
     stream.once('close', () => this.agents.delete(agent));
   }
 
@@ -321,6 +507,113 @@ export class ResourceMonitor {
     return operationId;
   }
 
+  /**
+   * Records what a read of documents returned. Called from the 'readSnapshots' middleware, which every read passes
+   * through, so this covers the reads that beginFetchOperation does not: those made by frontend clients, those made by
+   * this server's own connections, and the results of queries.
+   *
+   * The totals are kept in memory and written out with the next report, rather than a row being written per read.
+   */
+  public recordSnapshotRead(
+    clientId: string,
+    collection: string,
+    snapshotType: string,
+    snapshots: { data?: unknown }[],
+    userId?: string,
+    isServer?: boolean
+  ): void {
+    if (!this.enabled) return;
+    const key = `${clientId}|${collection}|${snapshotType}`;
+    let totals: SnapshotReadTotals | undefined = this.snapshotReads.get(key);
+    if (totals == null) {
+      totals = { clientId, userId, isServer, collection, snapshotType, readsCount: 0, docsCount: 0, docsBytes: 0 };
+      this.snapshotReads.set(key, totals);
+    }
+    totals.readsCount += 1;
+    totals.docsCount += snapshots.length;
+    totals.docsBytes += snapshots.reduce((sum: number, snapshot: { data?: unknown }) => sum + sizeof(snapshot.data), 0);
+  }
+
+  /**
+   * Records one operation that passed through a connection, whether it was read from the database, broadcast from
+   * pubsub, or written by that connection itself. Called from the 'op' middleware, which ShareDB runs once per
+   * operation, so this only counts and measures and leaves writing to the next report.
+   *
+   * Totals are kept per document rather than per collection, so that a connection loading a great deal from one
+   * document can be told from one loading a little from many.
+   *
+   * Possible improvement: when an op is broadcast, ShareDB calls this once per subscribed connection, handing over a
+   * shallow copy of the op each time (Agent.prototype._onOp in agent.js), so the payload is the same object on every
+   * such call. sizeof walks it once per subscriber to arrive at the same number each time. A WeakMap keyed on the
+   * payload would make that one walk and N-1 lookups. Check first whether a projection ever rewrites the payload in
+   * place, which would leave such a memo stale.
+   */
+  public recordOpLoaded(
+    clientId: string,
+    collection: string,
+    docId: string,
+    op: unknown,
+    userId?: string,
+    isServer?: boolean
+  ): void {
+    if (!this.enabled) return;
+    const key = `${clientId}|${collection}|${docId}`;
+    let totals: OpsLoadedTotals | undefined = this.opsLoaded.get(key);
+    if (totals == null) {
+      totals = { clientId, userId, isServer, collection, docId, opsCount: 0, opsBytes: 0, largestOpBytes: 0 };
+      this.opsLoaded.set(key, totals);
+    }
+    const opBytes: number = sizeof(op);
+    totals.opsCount += 1;
+    totals.opsBytes += opBytes;
+    totals.largestOpBytes = Math.max(totals.largestOpBytes, opBytes);
+  }
+
+  /**
+   * Records one query being asked for by a connection. Called from the 'query' middleware, which ShareDB triggers when
+   * a query is fetched or subscribed to.
+   *
+   * This is not a count of database work. A subscribed query is re-polled whenever a document that might match it
+   * changes, and those re-polls go straight to the database without passing through any middleware, so none of them
+   * are counted here. Subscribing on a reconnect goes the other way: the middleware runs even though no query is put
+   * to the database. See queryPolled for the re-polls.
+   */
+  public recordQueryRun(clientId: string, collection: string, userId?: string, isServer?: boolean): void {
+    if (!this.enabled) return;
+    const key = `${clientId}|${collection}`;
+    let totals: QueryRunTotals | undefined = this.queriesRun.get(key);
+    if (totals == null) {
+      totals = { clientId, userId, isServer, collection, runsCount: 0 };
+      this.queriesRun.set(key, totals);
+    }
+    totals.runsCount += 1;
+  }
+
+  /**
+   * Records one poll of a subscribed query. Driven by ShareDB's 'timing' event, which is the only notice given of
+   * these, since they reach the database without any middleware running.
+   *
+   * The connection is the one that subscribed, not whoever made the change that caused the poll.
+   */
+  public recordQueryPolled(
+    clientId: string,
+    collection: string,
+    pollType: string,
+    durationMs: number,
+    userId?: string,
+    isServer?: boolean
+  ): void {
+    if (!this.enabled) return;
+    const key = `${clientId}|${collection}|${pollType}`;
+    let totals: QueryPolledTotals | undefined = this.queriesPolled.get(key);
+    if (totals == null) {
+      totals = { clientId, userId, isServer, collection, pollType, pollsCount: 0, totalMs: 0 };
+      this.queriesPolled.set(key, totals);
+    }
+    totals.pollsCount += 1;
+    totals.totalMs += durationMs;
+  }
+
   public async endFetchOperation(
     operationId: string,
     results: Array<{ data: unknown }> | undefined,
@@ -332,7 +625,6 @@ export class ResourceMonitor {
     this.inFlightFetchCount = Math.max(0, this.inFlightFetchCount - 1);
 
     const returnedDocsCount = results?.length ?? 0;
-    const returnedDocsBytes = results?.reduce((sum, result) => sum + sizeof(result.data), 0) ?? 0;
     const data: FetchInfo = {
       timestamp: new Date().toISOString(),
       operationId,
@@ -342,7 +634,6 @@ export class ResourceMonitor {
       collection: state.collection,
       requestedIdsCount: state.requestedIdsCount,
       returnedDocsCount,
-      returnedDocsBytes,
       durationMs: Date.now() - state.startedAt,
       inFlightAtStart: state.inFlightAtStart,
       inFlightAtEnd: this.inFlightFetchCount,
@@ -359,6 +650,7 @@ export class ResourceMonitor {
     await this.recordConnectionDiagnostics(reportBatchId, triggerType);
     await this.recordAgentDiagnostics(reportBatchId, triggerType);
     await this.recordPubSubDiagnostics(reportBatchId, triggerType);
+    await this.recordUsageDiagnostics(reportBatchId, triggerType);
     ActivityLogger.instance.log('resourceReportGenerated', {
       reportBatchId: reportBatchId,
       triggerType: triggerType
@@ -392,6 +684,79 @@ export class ResourceMonitor {
     if (this.pubSub === undefined) return;
     const report = this.reportOnPubSub(this.pubSub, new Date().toISOString(), reportBatchId, triggerType);
     await this.saveToCsv(this.pubSubInfoPath, [report]);
+  }
+
+  /**
+   * Writes out what each connection caused since the previous report - documents read, operations loaded, queries run
+   * - and starts the totals again. A connection that did none of a thing contributes no line for it.
+   */
+  private async recordUsageDiagnostics(reportBatchId: string, triggerType: ReportTriggerType): Promise<void> {
+    const timestamp: string = new Date().toISOString();
+    const report: SnapshotReadInfo[] = [...this.snapshotReads.values()].map(
+      (totals: SnapshotReadTotals): SnapshotReadInfo => ({
+        type: 'snapshotRead',
+        reportBatchId: reportBatchId,
+        triggerType: triggerType,
+        timestamp: timestamp,
+        clientId: totals.clientId,
+        userId: totals.userId,
+        isServer: totals.isServer,
+        collection: totals.collection,
+        snapshotType: totals.snapshotType,
+        readsCount: totals.readsCount,
+        docsCount: totals.docsCount,
+        docsBytes: totals.docsBytes
+      })
+    );
+    this.snapshotReads.clear();
+
+    const opsLoaded: OpsLoadedInfo[] = [...this.opsLoaded.values()].map((totals: OpsLoadedTotals): OpsLoadedInfo => ({
+      type: 'opsLoaded',
+      reportBatchId: reportBatchId,
+      triggerType: triggerType,
+      timestamp: timestamp,
+      clientId: totals.clientId,
+      userId: totals.userId,
+      isServer: totals.isServer,
+      collection: totals.collection,
+      docId: totals.docId,
+      opsCount: totals.opsCount,
+      opsBytes: totals.opsBytes,
+      largestOpBytes: totals.largestOpBytes
+    }));
+    this.opsLoaded.clear();
+
+    const queriesRun: QueryRunInfo[] = [...this.queriesRun.values()].map((totals: QueryRunTotals): QueryRunInfo => ({
+      type: 'queryRun',
+      reportBatchId: reportBatchId,
+      triggerType: triggerType,
+      timestamp: timestamp,
+      clientId: totals.clientId,
+      userId: totals.userId,
+      isServer: totals.isServer,
+      collection: totals.collection,
+      runsCount: totals.runsCount
+    }));
+    this.queriesRun.clear();
+
+    const queriesPolled: QueryPolledInfo[] = [...this.queriesPolled.values()].map(
+      (totals: QueryPolledTotals): QueryPolledInfo => ({
+        type: 'queryPolled',
+        reportBatchId: reportBatchId,
+        triggerType: triggerType,
+        timestamp: timestamp,
+        clientId: totals.clientId,
+        userId: totals.userId,
+        isServer: totals.isServer,
+        collection: totals.collection,
+        pollType: totals.pollType,
+        pollsCount: totals.pollsCount,
+        totalMs: totals.totalMs
+      })
+    );
+    this.queriesPolled.clear();
+
+    await this.saveToJsonl(this.resourceUsagePath, [...report, ...opsLoaded, ...queriesRun, ...queriesPolled]);
   }
 
   private reportOnConnection(
@@ -471,12 +836,17 @@ export class ResourceMonitor {
       clientId: ag.clientId,
       connectTime: ag.connectTime,
       connectSessionUserId: ag.connectSession?.userId,
-      subscribedDocsCount: Object.keys(ag.subscribedDocs).length,
-      subscribedDocsBytes: sizeof(ag.subscribedDocs),
+      subscribedDocsCount: Object.values(ag.subscribedDocs).reduce(
+        (total: number, docs: Record<string, unknown>) => total + Object.keys(docs).length,
+        0
+      ),
+      subscribedDocsOpsBytes: sizeof(ag.subscribedDocs),
       subscribedPresencesCount: Object.keys(ag.subscribedPresences).length,
       subscribedPresencesBytes: sizeof(ag.subscribedPresences),
       subscribedQueriesCount: Object.keys(ag.subscribedQueries).length,
-      subscribedQueriesBytes
+      subscribedQueriesBytes,
+      outboundBufferedBytes: ag.stream?.ws?.bufferedAmount,
+      outboundQueuedCount: ag.stream?.writableLength ?? 0
     };
     return agentInfo;
   }
@@ -541,6 +911,20 @@ export class ResourceMonitor {
       physicalSpaceSizeBytes: space.physical_space_size
     }));
     await this.saveToCsv(this.heapSpaceInfoPath, data);
+  }
+
+  /**
+   * Appends one JSON object per line.
+   */
+  private async saveToJsonl<T extends object>(filePath: string, data: T[]): Promise<void> {
+    if (data.length === 0) return;
+    try {
+      await mkdir(path.dirname(filePath), { recursive: true });
+      const lines: string = data.map((item: T) => JSON.stringify(item)).join('\n');
+      await appendFile(filePath, lines + '\n', { flag: 'a' });
+    } catch (error) {
+      console.error(`Ignoring error writing to ${filePath}:`, error);
+    }
   }
 
   /** Write data to a CSV file. If needed, create header row from the data's objects' keys. */

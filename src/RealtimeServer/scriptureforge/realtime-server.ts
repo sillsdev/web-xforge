@@ -1,4 +1,5 @@
 import ShareDB from 'sharedb';
+import { ConnectSession } from '../common/connect-session';
 import { Operation } from '../common/models/project-rights';
 import { RealtimeServer } from '../common/realtime-server';
 import { SchemaVersionRepository } from '../common/schema-version-repository';
@@ -56,11 +57,17 @@ export default class SFRealtimeServer extends RealtimeServer {
     );
     this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void): void => {
       if (context.collection === NOTE_THREAD_COLLECTION) {
-        if (context.agent.connectSession.isServer) {
+        const connectSession: ConnectSession | undefined = context.agent?.connectSession;
+        if (connectSession == null) {
+          // How to process the query cannot be decided without knowing who is asking.
+          next(new Error('A query for note threads arrived without a connection session.'));
+          return;
+        }
+        if (connectSession.isServer) {
           next();
           return;
         }
-        const userId: string = context.agent.connectSession.userId;
+        const userId: string = connectSession.userId;
         this.getProject(context.query.projectRef)
           .then(p => {
             if (
