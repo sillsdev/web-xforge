@@ -362,7 +362,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   }
 
   private async handleApply(context: ShareDB.middleware.SubmitContext): Promise<void> {
-    const connectSession = context.agent.connectSession as ConnectSession;
+    const connectSession: ConnectSession | undefined = context.agent?.connectSession;
+    if (connectSession == null) {
+      throw new Error('Op reached has no associated connection session.');
+    }
     if (context.op.del != null) {
       const domain = this.getUpdatedDomain([], context.snapshot!.data);
       if (domain != null) {
@@ -372,7 +375,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   }
 
   private async handleAfterSubmit(context: ShareDB.middleware.SubmitContext): Promise<void> {
-    const connectSession = context.agent.connectSession as ConnectSession;
+    const connectSession: ConnectSession | undefined = context.agent?.connectSession;
+    if (connectSession == null) {
+      throw new Error('Op reached has no associated connection session.');
+    }
     if (context.op.create != null) {
       const domain = this.getUpdatedDomain([], context.op.create.data);
       if (domain != null) {

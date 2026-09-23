@@ -1,5 +1,5 @@
 import path from 'path';
-import { ActivityLogger } from './activity-logger';
+import { ActivityLogger, MAX_QUEUED_ENTRIES } from './activity-logger';
 
 let mockFsPromises: MockFsPromises;
 jest.mock('fs/promises', () => ({
@@ -63,6 +63,68 @@ describe('ActivityLogger', () => {
       expect(written.event).toBe('someEvent');
       expect(written.detail).toBe('abc');
       expect(typeof written.timestamp).toBe('string');
+    });
+  });
+
+  describe('dropped entries', () => {
+    it('records in the log itself that entries were dropped', async () => {
+      const env = new TestEnvironment({ SF_RTS_LOG_LEVEL: 'all' });
+      // Fill the queue past its limit while no write can complete, so that later entries are dropped.
+      for (let count = 0; count < TestEnvironment.maxQueuedEntries + 3; count++) {
+        env.logger.log('someEvent');
+      }
+      // SUT
+      await TestEnvironment.flushMicrotasks();
+      const written: any[] = mockFsPromises.appendFileCalls
+        .flatMap(data => data.split('\n'))
+        .filter(line => line.length > 0)
+        .map(line => JSON.parse(line));
+      const dropped: any = written.find(entry => entry.event === 'logEntriesDropped');
+      expect(dropped).toBeDefined();
+      expect(dropped.droppedCount).toBe(3);
+    });
+
+    it('still records that entries were dropped when the first write of the notice fails', async () => {
+      const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const env = new TestEnvironment({ SF_RTS_LOG_LEVEL: 'all' });
+        mockFsPromises.failWhen = data => data.includes('logEntriesDropped');
+        const cyclic: any = {};
+        cyclic.self = cyclic;
+        // Can't be stringified, so it is dropped.
+        env.logger.log('someEvent', { cyclic: cyclic });
+        env.logger.log('someOtherEvent');
+        await TestEnvironment.flushMicrotasks();
+        // Writing works again. The log must still say that an entry was lost.
+        mockFsPromises.failWhen = undefined;
+        // SUT
+        env.logger.log('anotherEvent');
+        await TestEnvironment.flushMicrotasks();
+        const written: any[] = mockFsPromises.appendFileCalls
+          .flatMap(data => data.split('\n'))
+          .filter(line => line.length > 0)
+          .map(line => JSON.parse(line));
+        const dropped: any = written.find(entry => entry.event === 'logEntriesDropped');
+        expect(dropped).toBeDefined();
+        expect(dropped.droppedCount).toBe(1);
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
+    it('says nothing about dropped entries when the queue stayed within its limit', async () => {
+      const env = new TestEnvironment({ SF_RTS_LOG_LEVEL: 'all' });
+      for (let count = 0; count < TestEnvironment.maxQueuedEntries; count++) {
+        env.logger.log('someEvent');
+      }
+      // SUT
+      await TestEnvironment.flushMicrotasks();
+      const written: any[] = mockFsPromises.appendFileCalls
+        .flatMap(data => data.split('\n'))
+        .filter(line => line.length > 0)
+        .map(line => JSON.parse(line));
+      expect(written.length).toBe(TestEnvironment.maxQueuedEntries);
+      expect(written.find(entry => entry.event === 'logEntriesDropped')).toBeUndefined();
     });
   });
 
@@ -169,6 +231,8 @@ class MockFsPromises {
   public readonly mkdirCalls: string[] = [];
   public readonly appendFileCalls: string[] = [];
   public readonly appendFilePaths: string[] = [];
+  /** Fails appendFile for data that this returns true for, in place of a disk problem. */
+  public failWhen: ((data: string) => boolean) | undefined;
 
   mkdir(dirPath: string, _options?: unknown): Promise<void> {
     this.mkdirCalls.push(dirPath);
@@ -176,6 +240,9 @@ class MockFsPromises {
   }
 
   appendFile(filePath: string, data: string, _options?: unknown): Promise<void> {
+    if (this.failWhen?.(data) === true) {
+      return Promise.reject(new Error('Test-induced write failure'));
+    }
     this.appendFilePaths.push(filePath);
     this.appendFileCalls.push(data);
     return Promise.resolve();
@@ -209,6 +276,11 @@ class TestEnvironment {
     // Reset singleton between tests
     (ActivityLogger as any)._instance = undefined;
     this.logger = ActivityLogger.instance;
+  }
+
+  /** How many entries ActivityLogger queues before it starts dropping them. */
+  static get maxQueuedEntries(): number {
+    return MAX_QUEUED_ENTRIES;
   }
 
   static flushMicrotasks(): Promise<void> {

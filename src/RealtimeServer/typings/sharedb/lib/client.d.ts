@@ -22,6 +22,7 @@ export {
 export class Connection extends EventEmitter {
   state: 'connecting' | 'connected' | 'disconnected' | 'closed' | 'stopped';
   constructor(ws: WebSocket | WS);
+  close(): void;
   get(collectionName: string, documentID: string): Doc;
   createFetchQuery(
     collectionName: string,
