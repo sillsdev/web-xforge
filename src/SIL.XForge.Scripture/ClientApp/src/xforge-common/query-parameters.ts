@@ -18,27 +18,27 @@ export interface InFilter {
 }
 
 export interface ArrayFilter {
-  $elemMatch?: PropertyFilter;
-  $size?: number;
+  $elemMatch: PropertyFilter;
 }
 
 export interface ComparisonFilter {
-  $eq?: any;
   $ne?: any;
   $gt?: PrimitiveType;
   $gte?: PrimitiveType;
   $lt?: PrimitiveType;
-  $lte?: PrimitiveType;
 }
 
 export type ComparisonOperator = Extract<keyof ComparisonFilter, string>;
 
-export type ObjectFilter = RegexFilter | InFilter | ArrayFilter | ComparisonFilter;
+export interface NotFilter {
+  $not: ObjectFilter;
+}
+
+export type ObjectFilter = NotFilter | RegexFilter | InFilter | ArrayFilter | ComparisonFilter;
 
 export interface ConjunctionFilter {
   $and?: QueryFilter[];
   $or?: QueryFilter[];
-  $nor?: QueryFilter[];
 }
 
 export interface PropertyFilter {
@@ -100,7 +100,6 @@ function toMingoCriteria(filters: QueryParameters): any {
     switch (key) {
       case '$and':
       case '$or':
-      case '$nor':
         const subFiltersArray = filters[key] as PropertyFilter[];
         criteria[key] = subFiltersArray.map(f => toMingoCriteria(f));
         break;

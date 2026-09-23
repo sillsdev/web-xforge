@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { isObjectLike } from 'lodash-es';
 import { environment } from '../environments/environment';
 import { OfflineData, OfflineStore } from './offline-store';
-import { performQuery, PropertyFilter, QueryParameters, QueryResults } from './query-parameters';
+import { ObjectFilter, performQuery, PrimitiveType, QueryParameters, QueryResults } from './query-parameters';
 import { TypeRegistry } from './type-registry';
 
 const DATABASE_NAME = 'xforge';
@@ -18,15 +18,8 @@ function getAllFromCursor<T extends OfflineData>(
   });
 }
 
-function getKeyRange(filter: PropertyFilter): IDBKeyRange | undefined {
-  if (filter === undefined) {
-    return undefined;
-  }
-
-  if (isObjectLike(filter)) {
-    if (filter['$eq'] !== undefined) {
-      return IDBKeyRange.only(filter['$eq']);
-    }
+function getKeyRange(filter: PrimitiveType | ObjectFilter): IDBKeyRange | undefined {
+  if (filter === undefined || isObjectLike(filter)) {
     return undefined;
   }
   return IDBKeyRange.only(filter);
@@ -120,7 +113,7 @@ export class IndexeddbOfflineStore extends OfflineStore {
     let snapshots: T[] | undefined;
     for (const key of Object.keys(parameters)) {
       if (objectStore.indexNames.contains(key)) {
-        const filter = parameters[key] as PropertyFilter;
+        const filter = parameters[key] as PrimitiveType | ObjectFilter;
         const keyRange = getKeyRange(filter);
         if (keyRange !== undefined) {
           const index = objectStore.index(key);
