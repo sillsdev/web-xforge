@@ -1,8 +1,51 @@
-import { Connection, Doc, OTType } from 'sharedb/lib/client';
+import { Connection, Doc, OTType, Query } from 'sharedb/lib/client';
+import { Snapshot } from 'sharedb/lib/common';
 import { SystemRole } from '../models/system-role';
 import { RealtimeServer, XF_ROLE_CLAIM, XF_USER_ID_CLAIM } from '../realtime-server';
 import { Json0OpBuilder } from './json0-op-builder';
-import { docCreate, docDelete, docFetch, docSubmitJson0Op, docSubmitOp } from './sharedb-utils';
+import { createFetchQuery, docCreate, docDelete, docFetch, docSubmitJson0Op, docSubmitOp } from './sharedb-utils';
+
+/** Runs a fetch query as the connection's user and resolves to the matching docs. */
+export async function fetchQuery(conn: Connection, collection: string, query: any): Promise<Doc[]> {
+  const queryObj: Query = await createFetchQuery(conn, collection, query);
+  return queryObj.results;
+}
+
+/** Requests the snapshot of a document at a version, or at its latest version when `version` is null. */
+export function fetchSnapshot(
+  conn: Connection,
+  collection: string,
+  id: string,
+  version: number | null
+): Promise<Snapshot> {
+  return new Promise<Snapshot>((resolve, reject) => {
+    conn.fetchSnapshot(collection, id, version, (err, snapshot) => {
+      if (err != null) {
+        reject(err);
+      } else {
+        resolve(snapshot);
+      }
+    });
+  });
+}
+
+/** Requests the snapshot a document had at a point in time. */
+export function fetchSnapshotByTimestamp(
+  conn: Connection,
+  collection: string,
+  id: string,
+  timestamp: number
+): Promise<Snapshot> {
+  return new Promise<Snapshot>((resolve, reject) => {
+    conn.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => {
+      if (err != null) {
+        reject(err);
+      } else {
+        resolve(snapshot);
+      }
+    });
+  });
+}
 
 /**
  * Connects with a user's own session, somewhat like a frontend client. For unit tests.
