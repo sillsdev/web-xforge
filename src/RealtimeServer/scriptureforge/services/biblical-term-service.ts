@@ -1,3 +1,4 @@
+import { ConnectSession } from '../../common/connect-session';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { BIBLICAL_TERM_COLLECTION, BIBLICAL_TERM_INDEX_PATHS, BiblicalTerm } from '../models/biblical-term';
@@ -103,6 +104,11 @@ export class BiblicalTermService extends SFProjectDataService<BiblicalTerm> {
       this.pathTemplate(t => t.definitions)
     ];
     this.immutableProps.push(...immutableProps);
+  }
+
+  /** The Biblical Terms panel queries a project's terms. */
+  protected allowQuery(query: unknown, session: ConnectSession): Promise<boolean> {
+    return this.allowProjectQuery(query, session);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {

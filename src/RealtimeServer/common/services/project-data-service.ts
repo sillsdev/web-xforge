@@ -20,6 +20,14 @@ export interface ProjectDomainConfig {
 }
 
 /**
+ * Whether a domain's entities are whole docs, such as a question, rather than entities within them, such as its answers.
+ * Its path template is then empty, because the path from the root of the doc to the entity is empty.
+ */
+function isWholeDocDomain(domain: ProjectDomainConfig): boolean {
+  return domain.pathTemplate.template.length === 0;
+}
+
+/**
  * This is the abstract base class for all doc services that manage JSON0 project data.
  */
 export abstract class ProjectDataService<T extends ProjectData> extends JsonDocService<T> {
@@ -209,6 +217,46 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     }
 
     return true;
+  }
+
+  /**
+   * Whether a client may query the docs of one project, for services whose client code queries them. The query must
+   * name the project by a top-level `projectRef`, as the client's queries do, so that it cannot match docs of any
+   * other project. The user must also be able to view some kind of doc there: a right to view, or to view their own,
+   * in a domain for whole docs. The read rules still decide which of the matching docs the user sees.
+   */
+  protected async allowProjectQuery(query: unknown, session: ConnectSession): Promise<boolean> {
+    const projectId: string | undefined = this.getQueriedProjectId(query);
+    if (projectId == null) {
+      return false;
+    }
+
+    if (this.server == null) {
+      throw new Error('The doc service has not been initialized.');
+    }
+    const project = await this.server.getProject(projectId);
+    if (project == null) {
+      return false;
+    }
+
+    return this.getApplicableDomains()
+      .filter(isWholeDocDomain)
+      .some(
+        domain =>
+          this.projectRights.hasRight(project, session.userId, domain.projectDomain, Operation.View) ||
+          this.projectRights.hasRight(project, session.userId, domain.projectDomain, Operation.ViewOwn)
+      );
+  }
+
+  /**
+   * Returns the project that a query is limited to by a top-level `projectRef`, or undefined when it names no single
+   * project that way.
+   */
+  protected getQueriedProjectId(query: unknown): string | undefined {
+    if (typeof query === 'object' && query != null && 'projectRef' in query && typeof query.projectRef === 'string') {
+      return query.projectRef;
+    }
+    return undefined;
   }
 
   /**

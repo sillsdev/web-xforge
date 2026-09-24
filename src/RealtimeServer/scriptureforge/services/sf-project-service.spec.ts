@@ -4,7 +4,7 @@ import { instance, mock } from 'ts-mockito';
 import { SystemRole } from '../../common/models/system-role';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-utils';
+import { clientConnect, createDoc, fetchDoc, fetchQuery } from '../../common/utils/test-utils';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
 import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { createTestProject } from '../models/sf-project-test-data';
@@ -60,6 +60,33 @@ describe('SFProjectService', () => {
 
     const conn = clientConnect(env.server, 'non_member');
     await expect(fetchDoc(conn, SF_PROJECT_PROFILES_COLLECTION, 'project01')).rejects.toThrow();
+  });
+
+  it('lets only system admins query projects', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const sysAdminConn = clientConnect(env.server, 'sys_admin', SystemRole.SystemAdmin);
+    expect((await fetchQuery(sysAdminConn, env.collection, {})).map(d => d.id)).toEqual(['project01']);
+    const servalAdminConn = clientConnect(env.server, 'serval_admin', SystemRole.ServalAdmin);
+    await expect(fetchQuery(servalAdminConn, env.collection, {})).rejects.toThrow('Query is not allowed');
+    const translatorConn = clientConnect(env.server, 'translator');
+    await expect(fetchQuery(translatorConn, env.collection, {})).rejects.toThrow('Query is not allowed');
+  });
+
+  it('lets only serval admins query project profiles', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const servalAdminConn = clientConnect(env.server, 'serval_admin', SystemRole.ServalAdmin);
+    const results = await fetchQuery(servalAdminConn, SF_PROJECT_PROFILES_COLLECTION, { paratextId: 'paratextId1' });
+    expect(results.map(d => d.id)).toEqual(['project01']);
+    const sysAdminConn = clientConnect(env.server, 'sys_admin', SystemRole.SystemAdmin);
+    await expect(fetchQuery(sysAdminConn, SF_PROJECT_PROFILES_COLLECTION, {})).rejects.toThrow('Query is not allowed');
+    const translatorConn = clientConnect(env.server, 'translator');
+    await expect(fetchQuery(translatorConn, SF_PROJECT_PROFILES_COLLECTION, {})).rejects.toThrow(
+      'Query is not allowed'
+    );
   });
 });
 

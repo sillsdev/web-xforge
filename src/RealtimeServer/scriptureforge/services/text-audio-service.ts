@@ -1,3 +1,4 @@
+import { ConnectSession } from '../../common/connect-session';
 import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { SFProjectDomain } from '../models/sf-project-rights';
@@ -58,6 +59,11 @@ export class TextAudioService extends SFProjectDataService<TextAudio> {
 
     const immutableProps = [this.pathTemplate(t => t.dataId)];
     this.immutableProps.push(...immutableProps);
+  }
+
+  /** The checking tool and the chapter audio dialog query a project's chapter audio. */
+  protected allowQuery(query: unknown, session: ConnectSession): Promise<boolean> {
+    return this.allowProjectQuery(query, session);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {

@@ -8,6 +8,7 @@ import { ConnectSession } from './connect-session';
 import { MetadataDB } from './metadata-db';
 import { Migration } from './migration';
 import { Project } from './models/project';
+import { SystemRole } from './models/system-role';
 import { User, USERS_COLLECTION } from './models/user';
 import { createTestUser } from './models/user-test-data';
 import { RealtimeServer, submitMigrationOp } from './realtime-server';
@@ -687,6 +688,95 @@ describe('RealtimeServer', () => {
     });
   });
 
+  describe('query rules', () => {
+    it('refuses a client a query of a collection whose rule does not allow it', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.allowQuery(PROJECTS_COLLECTION, (_query, session) => session.roles.includes(SystemRole.SystemAdmin));
+
+      const userConn = clientConnect(env.server, 'user01');
+      await expect(fetchQuery(userConn, PROJECTS_COLLECTION, {})).rejects.toThrow(
+        'Query is not allowed for collection: projects'
+      );
+      const adminConn = clientConnect(env.server, 'user01', SystemRole.SystemAdmin);
+      expect((await fetchQuery(adminConn, PROJECTS_COLLECTION, {})).map(d => d.id)).toEqual(['project01']);
+    });
+
+    it('checks a query of a projection against the rule of the projection', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.allowQuery(PROJECT_PROFILES_COLLECTION, () => false);
+      const conn = clientConnect(env.server, 'user01');
+
+      await expect(fetchQuery(conn, PROJECT_PROFILES_COLLECTION, {})).rejects.toThrow(
+        'Query is not allowed for collection: project_profiles'
+      );
+      expect((await fetchQuery(conn, PROJECTS_COLLECTION, {})).map(d => d.id)).toEqual(['project01']);
+    });
+
+    it('refuses a client a query of a projection that has no rule', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.addProjection('project_names', PROJECTS_COLLECTION, { name: true });
+      const conn = clientConnect(env.server, 'user01', SystemRole.SystemAdmin);
+
+      await expect(fetchQuery(conn, 'project_names', {})).rejects.toThrow(
+        'Query is not allowed for collection: project_names'
+      );
+    });
+
+    it('lets a client check whether a doc exists in a collection whose rule refuses it', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.allowQuery(PROJECTS_COLLECTION, () => false);
+      const conn = clientConnect(env.server, 'user01');
+
+      const existing = await createFetchQuery(conn, PROJECTS_COLLECTION, {
+        _id: 'project01',
+        $limit: 1,
+        $count: { applySkipLimit: true }
+      });
+      expect(existing.extra).toBe(1);
+      const missing = await createFetchQuery(conn, PROJECTS_COLLECTION, {
+        _id: 'project02',
+        $limit: 1,
+        $count: { applySkipLimit: true }
+      });
+      expect(missing.extra).toBe(0);
+    });
+
+    it('checks a query that only resembles the existence check against the query rules', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.allowQuery(PROJECTS_COLLECTION, () => false);
+      const conn = clientConnect(env.server, 'user01');
+
+      for (const query of [
+        { _id: 'project01', $limit: 1, $count: { applySkipLimit: true }, name: 'Project 01' },
+        { _id: { $ne: 'none' }, $limit: 1, $count: { applySkipLimit: true } },
+        { $limit: 1, $count: { applySkipLimit: true } },
+        { _id: 'project01', $limit: 2, $count: { applySkipLimit: true } },
+        { _id: 'project01', $limit: 1, $count: { applySkipLimit: false } },
+        { _id: 'project01', $limit: 1, $count: { applySkipLimit: true, other: true } },
+        { _id: 'project01', $limit: 1 },
+        { _id: 'project01', $limit: 1, $count: { applySkipLimit: true }, $sort: { name: 1 } }
+      ]) {
+        await expect(fetchQuery(conn, PROJECTS_COLLECTION, query)).rejects.toThrow(
+          'Query is not allowed for collection: projects'
+        );
+      }
+    });
+
+    it('lets the server query a collection whose rule refuses every client', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.allowQuery(PROJECTS_COLLECTION, () => false);
+      const conn = env.server.connect();
+
+      expect((await fetchQuery(conn, PROJECTS_COLLECTION, {})).map(d => d.id)).toEqual(['project01']);
+    });
+  });
+
   describe('snapshot requests', () => {
     it('refuses a snapshot request that names a projection', async () => {
       const env = new TestEnvironment();
@@ -969,6 +1059,7 @@ class TestEnvironment {
     allowAll(this.server, USERS_COLLECTION);
     allowAll(this.server, PROJECTS_COLLECTION);
     this.server.addProjection(PROJECT_PROFILES_COLLECTION, PROJECTS_COLLECTION, { name: true });
+    this.server.allowQuery(PROJECT_PROFILES_COLLECTION, () => true);
   }
 
   async createData(): Promise<void> {

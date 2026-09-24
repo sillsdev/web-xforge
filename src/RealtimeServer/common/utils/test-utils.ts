@@ -122,6 +122,7 @@ export function allowAll(server: RealtimeServer, collection: string): void {
   server.allowDelete(collection, () => true);
   server.allowRead(collection, () => true);
   server.allowUpdate(collection, () => true);
+  server.allowQuery(collection, () => true);
 }
 
 export function flushPromises(): Promise<void> {

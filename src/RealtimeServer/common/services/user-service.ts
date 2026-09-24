@@ -126,6 +126,11 @@ export class UserService extends JsonDocService<User> {
     return true;
   }
 
+  /** The system administration page lists and searches users. */
+  protected allowQuery(_query: unknown, session: ConnectSession): boolean {
+    return session.roles.includes(SystemRole.SystemAdmin);
+  }
+
   protected allowUpdate(docId: string, _oldDoc: User, _newDoc: User, ops: any, session: ConnectSession): boolean {
     if (session.isServer || session.roles.includes(SystemRole.SystemAdmin)) {
       return true;

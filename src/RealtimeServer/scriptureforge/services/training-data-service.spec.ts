@@ -6,7 +6,7 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { allowAll, clientConnect, createDoc, fetchDoc, submitJson0Op } from '../../common/utils/test-utils';
+import { allowAll, clientConnect, createDoc, fetchDoc, fetchQuery, submitJson0Op } from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
@@ -58,6 +58,37 @@ describe('TrainingDataService', () => {
     await expect(
       fetchDoc(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'))
     ).resolves.not.toThrow();
+  });
+
+  it('lets translators query training data', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'translator');
+    const results = await fetchQuery(conn, TRAINING_DATA_COLLECTION, { projectRef: 'project01', deleted: false });
+    expect(results.map(d => d.id)).toEqual([getTrainingDataId('project01', 'dataid01')]);
+  });
+
+  it('does not let consultants query training data', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'consultant');
+    await expect(fetchQuery(conn, TRAINING_DATA_COLLECTION, { projectRef: 'project01' })).rejects.toThrow(
+      'Query is not allowed for collection: training_data'
+    );
+  });
+
+  it('lets serval admins query the training data of a project they are not a member of', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'servalAdmin', SystemRole.ServalAdmin);
+    const results = await fetchQuery(conn, TRAINING_DATA_COLLECTION, { projectRef: 'project01' });
+    expect(results.map(d => d.id)).toEqual([getTrainingDataId('project01', 'dataid01')]);
+    await expect(fetchQuery(conn, TRAINING_DATA_COLLECTION, {})).rejects.toThrow(
+      'Query is not allowed for collection: training_data'
+    );
   });
 });
 
