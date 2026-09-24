@@ -458,12 +458,12 @@ export class RealtimeServer extends ShareDB {
       if (action !== 'queryEmitter.poll' && action !== 'queryEmitter.pollDoc') {
         return;
       }
-      if (context.agent == null || context.collection == null) {
+      if (context.agent == null || context.index == null) {
         return;
       }
       ResourceMonitor.instance.recordQueryPolled(
         context.agent.clientId,
-        context.collection,
+        context.index,
         action,
         durationMs,
         context.agent.connectSession?.userId,
@@ -500,7 +500,7 @@ export class RealtimeServer extends ShareDB {
     // opCommitted rather than in the 'commit' hook above.
     this.use('afterWrite', (context, callback) => {
       ActivityLogger.instance.log('opCommitted', {
-        collection: context.collection,
+        collection: context.index,
         docId: context.id,
         clientId: context.agent?.clientId,
         srcClientId: context.op.src,
@@ -530,7 +530,7 @@ export class RealtimeServer extends ShareDB {
 
       const failValidation = (message: string): void => {
         ActivityLogger.instance.log('opValidationFailed', {
-          collection: context.collection,
+          collection: context.index,
           docId: context.id,
           // Needed here as well as on opSubmitted: a failed op never reaches the opSubmitted entry below, so this
           // entry has nothing else to be attributed by.
@@ -725,7 +725,7 @@ export class RealtimeServer extends ShareDB {
         opsCount = 0;
       }
       ActivityLogger.instance.log('opSubmitted', {
-        collection: context.collection,
+        collection: context.index,
         docId: context.id,
         // Which connection the op arrived on, matching the clientId that connectionEstablished reported.
         //

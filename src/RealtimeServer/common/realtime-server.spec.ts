@@ -1125,6 +1125,48 @@ describe('RealtimeServer', () => {
       expect(polled[0].collection).toBe(PROJECTS_COLLECTION);
     });
 
+    it('reports a re-polled query of a projection against the projection, not the collection behind it', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const polled: string[] = [];
+      jest.spyOn(ResourceMonitor.instance, 'recordQueryPolled').mockImplementation((_clientId, collection) => {
+        polled.push(collection);
+      });
+      const watcher = clientConnect(env.server, 'user01');
+      await new Promise<void>((resolve, reject) =>
+        watcher.createSubscribeQuery(PROJECT_PROFILES_COLLECTION, {}, {}, err =>
+          err == null ? resolve() : reject(err)
+        )
+      );
+      const editor = clientConnect(env.server, 'user01');
+      // SUT. Changing a document the query might match makes ShareDB poll the subscription again.
+      await submitOp(editor, PROJECTS_COLLECTION, 'project01', [{ p: ['userPermissions', 'abc123'], oi: 'admin' }]);
+      await flushPromises();
+      expect(polled.length).toBeGreaterThan(0);
+      expect(polled).toContain(PROJECT_PROFILES_COLLECTION);
+      expect(polled).not.toContain(PROJECTS_COLLECTION);
+    });
+
+    it('reports an op submitted through a projection against the projection', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      allowAll(env.server, PROJECT_PROFILES_COLLECTION);
+      const conn = clientConnect(env.server, 'user01');
+      await flushPromises();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      await submitOp(conn, PROJECT_PROFILES_COLLECTION, 'project01', [
+        { p: ['name'], od: 'Project 01', oi: 'Renamed' }
+      ]);
+      await flushPromises();
+      const submitted: LoggedActivity[] = logged.filter(item => item.event === 'opSubmitted');
+      const committed: LoggedActivity[] = logged.filter(item => item.event === 'opCommitted');
+      expect(submitted.length).toBe(1);
+      expect(committed.length).toBe(1);
+      expect(submitted[0].details['collection']).toBe(PROJECT_PROFILES_COLLECTION);
+      expect(committed[0].details['collection']).toBe(PROJECT_PROFILES_COLLECTION);
+    });
+
     it('measures a query being run against the database', async () => {
       const env = new TestEnvironment();
       await env.createData();
