@@ -318,7 +318,7 @@ export class RealtimeServer extends ShareDB {
     // Checks every message that names a collection before ShareDB acts on it.
     this.use('receive', (context, done) => {
       const request: any = context.data;
-      const session: ConnectSession = context.agent.connectSession;
+      const session: ConnectSession | undefined = context.agent?.connectSession;
       const collection: unknown = request?.c;
       if (typeof collection !== 'string') {
         done();
@@ -332,7 +332,8 @@ export class RealtimeServer extends ShareDB {
         // because sharedb-mongo declares that it projects snapshots itself (Backend.fetchSnapshot and
         // fetchSnapshotByTimestamp). The read rules cannot help with either: they decide whether the user may read the
         // document now, not which versions or properties they may see.
-        const isServerRequestForCollection: boolean = session.isServer && this.docServices.has(collection);
+        // A request whose connection has no session yet is not the server's, so it is held to the client rules.
+        const isServerRequestForCollection: boolean = session?.isServer === true && this.docServices.has(collection);
         // The translate editor fetches a note thread's previous version when undoing.
         const isNoteThreadVersionRequest: boolean = request.a === 'nf' && collection === 'note_threads';
         if (isServerRequestForCollection || isNoteThreadVersionRequest) {
