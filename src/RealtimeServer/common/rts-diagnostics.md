@@ -26,6 +26,12 @@ Content in `resource-usage.jsonl` includes:
 | `queryRun`     | report batch, connection, collection            | `runsCount` - how often a connection fetched or subscribed to a query. Not the re-polls. |
 | `queryPolled`  | report batch, connection, collection, poll type | `pollsCount` and `totalMs` for the re-polls a subscription caused.                       |
 
+The two query records name a collection differently, which matters when a projection is queried. `queryRun` names
+what the client addressed, so it matches the `collection` of the `clientRequest` that asked for it, and a projection
+is counted under its own name. `queryPolled` names the collection behind the projection. Logs written before
+2026-09-24 have `queryRun` naming the backing collection too, so a query of `sf_projects_profile` appears there as one
+of `sf_projects`.
+
 Resource reports are written one row per subject to
 each batch-scoped file, sharing a `reportBatchId`.
 
@@ -60,6 +66,12 @@ Events, grouped by what they describe:
   an `nt` each and no detail entry. So a `snapshotRebuiltFromOps` with no `interopFetchSnapshotByTimestamp` beside it
   is either the browser or one of those bulk requests, and the `clientRequest` at the same moment says which: `nf` for
   the browser, `nt` for dotnet.
+
+- **Refusals**: `requestRefused`, one per request the server turned away, carrying the `reason` and the `collection`
+  the client addressed. A `clientRequest` is recorded when the request arrives, before the checks that may refuse it,
+  so it says what was asked rather than what was allowed; the two together say which requests were served. Expect
+  none of these in an ordinary session: they mean a client asked for a collection the server does not serve, a
+  snapshot of a past version it may not have, or a query whose operator or collection is not allowed.
 
 - **Ops**: `opSubmitted`, `opCommitted`, `opValidationFailed`.
 - **History**: `snapshotRebuiltFromOps`, when a document is asked for at a past version or timestamp and has to be
