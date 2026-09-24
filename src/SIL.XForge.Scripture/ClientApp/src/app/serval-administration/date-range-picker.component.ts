@@ -64,7 +64,35 @@ export class DateRangePickerComponent implements OnInit {
   @Input() showReset: boolean = false;
 
   /** When true, initialize the control with null as the selected default range. */
-  @Input() startWithEmptyRange: boolean = false;
+  @Input() set startWithEmptyRange(value: boolean | null) {
+    if (value == null) return;
+    if (value) {
+      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
+      this.defaultRange = undefined;
+      this.isDefaultRange = true;
+    } else {
+      // Set initial range
+      const initialEndDate = new Date(this.maxSelectableDate);
+      const initialStartDate = new Date(this.maxSelectableDate);
+      initialStartDate.setDate(initialStartDate.getDate() - this.defaultDaysBack);
+
+      const normalizedStart = this.beginningOfTheDayOf(initialStartDate);
+      const normalizedEnd = this.endOfTheDayOf(initialEndDate);
+
+      this.dateRangeForm.setValue({ start: normalizedStart, end: normalizedEnd }, { emitEvent: false });
+      this.defaultRange = {
+        start: new Date(normalizedStart),
+        end: new Date(normalizedEnd)
+      };
+      this.isDefaultRange = true;
+
+      // Tell parent of the initial range.
+      this.dateRangeChange.emit({
+        start: new Date(normalizedStart),
+        end: new Date(normalizedEnd)
+      });
+    }
+  }
 
   /** Maximum selectable date (today) */
   readonly maxSelectableDate: Date;
@@ -115,33 +143,6 @@ export class DateRangePickerComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.startWithEmptyRange) {
-      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
-      this.defaultRange = undefined;
-      this.isDefaultRange = true;
-    } else {
-      // Set initial range
-      const initialEndDate = new Date(this.maxSelectableDate);
-      const initialStartDate = new Date(this.maxSelectableDate);
-      initialStartDate.setDate(initialStartDate.getDate() - this.defaultDaysBack);
-
-      const normalizedStart = this.beginningOfTheDayOf(initialStartDate);
-      const normalizedEnd = this.endOfTheDayOf(initialEndDate);
-
-      this.dateRangeForm.setValue({ start: normalizedStart, end: normalizedEnd }, { emitEvent: false });
-      this.defaultRange = {
-        start: new Date(normalizedStart),
-        end: new Date(normalizedEnd)
-      };
-      this.isDefaultRange = true;
-
-      // Tell parent of the initial range.
-      this.dateRangeChange.emit({
-        start: new Date(normalizedStart),
-        end: new Date(normalizedEnd)
-      });
-    }
-
     // Update format hint based on current locale
     this.updateLocaleSensitiveSettings(this.i18nService.localeCode);
 

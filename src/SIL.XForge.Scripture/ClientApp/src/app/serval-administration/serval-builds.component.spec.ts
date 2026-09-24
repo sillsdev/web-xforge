@@ -395,16 +395,21 @@ describe('ServalBuildsComponent', () => {
       const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
       const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
 
+      // The date range mode is only read from the initial query params.
+      env.queryParams$.next({ q: 'sf-project-123', noDateRange: true });
+
       // SUT
       env.component.ngOnInit();
       env.waitForRowUpdate();
       env.component['allRows'] = [matchingRow, otherRow];
-      env.queryParams$.next({ q: 'sf-project-123', noDateRange: true });
+      env.component['applyFiltersAndStats']();
       env.waitForRowUpdate();
-
       expect(env.component['searchControl'].value).toBe('sf-project-123');
-      expect(env.component.useUnspecifiedDateRange).toBe(true);
       expect(env.component['rows']).toEqual([matchingRow]);
+
+      let useUnspecifiedDateRange: boolean | undefined;
+      env.component.useUnspecifiedDateRange$.pipe(take(1)).subscribe(v => (useUnspecifiedDateRange = v));
+      expect(useUnspecifiedDateRange).toBe(true);
     }));
 
     it('updates query param q when search text changes', fakeAsync(() => {
