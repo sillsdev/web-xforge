@@ -26,12 +26,6 @@ Content in `resource-usage.jsonl` includes:
 | `queryRun`     | report batch, connection, collection            | `runsCount` - how often a connection fetched or subscribed to a query. Not the re-polls. |
 | `queryPolled`  | report batch, connection, collection, poll type | `pollsCount` and `totalMs` for the re-polls a subscription caused.                       |
 
-The two query records name a collection differently, which matters when a projection is queried. `queryRun` names
-what the client addressed, so it matches the `collection` of the `clientRequest` that asked for it, and a projection
-is counted under its own name. `queryPolled` names the collection behind the projection. Logs written before
-2026-09-24 have `queryRun` naming the backing collection too, so a query of `sf_projects_profile` appears there as one
-of `sf_projects`.
-
 Resource reports are written one row per subject to
 each batch-scoped file, sharing a `reportBatchId`.
 
@@ -97,6 +91,23 @@ Events, grouped by what they describe:
 | `fetch-info.csv`                 | **fetch operation**                            | Not batch-scoped, and has no `reportBatchId`. Timing, not bytes.                |
 | `resource-usage.jsonl`           | varies by record `type`                        | See above.                                                                      |
 
+## Projections and the collection a record names
+
+A client can address a projection rather than the collection behind it: `sf_projects_profile` reads from
+`sf_projects`, `user_profiles` from `users`. Which of the two names a record carries decides what lines up with what.
+
+Naming what the client addressed, so a projection appears under its own name: `clientRequest`, `requestRefused`,
+`queryRun`, `queryPolled`, `opSubmitted`, `opCommitted`, `opValidationFailed`.
+
+Naming the collection behind it: `snapshotRead` and `opsLoaded`. ShareDB builds the `readSnapshots` and `op`
+middleware contexts from the collection alone, so the addressed name never reaches them.
+
+A query of `sf_projects_profile` is therefore counted under that name by `queryRun`, while the bytes it read are
+counted under `sf_projects` by `snapshotRead`. A collection's read totals include its projections'.
+
+Logs written before 2026-09-24 name the backing collection in `queryRun`, `queryPolled` and the three op events, so
+counts that span that date are not comparable.
+
 ## The event export (`events_*.jsonl`)
 
 Exported from MongoDB by `mongodb/EventMetrics/EventsInPeriod.mongodb.js`.
@@ -157,10 +168,15 @@ it grew".
   fetch-info.csv connectionId  -> connectionEstablished.clientId
   opSubmitted (srcClientId, opSeq) -> opCommitted / opValidationFailed (srcClientId, opSeq)
   snapshotRebuiltFromOps (pid, docId) -> interopFetchSnapshotByTimestamp (pid, docId)
+  clientRequest (clientId, collection), action qf or qs -> queryRun (clientId, collection)
 
   events_*.jsonl userId / userRef       -> activity log userId
   events_*.jsonl projectId / projectRef -> docId, or docId up to the first colon
 ```
+
+A `clientRequest` is recorded before the checks run and a `queryRun` after them, so a query that was refused appears
+only as the former. Counting the two per collection says whether anything was turned away, which is worth doing when
+`requestRefused` is unexpectedly absent.
 
 `handle` and `callId` are only unique within a process. They are counters that restart at 0 when the
 RealtimeServer restarts; so join on `(pid, handle)` and `(pid, callId)` rather than on the handle or callId alone. Every activity
