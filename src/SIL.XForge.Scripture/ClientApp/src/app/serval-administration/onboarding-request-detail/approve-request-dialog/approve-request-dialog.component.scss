@@ -40,3 +40,14 @@ h3:first-of-type {
 app-notice {
   margin-top: 1em;
 }
+
+.same-language-notice {
+  h4 {
+    margin-top: 0;
+  }
+
+  .confirmation-required {
+    margin-bottom: 0;
+    color: colors.$errorColor;
+  }
+}
