@@ -334,7 +334,9 @@ export class RealtimeServer extends ShareDB {
       } else if (!this.docServices.has(collection) && this.projections[collection] == null) {
         // ShareDB would pass any name on to the database, where the read rules cannot help because they only see the
         // snapshots a request produces. The collections kept out of ShareDB on purpose, such as the secrets, stay out.
-        done(`403: Unknown collection: ${collection}`);
+        const reason = `403: Unknown collection: ${collection}`;
+        RealtimeServer.refuse(context.agent, collection, reason);
+        done(reason);
       } else if (SNAPSHOT_REQUEST_ACTIONS.includes(request.a)) {
         // A snapshot request can read any past version of a doc. For a projection it answers with the whole backing
         // document: ShareDB fetches it without the projection's field list and then skips its own projection step,
@@ -348,7 +350,9 @@ export class RealtimeServer extends ShareDB {
         if (isServerRequestForCollection || isNoteThreadVersionRequest) {
           done();
         } else {
-          done(`403: Snapshot request ${request.a} is not allowed for collection: ${collection}`);
+          const reason = `403: Snapshot request ${request.a} is not allowed for collection: ${collection}`;
+          RealtimeServer.refuse(context.agent, collection, reason);
+          done(reason);
         }
       } else {
         done();
@@ -359,11 +363,15 @@ export class RealtimeServer extends ShareDB {
       const session: ConnectSession | undefined = context.agent?.connectSession;
       const disallowed: string | undefined = findDisallowedQueryOperator(context.query);
       if (disallowed != null) {
-        done(`403: Query operator is not allowed: ${disallowed}`);
+        const reason = `403: Query operator is not allowed: ${disallowed}`;
+        RealtimeServer.refuse(context.agent, context.index, reason);
+        done(reason);
       } else if (session == null) {
         // Whether a query is allowed cannot be decided without knowing who is asking, and the rules are given the
         // session to decide with.
-        done('403: Query arrived without a connection session.');
+        const reason = '403: Query arrived without a connection session.';
+        RealtimeServer.refuse(context.agent, context.index, reason);
+        done(reason);
       } else if (session.isServer || isDocIdExistenceQuery(context.query)) {
         // The existence check is not up to the query rules, because the client sends it for a doc of any collection it
         // subscribes to. Clients still in use send it, so refusing it would break them.
@@ -373,7 +381,15 @@ export class RealtimeServer extends ShareDB {
         // by the rule of the collection behind it.
         const rule: QueryRule | undefined = this.queryRules.get(context.index);
         Promise.resolve(rule == null ? false : rule(context.query, session))
-          .then(allowed => done(allowed ? undefined : `403: Query is not allowed for collection: ${context.index}`))
+          .then(allowed => {
+            if (allowed) {
+              done();
+            } else {
+              const reason = `403: Query is not allowed for collection: ${context.index}`;
+              RealtimeServer.refuse(context.agent, context.index, reason);
+              done(reason);
+            }
+          })
           .catch(err => done(err));
       }
     });
@@ -943,6 +959,20 @@ export class RealtimeServer extends ShareDB {
         version: version
       });
     }
+  }
+
+  /**
+   * Reports a request the server decided to refuse. A client request is reported when it arrives rather than when it
+   * is answered, so without this the log would not say which requests were turned away.
+   */
+  private static refuse(agent: ShareDB.Agent | undefined, collection: string | undefined, reason: string): void {
+    ActivityLogger.instance.log('requestRefused', {
+      clientId: agent?.clientId,
+      userId: agent?.connectSession?.userId,
+      isServer: agent?.connectSession?.isServer,
+      collection: collection,
+      reason: reason
+    });
   }
 
   /**

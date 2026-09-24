@@ -1178,6 +1178,53 @@ describe('RealtimeServer', () => {
       expect(fetches.length).toBeGreaterThan(0);
     });
 
+    it('reports a request refused for naming a collection the server does not serve', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+      await flushPromises();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      await expect(fetchDoc(conn, 'user_secrets', 'user01')).rejects.toThrow();
+      await flushPromises();
+      const refusals: LoggedActivity[] = logged.filter(item => item.event === 'requestRefused');
+      expect(refusals.length).toBe(1);
+      expect(refusals[0].details['reason']).toContain('Unknown collection: user_secrets');
+      expect(refusals[0].details['collection']).toBe('user_secrets');
+      expect(refusals[0].details['userId']).toBe('user01');
+    });
+
+    it('reports a query refused for using an operator that is not allowed', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const conn = clientConnect(env.server, 'user01');
+      await flushPromises();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, { $distinct: { field: 'name' } })).rejects.toThrow();
+      await flushPromises();
+      const refusals: LoggedActivity[] = logged.filter(item => item.event === 'requestRefused');
+      expect(refusals.length).toBe(1);
+      expect(refusals[0].details['reason']).toContain('Query operator is not allowed: $distinct');
+      expect(refusals[0].details['collection']).toBe(PROJECTS_COLLECTION);
+    });
+
+    it('reports a query refused because the query rule for that collection did not allow it', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      env.server.allowQuery(PROJECTS_COLLECTION, () => false);
+      const conn = clientConnect(env.server, 'user01');
+      await flushPromises();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      await expect(fetchQuery(conn, PROJECTS_COLLECTION, {})).rejects.toThrow();
+      await flushPromises();
+      const refusals: LoggedActivity[] = logged.filter(item => item.event === 'requestRefused');
+      expect(refusals.length).toBe(1);
+      expect(refusals[0].details['reason']).toContain('Query is not allowed');
+      expect(refusals[0].details['collection']).toBe(PROJECTS_COLLECTION);
+    });
+
     it('reports an op as received, as well as when it is submitted and committed', async () => {
       const env = new TestEnvironment();
       await env.createData();
