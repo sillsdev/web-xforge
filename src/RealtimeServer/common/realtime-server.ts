@@ -437,7 +437,7 @@ export class RealtimeServer extends ShareDB {
       }
       ResourceMonitor.instance.recordQueryRun(
         context.agent.clientId,
-        context.collection,
+        context.index,
         context.agent.connectSession?.userId,
         context.agent.connectSession?.isServer
       );
