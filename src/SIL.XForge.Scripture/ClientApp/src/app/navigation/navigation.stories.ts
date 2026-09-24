@@ -5,9 +5,11 @@ import { Meta, StoryObj } from '@storybook/angular';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
+import { NEVER, of } from 'rxjs';
 import { expect } from 'storybook/test';
 import { anything, instance, mock, when } from 'ts-mockito';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService, TestActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { AuthService } from 'xforge-common/auth.service';
@@ -35,6 +37,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedRouter = mock(Router);
 const mockedResumeCheckingService = mock(ResumeCheckingService);
 const mockedResumeTranslateService = mock(ResumeTranslateService);
+const mockedActivatedProjectUserConfigService = mock(ActivatedProjectUserConfigService);
 let testActivatedProjectService: ActivatedProjectService;
 
 function setUpMocks(args: StoryState): void {
@@ -59,8 +62,13 @@ function setUpMocks(args: StoryState): void {
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedRouter.url).thenReturn(`/projects/${projectId}/${args.path}`);
   when(mockedRouter.createUrlTree(anything(), anything())).thenCall((portions: any[]) => portions.join('/'));
+  when(mockedRouter.events).thenReturn(NEVER);
   when(mockedResumeCheckingService.resumeLink$).thenReturn(of(['']));
   when(mockedResumeTranslateService.resumeLink$).thenReturn(of(['']));
+  when(mockedActivatedProjectUserConfigService.projectUserConfig$).thenReturn(
+    of(createTestProjectUserConfig({ draftResultAvailable: args.draftResultAvailable }))
+  );
+  when(mockedActivatedProjectUserConfigService.projectUserConfigDoc$).thenReturn(of(undefined));
 
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
@@ -76,6 +84,7 @@ function setUpMocks(args: StoryState): void {
   when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
     realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
   );
+
   testActivatedProjectService = TestActivatedProjectService.withProjectId(projectId);
 }
 
@@ -134,6 +143,10 @@ const meta: Meta = {
             provide: ResumeTranslateService,
             useValue: instance(mockedResumeTranslateService)
           },
+          {
+            provide: ActivatedProjectUserConfigService,
+            useValue: instance(mockedActivatedProjectUserConfigService)
+          },
           // Use a real PermissionsService so the role permission logic the guards rely on is exercised
           { provide: PermissionsService, useClass: PermissionsService },
           {
@@ -166,6 +179,7 @@ interface StoryState {
   lastSyncSuccessful: boolean;
   checkingEnabled: boolean;
   path: string;
+  draftResultAvailable: boolean;
 }
 
 type Story = StoryObj<StoryState>;
@@ -177,7 +191,8 @@ export const Default: Story = {
     syncInProgress: false,
     lastSyncSuccessful: true,
     checkingEnabled: true,
-    path: ''
+    path: '',
+    draftResultAvailable: false
   }
 };
 
@@ -260,6 +275,15 @@ export const SyncFailed: Story = {
     // The mat-badge is not rendered immediately, so we need to wait for it to appear
     await new Promise(resolve => setTimeout(resolve, 0));
     expect(canvasElement.querySelector('#sync-icon .mat-badge-active')).toBeInTheDocument();
+  }
+};
+
+export const DraftCompleted: Story = {
+  args: { ...Default.args, draftResultAvailable: true },
+  play: async ({ canvasElement }) => {
+    // The mat-badge is not rendered immediately, so we need to wait for it to appear
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(canvasElement.querySelector('#draft-generation-icon .mat-badge-active')).toBeInTheDocument();
   }
 };
 
