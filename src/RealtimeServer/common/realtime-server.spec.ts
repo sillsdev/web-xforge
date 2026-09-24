@@ -1155,6 +1155,29 @@ describe('RealtimeServer', () => {
       expect(handshakes[0].details['srcClientId']).toBeUndefined();
     });
 
+    it('reports a request that is refused for naming a collection the server does not serve', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const userConn = clientConnect(env.server, 'user01');
+      await flushPromises();
+      const logged: LoggedActivity[] = env.captureActivityLog();
+      // SUT
+      let refusal: string | undefined;
+      try {
+        await fetchDoc(userConn, 'secrets', 'secret01');
+      } catch (err) {
+        refusal = `${err}`;
+      }
+      await flushPromises();
+      expect(refusal).toContain('403');
+      // The refusal ends the receive middleware chain, so this is only reported if the reporting runs before the
+      // check that refuses it.
+      const fetches: LoggedActivity[] = logged.filter(
+        item => item.event === 'clientRequest' && item.details['collection'] === 'secrets'
+      );
+      expect(fetches.length).toBeGreaterThan(0);
+    });
+
     it('reports an op as received, as well as when it is submitted and committed', async () => {
       const env = new TestEnvironment();
       await env.createData();
