@@ -31,7 +31,6 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
-  filter,
   firstValueFrom,
   from,
   map,
@@ -39,7 +38,8 @@ import {
   of,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
+  tap
 } from 'rxjs';
 import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -203,6 +203,7 @@ export interface BuildInputItem {
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
   /** Max problems to preview in problems card. */
   public readonly problemPreviewLimit: number = 8;
+  useUnspecifiedDateRange: boolean = true;
 
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
@@ -258,6 +259,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   ngOnInit(): void {
     this.route.queryParams
       .pipe(
+        tap(params => (this.useUnspecifiedDateRange = !!params['noDateRange'])),
         map(params => params['q']),
         map((queryParam: unknown) => (isString(queryParam) ? queryParam : null)),
         distinctUntilChanged(),
@@ -272,7 +274,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         this.applyFiltersAndStats();
       });
 
-    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$.pipe(filter(notNull))])
+    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([isOnline, range]) => {
         this.loadingStarted();
@@ -353,12 +355,11 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   private createSpreadsheetData(): {
     spreadsheetRows: SpreadsheetRow[];
-    dateRange: NormalizedDateRange;
+    dateRange: NormalizedDateRange | undefined;
     meanDurationMs: number;
     maxDurationMs: number;
   } {
     const dateRange: NormalizedDateRange | undefined = this.dateRange$.value;
-    if (dateRange == null) throw new Error('Date range is not set');
     const spreadsheetRows: SpreadsheetRow[] = ServalBuildsComponent.createSpreadsheetRows(this.rows);
     const meanDurationMs: number = this.summaryStats?.meanDurationMs ?? 0;
     const maxDurationMs: number = this.summaryStats?.maxDurationMs ?? 0;
@@ -558,7 +559,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return identity$;
   }
 
-  private async loadBuilds(range: NormalizedDateRange, isOnline: boolean): Promise<void> {
+  private async loadBuilds(range: NormalizedDateRange | undefined, isOnline: boolean): Promise<void> {
     try {
       if (!isOnline) {
         this.allRows = [];
@@ -568,8 +569,9 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         return;
       }
 
+      const rangeStart: Date = range != null ? range.start : new Date('2025-12-01');
       const reports: ServalBuildReportDto[] | undefined = await firstValueFrom(
-        this.draftGenerationService.getBuildsSince(range.start)
+        this.draftGenerationService.getBuildsSince(rangeStart)
       );
 
       const reportsInRange: ServalBuildReportDto[] = (reports ?? []).filter(
@@ -930,7 +932,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   /** If the Serval build request has a beginning date outside of the date range. */
-  private didReportBeginOutOfDateRange(report: ServalBuildReportDto, range: NormalizedDateRange): boolean {
+  private didReportBeginOutOfDateRange(report: ServalBuildReportDto, range: NormalizedDateRange | undefined): boolean {
+    if (range == null) return false;
     const beginDate: Date | undefined = report.timeline.requestTime;
     if (beginDate == null) return false;
     if (Number.isNaN(beginDate.getTime())) return false;

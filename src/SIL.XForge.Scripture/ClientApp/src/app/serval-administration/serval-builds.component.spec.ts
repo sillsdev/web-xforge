@@ -378,14 +378,32 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
       const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
-      env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
       env.component.ngOnInit();
+      env.waitForRowUpdate();
+      env.component['allRows'] = [matchingRow, otherRow];
       env.queryParams$.next({ q: 'project-123' });
       env.waitForRowUpdate();
 
       expect(env.component['searchControl'].value).toBe('project-123');
+      expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('uses unspecified date range', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
+      const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
+
+      // SUT
+      env.component.ngOnInit();
+      env.waitForRowUpdate();
+      env.component['allRows'] = [matchingRow, otherRow];
+      env.queryParams$.next({ q: 'sf-project-123', noDateRange: true });
+      env.waitForRowUpdate();
+
+      expect(env.component['searchControl'].value).toBe('sf-project-123');
+      expect(env.component.useUnspecifiedDateRange).toBe(true);
       expect(env.component['rows']).toEqual([matchingRow]);
     }));
 
