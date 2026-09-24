@@ -47,6 +47,8 @@ public class MachineProjectServiceTests
     private const string Project05 = "project05";
     private const string Project06 = "project06";
     private const string User01 = "user01";
+    private const string User02 = "user02";
+    private const string User03 = "user03";
     private const string Build01 = "build01";
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
@@ -417,6 +419,184 @@ public class MachineProjectServiceTests
         await env
             .EmailService.Received()
             .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SetsDraftResultForBuildInProgressErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
+            .ThrowsAsync(ServalApiExceptions.BuildInProgress);
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            draftGenerationRequestId: null,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User01));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User02));
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SetsDraftResultForTaskCancellation()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
+            .ThrowsAsync(new TaskCanceledException());
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            draftGenerationRequestId: null,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User01));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User02));
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_SetsDraftResultForUnexpectedErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
+            .ThrowsAsync(new NotSupportedException());
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            draftGenerationRequestId: null,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(DraftResult.Faulted, env.GetLatestDraftResult(User01));
+        Assert.AreEqual(DraftResult.Faulted, env.GetLatestDraftResult(User02));
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_DoesNotSetDraftResultOnSuccess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+        var buildConfig = new BuildConfig { ProjectId = Project01 };
+        env.Service.Configure()
+            .BuildProjectAsync(
+                User01,
+                buildConfig,
+                draftGenerationRequestId: null,
+                cancellationToken: CancellationToken.None
+            )
+            .Returns(Task.FromResult(Build01));
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            buildConfig,
+            preTranslate: true,
+            draftGenerationRequestId: null,
+            CancellationToken.None
+        );
+
+        // The draft result will be set when Serval notifies us that the build has finished
+        Assert.IsNull(env.GetLatestDraftResult(User01));
+        Assert.IsNull(env.GetLatestDraftResult(User02));
+    }
+
+    [TestCase(JobState.Completed, DraftResult.Completed)]
+    [TestCase(JobState.Faulted, DraftResult.Faulted)]
+    [TestCase(JobState.Canceled, DraftResult.Cancelled)]
+    public async Task SetDraftResultForProjectUsersAsync_SetsResultForAdministratorsAndTranslators(
+        JobState buildState,
+        string expected
+    )
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+
+        // SUT
+        await env.Service.SetDraftResultForProjectUsersAsync(Project01, buildState);
+
+        Assert.AreEqual(expected, env.GetLatestDraftResult(User01));
+        Assert.AreEqual(expected, env.GetLatestDraftResult(User02));
+        Assert.IsNull(env.GetLatestDraftResult(User03));
+    }
+
+    [TestCase(JobState.Pending)]
+    [TestCase(JobState.Active)]
+    public async Task SetDraftResultForProjectUsersAsync_DoesNotSetResultForUnfinishedBuilds(JobState buildState)
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+
+        // SUT
+        await env.Service.SetDraftResultForProjectUsersAsync(Project01, buildState);
+
+        Assert.IsNull(env.GetLatestDraftResult(User01));
+        Assert.IsNull(env.GetLatestDraftResult(User02));
+    }
+
+    [Test]
+    public async Task SetDraftResultForProjectUsersAsync_MissingProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.SetDraftResultForProjectUsersAsync("invalid_project_id", JobState.Completed);
+
+        env.ExceptionHandler.DidNotReceiveWithAnyArgs().ReportException(Arg.Any<Exception>());
+    }
+
+    [Test]
+    public async Task SetDraftResultForProjectUsersAsync_ReportsErrors()
+    {
+        // Set up test environment
+        // Without the user config repository, fetching a user config will throw an exception
+        var env = new TestEnvironment(new TestEnvironmentOptions { ProjectUserConfigsAreMissing = true });
+        await env.SetupProjectUserRolesAsync();
+
+        // SUT
+        await env.Service.SetDraftResultForProjectUsersAsync(Project01, JobState.Completed);
+
+        env.ExceptionHandler.ReceivedWithAnyArgs().ReportException(Arg.Any<Exception>());
     }
 
     [Test]
@@ -3294,6 +3474,7 @@ public class MachineProjectServiceTests
         public bool DraftingSourceAndTrainingSourceAreTheSame { get; init; }
         public bool HasBaseProject { get; init; }
         public bool HasTranslationEngineForNmt { get; init; }
+        public bool ProjectUserConfigsAreMissing { get; init; }
         public int DraftingSources { get; init; }
         public int TrainingSources { get; init; }
 
@@ -3531,8 +3712,18 @@ public class MachineProjectServiceTests
                 },
             ]);
 
+            ProjectUserConfigs = new MemoryRepository<SFProjectUserConfig>([
+                new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
+                new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
+            ]);
+
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+            if (!options.ProjectUserConfigsAreMissing)
+            {
+                RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0, ProjectUserConfigs);
+            }
             RealtimeService.AddRepository("training_data", OTType.Json0, TrainingData);
             RealtimeService.AddRepository("users", OTType.Json0, Users);
 
@@ -3574,6 +3765,7 @@ public class MachineProjectServiceTests
         public IParatextService ParatextService { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+        public MemoryRepository<SFProjectUserConfig> ProjectUserConfigs { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public IOptions<SiteOptions> SiteOptions { get; }
         private MemoryRepository<TrainingData> TrainingData { get; }
@@ -3712,6 +3904,33 @@ public class MachineProjectServiceTests
         /// <returns>The asynchronous task.</returns>
         public async Task SetupProjectSecretAsync(string projectId, ServalData? servalData) =>
             await ProjectSecrets.UpdateAsync(projectId, u => u.Set(p => p.ServalData, servalData));
+
+        /// <summary>
+        /// Sets up Project01 with an administrator (User01), a translator (User02), and a consultant (User03).
+        /// </summary>
+        /// <returns>The asynchronous task.</returns>
+        public async Task SetupProjectUserRolesAsync() =>
+            await Projects.UpdateAsync(
+                Project01,
+                u =>
+                    u.Set(
+                        p => p.UserRoles,
+                        new Dictionary<string, string>
+                        {
+                            { User01, SFProjectRole.Administrator },
+                            { User02, SFProjectRole.Translator },
+                            { User03, SFProjectRole.Consultant },
+                        }
+                    )
+            );
+
+        /// <summary>
+        /// Gets the latest draft result for the specified user on Project01.
+        /// </summary>
+        /// <param name="userId">The user identifier.</param>
+        /// <returns>The latest draft result, if set.</returns>
+        public string? GetLatestDraftResult(string userId) =>
+            ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, userId)).LatestDraftResult;
 
         /// <summary>
         /// Sets up the additional training data

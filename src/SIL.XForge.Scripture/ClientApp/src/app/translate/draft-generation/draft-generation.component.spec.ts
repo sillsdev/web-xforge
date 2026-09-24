@@ -8,10 +8,13 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/draft-result';
+import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -23,6 +26,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TextDocService } from '../../core/text-doc.service';
@@ -44,6 +48,8 @@ describe('DraftGenerationComponent', () => {
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockDraftSourcesService: jasmine.SpyObj<DraftSourcesService>;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
+  let mockActivatedProjectUserConfigService: jasmine.SpyObj<ActivatedProjectUserConfigService>;
+  let mockProjectUserConfigDoc: jasmine.SpyObj<SFProjectUserConfigDoc>;
   let mockUserService: jasmine.SpyObj<UserService>;
   let mockNoticeService: jasmine.SpyObj<NoticeService>;
   let mockNllbLanguageService: jasmine.SpyObj<NllbLanguageService>;
@@ -91,6 +97,7 @@ describe('DraftGenerationComponent', () => {
           { provide: DraftSourcesService, useValue: mockDraftSourcesService },
           { provide: DraftHandlingService, useValue: undefined },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
+          { provide: ActivatedProjectUserConfigService, useValue: mockActivatedProjectUserConfigService },
           { provide: SFProjectService, useValue: mockSFProjectService },
           { provide: UserService, useValue: mockUserService },
           { provide: TextDocService, useValue: undefined },
@@ -146,11 +153,22 @@ describe('DraftGenerationComponent', () => {
           trainingTargets: []
         } as DraftSourcesAsArrays)
       );
+
+      TestEnvironment.initProjectUserConfig(DraftResult.Completed);
       mockNllbLanguageService = jasmine.createSpyObj<NllbLanguageService>(['isNllbLanguageAsync']);
       mockNllbLanguageService.isNllbLanguageAsync.and.returnValue(Promise.resolve(false));
 
       mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['getTrainingData']);
       mockTrainingDataService.getTrainingData.and.returnValue(of([]));
+    }
+
+    static initProjectUserConfig(latestDraftResult: DraftResult | undefined): void {
+      mockProjectUserConfigDoc = jasmine.createSpyObj<SFProjectUserConfigDoc>(['submitJson0Op'], {
+        data: createTestProjectUserConfig({ projectRef: projectId, ownerRef: 'user01', latestDraftResult })
+      });
+      mockActivatedProjectUserConfigService = jasmine.createSpyObj<ActivatedProjectUserConfigService>([], {
+        projectUserConfigDoc$: of(mockProjectUserConfigDoc)
+      });
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {
@@ -1431,5 +1449,38 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
     });
+  });
+
+  describe('latestDraftResult', () => {
+    it('should reset the latestDraftResult on the project user config when the page is initialized', fakeAsync(() => {
+      new TestEnvironment();
+      tick();
+
+      expect(mockProjectUserConfigDoc.submitJson0Op).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should wait until online before resetting the latestDraftResult', fakeAsync(() => {
+      const projectUserConfigDoc$ = new Subject<SFProjectUserConfigDoc>();
+      const env = new TestEnvironment(() => {
+        mockActivatedProjectUserConfigService = jasmine.createSpyObj<ActivatedProjectUserConfigService>([], {
+          projectUserConfigDoc$
+        });
+      });
+      env.testOnlineStatusService.setIsOnline(false);
+      projectUserConfigDoc$.next(mockProjectUserConfigDoc);
+      tick();
+      expect(mockProjectUserConfigDoc.submitJson0Op).not.toHaveBeenCalled();
+
+      env.testOnlineStatusService.setIsOnline(true);
+      tick();
+      expect(mockProjectUserConfigDoc.submitJson0Op).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should not reset the latestDraftResult if it is already undefined', fakeAsync(() => {
+      new TestEnvironment(() => TestEnvironment.initProjectUserConfig(undefined));
+      tick();
+
+      expect(mockProjectUserConfigDoc.submitJson0Op).not.toHaveBeenCalled();
+    }));
   });
 });
