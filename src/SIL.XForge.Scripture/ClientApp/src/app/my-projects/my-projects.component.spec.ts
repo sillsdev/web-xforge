@@ -479,7 +479,7 @@ describe('MyProjectsComponent', () => {
     expect(
       env.component.userUpdateParatextProjects.find(proj => proj.projectId === 'testProject1')?.hasUserRoleChanged
     ).toBeTrue();
-    expect(env.userUpdateParatextProjects).not.toBeNull();
+    expect(env.userUpdateParatextProjects('testProject1')).not.toBeNull();
 
     env.click(env.buttonForUpdateUserRole('testProject1'));
     verify(mockedNoticeService.loadingStarted(anything())).once();
@@ -505,7 +505,7 @@ describe('MyProjectsComponent', () => {
     expect(
       env.component.userUpdateParatextProjects.find(proj => proj.projectId === 'testProject1')?.hasUserRoleChanged
     ).toBeTrue();
-    expect(env.userUpdateParatextProjects).not.toBeNull();
+    expect(env.userUpdateParatextProjects('testProject1')).not.toBeNull();
 
     when(mockedSFProjectService.onlineSyncUserRole('testProject1')).thenThrow(new Error('test error'));
     env.click(env.buttonForUpdateUserRole('testProject1'));
