@@ -376,7 +376,8 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     void this.router.navigate(['/serval-administration'], {
       queryParams: {
         tab: 'serval-builds',
-        q: this.activatedProjectService.projectId!
+        q: this.activatedProjectService.projectId!,
+        noDateRange: true
       }
     });
   }
