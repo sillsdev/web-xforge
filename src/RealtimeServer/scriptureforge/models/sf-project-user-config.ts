@@ -1,4 +1,5 @@
 import { PROJECT_DATA_INDEX_PATHS, ProjectData } from '../../common/models/project-data';
+import { DraftResult } from './draft-result';
 import { EditorTabPersistData } from './editor-tab-persist-data';
 import { LynxInsightUserData } from './lynx-insight-user-data';
 
@@ -32,4 +33,5 @@ export interface SFProjectUserConfig extends ProjectData {
   lynxInsightState: LynxInsightUserData;
   selectedDraftTargetParatextId?: string;
   showEditorTabsInSinglePane?: boolean;
+  latestDraftResult?: DraftResult;
 }

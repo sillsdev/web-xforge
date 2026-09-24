@@ -17,6 +17,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -152,6 +153,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftSourcesService: DraftSourcesService,
+    private readonly activatedProjectUserConfigService: ActivatedProjectUserConfigService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -216,6 +218,18 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   ngOnInit(): void {
     this.loadingStarted();
+
+    // Clear the latest draft result notification, as the user is now viewing the draft generation page
+    this.activatedProjectUserConfigService.projectUserConfigDoc$
+      .pipe(
+        filterNullish(),
+        filter(projectUserConfigDoc => projectUserConfigDoc.data?.latestDraftResult != null),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(async projectUserConfigDoc => {
+        await this.onlineStatusService.online;
+        void projectUserConfigDoc.submitJson0Op(op => op.unset(puc => puc.latestDraftResult));
+      });
 
     // Display dialog for supported languages when route fragment is 'supported-languages'
     this.route.fragment
