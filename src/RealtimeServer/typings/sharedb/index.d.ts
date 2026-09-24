@@ -154,6 +154,8 @@ declare namespace ShareDB {
    */
   interface TimingContext {
     collection?: string;
+    /** The name the client addressed, which is a projection's own name where one was queried. QueryEmitter only. */
+    index?: string;
     agent?: Agent;
   }
 
