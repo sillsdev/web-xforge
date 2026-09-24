@@ -27,8 +27,8 @@ export class ExternalUrls {
     return this.helps + '/understanding-drafts';
   }
 
-  get understandingDraftQuality(): string {
-    return this.helps + '/understanding-draft-quality';
+  get improvingDraftQuality(): string {
+    return this.helps + '/improving-draft-quality';
   }
 
   get configuringSources(): string {
