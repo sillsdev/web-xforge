@@ -45,6 +45,7 @@ import {
   OnboardingRequestService
 } from '../../translate/draft-generation/onboarding-request.service';
 import { OnboardingRequestAssigneeSelectComponent } from '../onboarding-request-assignee-select/onboarding-request-assignee-select.component';
+import { ServalAdminParams } from '../serval-administration.component';
 import { ServalAdministrationService } from '../serval-administration.service';
 import {
   ApproveRequestDialogComponent,
@@ -123,7 +124,8 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       void this.loadRequest(requestId);
     } else {
       this.noticeService.showError('No request ID provided');
-      void this.router.navigate(['/serval-administration'], { queryParams: { tab: 'onboarding-requests' } });
+      const queryParams: ServalAdminParams = { tab: 'onboarding-requests' };
+      void this.router.navigate(['/serval-administration'], { queryParams });
     }
   }
 

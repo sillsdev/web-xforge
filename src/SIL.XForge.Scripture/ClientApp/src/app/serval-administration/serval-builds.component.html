@@ -3,7 +3,7 @@
     <div class="filter-group">
       <app-date-range-picker
         [showReset]="true"
-        [startWithEmptyRange]="useUnspecifiedDateRange"
+        [startWithEmptyRange]="useUnspecifiedDateRange$ | async"
         (dateRangeChange)="onDateRangeChange($event)"
       ></app-date-range-picker>
       <div class="duration-area-toggle">

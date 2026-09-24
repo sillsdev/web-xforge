@@ -36,10 +36,11 @@ import {
   map,
   Observable,
   of,
+  ReplaySubject,
   shareReplay,
   startWith,
   switchMap,
-  tap
+  take
 } from 'rxjs';
 import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -67,6 +68,7 @@ import { DateRangePickerComponent, NormalizedDateRange } from './date-range-pick
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { SearchRecordsComponent } from './search-records.component';
+import { ServalAdminParams } from './serval-administration.component';
 import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
@@ -203,7 +205,7 @@ export interface BuildInputItem {
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
   /** Max problems to preview in problems card. */
   public readonly problemPreviewLimit: number = 8;
-  useUnspecifiedDateRange: boolean = true;
+  useUnspecifiedDateRange$: ReplaySubject<boolean> = new ReplaySubject<boolean>();
 
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
@@ -257,33 +259,37 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
-    this.route.queryParams
-      .pipe(
-        tap(params => (this.useUnspecifiedDateRange = !!params['noDateRange'])),
-        map(params => params['q']),
-        map((queryParam: unknown) => (isString(queryParam) ? queryParam : null)),
-        distinctUntilChanged(),
-        takeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((searchText: string | null) => {
-        this.currentSearchQueryParam = searchText;
-        const searchTextValue: string = searchText ?? '';
-        if (this.searchControl.value !== searchTextValue) {
-          this.searchControl.setValue(searchTextValue, { emitEvent: false });
-        }
-        this.applyFiltersAndStats();
-      });
-
-    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$])
+    combineLatest([
+      this.onlineStatusService.onlineStatus$,
+      this.dateRange$,
+      this.useUnspecifiedDateRange$.pipe(take(1))
+    ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([isOnline, range]) => {
         this.loadingStarted();
         void this.loadBuilds(range, isOnline);
       });
+
+    this.route.queryParams
+      .pipe(
+        map(params => params as ServalAdminParams),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(saParams => {
+        const searchText: string | null = isString(saParams.q) ? saParams.q : null;
+        this.currentSearchQueryParam = searchText;
+        const searchTextValue: string = searchText ?? '';
+        if (this.searchControl.value !== searchTextValue) {
+          this.searchControl.setValue(searchTextValue, { emitEvent: false });
+        }
+
+        this.useUnspecifiedDateRange$.next(!!saParams.noDateRange);
+        this.applyFiltersAndStats();
+      });
   }
 
   protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
-    if (range == null) return;
     this.dateRange$.next(range);
   }
 

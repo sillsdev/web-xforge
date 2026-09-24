@@ -146,9 +146,9 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(DateRangePickerComponent);
     this.component = this.fixture.componentInstance;
-    this.component.startWithEmptyRange = startWithEmptyRange;
-    // Spy before the first change detection so that emissions from ngOnInit are recorded.
+    // Spy before setting the input, since setting it can emit the initial range.
     this.emitSpy = spyOn(this.component.dateRangeChange, 'emit').and.callThrough();
+    this.component.startWithEmptyRange = startWithEmptyRange;
     this.fixture.detectChanges();
   }
 }
