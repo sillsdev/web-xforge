@@ -1138,6 +1138,20 @@ describe('RealtimeServer', () => {
       expect(queries).toContain(PROJECTS_COLLECTION);
     });
 
+    it('measures a query of a projection against the projection, not the collection behind it', async () => {
+      const env = new TestEnvironment();
+      await env.createData();
+      const queries: string[] = [];
+      jest.spyOn(ResourceMonitor.instance, 'recordQueryRun').mockImplementation((_clientId, collection) => {
+        queries.push(collection);
+      });
+      const userConn = clientConnect(env.server, 'user01');
+      // SUT
+      await createFetchQuery(userConn, PROJECT_PROFILES_COLLECTION, {});
+      expect(queries).toContain(PROJECT_PROFILES_COLLECTION);
+      expect(queries).not.toContain(PROJECTS_COLLECTION);
+    });
+
     it('reports a handshake', async () => {
       const env = new TestEnvironment();
       await env.createData();
