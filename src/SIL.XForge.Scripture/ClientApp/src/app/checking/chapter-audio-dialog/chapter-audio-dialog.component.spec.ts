@@ -86,7 +86,7 @@ describe('ChapterAudioDialogComponent', () => {
       Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
     ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
 
-    expect(!chapterOfFirstQuestion.hasAudio);
+    expect(chapterOfFirstQuestion.hasAudio).toBeFalsy();
     expect(env.component.book).toEqual(env.question1.data?.verseRef.bookNum!);
     expect(env.component.chapter).toEqual(env.question1.data?.verseRef.chapterNum!);
   }));
