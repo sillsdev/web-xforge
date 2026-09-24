@@ -1090,9 +1090,12 @@ describe('RealtimeServer', () => {
       const userConn = clientConnect(env.server, 'user01');
       await submitOp(userConn, PROJECTS_COLLECTION, 'project01', [{ p: ['userPermissions', 'abc123'], oi: 'admin' }]);
       const logged: LoggedActivity[] = env.captureActivityLog();
+      // Snapshot requests for a doc collection are only allowed on the server's own connection, which is what makes
+      // them in production: the dotnet backend fetching a past version of a doc.
+      const serverConn = env.server.connectAsServer('user01');
       // SUT
       await new Promise<void>((resolve, reject) =>
-        userConn.fetchSnapshot(PROJECTS_COLLECTION, 'project01', 1, err => (err == null ? resolve() : reject(err)))
+        serverConn.fetchSnapshot(PROJECTS_COLLECTION, 'project01', 1, err => (err == null ? resolve() : reject(err)))
       );
       const rebuilds: LoggedActivity[] = logged.filter(item => item.event === 'snapshotRebuiltFromOps');
       expect(rebuilds.length).toBe(1);
