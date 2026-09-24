@@ -157,6 +157,9 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       },
       showEditorTabsInSinglePane: {
         bsonType: 'bool'
+      },
+      latestDraftResult: {
+        bsonType: 'string'
       }
     },
     additionalProperties: false

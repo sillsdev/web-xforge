@@ -785,6 +785,10 @@ public partial class MachineApiService(
         CancellationToken cancellationToken
     )
     {
+        // Let the administrators and translators know that a draft result is available.
+        // This is done first, so that any failure in sending the email does not prevent the users being notified.
+        await machineProjectService.SetDraftResultForProjectUsersAsync(sfProjectId, buildState);
+
         try
         {
             string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(sfProjectId, buildId);
