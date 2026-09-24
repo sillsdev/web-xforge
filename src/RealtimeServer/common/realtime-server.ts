@@ -315,6 +315,15 @@ export class RealtimeServer extends ShareDB {
         });
     });
 
+    // Report what a client asks for. Registered before the checks below so that the requests they reject are reported
+    // too, those being the ones most worth seeing.
+    this.use('receive', (context, next) => {
+      if (ActivityLogger.instance.enabled) {
+        RealtimeServer.logClientRequest(context);
+      }
+      next();
+    });
+
     // Checks every message that names a collection before ShareDB acts on it.
     this.use('receive', (context, done) => {
       const request: any = context.data;
@@ -434,14 +443,6 @@ export class RealtimeServer extends ShareDB {
         context.agent.connectSession?.userId,
         context.agent.connectSession?.isServer
       );
-    });
-
-    // Report what a client asks for.
-    this.use('receive', (context, next) => {
-      if (ActivityLogger.instance.enabled) {
-        RealtimeServer.logClientRequest(context);
-      }
-      next();
     });
 
     // Configure op, snapshot, or milestone changes to be made just before the op is committed to the database
