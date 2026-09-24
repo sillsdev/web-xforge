@@ -50,8 +50,19 @@
       <app-notice type="error" mode="outline">All source projects must be in the same language.</app-notice>
     }
     @if (sourcesMatchTargetLanguage) {
-      <app-notice type="warning" mode="outline">
-        Sources are in the same language as the target project. This may be a mistake.
+      <app-notice type="warning" mode="outline" class="same-language-notice">
+        <h4>Sources and target are all {{ data.targetProject.languageCode }}</h4>
+        <p>
+          Drafting a language from itself usually means a language code is wrong. It is only correct when the target is
+          a dialect or related language without its own ISO code.
+        </p>
+        <mat-checkbox [formControl]="sameLanguageConfirmed" class="confirm-same-language">
+          I'm aware the sources and target have the same language code, and I've considered whether to contact the user
+          about it
+        </mat-checkbox>
+        @if (approveAttempted && form.hasError("sameLanguageNotConfirmed")) {
+          <p class="confirmation-required">Check the box above to approve.</p>
+        }
       </app-notice>
     }
     @if (trainingSources.hasError("trainingSourceCount")) {

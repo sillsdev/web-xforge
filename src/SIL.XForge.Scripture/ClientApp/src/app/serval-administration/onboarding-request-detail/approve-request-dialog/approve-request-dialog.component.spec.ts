@@ -9,7 +9,7 @@ import {
 } from './approve-request-dialog.component';
 
 const TEST_DATA: ApproveRequestDialogData = {
-  targetProject: { paratextId: 'ptid-main', name: 'MYPROJ - My Project', languageCode: 'eng' },
+  targetProject: { paratextId: 'ptid-main', name: 'MYPROJ - My Project', languageCode: 'tpi' },
   draftingSourceOptions: [
     { paratextId: 'ptid-draft', name: 'English Drafting Project', languageCode: 'eng' },
     { paratextId: 'ptid-A', name: 'English Source Alpha', languageCode: 'eng' },
@@ -48,10 +48,15 @@ const BT_SAME_LANGUAGE_DATA: ApproveRequestDialogData = {
   ...TEST_DATA,
   backTranslation: {
     paratextId: 'ptid-bt',
-    name: 'English Back Translation',
-    languageCode: 'eng',
+    name: 'Tok Pisin Back Translation',
+    languageCode: 'tpi',
     draftingAlreadyEnabled: false
   }
+};
+
+const SOURCES_SAME_LANGUAGE_AS_TARGET_DATA: ApproveRequestDialogData = {
+  ...TEST_DATA,
+  targetProject: { ...TEST_DATA.targetProject, languageCode: 'en' }
 };
 
 describe('ApproveRequestDialogComponent', () => {
@@ -181,6 +186,42 @@ describe('ApproveRequestDialogComponent', () => {
     expect().nothing();
   });
 
+  describe('when sources are in the same language as the target project', () => {
+    it('does not show the confirmation when the languages differ', () => {
+      const env = new TestEnvironment();
+      expect(env.sameLanguageCheckbox).toBeNull();
+    });
+
+    it('shows an unchecked confirmation checkbox', () => {
+      const env = new TestEnvironment(SOURCES_SAME_LANGUAGE_AS_TARGET_DATA);
+      expect(env.sameLanguageCheckbox).not.toBeNull();
+      expect(env.component.sameLanguageConfirmed.value).toBeFalse();
+    });
+
+    it('does not approve until the admin confirms', () => {
+      const env = new TestEnvironment(SOURCES_SAME_LANGUAGE_AS_TARGET_DATA);
+      expect(env.confirmationRequiredMessage).toBeNull();
+
+      env.approveButton.click();
+      env.fixture.detectChanges();
+      verify(env.mockedDialogRef.close(anything())).never();
+      expect(env.confirmationRequiredMessage).not.toBeNull();
+
+      env.clickSameLanguageCheckbox();
+      expect(env.confirmationRequiredMessage).toBeNull();
+      env.approveButton.click();
+      verify(
+        env.mockedDialogRef.close(
+          deepEqual({
+            draftingSourceParatextId: 'ptid-draft',
+            trainingSourceParatextIds: ['ptid-A'],
+            enableBackTranslationDrafting: false
+          } satisfies ApproveRequestDialogResult)
+        )
+      ).once();
+    });
+  });
+
   describe('back translation section', () => {
     it('does not render when backTranslationParatextId is absent', () => {
       const env = new TestEnvironment();
@@ -270,6 +311,23 @@ class TestEnvironment {
   /** The "enable drafting" checkbox in the back translation section, or null when that section is not rendered. */
   get backTranslationCheckbox(): HTMLElement | null {
     return this.fixture.nativeElement.querySelector('[data-test-id="enable-bt-drafting"]');
+  }
+
+  get sameLanguageCheckbox(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.confirm-same-language');
+  }
+
+  get confirmationRequiredMessage(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.confirmation-required');
+  }
+
+  get approveButton(): HTMLButtonElement {
+    return this.fixture.nativeElement.querySelector('#approve-button');
+  }
+
+  clickSameLanguageCheckbox(): void {
+    this.sameLanguageCheckbox!.querySelector('input')!.click();
+    this.fixture.detectChanges();
   }
 
   get cancelButton(): HTMLButtonElement {

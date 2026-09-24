@@ -98,6 +98,9 @@ export class ApproveRequestDialogComponent {
   readonly trainingSources: FormControl<string[]>;
   readonly form: FormGroup;
   readonly enableBackTranslationDrafting: FormControl<boolean>;
+  readonly sameLanguageConfirmed = new FormControl<boolean>(false, { nonNullable: true });
+  /** Whether the admin has clicked Approve, so that requirements they skipped can be pointed out. */
+  approveAttempted = false;
   readonly backTranslationLanguageMatchesTarget: boolean;
   private readonly languageCodes: Map<string, string>;
   private readonly normalizedTargetLanguageCode: string;
@@ -124,8 +127,20 @@ export class ApproveRequestDialogComponent {
       [...data.trainingSourceOptions, ...data.draftingSourceOptions].map(o => [o.paratextId, o.languageCode] as const)
     );
     this.form = new FormGroup(
-      { draftingSource: this.draftingSource, trainingSources: this.trainingSources },
-      { validators: languageCodesValidator(this.languageCodes) }
+      {
+        draftingSource: this.draftingSource,
+        trainingSources: this.trainingSources,
+        sameLanguageConfirmed: this.sameLanguageConfirmed
+      },
+      {
+        validators: [
+          languageCodesValidator(this.languageCodes),
+          () =>
+            this.sourcesMatchTargetLanguage && !this.sameLanguageConfirmed.value
+              ? { sameLanguageNotConfirmed: true }
+              : null
+        ]
+      }
     );
     this.enableBackTranslationDrafting = new FormControl<boolean>(!this.backTranslationLanguageMatchesTarget, {
       nonNullable: true
@@ -169,6 +184,7 @@ export class ApproveRequestDialogComponent {
   }
 
   approve(): void {
+    this.approveAttempted = true;
     if (this.form.valid) {
       this.dialogRef.close({
         draftingSourceParatextId: this.draftingSource.value,
