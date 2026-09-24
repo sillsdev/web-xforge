@@ -8,6 +8,15 @@ import { ServalBuildsComponent } from './serval-builds.component';
 import { ServalProjectsComponent } from './serval-projects.component';
 
 /**
+ * Represents the possible valid query params for the Serval Administration page
+ */
+export interface ServalAdminParams {
+  tab?: string;
+  q?: string;
+  noDateRange?: boolean;
+}
+
+/**
  * Main serval administration component with tabbed interface.
  * Supports URL parameters for filtering by project ID and selecting specific tabs.
  */
