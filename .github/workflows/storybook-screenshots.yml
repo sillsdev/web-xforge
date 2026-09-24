@@ -115,8 +115,8 @@ jobs:
         run: |
           set -xueo pipefail
           cd src/SIL.XForge.Scripture/ClientApp
-          sudo npx playwright install-deps
-          npx playwright install
+          sudo npx playwright install-deps chromium
+          npx playwright install chromium
 
       # The screenshot script may not exist on the base branch (or may be outdated). Always use the
       # version from the PR branch so that any script improvements in the PR also apply to the base
@@ -215,8 +215,8 @@ jobs:
         run: |
           set -xueo pipefail
           cd src/SIL.XForge.Scripture/ClientApp
-          sudo npx playwright install-deps
-          npx playwright install
+          sudo npx playwright install-deps chromium
+          npx playwright install chromium
 
       - name: "Take screenshots"
         run: deno run --allow-read --allow-write --allow-net --allow-run --allow-env --allow-sys scripts/storybook-screenshots/take-screenshots.mts src/SIL.XForge.Scripture/ClientApp/storybook-static src/SIL.XForge.Scripture/ClientApp/screenshots/

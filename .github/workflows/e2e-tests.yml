@@ -311,7 +311,7 @@ jobs:
         run: |
           set -xueo pipefail
           cd src/SIL.XForge.Scripture/ClientApp/e2e
-          npx playwright install
+          npx playwright install chromium
 
   run_e2e_tests:
     name: "Run E2E tests"
@@ -512,8 +512,8 @@ jobs:
         run: |
           set -xueo pipefail
           cd src/SIL.XForge.Scripture/ClientApp/e2e
-          sudo npx playwright install-deps
-          npx playwright install
+          sudo npx playwright install-deps chromium
+          npx playwright install chromium
 
       - name: Run E2E tests
         run: ./src/SIL.XForge.Scripture/ClientApp/e2e/pre_merge_ci.sh
