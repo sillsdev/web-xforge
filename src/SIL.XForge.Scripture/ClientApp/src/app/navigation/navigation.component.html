@@ -13,9 +13,15 @@
         {{ t("edit_review") }}
       </a>
       @if (canGenerateDraft$ | async) {
-        <a mat-list-item [appRouterLink]="draftGenerationLink" [class.active]="draftGenerationActive">
-          <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
-          {{ t("generate_draft") }}
+        <a
+          mat-list-item
+          [appRouterLink]="draftGenerationLink"
+          [class.active]="draftGenerationActive"
+          [class.draft-completed]="(latestDraftResult$ | async) === draftResult.Completed"
+          [class.draft-failed]="(latestDraftResult$ | async) === draftResult.Faulted"
+        >
+          <mat-icon aria-hidden="false" id="draft-generation-icon">auto_awesome</mat-icon>
+          {{ t("generate_draft") }}<span><!-- notification anchor --></span>
           @if (draftInProgress) {
             <mat-spinner class="status-icon" [diameter]="20" [strokeWidth]="3"></mat-spinner>
           } @else if (lastDraftFailed) {

@@ -7,10 +7,12 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/draft-result';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { asyncScheduler, combineLatest, Observable, of } from 'rxjs';
 import { map, shareReplay, switchMap, throttleTime } from 'rxjs/operators';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -63,14 +65,18 @@ export class NavigationComponent {
   canGenerateDraft$: Observable<boolean> = this.projectChanges$.pipe(
     switchMap(projectDoc => (projectDoc == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectDoc.id)))
   );
+  latestDraftResult$: Observable<DraftResult | undefined> =
+    this.activatedProjectUserConfigService.projectUserConfig$.pipe(map(config => config?.latestDraftResult));
 
   @Output() readonly menuItemClicked = new EventEmitter<void>();
 
+  readonly draftResult = DraftResult;
   readonly answerQuestionsLink$ = this.resumeCheckingService.resumeLink$;
   readonly translateLink$ = this.resumeTranslateService.resumeLink$;
 
   constructor(
     readonly i18n: I18nService,
+    private readonly activatedProjectUserConfigService: ActivatedProjectUserConfigService,
     private readonly destroyRef: DestroyRef,
     private readonly nmtDraftAuthGuard: NmtDraftAuthGuard,
     private readonly settingsAuthGuard: SettingsAuthGuard,
