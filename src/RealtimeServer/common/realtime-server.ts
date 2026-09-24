@@ -24,28 +24,20 @@ const SNAPSHOT_REQUEST_ACTIONS: string[] = ['nf', 'nt'];
  * operator that answers some other way, as `$distinct` and `$explain` do, bypasses them entirely. Allowing a fixed
  * list rather than refusing a known list means an operator MongoDB or sharedb-mongo adds later is refused until
  * someone decides it is safe. To add one, check that MongoDB answers it with matching documents and nothing more.
- *
- * `$count` also answers without snapshots, so it counts documents the user may not read. It is allowed because the
- * client sends a `$count` alongside every paged query; making counts respect the read rules is separate work.
+ * The list holds only the operators the frontend's queries use, which also cover the backend's.
  */
 const CURSOR_QUERY_OPERATORS: Set<string> = new Set(['$sort', '$limit', '$skip', '$count']);
-const LOGICAL_QUERY_OPERATORS: Set<string> = new Set(['$or', '$and', '$nor']);
+const LOGICAL_QUERY_OPERATORS: Set<string> = new Set(['$or', '$and']);
 const FIELD_QUERY_OPERATORS: Set<string> = new Set([
-  '$eq',
   '$ne',
   '$gt',
   '$gte',
   '$lt',
-  '$lte',
   '$in',
-  '$nin',
-  '$exists',
   '$regex',
   '$options',
   '$not',
-  '$elemMatch',
-  '$all',
-  '$size'
+  '$elemMatch'
 ]);
 
 /**
