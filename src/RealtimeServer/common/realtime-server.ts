@@ -356,10 +356,14 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.use('query', (context, done) => {
-      const session: ConnectSession = context.agent.connectSession;
+      const session: ConnectSession | undefined = context.agent?.connectSession;
       const disallowed: string | undefined = findDisallowedQueryOperator(context.query);
       if (disallowed != null) {
         done(`403: Query operator is not allowed: ${disallowed}`);
+      } else if (session == null) {
+        // Whether a query is allowed cannot be decided without knowing who is asking, and the rules are given the
+        // session to decide with.
+        done('403: Query arrived without a connection session.');
       } else if (session.isServer || isDocIdExistenceQuery(context.query)) {
         // The existence check is not up to the query rules, because the client sends it for a doc of any collection it
         // subscribes to. Clients still in use send it, so refusing it would break them.
