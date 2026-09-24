@@ -1169,29 +1169,6 @@ describe('RealtimeServer', () => {
       expect(handshakes[0].details['srcClientId']).toBeUndefined();
     });
 
-    it('reports a request that is refused for naming a collection the server does not serve', async () => {
-      const env = new TestEnvironment();
-      await env.createData();
-      const userConn = clientConnect(env.server, 'user01');
-      await flushPromises();
-      const logged: LoggedActivity[] = env.captureActivityLog();
-      // SUT
-      let refusal: string | undefined;
-      try {
-        await fetchDoc(userConn, 'secrets', 'secret01');
-      } catch (err) {
-        refusal = `${err}`;
-      }
-      await flushPromises();
-      expect(refusal).toContain('403');
-      // The refusal ends the receive middleware chain, so this is only reported if the reporting runs before the
-      // check that refuses it.
-      const fetches: LoggedActivity[] = logged.filter(
-        item => item.event === 'clientRequest' && item.details['collection'] === 'secrets'
-      );
-      expect(fetches.length).toBeGreaterThan(0);
-    });
-
     it('reports a request refused for naming a collection the server does not serve', async () => {
       const env = new TestEnvironment();
       await env.createData();
@@ -1206,6 +1183,12 @@ describe('RealtimeServer', () => {
       expect(refusals[0].details['reason']).toContain('Unknown collection: user_secrets');
       expect(refusals[0].details['collection']).toBe('user_secrets');
       expect(refusals[0].details['userId']).toBe('user01');
+      // The refusal ends the receive middleware chain, so what was asked for is only reported if the reporting runs
+      // before the check that refuses it.
+      const fetches: LoggedActivity[] = logged.filter(
+        item => item.event === 'clientRequest' && item.details['collection'] === 'user_secrets'
+      );
+      expect(fetches.length).toBeGreaterThan(0);
     });
 
     it('reports a query refused for using an operator that is not allowed', async () => {

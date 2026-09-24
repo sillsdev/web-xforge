@@ -315,8 +315,9 @@ export class RealtimeServer extends ShareDB {
         });
     });
 
-    // Report what a client asks for. Registered before the checks below so that the requests they reject are reported
-    // too, those being the ones most worth seeing.
+    // Report what a client asks for. Registered before the checks below so that a request they refuse is described
+    // here as well: requestRefused says only which collection and why, while this says what was actually asked, such
+    // as the doc, query or presence channel named.
     this.use('receive', (context, next) => {
       if (ActivityLogger.instance.enabled) {
         RealtimeServer.logClientRequest(context);
@@ -329,7 +330,13 @@ export class RealtimeServer extends ShareDB {
       const request: any = context.data;
       const session: ConnectSession | undefined = context.agent?.connectSession;
       const collection: unknown = request?.c;
-      if (typeof collection !== 'string') {
+      if (session == null) {
+        // Should not happen. ShareDB only begins reading a connection's messages once the connect middleware has
+        // finished, which is where the session is set.
+        const reason = '403: Request arrived without a connection session.';
+        RealtimeServer.refuse(context.agent, typeof collection === 'string' ? collection : undefined, reason);
+        done(reason);
+      } else if (typeof collection !== 'string') {
         done();
       } else if (!this.docServices.has(collection) && this.projections[collection] == null) {
         // ShareDB would pass any name on to the database, where the read rules cannot help because they only see the
@@ -343,8 +350,7 @@ export class RealtimeServer extends ShareDB {
         // because sharedb-mongo declares that it projects snapshots itself (Backend.fetchSnapshot and
         // fetchSnapshotByTimestamp). The read rules cannot help with either: they decide whether the user may read the
         // document now, not which versions or properties they may see.
-        // A request whose connection has no session yet is not the server's, so it is held to the client rules.
-        const isServerRequestForCollection: boolean = session?.isServer === true && this.docServices.has(collection);
+        const isServerRequestForCollection: boolean = session.isServer && this.docServices.has(collection);
         // The translate editor fetches a note thread's previous version when undoing.
         const isNoteThreadVersionRequest: boolean = request.a === 'nf' && collection === 'note_threads';
         if (isServerRequestForCollection || isNoteThreadVersionRequest) {
