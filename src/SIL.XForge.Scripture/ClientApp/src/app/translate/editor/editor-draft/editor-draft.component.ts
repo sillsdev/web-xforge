@@ -10,6 +10,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Delta } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
@@ -51,6 +52,7 @@ import { BuildDto } from '../../../machine-api/build-dto';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
+import { DisplayConfidenceComponent } from '../../draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../../draft-generation/draft-generation.service';
 import { DraftHandlingService } from '../../draft-generation/draft-handling.service';
 import {
@@ -69,8 +71,10 @@ import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/his
   styleUrls: ['./editor-draft.component.scss'],
   imports: [
     TranslocoModule,
+    TranslocoMarkupModule,
     MatProgressBar,
     NoticeComponent,
+    DisplayConfidenceComponent,
     DraftPreviewBooksComponent,
     MatFormField,
     MatSelect,
