@@ -609,7 +609,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task BuildCompletedAsync_SetsDraftCompletedForAdminsAndTranslators()
+    public async Task BuildCompletedAsync_SetsDraftResultForAdminsAndTranslators()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -632,7 +632,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task BuildCompletedAsync_DoesNotSetDraftCompletedWhenBuildNotCompleted()
+    public async Task BuildCompletedAsync_SetDraftResultWhenBuildNotCompleted()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -644,13 +644,13 @@ public class MachineApiServiceTests
         await env.Service.BuildCompletedAsync(
             Project01,
             ServalBuildId01,
-            JobState.Canceled,
+            JobState.Faulted,
             env.SiteOptions.Value.WebsiteUrl,
             CancellationToken.None
         );
 
-        Assert.IsNull(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User01)).DraftResultAvailable);
-        Assert.IsNull(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User03)).DraftResultAvailable);
+        Assert.IsTrue(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User01)).DraftResultAvailable);
+        Assert.IsTrue(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User03)).DraftResultAvailable);
     }
 
     [Test]
