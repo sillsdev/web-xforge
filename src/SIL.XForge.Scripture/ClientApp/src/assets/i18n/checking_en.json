@@ -337,6 +337,7 @@
     "failed_to_update_avatar": "Your avatar image could not be updated.",
     "login": "Log in",
     "login_expired": "Your log in has expired. Please log in again.",
+    "paratext_registry_problem": "There was a problem with the Paratext Registry. Please try logging in again.",
     "try_again": "Try Again"
   },
   "exception_handling_service": {
