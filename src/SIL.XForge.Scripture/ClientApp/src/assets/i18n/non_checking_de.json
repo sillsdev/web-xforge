@@ -320,7 +320,10 @@
     }
   },
   "draft_confidence": {
-    "low_confidence": "Geringe Zuverlässigkeit"
+    "low_confidence": "Geringe Zuverlässigkeit",
+    "low_confidence_book": "Die Qualität des Entwurfs für „ {{ book }} “ ist möglicherweise geringer als üblich. [link:learnMoreLink]Weitere Informationen[/link]",
+    "low_confidence_books": "Die Qualität des Entwurfs für „ {{ number }} “ Bücher ist möglicherweise geringer als üblich. [link:learnMoreLink]Weitere Informationen[/link]",
+    "one_book": "1 Buch"
   },
   "draft_generation_steps": {
     "back": "Zurück",
@@ -389,9 +392,6 @@
     "formatting_options": "Optionen für die Formatierung",
     "formatting": "Formatierung",
     "hide_model_training_configuration": "Modellschulungskonfiguration ausblenden",
-    "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
-    "low_confidence_books": "Die Entwurfsqulität für {{ number }} Bücher ist möglicherweise geringer als üblich.",
-    "one_book": "1 Buch",
     "requested_at": "Angefordert {{ requestedAtTime }}.",
     "requested_by": "Angefordert von {{ requestedByUserName }} um {{ requestedAtTime }}.",
     "select_formatting_options": "Der Entwurf wurde erstellt. Um fortzufahren, wähle Optionen für die Formatierung.",
@@ -442,8 +442,6 @@
     "import_some_chapters_failed": "{{ successful }} Kapitel erfolgreich importiert. Fehler beim Importieren von {{ failed }} Kapitel. Siehe Details oben.",
     "importing_draft": "Entwurf wird importiert",
     "importing": "Wird importiert",
-    "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
-    "low_confidence_books": "Die Entwurfsqulität für {{ number }} Bücher ist möglicherweise geringer als üblich.",
     "next": "Weiter",
     "no_books_ready_for_import": "Es sind keine Entwürfe von Kapitel für den Import bereit. Generiere einen Entwurf und versuche es erneut.",
     "overwrite_book_description": "Ein oder mehrere Kapitel haben bestehende Inhalte, die in {{ bookName }} in [b]{{ projectNameLabel }}[/b] überschrieben werden. Die Kapitel mit vorhandenem Inhalt sind unten aufgeführt. Klicke auf jedes Kapitel, um den Inhalt anzuzeigen.",
@@ -573,7 +571,6 @@
     "error_applying_draft": "Hinzufügen des Entwurfs zum Projekt ist fehlgeschlagen. Versuche es später noch einmal.",
     "format_draft": "Optionen für die Formatierung",
     "format_draft_tooltip": "Optionen für die Formatierung des Entwurfs anpassen",
-    "low_confidence_book": "Die Entwurfsqulität für {{ book }} ist möglicherweise geringer als üblich.",
     "no_draft_notice": "{{ bookChapterName }} hat keinen Entwurf.",
     "offline_notice": "Generierte Entwürfe sind offline nicht verfügbar.",
     "overwrite": "Das Hinzufügen des Entwurfs wird das aktuelle Kapitel überschreiben. Bist Du sicher, dass Du fortfahren möchtest?",

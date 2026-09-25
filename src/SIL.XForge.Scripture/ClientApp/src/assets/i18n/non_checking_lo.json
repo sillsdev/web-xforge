@@ -320,7 +320,10 @@
     }
   },
   "draft_confidence": {
-    "low_confidence": "Low confidence"
+    "low_confidence": "Low confidence",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal. [link:learnMoreLink]Learn more[/link]",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal. [link:learnMoreLink]Learn more[/link]",
+    "one_book": "1 book"
   },
   "draft_generation_steps": {
     "back": "ຄືນ",
@@ -389,9 +392,6 @@
     "formatting_options": "Formatting options",
     "formatting": "ການຈັດຮູບແບບ",
     "hide_model_training_configuration": "Hide model training configuration",
-    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
-    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
-    "one_book": "1 book",
     "requested_at": "Requested {{ requestedAtTime }}.",
     "requested_by": "Requested by {{ requestedByUserName }} at {{ requestedAtTime }}.",
     "select_formatting_options": "The draft has been created. Choose formatting options to continue.",
@@ -442,8 +442,6 @@
     "import_some_chapters_failed": "Imported {{ successful }} chapter(s) successfully. Failed to import {{ failed }} chapter(s). See details above.",
     "importing_draft": "Importing draft",
     "importing": "Importing",
-    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
-    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal.",
     "next": "ຕໍ່ໄປ",
     "no_books_ready_for_import": "No draft chapters are ready for import. Generate a draft and try again.",
     "overwrite_book_description": "One or more chapters have existing content that will be overwritten in {{ bookName }} in [b]{{ projectNameLabel }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
@@ -573,7 +571,6 @@
     "error_applying_draft": "Failed to add the draft to the project. Try again later.",
     "format_draft": "Formatting options",
     "format_draft_tooltip": "Customize formatting options for the draft",
-    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal.",
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",

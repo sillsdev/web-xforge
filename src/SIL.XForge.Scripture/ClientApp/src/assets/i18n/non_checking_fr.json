@@ -320,7 +320,10 @@
     }
   },
   "draft_confidence": {
-    "low_confidence": "Fiabilité faible"
+    "low_confidence": "Fiabilité faible",
+    "low_confidence_book": "La qualité des ébauches sur {{ book }} peut-être inférieure à la normale. [link:learnMoreLink]En savoir plus[/link]",
+    "low_confidence_books": "La qualité des ébauches des livres proposés sur {{ number }} peut-être inférieure à la normale. [link:learnMoreLink]En savoir plus[/link]",
+    "one_book": "1 livre"
   },
   "draft_generation_steps": {
     "back": "Retour",
@@ -389,9 +392,6 @@
     "formatting_options": "Options de formatage",
     "formatting": "Mise en forme",
     "hide_model_training_configuration": "Masquer la configuration de l'apprentissage du modèle",
-    "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
-    "low_confidence_books": "La qualité de l'ébauche des livres {{ number }} peut être inférieure à la normale.",
-    "one_book": "1 livre",
     "requested_at": "Demandé {{ requestedAtTime }}.",
     "requested_by": "Demandé par {{ requestedByUserName }} à {{ requestedAtTime }}.",
     "select_formatting_options": "L'ébauche a été créée. Choisissez les options de formatage pour continuer.",
@@ -442,8 +442,6 @@
     "import_some_chapters_failed": "Importation réussie du/des chapitre(s) de {{ successful }} . L'importation du/des chapitre(s) {{ failed }} a échoué. Voir les détails ci-dessus.",
     "importing_draft": "Importation de l'ébauche",
     "importing": "Importation en cours",
-    "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
-    "low_confidence_books": "La qualité de l'ébauche des livres {{ number }} peut être inférieure à la normale.",
     "next": "Suivant",
     "no_books_ready_for_import": "Aucun chapitre ébauche n'est prêt à être importé. Générez une ébauche et réessayez.",
     "overwrite_book_description": "Un ou plusieurs chapitres ont un contenu existant qui sera écrasé dans {{ bookName }} dans [b]{{ projectNameLabel }}[/b]. Les chapitres ayant un contenu existant sont listés ci-dessous. Cliquez sur chaque chapitre pour en afficher le contenu.",
@@ -573,7 +571,6 @@
     "error_applying_draft": "Échec de l'ajout de l'ébauche au projet. Réessayez plus tard.",
     "format_draft": "Options de formatage",
     "format_draft_tooltip": "Personnaliser les options de mise en forme pour l'ébauche",
-    "low_confidence_book": "La qualité de l'ébauche pour {{ book }} peut-être inférieure à la normale.",
     "no_draft_notice": "{{ bookChapterName }} n'a pas d'ébauche.",
     "offline_notice": "L'ébauche automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout d'une ébauche écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",

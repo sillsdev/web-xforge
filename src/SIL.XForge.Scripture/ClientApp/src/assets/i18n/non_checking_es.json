@@ -320,7 +320,10 @@
     }
   },
   "draft_confidence": {
-    "low_confidence": "Baja confianza"
+    "low_confidence": "Baja confianza",
+    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal. [link:learnMoreLink]Learn more[/link]",
+    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal. [link:learnMoreLink]Learn more[/link]",
+    "one_book": "1 libro"
   },
   "draft_generation_steps": {
     "back": "Atrás",
@@ -389,9 +392,6 @@
     "formatting_options": "Opciones de formato",
     "formatting": "Formato",
     "hide_model_training_configuration": "Ocultar la configuración de entrenamiento del modelo",
-    "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
-    "low_confidence_books": "La calidad del borrador para {{ number }} libros puede ser inferior a la normal.",
-    "one_book": "1 libro",
     "requested_at": "Solicitado {{ requestedAtTime }}.",
     "requested_by": "Solicitado por {{ requestedByUserName }} en {{ requestedAtTime }}.",
     "select_formatting_options": "Se ha creado el borrador. Elija las opciones de formato para continuar.",
@@ -442,8 +442,6 @@
     "import_some_chapters_failed": "Importado(s) {{ successful }} capítulo(s) con éxito. No se pudo importar capítulos {{ failed }} . Ver detalles arriba.",
     "importing_draft": "Importando borrador",
     "importing": "Importando",
-    "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
-    "low_confidence_books": "La calidad del borrador para {{ number }} libros puede ser inferior a la normal.",
     "next": "Siguiente",
     "no_books_ready_for_import": "No hay borradores de capítulos listos para importar. Genere un borrador e inténtelo de nuevo.",
     "overwrite_book_description": "Uno o más capítulos tienen contenido existente que se sobrescribirá en {{ bookName }} en [b]{{ projectNameLabel }}[/b]. Los capítulos con contenido existente se enumeran a continuación. Haga clic en cada capítulo para ver el contenido.",
@@ -573,7 +571,6 @@
     "error_applying_draft": "No se ha podido añadir el borrador al proyecto. Vuelva a intentarlo más tarde.",
     "format_draft": "Opciones de formato",
     "format_draft_tooltip": "Personalizar las opciones de formato del borrador",
-    "low_confidence_book": "La calidad del borrador para {{ book }} puede ser inferior a la normal.",
     "no_draft_notice": "{{ bookChapterName }} no tiene borrador.",
     "offline_notice": "Los borradores generados no están disponibles sin conexión.",
     "overwrite": "Añadir el borrador sobrescribirá el capítulo actual. ¿Está seguro de que desea continuar?",
