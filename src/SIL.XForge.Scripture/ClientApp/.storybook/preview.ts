@@ -95,7 +95,7 @@ export const decorators = [
       provideAnimations(),
       provideUICommon(),
       provideSFTabs(),
-      { provide: APP_ROOT_ELEMENT_SELECTOR, useValue: 'storybook-root' },
+      { provide: APP_ROOT_ELEMENT_SELECTOR, useValue: '#storybook-root' },
       { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
     ]
   }),
