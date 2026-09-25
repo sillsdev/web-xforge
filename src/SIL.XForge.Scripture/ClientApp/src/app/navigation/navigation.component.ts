@@ -92,6 +92,14 @@ export class NavigationComponent {
     return this.onlineStatusService.isOnline;
   }
 
+  get lastDraftFailed(): boolean {
+    return this.selectedProjectDoc?.data?.translateConfig.draftConfig.lastDraftSuccessful === false;
+  }
+
+  get draftInProgress(): boolean {
+    return this.selectedProjectDoc?.data?.translateConfig.draftConfig.draftInProgress === true;
+  }
+
   get lastSyncFailed(): boolean {
     return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false;
   }
