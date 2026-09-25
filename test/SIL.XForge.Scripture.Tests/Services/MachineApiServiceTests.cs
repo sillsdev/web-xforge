@@ -50,6 +50,7 @@ public class MachineApiServiceTests
     private const string TrainingDataId01 = "trainingDataId01";
     private const string User01 = "user01";
     private const string User02 = "user02";
+    private const string User03 = "user03";
     private const string Paratext01 = "paratext01";
     private const string Paratext02 = "paratext02";
     private const string ParatextUserId01 = "paratextUser01";
@@ -605,6 +606,51 @@ public class MachineApiServiceTests
                 "Activity should contain draftGenerationRequestId tag with correct value"
             );
         }
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_SetsDraftResultForAdminsAndTranslators()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetEmptyDraftGenerationMetricAssociations();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            ServalBuildId01,
+            JobState.Completed,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
+        );
+
+        // User01 is an administrator, and User03 is a translator, on Project01
+        Assert.IsTrue(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User01)).DraftResultAvailable);
+        Assert.IsTrue(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User03)).DraftResultAvailable);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_SetDraftResultWhenBuildNotCompleted()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetEmptyDraftGenerationMetricAssociations();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            ServalBuildId01,
+            JobState.Faulted,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
+        );
+
+        Assert.IsTrue(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User01)).DraftResultAvailable);
+        Assert.IsTrue(env.ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, User03)).DraftResultAvailable);
     }
 
     [Test]
@@ -5673,7 +5719,11 @@ public class MachineApiServiceTests
                             Chapters = [new Chapter { Number = 3 }, new Chapter { Number = 4 }],
                         },
                     ],
-                    UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                    UserRoles = new Dictionary<string, string>
+                    {
+                        { User01, SFProjectRole.Administrator },
+                        { User03, SFProjectRole.Translator },
+                    },
                 },
                 new SFProject
                 {
@@ -5703,6 +5753,10 @@ public class MachineApiServiceTests
                     UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
                 },
             ]);
+            ProjectUserConfigs = new MemoryRepository<SFProjectUserConfig>([
+                new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
+                new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User03) },
+            ]);
             TextDocuments = new MemoryRepository<TextDocument>();
             Texts = new MemoryRepository<TextData>();
             ProjectRights = Substitute.For<ISFProjectRights>();
@@ -5713,6 +5767,7 @@ public class MachineApiServiceTests
             ProjectService.SyncAsync(User01, Arg.Any<string>()).Returns(Task.FromResult(HangfireJobId));
             RealtimeService = new SFMemoryRealtimeService();
             RealtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+            RealtimeService.AddRepository("sf_project_user_configs", OTType.Json0, ProjectUserConfigs);
             RealtimeService.AddRepository("text_documents", OTType.Json0, TextDocuments);
             RealtimeService.AddRepository("texts", OTType.RichText, Texts);
             SiteOptions = Options.Create(
@@ -5787,6 +5842,7 @@ public class MachineApiServiceTests
         public MemoryRepository<DraftMetrics> DraftMetrics { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+        public MemoryRepository<SFProjectUserConfig> ProjectUserConfigs { get; }
         public MemoryRepository<SiteConfig> SiteConfigs { get; }
         public MemoryRepository<TextDocument> TextDocuments { get; }
         public MemoryRepository<TextData> Texts { get; }
