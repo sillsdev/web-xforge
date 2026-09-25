@@ -195,7 +195,7 @@ class TestEnvironment {
   setInputValue(input: DebugElement, value: string): void {
     const inputElem = input.nativeElement as HTMLInputElement;
     inputElem.value = value;
-    inputElem.dispatchEvent(new Event('keyup'));
+    inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
