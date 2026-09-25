@@ -1,11 +1,16 @@
 import { Injector } from '@angular/core';
 import { Translation, TranslocoService } from '@ngneat/transloco';
-import { Decorator, Meta, StoryContext, StoryFn, StoryObj } from '@storybook/angular';
+import { Decorator, Meta, StoryObj } from '@storybook/angular';
 import { I18nStoryDecorator as OriginalI18nStoryDecorator } from 'xforge-common/i18n-story';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LtrMarkerInterceptor } from './ltr-marker.interceptor';
 
-const AdaptedI18nStoryDecorator: Decorator = (story: StoryFn, context: StoryContext) => {
+interface StoryArgs {
+  englishTranslations: Translation;
+  rtlTranslations: Translation;
+}
+
+const AdaptedI18nStoryDecorator: Decorator<StoryArgs> = (story, context) => {
   return (OriginalI18nStoryDecorator as any)(story, context);
 };
 
@@ -20,7 +25,7 @@ const createMockTranslocoService = (englishTranslations: Translation): Transloco
   } as TranslocoService;
 };
 
-const meta: Meta = {
+const meta: Meta<StoryArgs> = {
   title: 'App/Transloco/LtrMarkers',
   decorators: [AdaptedI18nStoryDecorator],
   argTypes: {
@@ -118,7 +123,7 @@ const meta: Meta = {
 };
 export default meta;
 
-type Story = StoryObj;
+type Story = StoryObj<StoryArgs>;
 
 export const Default: Story = {
   args: {
