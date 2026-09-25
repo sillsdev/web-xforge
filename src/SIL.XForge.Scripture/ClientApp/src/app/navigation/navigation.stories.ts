@@ -95,7 +95,7 @@ function menuItems(element: HTMLElement): string[] {
   return Array.from(menuItems).map(item => textFromMenuElement(item as Element)) as string[];
 }
 
-const meta: Meta = {
+const meta: Meta<StoryState> = {
   title: 'App/NavigationComponent',
   component: NavigationComponent,
   argTypes: {
@@ -105,7 +105,7 @@ const meta: Meta = {
     }
   },
   render: args => {
-    setUpMocks(args as StoryState);
+    setUpMocks(args);
     return {
       moduleMetadata: {
         providers: [

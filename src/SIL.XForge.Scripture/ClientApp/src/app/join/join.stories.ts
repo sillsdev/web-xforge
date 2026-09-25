@@ -48,7 +48,7 @@ const defaultArgs: StoryAppState = {
   shareKey: ShareKeys.Valid
 };
 
-const meta: Meta = {
+const meta: Meta<StoryAppState> = {
   title: 'App/Join with share key',
   component: JoinComponent,
   argTypes: {

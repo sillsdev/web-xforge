@@ -91,7 +91,7 @@ export default {
     }
   },
   args: defaultArgs
-} as Meta;
+} as Meta<StoryAppState>;
 
 const dialogStoryConfig: MatDialogStoryConfig = {
   providers: [DialogService, NoticeService, { provide: NAVIGATOR, useValue: instance(mockedNavigator) }]
