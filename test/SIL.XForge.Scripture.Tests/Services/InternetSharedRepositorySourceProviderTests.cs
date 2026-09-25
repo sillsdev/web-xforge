@@ -71,7 +71,11 @@ public class InternetSharedRepositorySourceProviderTests
             MockJwtTokenHelper.GetJwtTokenFromUserSecret(Arg.Any<UserSecret>()).Returns("token_1234");
             MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns("ptUsernameHere");
             RegistryU.Implementation = new DotNetCoreRegistry();
-            InternetAccess.RawStatus = InternetUse.Enabled;
+            // Setting this writes to the machine's Paratext settings file, so only set it if it is not already right.
+            if (InternetAccess.RawStatus != InternetUse.Enabled)
+            {
+                InternetAccess.RawStatus = InternetUse.Enabled;
+            }
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
             siteOptions.Value.Returns(new SiteOptions { Name = "xForge" });
             Provider = new InternetSharedRepositorySourceProvider(
