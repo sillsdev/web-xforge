@@ -175,8 +175,14 @@ it grew".
 ```
 
 A `clientRequest` is recorded before the checks run and a `queryRun` after them, so a query that was refused appears
-only as the former. Counting the two per collection says whether anything was turned away, which is worth doing when
-`requestRefused` is unexpectedly absent.
+only as the former. Two things make the counts differ without anything having been refused, and both have to be
+excluded before a difference means anything:
+
+- Activity is logged as it happens, while `queryRun` totals only exist for a window that a report has flushed.
+  Anything after the last `resourceReportGenerated` is logged and never counted.
+- The monitor's totals accumulate until the next report rather than from the start of the file, so the first report
+  in a rotated file carries whatever accumulated before the rotation. A connection with no `connectionEstablished`
+  and a `serverStarted` that is absent are the signs of it.
 
 `handle` and `callId` are only unique within a process. They are counters that restart at 0 when the
 RealtimeServer restarts; so join on `(pid, handle)` and `(pid, callId)` rather than on the handle or callId alone. Every activity
