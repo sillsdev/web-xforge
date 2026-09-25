@@ -1,7 +1,7 @@
 <div class="projects-controls">
   <mat-form-field>
     <mat-label>Filter projects...</mat-label>
-    <input matInput (keyup)="updateSearchTerm($event.target)" id="project-filter" />
+    <input matInput (input)="updateSearchTerm($event.target)" id="project-filter" />
   </mat-form-field>
 </div>
 @if (!isLoading) {
