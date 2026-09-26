@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
+import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -9,7 +10,6 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -22,6 +22,7 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -34,6 +35,7 @@ import { StartBuildResult } from './draft-generation';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
+import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftSource, DraftSourcesAsArrays } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
 import { TrainingDataService } from './training-data/training-data.service';
@@ -50,6 +52,7 @@ describe('DraftGenerationComponent', () => {
   let mockTrainingDataService: jasmine.SpyObj<TrainingDataService>;
   let mockSFProjectService: jasmine.SpyObj<SFProjectService>;
   let mockProjectNotificationService: jasmine.SpyObj<ProjectNotificationService>;
+  let mockBrandingService: jasmine.SpyObj<BrandingService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -100,7 +103,8 @@ describe('DraftGenerationComponent', () => {
           { provide: OnlineStatusService, useClass: TestOnlineStatusService },
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: undefined },
-          { provide: ProjectNotificationService, useValue: mockProjectNotificationService }
+          { provide: ProjectNotificationService, useValue: mockProjectNotificationService },
+          { provide: BrandingService, useValue: mockBrandingService }
         ]
       });
 
@@ -151,6 +155,8 @@ describe('DraftGenerationComponent', () => {
 
       mockTrainingDataService = jasmine.createSpyObj<TrainingDataService>(['getTrainingData']);
       mockTrainingDataService.getTrainingData.and.returnValue(of([]));
+
+      mockBrandingService = jasmine.createSpyObj<BrandingService>([], { siteName: 'Scripture Forge' });
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {
@@ -207,9 +213,10 @@ describe('DraftGenerationComponent', () => {
         asymmetricMatch: (proj: SFProjectProfile | undefined) =>
           proj != null && proj.paratextId === projectDoc.data?.paratextId
       };
-      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft']);
+      mockSFProjectService = jasmine.createSpyObj<SFProjectService>(['hasDraft', 'onlineHasUserSubmittedFeedback']);
       mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
       mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
+      mockSFProjectService.onlineHasUserSubmittedFeedback.and.returnValue(Promise.resolve(false));
       mockProjectNotificationService = jasmine.createSpyObj<ProjectNotificationService>([
         'setNotifyBuildProgressHandler',
         'start',
@@ -237,6 +244,16 @@ describe('DraftGenerationComponent', () => {
 
     get signupResponseEmail(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('.signup-response-email');
+    }
+
+    get userFeedbackNotice(): HTMLElement | null {
+      return (this.fixture.nativeElement as HTMLElement).querySelector('app-user-feedback');
+    }
+
+    setBuildHistory(dates: string[]): void {
+      this.component.draftHistoryList = {
+        history: dates.map(date => ({ additionalInfo: { dateRequested: date } }) as BuildDto)
+      } as unknown as DraftHistoryListComponent;
     }
 
     getElementByTestId(testId: string): HTMLElement | null {
@@ -1446,6 +1463,61 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
       expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+    });
+  });
+
+  describe('showUserFeedbackNotice', () => {
+    it('should be false when the user has no historical draft builds', () => {
+      const env = new TestEnvironment();
+      expect(env.component.showUserFeedbackNotice).toBe(false);
+    });
+
+    it('should be false when the user has used drafting for less than three months', () => {
+      const env = new TestEnvironment();
+      env.setBuildHistory(['2025-01-01', '2025-02-01']);
+      expect(env.component.showUserFeedbackNotice).toBe(false);
+    });
+
+    it('should be true when the user has used drafting for more than three months and has not given feedback', () => {
+      const env = new TestEnvironment();
+      env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      expect(env.component.showUserFeedbackNotice).toBe(true);
+    });
+
+    it('should be false when the user has already submitted feedback, even after three months of use', () => {
+      const env = new TestEnvironment();
+      env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      env.component.hasUserSubmittedFeedback = true;
+      expect(env.component.showUserFeedbackNotice).toBe(false);
+    });
+
+    it('should show the user feedback notice when showUserFeedbackNotice is true', () => {
+      const env = new TestEnvironment();
+      env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
+
+      expect(env.component.showUserFeedbackNotice).toBe(true);
+      env.fixture.detectChanges();
+      expect(env.userFeedbackNotice).not.toBeNull();
+    });
+
+    it('should not show the user feedback notice when showUserFeedbackNotice is false', () => {
+      const env = new TestEnvironment();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
+
+      expect(env.component.showUserFeedbackNotice).toBe(false);
+      env.fixture.detectChanges();
+      expect(env.userFeedbackNotice).toBeNull();
+    });
+
+    it('should not show the user feedback notice while the draft build has faulted, even if showUserFeedbackNotice is true', () => {
+      const env = new TestEnvironment();
+      env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
+
+      expect(env.component.showUserFeedbackNotice).toBe(true);
+      env.fixture.detectChanges();
+      expect(env.userFeedbackNotice).toBeNull();
     });
   });
 });

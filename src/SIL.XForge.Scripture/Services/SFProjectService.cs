@@ -45,6 +45,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<TranslateMetrics> _translateMetrics;
     private readonly IRepository<SyncMetrics> _syncMetrics;
+    private readonly IRepository<UserFeedback> _userFeedback;
     private readonly IEmailService _emailService;
     private readonly ISecurityService _securityService;
     private readonly IStringLocalizer<SharedResource> _localizer;
@@ -70,6 +71,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<UserSecret> userSecrets,
         IRepository<TranslateMetrics> translateMetrics,
         IRepository<SyncMetrics> syncMetrics,
+        IRepository<UserFeedback> userFeedback,
         IStringLocalizer<SharedResource> localizer,
         ITransceleratorService transceleratorService,
         IBackgroundJobClient backgroundJobClient,
@@ -88,6 +90,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         _projectSecrets = projectSecrets;
         _translateMetrics = translateMetrics;
         _syncMetrics = syncMetrics;
+        _userFeedback = userFeedback;
         _emailService = emailService;
         _securityService = securityService;
         _localizer = localizer;
@@ -522,6 +525,63 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         metrics.ProjectRef = projectId;
         metrics.Timestamp = DateTime.UtcNow;
         await _translateMetrics.ReplaceAsync(metrics, true);
+    }
+
+    /// <summary>
+    /// Submits feedback from a user about a project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier the feedback pertains to. This string can be empty.</param>
+    /// <param name="feedbackParams">The feedback parameters including the feedback.</param>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user is not a member of the project.</exception>
+    public async Task AddUserFeedbackAsync(string curUserId, string projectId, UserFeedbackParams feedbackParams)
+    {
+        if (!string.IsNullOrEmpty(projectId))
+        {
+            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            if (!attempt.TryResult(out SFProject project))
+                throw new DataNotFoundException("The project does not exist.");
+
+            if (!project.UserRoles.ContainsKey(curUserId))
+                throw new ForbiddenException();
+        }
+
+        await _userFeedback.InsertAsync(
+            new UserFeedback
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                ProjectRef = projectId,
+                UserRef = curUserId,
+                Type = feedbackParams.Type,
+                Source = feedbackParams.Source,
+                FeedbackPermission = feedbackParams.Permission,
+                Feedback = feedbackParams.Feedback,
+                DateSubmitted = DateTime.UtcNow,
+            }
+        );
+    }
+
+    /// <summary>
+    /// Determines whether the specified user has already submitted feedback for the specified project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="source">The page source where the feedback was requested.</param>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user is not a member of the project.</exception>
+    public async Task<bool> HasUserSubmittedFeedbackAsync(string curUserId, string projectId, string source)
+    {
+        Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+        if (!attempt.TryResult(out SFProject project))
+            throw new DataNotFoundException("The project does not exist.");
+
+        if (!project.UserRoles.ContainsKey(curUserId))
+            throw new ForbiddenException();
+
+        return await _userFeedback
+            .Query()
+            .AnyAsync(f => f.ProjectRef == projectId && f.UserRef == curUserId && f.Source == source);
     }
 
     /// <summary>

@@ -174,7 +174,7 @@
         </section>
       }
       @if (isDraftJobFetched) {
-        <div>
+        <div class="draft-generation-header">
           @if (isGenerationSupported) {
             @if (isDraftFaulted(draftJob)) {
               <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
@@ -192,6 +192,8 @@
                   </a>
                 </div>
               </app-notice>
+            } @else if (showUserFeedbackNotice) {
+              <app-user-feedback (submitted)="hasUserSubmittedFeedback = true"></app-user-feedback>
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
               <section class="action-button-strip">

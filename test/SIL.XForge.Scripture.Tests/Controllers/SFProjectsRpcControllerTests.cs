@@ -1750,6 +1750,136 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task AddUserFeedback_Success()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Feedback from a user.",
+        };
+
+        var result = await env.Controller.AddUserFeedback(Project01, feedbackParams);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().AddUserFeedbackAsync(User01, Project01, feedbackParams);
+    }
+
+    [Test]
+    public async Task AddUserFeedback_ForbiddenException()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Feedback from a user.",
+        };
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, feedbackParams).Throws(new ForbiddenException());
+
+        var result = await env.Controller.AddUserFeedback(Project01, feedbackParams);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task AddUserFeedback_NotFoundException()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Feedback from a user.",
+        };
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, feedbackParams)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.AddUserFeedback(Project01, feedbackParams);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void AddUserFeedback_UnknownError()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Feedback from a user.",
+        };
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, feedbackParams)
+            .Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddUserFeedback(Project01, feedbackParams));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedback_Success()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
+            .Returns(Task.FromResult(true));
+
+        var result = await env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage);
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreEqual(true, (result as RpcMethodSuccessResult)!.ReturnObject);
+        await env.SFProjectService.Received().HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>());
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedback_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
+            .Throws(new ForbiddenException());
+
+        var result = await env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task HasUserSubmittedFeedback_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage);
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void HasUserSubmittedFeedback_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
+            .Throws(new ArgumentNullException());
+
+        Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task CancelSync_Success()
     {
         var env = new TestEnvironment();

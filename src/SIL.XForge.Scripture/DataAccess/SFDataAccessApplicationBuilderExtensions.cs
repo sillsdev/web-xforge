@@ -13,5 +13,6 @@ public static class SFDataAccessApplicationBuilderExtensions
         app.InitRepository<SyncMetrics>();
         app.InitRepository<OnboardingRequest>();
         app.InitRepository<DraftMetrics>();
+        app.InitRepository<UserFeedback>();
     }
 }
