@@ -533,8 +533,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="projectId">The project identifier the feedback pertains to. This string can be empty.</param>
     /// <param name="feedbackParams">The feedback parameters including the feedback.</param>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user is not a member of the project.</exception>
     public async Task AddUserFeedbackAsync(string curUserId, string projectId, UserFeedbackParams feedbackParams)
     {
+        if (!string.IsNullOrEmpty(projectId))
+        {
+            Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            if (!attempt.TryResult(out SFProject project))
+                throw new DataNotFoundException("The project does not exist.");
+
+            if (!project.UserRoles.ContainsKey(curUserId))
+                throw new ForbiddenException();
+        }
+
         await _userFeedback.InsertAsync(
             new UserFeedback
             {
