@@ -587,7 +587,22 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   private updateQuestionDocAudioUrls(): void {
-    this.fileSources.clear();
+    // Only discard sources for audio that is no longer referenced. This runs on every question doc change, including
+    // changes by other users, and giving a player a new source stops the audio it is playing.
+    const currentAudioUrls: Set<string> = new Set<string>(
+      [
+        this.questionDoc?.data?.audioUrl,
+        ...(this.questionDoc?.getAnswers() ?? []).map(answer => answer.audioUrl)
+      ].filter((url): url is string => url != null)
+    );
+    for (const [audioUrl, source] of [...this.fileSources]) {
+      if (!currentAudioUrls.has(audioUrl)) {
+        if (source != null) {
+          URL.revokeObjectURL(source);
+        }
+        this.fileSources.delete(audioUrl);
+      }
+    }
     if (this.questionDoc?.data == null) {
       return;
     }
@@ -609,8 +624,16 @@ export class CheckingAnswersComponent implements OnInit {
     // Always use the cached audio file if available otherwise set as undefined i.e. not available
     // We record the original audioUrl so that checks can be made by the player to see if the file is available
     // off the server when the cache is not available i.e. an 404 error is returned
-    const source: string | undefined = audio != null ? URL.createObjectURL(audio) : undefined;
-    this.fileSources.set(audioUrl, source);
+    if (audio == null) {
+      const previousSource: string | undefined = this.fileSources.get(audioUrl);
+      if (previousSource != null) {
+        URL.revokeObjectURL(previousSource);
+      }
+      this.fileSources.set(audioUrl, undefined);
+    } else if (this.fileSources.get(audioUrl) == null) {
+      // Reuse any existing object URL, since a new one would stop the audio if it is playing
+      this.fileSources.set(audioUrl, URL.createObjectURL(audio));
+    }
   }
 
   private refreshAnswersHighlightStatus(): void {
