@@ -608,10 +608,25 @@ public class SFProjectsRpcController(
             await projectService.AddUserFeedbackAsync(UserId, projectId, feedbackParams);
             return Ok();
         }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "AddUserFeedback" }, { "projectId", projectId } }
+                new Dictionary<string, string>
+                {
+                    { "method", "AddUserFeedback" },
+                    { "projectId", projectId },
+                    { "type", feedbackParams.Type },
+                    { "source", feedbackParams.Source },
+                    { "permission", feedbackParams.Permission },
+                }
             );
             throw;
         }

@@ -25,7 +25,7 @@ public static class PageSource
 public static class FeedbackPermission
 {
     public const string PublishPublic = "publish_public";
-    public const string PublishAnonymous = "public_anonymous";
+    public const string PublishAnonymous = "publish_anonymous";
     public const string Private = "private";
 }
 

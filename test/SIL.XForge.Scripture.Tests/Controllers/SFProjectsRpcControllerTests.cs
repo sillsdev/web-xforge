@@ -1768,6 +1768,45 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task AddUserFeedback_ForbiddenException()
+    {
+        var env = new TestEnvironment();
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Feedback from a user.",
+        };
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, feedbackParams).Throws(new ForbiddenException());
+
+        var result = await env.Controller.AddUserFeedback(Project01, feedbackParams);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task AddUserFeedback_NotFoundException()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        var feedbackParams = new UserFeedbackParams
+        {
+            Type = FeedbackType.HowSfImpactedProject,
+            Source = PageSource.GenerateDraftPage,
+            Permission = FeedbackPermission.PublishPublic,
+            Feedback = "Feedback from a user.",
+        };
+        env.SFProjectService.AddUserFeedbackAsync(User01, Project01, feedbackParams)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        var result = await env.Controller.AddUserFeedback(Project01, feedbackParams);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
     public void AddUserFeedback_UnknownError()
     {
         var env = new TestEnvironment();

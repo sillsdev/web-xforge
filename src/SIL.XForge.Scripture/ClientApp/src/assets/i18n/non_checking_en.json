@@ -1065,6 +1065,7 @@
   },
   "user_feedback": {
     "close": "close",
+    "error_occurred": "An error occurred. Please try submitting feedback later.",
     "how_has_drafting_helped_your_project": "How has {{ siteName }} drafting helped your project?",
     "send_feedback": "Send Feedback",
     "thank_you_for_your_feedback": "Thank you! We greatly value your feedback."
@@ -1073,7 +1074,7 @@
     "cancel": "Cancel",
     "connect_to_the_internet": "Please connect to the internet to send your feedback.",
     "feedback_label": "Your feedback",
-    "feedback_title": "Tell us has {{ siteName }} has impacted your project",
+    "feedback_title": "Tell us how {{ siteName }} has impacted your project",
     "feedback_subtitle": "How has {{ siteName }} influenced your team's process and workflow?",
     "permission_question": "May we publish your feedback?",
     "permission_anonymous_label": "Yes, but please don't use my name or project name",
