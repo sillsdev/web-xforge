@@ -233,7 +233,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     if (dates.length === 0) return false;
     const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000;
-    return Math.max(...dates) - Math.min(...dates) > threeMonthsInMs;
+    return Math.max(...dates) - Math.min(...dates) >= threeMonthsInMs;
   }
 
   ngOnInit(): void {

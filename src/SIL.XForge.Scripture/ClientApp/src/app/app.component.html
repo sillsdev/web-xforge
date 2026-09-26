@@ -201,10 +201,6 @@
               <div class="install-button"><mat-icon>install_mobile</mat-icon> {{ t("install_on_device") }}</div>
             </button>
           }
-          <button mat-menu-item (click)="openUserFeedbackDialog()" [disabled]="!isAppOnline">
-            <mat-icon>feedback</mat-icon>
-            {{ t("send_feedback") }}
-          </button>
           <button mat-menu-item (click)="logOut()" id="log-out-link">
             <mat-icon>logout</mat-icon> {{ t("log_out") }}
           </button>

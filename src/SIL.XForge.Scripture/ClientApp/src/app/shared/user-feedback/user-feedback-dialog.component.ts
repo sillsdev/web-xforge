@@ -1,6 +1,5 @@
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
-import { NgClass } from '@angular/common';
 import { Component, DestroyRef, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -15,20 +14,17 @@ import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { TranslocoModule } from '@ngneat/transloco';
-import { isPTUser } from 'realtime-server/lib/esm/common/models/user';
-import { combineLatest, filter, firstValueFrom, Subject } from 'rxjs';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { filter, firstValueFrom, tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AutofocusDirective } from 'xforge-common/autofocus.directive';
-import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { UserService } from 'xforge-common/user.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { isPopulatedString } from '../../../type-utils';
+import { isPopulatedString, notNull } from '../../../type-utils';
 import { BrandingService } from '../../core/branding.service';
-import { ParatextProject } from '../../core/models/paratext-project';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../core/paratext.service';
 import { ProjectSelectComponent } from '../../project-select/project-select.component';
 import { NoticeComponent } from '../notice/notice.component';
@@ -80,53 +76,32 @@ export interface UserFeedbackDialogResult {
     MatFormField,
     MatLabel,
     MatInput,
-    NgClass,
     CdkTextareaAutosize,
     AutofocusDirective,
     ProjectSelectComponent,
     NoticeComponent
   ]
 })
-export class UserFeedbackDialogComponent extends DataLoadingComponent implements OnInit {
+export class UserFeedbackDialogComponent implements OnInit {
   readonly publishPermission = FeedbackPermission;
-  isParatextUser: boolean = true;
+  /** The projects that a user is connected to that are not resources. */
+  projects: SFProjectProfile[] | undefined;
 
   feedbackForm = new FormGroup({
     feedback: new FormControl('', [Validators.required, XFValidators.someNonWhitespace]),
-    // ParatextId may be null if a user is leaving feedback but they are not a Paratext user because
-    // the project select only works for Paratext users
+    // ParatextId may be null since feedback does not have to be specific to a project
     paratextId: new FormControl(''),
     permission: new FormControl(FeedbackPermission.Private, { nonNullable: true })
   });
 
-  private readonly projectsLoaded$: Subject<void> = new Subject<void>();
-  private _projects: ParatextProject[] | undefined;
-
   constructor(
     private readonly dialogRef: MatDialogRef<UserFeedbackDialogComponent, UserFeedbackDialogResult>,
     private readonly userProjectsService: SFUserProjectsService,
-    private readonly paratextService: ParatextService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly brandingService: BrandingService,
-    private readonly userService: UserService,
     private readonly activatedProjectService: ActivatedProjectService,
-    noticeService: NoticeService,
     private readonly destroyRef: DestroyRef
-  ) {
-    super(noticeService, 'UserFeedbackDialogComponent');
-    void this.userService.getCurrentUser().then(userDoc => {
-      this.isParatextUser = userDoc.data != null ? isPTUser(userDoc.data) : false;
-    });
-  }
-
-  get projects(): ParatextProject[] {
-    return this._projects ?? [];
-  }
-
-  private set projects(value: ParatextProject[] | undefined) {
-    this._projects = value;
-    if (value != null) this.projectsLoaded$.next();
-  }
+  ) {}
 
   get siteName(): string {
     return this.brandingService.siteName;
@@ -141,15 +116,7 @@ export class UserFeedbackDialogComponent extends DataLoadingComponent implements
   }
 
   async ngOnInit(): Promise<void> {
-    combineLatest([this.activatedProjectService.projectDoc$, this.projectsLoaded$])
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(([projectDoc]) => {
-        if (projectDoc?.data != null) {
-          this.feedbackForm.controls.paratextId.setValue(projectDoc.data.paratextId);
-        }
-      });
-
-    if (this.isParatextUser) void this.loadProjects();
+    await this.loadProjects();
   }
 
   submit(): void {
@@ -158,7 +125,6 @@ export class UserFeedbackDialogComponent extends DataLoadingComponent implements
     if (!isPopulatedString(feedback?.trim())) return;
     const feedbackParams: UserFeedbackParams = {
       type: FeedbackType.HowSfImpactedProject,
-      // TODO: In the future if we make this dialog more generic the page source should come from the calling component
       source: PageSource.GenerateDraftPage,
       permission: this.feedbackForm.controls.permission.value,
       feedback
@@ -173,8 +139,24 @@ export class UserFeedbackDialogComponent extends DataLoadingComponent implements
   }
 
   private async loadProjects(): Promise<void> {
-    this.loadingStarted();
     await firstValueFrom(this.onlineStatusService.onlineStatus$.pipe(filter(online => online)));
-    this.projects = await this.paratextService.getProjects().finally(() => this.loadingFinished());
+    this.userProjectsService.projectDocs$
+      .pipe(
+        quietTakeUntilDestroyed(this.destroyRef),
+        filterNullish(),
+        tap(projectDocs => {
+          this.projects =
+            projectDocs
+              ?.map(doc => doc.data)
+              .filter(notNull)
+              .filter(project => !ParatextService.isResource(project.paratextId)) ?? [];
+        })
+      )
+      .subscribe(() => {
+        const selectedProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
+        if (selectedProjectDoc?.data != null) {
+          this.feedbackForm.controls.paratextId.setValue(selectedProjectDoc.data.paratextId);
+        }
+      });
   }
 }

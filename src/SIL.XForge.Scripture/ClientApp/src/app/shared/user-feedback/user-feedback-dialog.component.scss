@@ -1,26 +1,26 @@
+.mat-mdc-dialog-content {
+  overflow: unset;
+}
+
 .feedback-description {
   font-size: 1rem;
+  margin: 0.5rem 0 0.8rem;
+}
+
+#feedback-input {
+  min-height: 3rem;
 }
 
 form {
   display: flex;
   flex-direction: column;
-  row-gap: 8px;
-}
-
-.project-field-hidden {
-  display: none;
 }
 
 .project-select {
   width: 280px;
 }
 
-.permission-control {
-  margin-bottom: 0;
-
-  .permission-options {
-    display: flex;
-    flex-direction: column;
-  }
+.permission-options {
+  display: flex;
+  flex-direction: column;
 }
