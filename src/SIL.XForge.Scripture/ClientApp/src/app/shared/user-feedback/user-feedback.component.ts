@@ -32,9 +32,13 @@ export class UserFeedbackComponent {
       this.dialogService.openMatDialog(UserFeedbackDialogComponent, { disableClose: true });
     const feedback: UserFeedbackDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (feedback != null) {
-      void this.projectService.onlineAddUserFeedback(feedback);
-      this.submitted.emit();
-      void this.dialogService.message('user_feedback.thank_you_for_your_feedback', 'user_feedback.close');
+      try {
+        await this.projectService.onlineAddUserFeedback(feedback);
+        this.submitted.emit();
+        void this.dialogService.message('user_feedback.thank_you_for_your_feedback', 'user_feedback.close');
+      } catch {
+        void this.dialogService.message('user_feedback.error_occurred', 'user_feedback.close');
+      }
     }
   }
 }

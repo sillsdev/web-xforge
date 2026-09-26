@@ -2,19 +2,14 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { User } from 'realtime-server/lib/esm/common/models/user';
 import { BehaviorSubject, of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { ChildViewContainerComponent, configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { UserService } from 'xforge-common/user.service';
 import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { ParatextService } from '../../core/paratext.service';
 import {
   FeedbackPermission,
   FeedbackType,
@@ -26,10 +21,7 @@ import {
 const mockedUserProjectsService = mock(SFUserProjectsService);
 const mockedBrandingService = mock(BrandingService);
 const mockedActivatedProjectService = mock(ActivatedProjectService);
-const mockedParatextService = mock(ParatextService);
-const mockedUserService = mock(UserService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
-const mockedNoticeService = mock(NoticeService);
 
 describe('UserFeedbackDialogComponent', () => {
   configureTestingModule(() => ({
@@ -39,10 +31,7 @@ describe('UserFeedbackDialogComponent', () => {
       { provide: SFUserProjectsService, useMock: mockedUserProjectsService },
       { provide: BrandingService, useMock: mockedBrandingService },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
-      { provide: ParatextService, useMock: mockedParatextService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
-      { provide: NoticeService, useMock: mockedNoticeService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -58,17 +47,44 @@ describe('UserFeedbackDialogComponent', () => {
   });
 
   it('defaults the selected project to be the current active project', fakeAsync(() => {
-    const env = new TestEnvironment({ activeProjectParatextId: 'paratext01' });
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ activeProjectParatextId: 'paratext01', projectDocs: [projectDoc] });
     expect(env.isProjectSelectVisible).toBe(true);
     expect(env.component.feedbackForm.controls.paratextId.value).toBe('paratext01');
   }));
 
-  it('hides the project select when the user is not a paratext user', fakeAsync(() => {
-    const nonPtUser = { name: 'User Not PT', paratextId: undefined } as User;
-    const env = new TestEnvironment({ user: nonPtUser });
-    expect(env.component.isParatextUser).toBe(false);
-    expect(env.isProjectSelectVisible).toBe(false);
-    expect(env.component.feedbackForm.controls.paratextId.value).toBe('');
+  it('lists the projects the user is connected to, excluding resources', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const resourceDoc = {
+      id: 'resource01',
+      data: { paratextId: 'resource16char01', name: 'Resource 01', shortName: 'RES1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ projectDocs: [projectDoc, resourceDoc] });
+    expect(env.component.projects).toEqual([projectDoc.data!]);
+  }));
+
+  it('waits until online to load projects', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ projectDocs: [projectDoc], isOnline: false });
+    expect(env.component.projects).toBeUndefined();
+
+    env.isOnline = true;
+    expect(env.component.projects).toEqual([projectDoc.data!]);
+  }));
+
+  it('shows the project select when the user is not connected to any projects', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.isProjectSelectVisible).toBe(true);
+    expect(env.component.projects).toEqual([]);
   }));
 
   it('shows no selected project if there is no currently active project', fakeAsync(() => {
@@ -195,34 +211,26 @@ interface TestEnvironmentArgs {
   activeProjectParatextId?: string;
   projectDocs?: SFProjectProfileDoc[];
   isOnline?: boolean;
-  user?: User;
 }
 
 class TestEnvironment {
-  private defaultUser: User = {
-    name: 'User 01',
-    paratextId: 'ptuser01'
-  } as User;
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly component: UserFeedbackDialogComponent;
   readonly dialogRef: MatDialogRef<UserFeedbackDialogComponent, UserFeedbackDialogResult>;
+  private readonly onlineStatus$: BehaviorSubject<boolean>;
 
   constructor(args: TestEnvironmentArgs = {}) {
+    this.onlineStatus$ = new BehaviorSubject<boolean>(args.isOnline ?? true);
     when(mockedBrandingService.siteName).thenReturn('Scripture Forge');
     when(mockedUserProjectsService.projectDocs).thenReturn(args.projectDocs ?? []);
-    when(mockedOnlineStatusService.isOnline).thenReturn(args.isOnline ?? true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(new BehaviorSubject(args.isOnline ?? true));
-    when(mockedParatextService.getProjects()).thenResolve([]);
+    when(mockedUserProjectsService.projectDocs$).thenReturn(of(args.projectDocs ?? []));
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this.onlineStatus$.value);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.onlineStatus$);
     const projectDoc: SFProjectProfileDoc | undefined =
       args.activeProjectParatextId == null
         ? undefined
         : ({ data: { paratextId: args.activeProjectParatextId } } as SFProjectProfileDoc);
     when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
-    when(mockedActivatedProjectService.projectDoc$).thenReturn(of(projectDoc));
-    when(mockedUserService.getCurrentUser()).thenResolve({
-      id: 'user01',
-      data: args.user ?? this.defaultUser
-    } as UserDoc);
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(UserFeedbackDialogComponent, {
       viewContainerRef: this.fixture.componentInstance.childViewContainer
@@ -233,8 +241,14 @@ class TestEnvironment {
     tick();
   }
 
+  set isOnline(value: boolean) {
+    this.onlineStatus$.next(value);
+    tick();
+    this.fixture.detectChanges();
+  }
+
   get isProjectSelectVisible(): boolean {
-    return this.overlayContainerElement.querySelector('.project-field-hidden') == null;
+    return this.overlayContainerElement.querySelector('app-project-select') != null;
   }
 
   private get overlayContainerElement(): HTMLElement {
@@ -242,7 +256,7 @@ class TestEnvironment {
   }
 
   private get feedbackTextarea(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#feedback') as HTMLTextAreaElement;
+    return this.overlayContainerElement.querySelector('#feedback-input') as HTMLTextAreaElement;
   }
 
   private get submitButton(): HTMLElement {
