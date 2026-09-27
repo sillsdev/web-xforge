@@ -61,7 +61,7 @@ const defaultArgs: StoryAppState = {
   data: { excludedParatextIds: [] }
 };
 
-const meta: Meta = {
+const meta: Meta<StoryAppState> = {
   title: 'Translate/Editor/Tabs/Add resource dialog',
   component: MatDialogLaunchComponent,
   decorators: [

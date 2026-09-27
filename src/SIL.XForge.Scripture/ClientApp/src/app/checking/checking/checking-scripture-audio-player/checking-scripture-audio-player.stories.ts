@@ -20,7 +20,7 @@ const defaultArgs: StoryAppState = {
   source: './test-audio-player.webm'
 };
 
-const meta: Meta = {
+const meta: Meta<StoryAppState> = {
   title: 'Checking/Scripture Audio',
   component: CheckingScriptureAudioPlayerComponent,
   argTypes: {
