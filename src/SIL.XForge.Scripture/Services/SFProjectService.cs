@@ -1253,8 +1253,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         string curUserId,
         string[] systemRoles,
         string projectId,
-        IEnumerable<string> draftingSourcesParatextIds,
-        IEnumerable<string> trainingSourcesParatextIds
+        string[] draftingSourcesParatextIds,
+        string[] trainingSourcesParatextIds
     )
     {
         if (!systemRoles.Contains(SystemRole.ServalAdmin))
