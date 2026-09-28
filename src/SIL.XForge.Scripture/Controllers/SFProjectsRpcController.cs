@@ -935,8 +935,8 @@ public class SFProjectsRpcController(
 
     public async Task<IRpcMethodResult> SetDraftSources(
         string projectId,
-        IEnumerable<string> draftingSourcesParatextIds,
-        IEnumerable<string> trainingSourcesParatextIds
+        string[] draftingSourcesParatextIds,
+        string[] trainingSourcesParatextIds
     )
     {
         try
