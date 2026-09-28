@@ -638,6 +638,26 @@ describe('TextComponent', () => {
     }
   }));
 
+  it('does not scroll to the previous selection when the browser selection changes', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+    const editor: Quill = env.component.editor!;
+    editor.setSelection(env.component.getSegmentRange('verse_1_1')!.index, 0, 'user');
+    tick();
+    const scrollSpy = spyOn(editor, 'scrollSelectionIntoView').and.callThrough();
+
+    // Place the browser caret in another verse, as a mouse click does before Quill updates its own selection
+    const verseNode: Node = editor.root.querySelector('usx-segment[data-segment="verse_1_3"]')!.firstChild!;
+    document.getSelection()!.setBaseAndExtent(verseNode, 1, verseNode, 1);
+    document.dispatchEvent(new Event('selectionchange'));
+    tick();
+
+    expect(scrollSpy).not.toHaveBeenCalled();
+    expect(env.component.segmentRef).toEqual('verse_1_3');
+  }));
+
   describe('MultiCursor Presence', () => {
     it('should update presence if the user moves the cursor', fakeAsync(() => {
       const env: TestEnvironment = new TestEnvironment();
