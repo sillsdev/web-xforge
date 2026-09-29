@@ -94,7 +94,7 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public void GetTextsAsync_MissingProject()
+    public async Task GetTextsAsync_MissingProject()
     {
         var env = new TestEnvironment();
         string[] dataIds = [Data01];
@@ -102,13 +102,13 @@ public class TrainingDataServiceTests
         List<ISFText> targetTexts = [];
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetTextsAsync(User01, "invalid_project_id", dataIds, sourceTexts, targetTexts)
         );
     }
 
     [Test]
-    public void GetTextsAsync_MissingTrainingDataDirectory()
+    public async Task GetTextsAsync_MissingTrainingDataDirectory()
     {
         var env = new TestEnvironment();
         string[] dataIds = [Data01];
@@ -117,13 +117,13 @@ public class TrainingDataServiceTests
         env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
 
     [Test]
-    public void GetTextsAsync_NoPermission()
+    public async Task GetTextsAsync_NoPermission()
     {
         var env = new TestEnvironment();
         string[] dataIds = [Data01];
@@ -131,7 +131,7 @@ public class TrainingDataServiceTests
         List<ISFText> targetTexts = [];
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetTextsAsync(User03, Project01, dataIds, sourceTexts, targetTexts)
         );
     }
@@ -207,7 +207,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
         );
     }
@@ -226,51 +226,51 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
         );
     }
 
     [Test]
-    public void SaveTrainingDataAsync_InvalidDataId()
+    public async Task SaveTrainingDataAsync_InvalidDataId()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, "invalid_data_id", FileCsv)
         );
     }
 
     [Test]
-    public void SaveTrainingDataAsync_InvalidFileExtensions()
+    public async Task SaveTrainingDataAsync_InvalidFileExtensions()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, "test.doc")
         );
     }
 
     [Test]
-    public void SaveTrainingDataAsync_MissingProject()
+    public async Task SaveTrainingDataAsync_MissingProject()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SaveTrainingDataAsync(User01, "invalid_project_id", Data01, FileCsv)
         );
     }
 
     [Test]
-    public void SaveTrainingDataAsync_NoPermission()
+    public async Task SaveTrainingDataAsync_NoPermission()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SaveTrainingDataAsync(User03, Project01, Data01, FileCsv)
         );
     }
@@ -285,7 +285,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
         );
     }
@@ -300,7 +300,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv)
         );
     }
@@ -511,7 +511,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
         );
         outputStream.ForceDispose();
@@ -547,7 +547,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
         );
         outputStream.ForceDispose();
@@ -647,30 +647,32 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public void MarkFileDeleted_TrainingDataMissing()
+    public async Task MarkFileDeleted_TrainingDataMissing()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.MarkFileDeleted(User01, Project01, "missing_id"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.MarkFileDeleted(User01, Project01, "missing_id")
+        );
     }
 
     [Test]
-    public void MarkFileDeleted_MissingProject()
+    public async Task MarkFileDeleted_MissingProject()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.MarkFileDeleted(User01, "invalid_project_id", Data01)
         );
     }
 
     [Test]
-    public void MarkFileDeleted_NoPermission()
+    public async Task MarkFileDeleted_NoPermission()
     {
         var env = new TestEnvironment();
 
         // User03 (a consultant) does not have the right to edit the training data
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.MarkFileDeleted(User03, Project01, Data01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.MarkFileDeleted(User03, Project01, Data01));
     }
 
     [Test]

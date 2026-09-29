@@ -29,6 +29,7 @@ using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using BookConfidence = SIL.XForge.Scripture.Models.BookConfidence;
 using Chapter = SIL.XForge.Scripture.Models.Chapter;
 using TextInfo = SIL.XForge.Scripture.Models.TextInfo;
 

@@ -59,10 +59,10 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetProjectsAsync_BadArguments()
+    public async Task GetProjectsAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<NullReferenceException>(() => env.Service.GetProjectsAsync(null));
+        await Assert.ThrowsAsync<NullReferenceException>(() => env.Service.GetProjectsAsync(null));
     }
 
     [Test]
@@ -350,7 +350,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetResourcesAsync_Problem_EmptyList()
+    public async Task GetResourcesAsync_Problem_EmptyList()
     {
         // Set up environment
         var env = new TestEnvironment();
@@ -368,7 +368,7 @@ public class ParatextServiceTests
 
         IEnumerable<ParatextResource> resources = null;
         // SUT
-        Assert.DoesNotThrowAsync(async () => resources = await env.Service.GetResourcesAsync(env.User02));
+        await Assert.DoesNotThrowAsync(async () => resources = await env.Service.GetResourcesAsync(env.User02));
         // "Don't crash when permission problem");
         Assert.AreEqual(0, resources.Count(), "An empty set of resources should have been returned");
         env.MockExceptionHandler.Received()
@@ -888,7 +888,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetNoteThreads_UserNotOnProject_ThrowsForbidden()
+    public async Task GetNoteThreads_UserNotOnProject_ThrowsForbidden()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User03, env.Username03, env.ParatextUserId03);
@@ -897,7 +897,7 @@ public class ParatextServiceTests
         env.MockProjectRights.HasRight(Arg.Any<Project>(), userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View)
             .Returns(false);
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
         env.MockProjectRights.Received(1)
             .HasRight(
                 Arg.Is<Project>(project => project is SFProject && ((SFProject)project).ParatextId == paratextId),
@@ -908,7 +908,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetNoteThreads_UserMissingParatextUsername_ThrowsForbidden()
+    public async Task GetNoteThreads_UserMissingParatextUsername_ThrowsForbidden()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User04, "Unused", "paratext04");
@@ -918,7 +918,7 @@ public class ParatextServiceTests
         env.MockProjectRights.HasRight(Arg.Any<Project>(), userSecret.Id, SFProjectDomain.PTNoteThreads, Operation.View)
             .Returns(true);
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetNoteThreadsAsync(userSecret, paratextId));
         env.MockProjectRights.Received(1)
             .HasRight(
                 Arg.Is<Project>(project => project is SFProject && ((SFProject)project).ParatextId == paratextId),
@@ -929,12 +929,14 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetNoteThreads_ProjectMissing_ThrowsDataNotFound()
+    public async Task GetNoteThreads_ProjectMissing_ThrowsDataNotFound()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetNoteThreadsAsync(userSecret, "missing-pt-id"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetNoteThreadsAsync(userSecret, "missing-pt-id")
+        );
         env.MockProjectRights.DidNotReceiveWithAnyArgs().HasRight(default, default, default, default, default);
     }
 
@@ -3917,7 +3919,7 @@ public class ParatextServiceTests
             },
         };
         // The comment thread must exist if the Note Thread is not new
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.UpdateParatextCommentsAsync(
                 userSecret,
                 paratextId,
@@ -4026,14 +4028,14 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void SendReceiveAsync_BadArguments()
+    public async Task SendReceiveAsync_BadArguments()
     {
         var env = new TestEnvironment();
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.SendReceiveAsync(null, null, null, default, Substitute.For<SyncMetrics>())
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.SendReceiveAsync(
                 null,
                 env.PTProjectIds[env.Project01].Id,
@@ -4042,13 +4044,13 @@ public class ParatextServiceTests
                 Substitute.For<SyncMetrics>()
             )
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.SendReceiveAsync(user01Secret, null, null, default, Substitute.For<SyncMetrics>())
         );
     }
 
     [Test]
-    public void SendReceiveAsync_ShareChangesErrors_Throws()
+    public async Task SendReceiveAsync_ShareChangesErrors_Throws()
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -4066,21 +4068,21 @@ public class ParatextServiceTests
             )
             .Returns(false);
 
-        InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
         // Check exception is thrown if errors occurred, even if share changes succeeded
         env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
-        ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
     }
 
     [Test]
-    public void SendReceiveAsync_NoMatchingSourceRepository_Throws()
+    public async Task SendReceiveAsync_NoMatchingSourceRepository_Throws()
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -4089,7 +4091,7 @@ public class ParatextServiceTests
 
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
-        ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(() =>
+        ArgumentException ex = await Assert.ThrowsAsync<ArgumentException>(() =>
             env.Service.SendReceiveAsync(user01Secret, "badProjectId", null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
@@ -4098,7 +4100,7 @@ public class ParatextServiceTests
     [TestCase(SendReceiveResultEnum.Failed)]
     [TestCase(SendReceiveResultEnum.NotUpgraded)]
     [TestCase(SendReceiveResultEnum.ProjectVersionUpgraded)]
-    public void SendReceiveAsync_ShareChangesErrors_InResultsOnly(SendReceiveResultEnum sendReceiveResult)
+    public async Task SendReceiveAsync_ShareChangesErrors_InResultsOnly(SendReceiveResultEnum sendReceiveResult)
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -4124,21 +4126,21 @@ public class ParatextServiceTests
                 return true;
             });
 
-        InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
         // Check exception is thrown if errors occurred, even if share changes succeeded
         env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
-        ex = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
     }
 
     [Test]
-    public void SendReceiveAsync_UserIsObserver_ThrowsExceptionWithChanges()
+    public async Task SendReceiveAsync_UserIsObserver_ThrowsExceptionWithChanges()
     {
         // Setup
         var env = new TestEnvironment();
@@ -4150,7 +4152,7 @@ public class ParatextServiceTests
         env.SetSharedRepositorySource(user01Secret, UserRoles.Observer);
 
         // SUT
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.SendReceiveAsync(
                 user01Secret,
                 ptProjectId,
@@ -4192,7 +4194,7 @@ public class ParatextServiceTests
 
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
-        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
+        ArgumentException resultingException = await Assert.ThrowsAsync<ArgumentException>(() =>
             env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8", null, CancellationToken.None, syncMetrics)
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
@@ -4234,7 +4236,7 @@ public class ParatextServiceTests
 
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
-        ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(() =>
+        ArgumentException resultingException = await Assert.ThrowsAsync<ArgumentException>(() =>
             env.Service.SendReceiveAsync(
                 user01Secret,
                 "unknownPtProjectId8",
@@ -4381,7 +4383,7 @@ public class ParatextServiceTests
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
         string resourceId = "test_resource_id"; // A missing or invalid resource or project
         await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
-        Assert.ThrowsAsync<ArgumentException>(() =>
+        await Assert.ThrowsAsync<ArgumentException>(() =>
             env.Service.SendReceiveAsync(user01Secret, resourceId, null, default, Substitute.For<SyncMetrics>())
         );
     }
@@ -4603,7 +4605,7 @@ public class ParatextServiceTests
         SFProject project = projects.First();
         Assert.That(project.UserRoles.Count, Is.EqualTo(3), "setup");
         env.MakeRegistryClientReturn(env.NotFoundHttpResponseMessage);
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
             await env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
         );
     }
@@ -4726,7 +4728,7 @@ public class ParatextServiceTests
             .Returns(x => throw HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null));
 
         // SUT
-        Assert.ThrowsAsync<HttpException>(() =>
+        await Assert.ThrowsAsync<HttpException>(() =>
             env.Service.GetParatextUsersAsync(userSecret, project, CancellationToken.None)
         );
 
@@ -4760,7 +4762,7 @@ public class ParatextServiceTests
 
         env.MakeRegistryClientReturn(env.UnauthorizedHttpResponseMessage);
         // One SUT
-        HttpRequestException exc = Assert.ThrowsAsync<HttpRequestException>(() =>
+        HttpRequestException exc = await Assert.ThrowsAsync<HttpRequestException>(() =>
             env.Service.IsRegisteredAsync(userSecret, "some-project-pt-id", CancellationToken.None)
         );
         Assert.That(exc.Message, Contains.Substring("Unauthorized"), "relevant error info should be coming thru");
@@ -5059,13 +5061,13 @@ public class ParatextServiceTests
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         // One SUT
-        Assert.ThrowsAsync<ArgumentNullException>(
+        await Assert.ThrowsAsync<ArgumentNullException>(
             () => env.Service.CanUserAuthenticateToPTRegistryAsync(null),
             "throw on unacceptable input"
         );
 
         // One SUT
-        Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () =>
                 env.Service.CanUserAuthenticateToPTRegistryAsync(new UserSecret() { Id = null, ParatextTokens = null }),
             "the user secret does not have usable content"
@@ -5104,13 +5106,13 @@ public class ParatextServiceTests
         string userSFId = env.User01;
 
         // One SUT
-        Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => env.Service.CanUserAuthenticateToPTArchivesAsync(null),
             "unacceptable null input"
         );
 
         // One SUT
-        Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentException>(
             () => env.Service.CanUserAuthenticateToPTArchivesAsync(string.Empty),
             "unacceptable empty input"
         );
@@ -5467,7 +5469,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetChaptersAsUsj_InvalidUserSecret()
+    public async Task GetChaptersAsUsj_InvalidUserSecret()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = new UserSecret();
@@ -5475,7 +5477,7 @@ public class ParatextServiceTests
         string paratextId = env.PTProjectIds[env.Project01].ToString();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
         {
             foreach (var _ in env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm)) { }
             return null;
@@ -5483,14 +5485,14 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetChaptersAsUsj_MissingProject()
+    public async Task GetChaptersAsUsj_MissingProject()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         const string paratextId = "invalid_paratext_id";
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
         {
             foreach (var _ in env.Service.GetChaptersAsUsj(userSecret, paratextId, 8, env.RuthBookUsfm)) { }
             return null;
@@ -5649,7 +5651,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetRevisionHistoryAsync_InsufficientPermissions()
+    public async Task GetRevisionHistoryAsync_InsufficientPermissions()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -5658,27 +5660,27 @@ public class ParatextServiceTests
         env.AddProjectRepository(project);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
         {
             await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)) { }
         });
     }
 
     [Test]
-    public void GetRevisionHistoryAsync_MissingProject()
+    public async Task GetRevisionHistoryAsync_MissingProject()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+        await Assert.ThrowsAsync<DataNotFoundException>(async () =>
         {
             await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, "invalid_project_id", "MAT", 1)) { }
         });
     }
 
     [Test]
-    public void GetRevisionHistoryAsync_MissingUser()
+    public async Task GetRevisionHistoryAsync_MissingUser()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -5687,7 +5689,7 @@ public class ParatextServiceTests
         env.AddProjectRepository(project);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
         {
             await foreach (var _ in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)) { }
         });
@@ -5874,7 +5876,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public void GetSnapshotAsync_InsufficientPermissions()
+    public async Task GetSnapshotAsync_InsufficientPermissions()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -5883,25 +5885,25 @@ public class ParatextServiceTests
         env.AddProjectRepository(project);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
         );
     }
 
     [Test]
-    public void GetSnapshotAsync_MissingProject()
+    public async Task GetSnapshotAsync_MissingProject()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetSnapshotAsync(userSecret, "invalid_project_id", "MAT", 1, DateTime.UtcNow)
         );
     }
 
     [Test]
-    public void GetSnapshotAsync_MissingUser()
+    public async Task GetSnapshotAsync_MissingUser()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -5910,13 +5912,13 @@ public class ParatextServiceTests
         env.AddProjectRepository(project);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
         );
     }
 
     [Test]
-    public void GetSnapshotAsync_NoParatextRevisions()
+    public async Task GetSnapshotAsync_NoParatextRevisions()
     {
         var env = new TestEnvironment();
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -5933,13 +5935,13 @@ public class ParatextServiceTests
         env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).Returns(_ => scrText);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetSnapshotAsync(userSecret, project.Id, "RUT", 1, DateTime.MinValue)
         );
     }
 
     [Test]
-    public void GetDeltaFromUsfmAsync_MissingProject()
+    public async Task GetDeltaFromUsfmAsync_MissingProject()
     {
         // Setup the test environment
         var env = new TestEnvironment();
@@ -5948,13 +5950,13 @@ public class ParatextServiceTests
         env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetDeltaFromUsfmAsync(env.User01, "invalid_project_id", env.RuthBookUsfm, 8)
         );
     }
 
     [Test]
-    public void GetDeltaFromUsfmAsync_MissingUserSecret()
+    public async Task GetDeltaFromUsfmAsync_MissingUserSecret()
     {
         // Setup the test environment
         var env = new TestEnvironment();
@@ -5963,7 +5965,7 @@ public class ParatextServiceTests
         env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetDeltaFromUsfmAsync("invalid_user_id", project.Id, env.RuthBookUsfm, 8)
         );
     }

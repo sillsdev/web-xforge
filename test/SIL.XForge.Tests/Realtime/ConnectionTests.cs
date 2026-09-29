@@ -49,13 +49,13 @@ public class ConnectionTests
     }
 
     [Test]
-    public void CommitTransactionAsync_RequiresBeginTransaction()
+    public async Task CommitTransactionAsync_RequiresBeginTransaction()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.CommitTransactionAsync());
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.CommitTransactionAsync());
     }
 
     [Test]

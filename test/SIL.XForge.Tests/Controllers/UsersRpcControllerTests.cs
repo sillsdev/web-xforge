@@ -40,13 +40,13 @@ public class UsersRpcControllerTests
     }
 
     [Test]
-    public void Delete_UnknownError()
+    public async Task Delete_UnknownError()
     {
         var env = new TestEnvironment();
         env.UserService.DeleteAsync(User01, Roles, User02).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Delete(User02));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Delete(User02));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 

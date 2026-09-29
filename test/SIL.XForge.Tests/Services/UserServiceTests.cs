@@ -252,15 +252,17 @@ public class UserServiceTests
     }
 
     [Test]
-    public void DeleteAsync_BadArguments()
+    public async Task DeleteAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync(null, ["systemRole"], "userId"));
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync("curUserId", ["systemRole"], null));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.DeleteAsync(null, ["systemRole"], "userId"));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.DeleteAsync("curUserId", ["systemRole"], null)
+        );
     }
 
     [Test]
-    public void DeleteAsync_UserCannotDeleteAnotherUser()
+    public async Task DeleteAsync_UserCannotDeleteAnotherUser()
     {
         var env = new TestEnvironment();
         string curUserId = "user01";
@@ -269,7 +271,7 @@ public class UserServiceTests
         string userIdToDelete = "user02";
         Assert.That(env.ContainsUser(userIdToDelete), Is.True);
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.DeleteAsync(curUserId, curUserSystemRoles, userIdToDelete)
         );
         Assert.That(env.RealtimeService.CallCountDeleteUserAsync, Is.EqualTo(0));

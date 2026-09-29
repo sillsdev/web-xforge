@@ -55,23 +55,23 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public void SaveAudioAsync_InvalidDataId_FormatError()
+    public async Task SaveAudioAsync_InvalidDataId_FormatError()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt", "file.wav")
         );
     }
 
     [Test]
-    public void SaveAudioAsync_InvalidProjectId_NotFoundError()
+    public async Task SaveAudioAsync_InvalidProjectId_NotFoundError()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SaveAudioAsync(User01, "/../abc.txt", "507f1f77bcf86cd799439011", "file.wav")
         );
     }
@@ -101,32 +101,34 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public void DeleteAudioAsync_NotOwner_ForbiddenError()
+    public async Task DeleteAudioAsync_NotOwner_ForbiddenError()
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
         string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteAudioAsync(User02, Project01, User01, dataId));
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.DeleteAudioAsync(User02, Project01, User01, dataId)
+        );
     }
 
     [Test]
-    public void DeleteAudioAsync_InvalidDataId_FormatError()
+    public async Task DeleteAudioAsync_InvalidDataId_FormatError()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.DeleteAudioAsync(User02, Project01, User01, "/../test/abc.txt")
         );
     }
 
     [Test]
-    public void DeleteAudioAsync_InvalidProjectId_NotFoundError()
+    public async Task DeleteAudioAsync_InvalidProjectId_NotFoundError()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.DeleteAudioAsync(User02, "/../test/abc.txt", User01, "507f1f77bcf86cd799439011")
         );
     }
@@ -166,29 +168,29 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public void UpdateRoleAsync_NormalUser_ForbiddenError()
+    public async Task UpdateRoleAsync_NormalUser_ForbiddenError()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.UpdateRoleAsync(User02, [SystemRole.User], Project01, User02, TestProjectRole.Administrator)
         );
     }
 
     [Test]
-    public void SetSyncDisabled_RequiresSysAdmin()
+    public async Task SetSyncDisabled_RequiresSysAdmin()
     {
         var env = new TestEnvironment();
         // SUT 1
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
             await env.Service.SetSyncDisabledAsync(User03, [SystemRole.User], Project01, false)
         );
         // SUT 2
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
             await env.Service.SetSyncDisabledAsync(User03, [SystemRole.None], Project01, false)
         );
         // SUT 3
-        Assert.DoesNotThrowAsync(async () =>
+        await Assert.DoesNotThrowAsync(async () =>
             await env.Service.SetSyncDisabledAsync(User03, [SystemRole.SystemAdmin], Project01, false)
         );
     }
@@ -210,19 +212,19 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public void RemoveUserFromProjectAsync_BadArguments()
+    public async Task RemoveUserFromProjectAsync_BadArguments()
     {
         var env = new TestEnvironment();
         IConnection connection = Substitute.For<IConnection>();
         IDocument<TestProject> projectDoc = Substitute.For<IDocument<TestProject>>();
         IDocument<User> userDoc = Substitute.For<IDocument<User>>();
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.RemoveUserFromProjectAsync(null, projectDoc, userDoc)
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.RemoveUserFromProjectAsync(connection, null, userDoc)
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null)
         );
     }
@@ -240,16 +242,18 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public void RemoveUserAsync_BadArguments()
+    public async Task RemoveUserAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.RemoveUserAsync(null, "projectId", "projectUserId")
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.RemoveUserAsync("curUserId", null, "projectUserId")
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserAsync("curUserId", "projectId", null));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.RemoveUserAsync("curUserId", "projectId", null)
+        );
     }
 
     [Test]
@@ -292,13 +296,15 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public void RemoveUserFromAllProjectsAsync_BadArguments()
+    public async Task RemoveUserFromAllProjectsAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Service.RemoveUserFromAllProjectsAsync(null, "projectUserId")
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.RemoveUserFromAllProjectsAsync("curUserId", null));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Service.RemoveUserFromAllProjectsAsync("curUserId", null)
+        );
     }
 
     [Test]

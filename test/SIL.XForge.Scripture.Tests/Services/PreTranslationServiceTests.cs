@@ -47,7 +47,7 @@ public class PreTranslationServiceTests
         await env.SetupProjectSecretAsync(new ServalData { PreTranslationEngineId = TranslationEngine01 });
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
     }
 
     [Test]
@@ -58,7 +58,7 @@ public class PreTranslationServiceTests
         await env.SetupProjectSecretAsync(new ServalData());
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
     }
 
     [Test]
@@ -69,17 +69,17 @@ public class PreTranslationServiceTests
         await env.SetupProjectSecretAsync(servalData: null);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetPreTranslationParametersAsync(Project01));
     }
 
     [Test]
-    public void GetPreTranslationParametersAsync_ThrowsExceptionWhenProjectSecretMissing()
+    public async Task GetPreTranslationParametersAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetPreTranslationParametersAsync("invalid_project_id")
         );
     }

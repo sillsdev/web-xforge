@@ -76,13 +76,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void ApplyPreTranslationToProject_UnknownError()
+    public async Task ApplyPreTranslationToProject_UnknownError()
     {
         var env = new TestEnvironment();
         env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.ApplyPreTranslationToProject(Project01, "GEN-EXO", Project01, DateTime.UtcNow)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -139,13 +139,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void Delete_UnknownError()
+    public async Task Delete_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.DeleteProjectAsync(User01, Project01).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Delete(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Delete(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -285,7 +285,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void EventMetrics_UnknownError()
+    public async Task EventMetrics_UnknownError()
     {
         var env = new TestEnvironment();
         const int pageIndex = 0;
@@ -304,7 +304,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.EventMetrics(
                 Project01,
                 scopes: null,
@@ -380,7 +380,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SyncMetrics_UnknownError()
+    public async Task SyncMetrics_UnknownError()
     {
         var env = new TestEnvironment();
         const int pageIndex = 0;
@@ -389,7 +389,9 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SyncMetrics(Project01, pageIndex, pageSize));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SyncMetrics(Project01, pageIndex, pageSize)
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -471,14 +473,14 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void Invite_UnknownError()
+    public async Task Invite_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.InviteAsync(User01, Project01, Email, Locale, Role, WebsiteUrl, CancellationToken.None)
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Invite(Project01, Email, Locale, Role));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Invite(Project01, Email, Locale, Role));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -546,7 +548,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void UpdateRole_UnknownError()
+    public async Task UpdateRole_UnknownError()
     {
         var env = new TestEnvironment();
         const string projectRole = SFProjectRole.Viewer;
@@ -554,7 +556,9 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.UpdateRole(Project01, User02, projectRole));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.UpdateRole(Project01, User02, projectRole)
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -627,7 +631,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void LinkSharingKey_UnknownError()
+    public async Task LinkSharingKey_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.GetLinkSharingKeyAsync(
@@ -640,7 +644,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.LinkSharingKey(Project01, Role01, ShareLinkType.Recipient, DaysBeforeExpiration)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -772,7 +776,7 @@ public class SFProjectsRpcControllerTests
 
     [Test]
     [Obsolete("Tests legacy method")]
-    public void SetDraftApplied_UnknownError()
+    public async Task SetDraftApplied_UnknownError()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -783,7 +787,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.SetDraftApplied(Project01, book, chapter, draftApplied, lastVerse)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -832,7 +836,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetPreTranslate_UnknownError()
+    public async Task SetPreTranslate_UnknownError()
     {
         var env = new TestEnvironment();
         const bool preTranslate = true;
@@ -840,7 +844,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetPreTranslate(Project01, preTranslate));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetPreTranslate(Project01, preTranslate));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -887,7 +891,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetSyncDisabled_UnknownError()
+    public async Task SetSyncDisabled_UnknownError()
     {
         var env = new TestEnvironment();
         const bool syncDisabled = true;
@@ -895,7 +899,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetSyncDisabled(Project01, syncDisabled));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetSyncDisabled(Project01, syncDisabled));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -965,13 +969,13 @@ public class SFProjectsRpcControllerTests
 
     [Test]
     [Obsolete("Tests legacy method")]
-    public void GetProjectIdByParatextId_UnknownError()
+    public async Task GetProjectIdByParatextId_UnknownError()
     {
         var env = new TestEnvironment();
         const string paratextId = "paratext-id";
         env.SFProjectService.GetProjectIdFromParatextIdAsync(Roles, paratextId).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectIdByParatextId(paratextId));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectIdByParatextId(paratextId));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1019,7 +1023,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetServalConfig_UnknownError()
+    public async Task SetServalConfig_UnknownError()
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ updatedConfig: true }";
@@ -1027,7 +1031,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetServalConfig(Project01, servalConfig));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetServalConfig(Project01, servalConfig));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1070,13 +1074,15 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetUsfmConfig_UnknownError()
+    public async Task SetUsfmConfig_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.SetUsfmConfigAsync(User01, Project01, Arg.Any<DraftUsfmConfig>())
             .Throws(new ArgumentNullException());
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig()));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetUsfmConfig(Project01, new DraftUsfmConfig())
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1120,14 +1126,14 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetRoleProjectPermissions_UnknownError()
+    public async Task SetRoleProjectPermissions_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.SetRoleProjectPermissionsAsync(User01, Project01, Role01, Permissions)
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.SetRoleProjectPermissions(Project01, Role01, Permissions)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -1173,14 +1179,14 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetUserProjectPermissions_UnknownError()
+    public async Task SetUserProjectPermissions_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.SetUserProjectPermissionsAsync(User01, Project01, User02, Permissions)
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.SetUserProjectPermissions(Project01, User02, Permissions)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -1236,13 +1242,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void Sync_UnknownError()
+    public async Task Sync_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.SyncAsync(User01, Project01).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Sync(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.Sync(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1285,13 +1291,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void TransceleratorQuestions_UnknownError()
+    public async Task TransceleratorQuestions_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.TransceleratorQuestionsAsync(User01, Project01).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.TransceleratorQuestions(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.TransceleratorQuestions(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1337,7 +1343,7 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void UpdateSettings_UnknownError()
+    public async Task UpdateSettings_UnknownError()
     {
         var env = new TestEnvironment();
         var settings = new SFProjectSettings
@@ -1352,7 +1358,7 @@ public class SFProjectsRpcControllerTests
         env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings).Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.UpdateSettings(Project01, settings));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.UpdateSettings(Project01, settings));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1398,13 +1404,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void AddUser_WithRole_UnknownError()
+    public async Task AddUser_WithRole_UnknownError()
     {
         var env = new TestEnvironment();
         const string projectRole = SFProjectRole.Viewer;
         env.SFProjectService.AddUserAsync(User01, Project01, projectRole).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddUser(Project01, projectRole));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddUser(Project01, projectRole));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1457,12 +1463,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void RemoveUser_UnknownError()
+    public async Task RemoveUser_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.RemoveUserAsync(User01, Project01, User02).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.RemoveUser(Project01, User02));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.RemoveUser(Project01, User02));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1493,12 +1499,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void GetProjectRole_UnknownError()
+    public async Task GetProjectRole_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.GetProjectRoleAsync(User01, Project01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectRole(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectRole(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1540,12 +1546,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SyncUserRole_UnknownError()
+    public async Task SyncUserRole_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.SyncUserRoleAsync(User01, Project01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SyncUserRole(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SyncUserRole(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1589,12 +1595,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void IsAlreadyInvited_UnknownError()
+    public async Task IsAlreadyInvited_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.IsAlreadyInvitedAsync(User01, Project01, Email).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.IsAlreadyInvited(Project01, Email));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.IsAlreadyInvited(Project01, Email));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1637,12 +1643,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void JoinWithShareKey_UnknownError()
+    public async Task JoinWithShareKey_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.JoinWithShareKeyAsync(User01, Data01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.JoinWithShareKey(Data01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.JoinWithShareKey(Data01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1685,13 +1691,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void ReserveLinkSharingKey_UnknownError()
+    public async Task ReserveLinkSharingKey_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.ReserveLinkSharingKeyAsync(User01, Data01, DaysBeforeExpiration)
             .Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.ReserveLinkSharingKey(Data01, DaysBeforeExpiration)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -1739,13 +1745,13 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void AddTranslateMetrics_UnknownError()
+    public async Task AddTranslateMetrics_UnknownError()
     {
         var env = new TestEnvironment();
         var metrics = new TranslateMetrics { Id = Data01 };
         env.SFProjectService.AddTranslateMetricsAsync(User01, Project01, metrics).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddTranslateMetrics(Project01, metrics));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.AddTranslateMetrics(Project01, metrics));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1787,12 +1793,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void CancelSync_UnknownError()
+    public async Task CancelSync_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.CancelSyncAsync(User01, Project01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.CancelSync(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.CancelSync(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1850,12 +1856,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void DeleteAudio_UnknownError()
+    public async Task DeleteAudio_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.DeleteAudioAsync(User01, Project01, User02, Data01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteAudio(Project01, User02, Data01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteAudio(Project01, User02, Data01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1898,12 +1904,14 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void MarkTrainingDataDeleted_UnknownError()
+    public async Task MarkTrainingDataDeleted_UnknownError()
     {
         var env = new TestEnvironment();
         env.TrainingDataService.MarkFileDeleted(User01, Project01, Data01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.MarkTrainingDataDeleted(Project01, Data01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.MarkTrainingDataDeleted(Project01, Data01)
+        );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -1950,14 +1958,14 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void CreateAudioTimingData_UnknownError()
+    public async Task CreateAudioTimingData_UnknownError()
     {
         var env = new TestEnvironment();
         var timingData = new List<AudioTiming>();
         env.SFProjectService.CreateAudioTimingData(User01, Project01, 1, 2, timingData, "url")
             .Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() =>
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
             env.Controller.CreateAudioTimingData(Project01, 1, 2, timingData, "url")
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
@@ -2001,12 +2009,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void DeleteAudioTimingData_UnknownError()
+    public async Task DeleteAudioTimingData_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.DeleteAudioTimingData(User01, Project01, 1, 2).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteAudioTimingData(Project01, 1, 2));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.DeleteAudioTimingData(Project01, 1, 2));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -2049,12 +2057,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void SetIsValid_UnknownError()
+    public async Task SetIsValid_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.SetIsValidAsync(User01, Project01, 1, 2, true).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetIsValid(Project01, 1, 2, true));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.SetIsValid(Project01, 1, 2, true));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -2096,12 +2104,12 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
-    public void GetProjectProgress_UnknownError()
+    public async Task GetProjectProgress_UnknownError()
     {
         var env = new TestEnvironment();
         env.SFProjectService.GetProjectProgressAsync(User01, Project01).Throws(new ArgumentNullException());
 
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectProgress(Project01));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => env.Controller.GetProjectProgress(Project01));
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 

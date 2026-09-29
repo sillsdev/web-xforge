@@ -18,7 +18,7 @@ public class AnonymousServiceTests
     private const string Project01 = "project01";
 
     [Test]
-    public void CheckSharingKey_CheckShareKeyValidityThrowsWhenReserved()
+    public async Task CheckSharingKey_CheckShareKeyValidityThrowsWhenReserved()
     {
         var env = new TestEnvironment();
         string shareKey = "key02";
@@ -40,11 +40,11 @@ public class AnonymousServiceTests
             );
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.CheckShareKey(shareKey));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.CheckShareKey(shareKey));
     }
 
     [Test]
-    public void CheckSharingKey_CheckShareKeyValidityThrowsWhenNotValid()
+    public async Task CheckSharingKey_CheckShareKeyValidityThrowsWhenNotValid()
     {
         var env = new TestEnvironment();
         string shareKey = "key01";
@@ -53,7 +53,7 @@ public class AnonymousServiceTests
         env.SFProjectService.CheckShareKeyValidity(shareKey).Throws(new ForbiddenException());
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckShareKey(shareKey));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckShareKey(shareKey));
     }
 
     [Test]
@@ -114,7 +114,7 @@ public class AnonymousServiceTests
     }
 
     [Test]
-    public void CheckSharingKey_GenerateAnonymousUserThrowsWhenKeyNotValid()
+    public async Task CheckSharingKey_GenerateAnonymousUserThrowsWhenKeyNotValid()
     {
         var env = new TestEnvironment();
         string shareKey = "key01";
@@ -125,11 +125,13 @@ public class AnonymousServiceTests
         env.SFProjectService.CheckShareKeyValidity(shareKey).Throws(new ForbiddenException());
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GenerateAccount(shareKey, displayName, language));
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.GenerateAccount(shareKey, displayName, language)
+        );
     }
 
     [Test]
-    public void CheckSharingKey_GenerateAnonymousUserThrowsWhenMaxUsersGeneratedReached()
+    public async Task CheckSharingKey_GenerateAnonymousUserThrowsWhenMaxUsersGeneratedReached()
     {
         var env = new TestEnvironment();
         string shareKey = "key03";
@@ -153,7 +155,9 @@ public class AnonymousServiceTests
             );
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GenerateAccount(shareKey, displayName, language));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GenerateAccount(shareKey, displayName, language)
+        );
         Assert.AreEqual(project.MaxGeneratedUsersPerShareKey, MaxUsers);
         Assert.AreEqual(projectSecretShareKey.UsersGenerated, MaxUsers);
     }

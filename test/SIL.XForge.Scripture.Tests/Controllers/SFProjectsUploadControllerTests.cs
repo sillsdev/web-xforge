@@ -72,7 +72,7 @@ public class SFProjectsUploadControllerTests
         using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
 
         // SUT
-        Assert.ThrowsAsync<ZipException>(env.Controller.ConvertToCsvAsync);
+        await Assert.ThrowsAsync<ZipException>(env.Controller.ConvertToCsvAsync);
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -197,7 +197,7 @@ public class SFProjectsUploadControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(env.Controller.UploadAudioAsync);
+        await Assert.ThrowsAsync<ArgumentNullException>(env.Controller.UploadAudioAsync);
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -325,7 +325,7 @@ public class SFProjectsUploadControllerTests
             .Throws(new ArgumentNullException());
 
         // SUT
-        Assert.ThrowsAsync<ArgumentNullException>(env.Controller.UploadTrainingDataAsync);
+        await Assert.ThrowsAsync<ArgumentNullException>(env.Controller.UploadTrainingDataAsync);
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 

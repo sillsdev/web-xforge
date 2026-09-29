@@ -63,13 +63,13 @@ public class SFProjectServiceTests
     ];
 
     [Test]
-    public void InviteAsync_InvalidEmail()
+    public async Task InviteAsync_InvalidEmail()
     {
         var env = new TestEnvironment();
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
         env.EmailService.ValidateEmail(email).Returns(false);
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.InviteAsync(
                 User01,
                 Project03,
@@ -409,7 +409,7 @@ public class SFProjectServiceTests
     public async Task InviteAsync_SharingDisabled_ForbiddenError()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.InviteAsync(
                 User02,
                 Project01,
@@ -464,12 +464,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void InviteAsync_UserNotOnProject_ForbiddenError()
+    public async Task InviteAsync_UserNotOnProject_ForbiddenError()
     {
         var env = new TestEnvironment();
         const string email = "newuser@example.com";
         const string role = SFProjectRole.CommunityChecker;
-        Assert.DoesNotThrowAsync(() =>
+        await Assert.DoesNotThrowAsync(() =>
             env.Service.InviteAsync(
                 User02,
                 Project03,
@@ -480,7 +480,7 @@ public class SFProjectServiceTests
                 CancellationToken.None
             )
         );
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.InviteAsync(
                 User03,
                 Project03,
@@ -652,12 +652,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetLinkSharingKeyAsync_LinkSharingDisabled_ForbiddenError()
+    public async Task GetLinkSharingKeyAsync_LinkSharingDisabled_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(2));
-        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
             await env.Service.GetLinkSharingKeyAsync(
                 User02,
                 Project01,
@@ -691,7 +691,7 @@ public class SFProjectServiceTests
             30
         );
         Assert.That(key, Is.Not.Null);
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Viewer, ShareLinkType.Anyone, 30)
         );
     }
@@ -708,7 +708,7 @@ public class SFProjectServiceTests
             14
         );
         Assert.That(key, Is.Not.Null);
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Commenter, ShareLinkType.Anyone, 21)
         );
     }
@@ -729,39 +729,25 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserOnProject_Success()
+    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserOnProject_Success()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project01);
         Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "setup");
-        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User02, "abcd"));
+        await Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User02, "abcd"));
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_MissingUser()
+    public async Task JoinWithShareKeyAsync_MissingUser()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync("missing_user_id", "abcd"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.JoinWithShareKeyAsync("missing_user_id", "abcd")
+        );
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
-    {
-        var env = new TestEnvironment();
-        SFProject project = env.GetProject(Project02);
-        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-        env.ProjectRights.RoleHasRight(
-                project: Arg.Is<SFProject>(p => p.Id == Project02),
-                role: SFProjectRole.CommunityChecker,
-                SFProjectDomain.UserInvites,
-                Operation.Create
-            )
-            .Returns(false);
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
-    }
-
-    [Test]
-    public void JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
+    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -773,7 +759,25 @@ public class SFProjectServiceTests
                 Operation.Create
             )
             .Returns(false);
-        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "reusableLinkFromAdmin"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.JoinWithShareKeyAsync(User03, "linksharing02")
+        );
+    }
+
+    [Test]
+    public async Task JoinWithShareKeyAsync_LinkFromAdmin_SharingDisabledAndUserNotOnProject_Success()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project02);
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+        env.ProjectRights.RoleHasRight(
+                project: Arg.Is<SFProject>(p => p.Id == Project02),
+                role: SFProjectRole.CommunityChecker,
+                SFProjectDomain.UserInvites,
+                Operation.Create
+            )
+            .Returns(false);
+        await Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "reusableLinkFromAdmin"));
     }
 
     [Test]
@@ -825,7 +829,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_CommunityCheckerCantUseReusable_WhenCheckingDisabled()
+    public async Task JoinWithShareKeyAsync_CommunityCheckerCantUseReusable_WhenCheckingDisabled()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project06);
@@ -835,13 +839,13 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "CheckerMultiUseFromNonAdmin"), Is.True, "setup");
 
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.JoinWithShareKeyAsync(User03, "CheckerMultiUseFromNonAdmin")
         );
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_CommunityCheckerCantUseSingle_WhenCheckingDisabled()
+    public async Task JoinWithShareKeyAsync_CommunityCheckerCantUseSingle_WhenCheckingDisabled()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project06);
@@ -851,7 +855,9 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "CheckerSingleUse"), Is.True, "setup");
 
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "CheckerSingleUse"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.JoinWithShareKeyAsync(User03, "CheckerSingleUse")
+        );
     }
 
     [Test]
@@ -908,7 +914,7 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(LinkExpiredUser), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "expired@example.com"), Is.True, "setup");
 
-        Assert.ThrowsAsync<DataNotFoundException>(
+        await Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.JoinWithShareKeyAsync(LinkExpiredUser, "keyexp"),
             "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired."
         );
@@ -923,21 +929,21 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_ReusableSharingLinkExpired_ForbiddenError()
+    public async Task JoinWithShareKeyAsync_ReusableSharingLinkExpired_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project06);
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-        Assert.ThrowsAsync<DataNotFoundException>(
+        await Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.JoinWithShareKeyAsync(User03, "expiredKeyReusable"),
             "The user should be forbidden to join the project: Code was expired."
         );
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_SpecificSharingAndWrongCode_ForbiddenError()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAndWrongCode_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -946,7 +952,7 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.True, "setup");
 
-        Assert.ThrowsAsync<DataNotFoundException>(
+        await Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.JoinWithShareKeyAsync(User03, "badcode"),
             "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given."
         );
@@ -1551,13 +1557,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void JoinWithShareKeyAsync_ObserverInvitedToProject_AddedToProject()
+    public async Task JoinWithShareKeyAsync_ObserverInvitedToProject_AddedToProject()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing04"));
+        await Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing04"));
         project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "user should be added to project");
     }
@@ -1610,7 +1616,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void IsAlreadyInvitedAsync_CheckingDisabledButCheckingSharingEnabled_Forbidden()
+    public async Task IsAlreadyInvitedAsync_CheckingDisabledButCheckingSharingEnabled_Forbidden()
     {
         var env = new TestEnvironment();
         Assert.That(env.GetProject(Project06).CheckingConfig.CheckingEnabled, Is.False);
@@ -1619,7 +1625,7 @@ public class SFProjectServiceTests
             Is.EqualTo(SFProjectRole.CommunityChecker)
         );
 
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.IsAlreadyInvitedAsync(User01, Project06, "user@example.com")
         );
     }
@@ -1632,13 +1638,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void IsAlreadyInvitedAsync_InvitingUserNotOnProject_Forbidden()
+    public async Task IsAlreadyInvitedAsync_InvitingUserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();
         Assert.That(env.GetProject(Project02).CheckingConfig.CheckingEnabled, Is.True);
         Assert.That(env.GetProject(Project02).UserRoles.GetValueOrDefault(User01, null), Is.Null);
 
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.IsAlreadyInvitedAsync(User01, Project02, "user@example.com")
         );
     }
@@ -1669,7 +1675,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void InvitedUsers_SystemAdmin_NoSpecialAccess()
+    public async Task InvitedUsers_SystemAdmin_NoSpecialAccess()
     {
         var env = new TestEnvironment();
 
@@ -1677,14 +1683,14 @@ public class SFProjectServiceTests
         Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
         Assert.That(env.GetUser(User04).Roles.First(), Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
-        Assert.ThrowsAsync<ForbiddenException>(
+        await Assert.ThrowsAsync<ForbiddenException>(
             () => (env.Service.InvitedUsersAsync(User04, Project03)),
             "should have been forbidden"
         );
     }
 
     [Test]
-    public void InvitedUsers_NonProjectAdmin_Forbidden()
+    public async Task InvitedUsers_NonProjectAdmin_Forbidden()
     {
         var env = new TestEnvironment();
         // User02 is not an admin on Project01
@@ -1694,26 +1700,26 @@ public class SFProjectServiceTests
             "test setup"
         );
         Assert.That(env.GetUser(User02).Roles.First(), Is.Not.EqualTo(SystemRole.SystemAdmin), "test setup");
-        Assert.ThrowsAsync<ForbiddenException>(
+        await Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.InvitedUsersAsync(User02, Project01),
             "should have been forbidden"
         );
     }
 
     [Test]
-    public void InvitedUsers_BadProject_Error()
+    public async Task InvitedUsers_BadProject_Error()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.InvitedUsersAsync(User02, "bad-project-id"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.InvitedUsersAsync(User02, "bad-project-id"));
     }
 
     [Test]
-    public void InvitedUsers_BadUser_Forbidden()
+    public async Task InvitedUsers_BadUser_Forbidden()
     {
         var env = new TestEnvironment();
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync("bad-user-id", Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync("bad-user-id", Project01));
     }
 
     [Test]
@@ -1760,16 +1766,16 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void UninviteUser_BadProject_Error()
+    public async Task UninviteUser_BadProject_Error()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.UninviteUserAsync(User02, "nonexistent-project", "some@email.com")
         );
     }
 
     [Test]
-    public void UninviteUser_NonProjectAdmin_Error()
+    public async Task UninviteUser_NonProjectAdmin_Error()
     {
         var env = new TestEnvironment();
         // User02 is not an admin on Project01
@@ -1778,7 +1784,7 @@ public class SFProjectServiceTests
             Is.Not.EqualTo(SFProjectRole.Administrator),
             "test setup"
         );
-        Assert.ThrowsAsync<ForbiddenException>(
+        await Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.UninviteUserAsync(User02, Project01, "some@email.com"),
             "should have been forbidden"
         );
@@ -1838,14 +1844,14 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void UninviteUser_SystemAdmin_NoSpecialAccess()
+    public async Task UninviteUser_SystemAdmin_NoSpecialAccess()
     {
         var env = new TestEnvironment();
         // User04 is a system admin, but not a project-admin or even a user on Project03
         Assert.That(env.GetProject(Project03).UserRoles.ContainsKey(User04), Is.False, "test setup");
         Assert.That(env.GetUser(User04).Roles.First(), Is.EqualTo(SystemRole.SystemAdmin), "test setup");
 
-        Assert.ThrowsAsync<ForbiddenException>(
+        await Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.UninviteUserAsync(User04, Project03, "bob@example.com"),
             "should have been forbidden"
         );
@@ -1926,12 +1932,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void AddUserAsync_SourceProjectUnavailable_SkipProject()
+    public async Task AddUserAsync_SourceProjectUnavailable_SkipProject()
     {
         var env = new TestEnvironment();
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
-        Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User03, Project04, SFProjectRole.Translator));
+        await Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User03, Project04, SFProjectRole.Translator));
         var project = env.GetProject(Project04);
         Assert.That(project.UserRoles[User03], Is.EqualTo(SFProjectRole.Translator));
         Assert.That(project.ParatextUsers.Exists(u => u.SFUserId == User03 && u.Username == "User 03"), Is.True);
@@ -2263,7 +2269,7 @@ public class SFProjectServiceTests
         IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.UpdatePermissionsAsync(User04, project01Doc));
     }
 
     [Test]
@@ -2764,13 +2770,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void UpdateSettingsAsync_AlternateSourceEnabled_Forbidden()
+    public async Task UpdateSettingsAsync_AlternateSourceEnabled_Forbidden()
     {
         var env = new TestEnvironment();
 
         // SUT
 #pragma warning disable CS0618 // Type or member is obsolete
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { AlternateSourceEnabled = true })
         );
 #pragma warning restore CS0618 // Type or member is obsolete
@@ -2922,7 +2928,7 @@ public class SFProjectServiceTests
         await env.RealtimeService.GetRepository<SFProject>().DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.DeleteProjectAsync(User01, Project01));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.DeleteProjectAsync(User01, Project01));
     }
 
     [Test]
@@ -2932,7 +2938,7 @@ public class SFProjectServiceTests
         await env.RealtimeService.GetRepository<User>().DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteProjectAsync(User01, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.DeleteProjectAsync(User01, Project01));
     }
 
     [Test]
@@ -3010,7 +3016,7 @@ public class SFProjectServiceTests
             .UpdateAsync(Project01, u => u.Set(p => p.Sync.QueuedCount, 1));
 
         // SUT
-        Assert.ThrowsAsync<InvalidOperationException>(() => env.Service.DeleteProjectAsync(User01, Project01));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => env.Service.DeleteProjectAsync(User01, Project01));
     }
 
     [Test]
@@ -3079,7 +3085,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CreateProjectAsync_DirectoryExisting_Error()
+    public async Task CreateProjectAsync_DirectoryExisting_Error()
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
@@ -3093,7 +3099,7 @@ public class SFProjectServiceTests
         string ptProjectDir = Path.Join("xforge", "sync", "paratext_" + Project01);
         env.FileSystemService.DirectoryExists(ptProjectDir).Returns(true);
         Assert.That(env.ProjectSecrets.Contains(Project01), Is.True, "setup");
-        InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.CreateProjectAsync(
                 User01,
                 new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
@@ -3108,7 +3114,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CreateProjectAsync_AlreadyExists_Error()
+    public async Task CreateProjectAsync_AlreadyExists_Error()
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
@@ -3120,7 +3126,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
         SFProject existingSfProject = env.GetProject(Project01);
         // SUT
-        InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.CreateProjectAsync(
                 User01,
                 new SFProjectCreateSettings() { ParatextId = existingSfProject.ParatextId }
@@ -3280,13 +3286,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CreateResourceProjectAsync_AlreadyExists_Error()
+    public async Task CreateResourceProjectAsync_AlreadyExists_Error()
     {
         var env = new TestEnvironment();
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
         SFProject existingSfProject = env.GetProject(Resource01);
         // SUT
-        InvalidOperationException thrown = Assert.ThrowsAsync<InvalidOperationException>(() =>
+        InvalidOperationException thrown = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.CreateResourceProjectAsync(User01, existingSfProject.ParatextId, addUser: false)
         );
         Assert.That(thrown.Message, Does.Contain(SFProjectService.ErrorAlreadyConnectedKey));
@@ -3371,7 +3377,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void AddUserToResourceProjectAsync_UserResourceNoPermission()
+    public async Task AddUserToResourceProjectAsync_UserResourceNoPermission()
     {
         var env = new TestEnvironment();
         env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
@@ -3380,60 +3386,60 @@ public class SFProjectServiceTests
         User user = env.GetUser(User01);
         Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "setup");
 
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddUserAsync(User01, Resource01, null));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddUserAsync(User01, Resource01, null));
 
         user = env.GetUser(User01);
         Assert.That(user.Sites[SiteId].Projects.Contains(Resource01), Is.False, "user cannot access resource");
     }
 
     [Test]
-    public void CancelSyncAsync_AdministratorsCanCancelSyncProject()
+    public async Task CancelSyncAsync_AdministratorsCanCancelSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Project01));
+        await Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Project01));
     }
 
     [Test]
-    public void CancelSyncAsync_TranslatorsCancelCanSyncProject()
+    public async Task CancelSyncAsync_TranslatorsCancelCanSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User05, Project01));
+        await Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User05, Project01));
     }
 
     [Test]
-    public void CancelSyncAsync_ObserversCanCancelSyncResource()
+    public async Task CancelSyncAsync_ObserversCanCancelSyncResource()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Resource01));
+        await Assert.DoesNotThrowAsync(() => env.Service.CancelSyncAsync(User01, Resource01));
     }
 
     [Test]
-    public void CancelSyncAsync_ObserversCannotCancelSyncProject()
+    public async Task CancelSyncAsync_ObserversCannotCancelSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User02, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User02, Project01));
     }
 
     [Test]
-    public void CancelSyncAsync_UsersNotInProjectCannotCancelSync()
+    public async Task CancelSyncAsync_UsersNotInProjectCannotCancelSync()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User03, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CancelSyncAsync(User03, Project01));
     }
 
     [Test]
@@ -3470,45 +3476,45 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncAsync_ObserversCannotSyncProject()
+    public async Task SyncAsync_ObserversCannotSyncProject()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(User02, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(User02, Project01));
     }
 
     [Test]
-    public void SyncAsync_NoArchivesAccess()
+    public async Task SyncAsync_NoArchivesAccess()
     {
         // Setup
         var env = new TestEnvironment();
         env.ParatextService.CanUserAuthenticateToPTArchivesAsync(User01).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
     }
 
     [Test]
-    public void SyncAsync_NoRegistryAccess()
+    public async Task SyncAsync_NoRegistryAccess()
     {
         // Setup
         var env = new TestEnvironment();
         env.ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
     }
 
     [Test]
-    public void SyncAsync_ProjectDoesNotExist()
+    public async Task SyncAsync_ProjectDoesNotExist()
     {
         // Setup
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, "invalid_project"));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, "invalid_project"));
     }
 
     [Test]
@@ -3519,7 +3525,7 @@ public class SFProjectServiceTests
         await env.UserSecrets.DeleteAsync(User01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, Project01));
+        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.SyncAsync(User01, Project01));
     }
 
     [Test]
@@ -3615,7 +3621,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CreateAudioTimingData_ProjectMustExist()
+    public async Task CreateAudioTimingData_ProjectMustExist()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -3624,13 +3630,13 @@ public class SFProjectServiceTests
         const string audioUrl = "http://example.com/audio.mp3";
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.CreateAudioTimingData(User01, "invalid_project", book, chapter, timingData, audioUrl)
         );
     }
 
     [Test]
-    public void CreateAudioTimingData_TranslatorsCannotUpload()
+    public async Task CreateAudioTimingData_TranslatorsCannotUpload()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -3639,13 +3645,13 @@ public class SFProjectServiceTests
         const string audioUrl = "http://example.com/audio.mp3";
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.CreateAudioTimingData(User05, Project01, book, chapter, timingData, audioUrl)
         );
     }
 
     [Test]
-    public void CreateAudioTimingData_CanUploadWithPermission()
+    public async Task CreateAudioTimingData_CanUploadWithPermission()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -3654,7 +3660,7 @@ public class SFProjectServiceTests
         const string audioUrl = "http://example.com/audio.mp3";
 
         // SUT
-        Assert.DoesNotThrowAsync(() =>
+        await Assert.DoesNotThrowAsync(() =>
             env.Service.CreateAudioTimingData(User03, Project01, book, chapter, timingData, audioUrl)
         );
     }
@@ -3727,62 +3733,62 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void DeleteAudioTimingData_ProjectMustExist()
+    public async Task DeleteAudioTimingData_ProjectMustExist()
     {
         var env = new TestEnvironment();
         const int book = 40;
         const int chapter = 1;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.DeleteAudioTimingData(User01, "invalid_project", book, chapter)
         );
     }
 
     [Test]
-    public void DeleteAudioTimingData_TextAudioDocMustExist()
+    public async Task DeleteAudioTimingData_TextAudioDocMustExist()
     {
         var env = new TestEnvironment();
         const int book = 40;
         const int chapter = 1;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.DeleteAudioTimingData(User01, Project01, book, chapter)
         );
     }
 
     [Test]
-    public void DeleteAudioTimingData_TranslatorsCannotDelete()
+    public async Task DeleteAudioTimingData_TranslatorsCannotDelete()
     {
         var env = new TestEnvironment();
         const int book = 40;
         const int chapter = 1;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.DeleteAudioTimingData(User05, Project01, book, chapter)
         );
     }
 
     [Test]
-    public void SetPreTranslate_RequiresSystemAdminOrServalAdmin()
+    public async Task SetPreTranslate_RequiresSystemAdminOrServalAdmin()
     {
         var env = new TestEnvironment();
         // SUT 1
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetPreTranslateAsync(User03, [SystemRole.User], Project01, false)
         );
         // SUT 2
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetPreTranslateAsync(User03, [SystemRole.None], Project01, false)
         );
         // SUT 3
-        Assert.DoesNotThrowAsync(() =>
+        await Assert.DoesNotThrowAsync(() =>
             env.Service.SetPreTranslateAsync(User03, [SystemRole.SystemAdmin], Project01, false)
         );
         // SUT 4
-        Assert.DoesNotThrowAsync(() =>
+        await Assert.DoesNotThrowAsync(() =>
             env.Service.SetPreTranslateAsync(User03, [SystemRole.ServalAdmin], Project01, false)
         );
     }
@@ -3815,41 +3821,41 @@ public class SFProjectServiceTests
         await env.Service.CreateAudioTimingData(User03, Project01, book, chapter, timingData, audioUrl);
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.DeleteAudioTimingData(User03, Project01, book, chapter));
+        await Assert.DoesNotThrowAsync(() => env.Service.DeleteAudioTimingData(User03, Project01, book, chapter));
     }
 
     [Test]
-    public void GetProjectIdFromParatextIdAsync_RequiresServalAdminOrSystemAdmin()
+    public async Task GetProjectIdFromParatextIdAsync_RequiresServalAdminOrSystemAdmin()
     {
         var env = new TestEnvironment();
         string? paratextId = env.GetProject(Project01).ParatextId;
         Assert.IsNotNull(paratextId, "setup");
 
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetProjectIdFromParatextIdAsync([SystemRole.User], paratextId!)
         );
-        Assert.DoesNotThrowAsync(() =>
+        await Assert.DoesNotThrowAsync(() =>
             env.Service.GetProjectIdFromParatextIdAsync([SystemRole.SystemAdmin], paratextId!)
         );
-        Assert.DoesNotThrowAsync(() =>
+        await Assert.DoesNotThrowAsync(() =>
             env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], paratextId!)
         );
     }
 
     [Test]
-    public void GetProjectIdFromParatextIdAsync_ParatextIdRequired()
+    public async Task GetProjectIdFromParatextIdAsync_ParatextIdRequired()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<InvalidOperationException>(() =>
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
             env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], "  ")
         );
     }
 
     [Test]
-    public void GetProjectIdFromParatextIdAsync_ProjectMustExist()
+    public async Task GetProjectIdFromParatextIdAsync_ProjectMustExist()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetProjectIdFromParatextIdAsync([SystemRole.ServalAdmin], "missing-pt-id")
         );
     }
@@ -3880,13 +3886,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetServalConfigAsync_BlocksInvalidJson()
+    public async Task SetServalConfigAsync_BlocksInvalidJson()
     {
         var env = new TestEnvironment();
         const string servalConfig = "this_is_not_json";
 
         // SUT
-        Assert.ThrowsAsync<JsonReaderException>(() =>
+        await Assert.ThrowsAsync<JsonReaderException>(() =>
             env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], Project01, servalConfig)
         );
     }
@@ -3906,13 +3912,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetServalConfigAsync_ProjectMustExist()
+    public async Task SetServalConfigAsync_ProjectMustExist()
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ config: true }";
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetServalConfigAsync(User01, [SystemRole.ServalAdmin], "invalid_project", servalConfig)
         );
     }
@@ -3936,24 +3942,24 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetServalConfigAsync_UserMustBeServalAdmin()
+    public async Task SetServalConfigAsync_UserMustBeServalAdmin()
     {
         var env = new TestEnvironment();
         const string servalConfig = "{ config: true }";
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetServalConfigAsync(User01, [SystemRole.User], Project01, servalConfig)
         );
     }
 
     [Test]
-    public void SetDraftSourcesAsync_RequiresServalAdmin()
+    public async Task SetDraftSourcesAsync_RequiresServalAdmin()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetDraftSourcesAsync(
                 User01,
                 [SystemRole.User],
@@ -3998,12 +4004,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetDraftSourcesAsync_ThrowsWhenSourceNotInDatabase()
+    public async Task SetDraftSourcesAsync_ThrowsWhenSourceNotInDatabase()
     {
         var env = new TestEnvironment();
 
         // SUT — a Paratext ID that does not correspond to any SFProject in the DB
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetDraftSourcesAsync(
                 User01,
                 [SystemRole.ServalAdmin],
@@ -4047,51 +4053,53 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetUsfmConfigAsync_ProjectMustExist()
+    public async Task SetUsfmConfigAsync_ProjectMustExist()
     {
         var env = new TestEnvironment();
         DraftUsfmConfig config = new DraftUsfmConfig();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetUsfmConfigAsync(User01, "invalid_project", config)
         );
     }
 
     [Test]
-    public void SetUsfmConfigAsync_UserIsNotParatext()
+    public async Task SetUsfmConfigAsync_UserIsNotParatext()
     {
         var env = new TestEnvironment();
         DraftUsfmConfig config = new DraftUsfmConfig();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SetUsfmConfigAsync(User02, Project01, config));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SetUsfmConfigAsync(User02, Project01, config));
     }
 
     [Test]
     [Obsolete]
-    public void AddChaptersAsync_BookMustBeInProject()
+    public async Task AddChaptersAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
         const int book = 42;
         int[] chapters = [3];
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.AddChaptersAsync(User01, Project01, book, chapters)
         );
     }
 
     [Test]
     [Obsolete]
-    public void AddChaptersAsync_UserMustHaveBookPermission()
+    public async Task AddChaptersAsync_UserMustHaveBookPermission()
     {
         var env = new TestEnvironment();
         const int book = 40;
         int[] chapters = [3];
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.AddChaptersAsync(User01, Project01, book, chapters));
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.AddChaptersAsync(User01, Project01, book, chapters)
+        );
     }
 
     [Test]
@@ -4132,7 +4140,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetDraftAppliedAsync_BookMustBeInProject()
+    public async Task SetDraftAppliedAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
         const int book = 39;
@@ -4141,13 +4149,13 @@ public class SFProjectServiceTests
         const int lastVerse = 25;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
         );
     }
 
     [Test]
-    public void SetDraftAppliedAsync_ChapterMustBeInBook()
+    public async Task SetDraftAppliedAsync_ChapterMustBeInBook()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4156,13 +4164,13 @@ public class SFProjectServiceTests
         const int lastVerse = 25;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
         );
     }
 
     [Test]
-    public void SetDraftAppliedAsync_ProjectMustExist()
+    public async Task SetDraftAppliedAsync_ProjectMustExist()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4171,13 +4179,13 @@ public class SFProjectServiceTests
         const int lastVerse = 25;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetDraftAppliedAsync(User01, "invalid_project", book, chapter, draftApplied, lastVerse)
         );
     }
 
     [Test]
-    public void SetDraftAppliedAsync_ProjectMustNotBeResource()
+    public async Task SetDraftAppliedAsync_ProjectMustNotBeResource()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4186,7 +4194,7 @@ public class SFProjectServiceTests
         const int lastVerse = 25;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetDraftAppliedAsync(User01, Resource01, book, chapter, draftApplied, lastVerse)
         );
     }
@@ -4250,7 +4258,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetDraftAppliedAsync_UserMustHaveParatextRole()
+    public async Task SetDraftAppliedAsync_UserMustHaveParatextRole()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4259,13 +4267,13 @@ public class SFProjectServiceTests
         const int lastVerse = 25;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetDraftAppliedAsync(User02, Project01, book, chapter, draftApplied, lastVerse)
         );
     }
 
     [Test]
-    public void SetDraftAppliedAsync_UserMustHavePermissionRecord()
+    public async Task SetDraftAppliedAsync_UserMustHavePermissionRecord()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4274,7 +4282,7 @@ public class SFProjectServiceTests
         const int lastVerse = 25;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
         );
     }
@@ -4301,13 +4309,13 @@ public class SFProjectServiceTests
             );
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetDraftAppliedAsync(User01, Project01, book, chapter, draftApplied, lastVerse)
         );
     }
 
     [Test]
-    public void SetIsValidAsync_BookMustBeInProject()
+    public async Task SetIsValidAsync_BookMustBeInProject()
     {
         var env = new TestEnvironment();
         const int book = 39;
@@ -4315,13 +4323,13 @@ public class SFProjectServiceTests
         const bool isValid = true;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
         );
     }
 
     [Test]
-    public void SetIsValidAsync_ChapterMustBeInBook()
+    public async Task SetIsValidAsync_ChapterMustBeInBook()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4329,13 +4337,13 @@ public class SFProjectServiceTests
         const bool isValid = true;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
         );
     }
 
     [Test]
-    public void SetIsValidAsync_ProjectMustExist()
+    public async Task SetIsValidAsync_ProjectMustExist()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4343,13 +4351,13 @@ public class SFProjectServiceTests
         const bool isValid = true;
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SetIsValidAsync(User01, "invalid_project", book, chapter, isValid)
         );
     }
 
     [Test]
-    public void SetIsValidAsync_ProjectMustNotBeResource()
+    public async Task SetIsValidAsync_ProjectMustNotBeResource()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4357,7 +4365,7 @@ public class SFProjectServiceTests
         const bool isValid = true;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetIsValidAsync(User01, Resource01, book, chapter, isValid)
         );
     }
@@ -4415,7 +4423,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetIsValidAsync_UserMustHaveParatextRole()
+    public async Task SetIsValidAsync_UserMustHaveParatextRole()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4423,13 +4431,13 @@ public class SFProjectServiceTests
         const bool isValid = true;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetIsValidAsync(User02, Project01, book, chapter, isValid)
         );
     }
 
     [Test]
-    public void SetIsValidAsync_UserMustHavePermissionRecord()
+    public async Task SetIsValidAsync_UserMustHavePermissionRecord()
     {
         var env = new TestEnvironment();
         const int book = 40;
@@ -4437,7 +4445,7 @@ public class SFProjectServiceTests
         const bool isValid = true;
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
         );
     }
@@ -4463,18 +4471,18 @@ public class SFProjectServiceTests
             );
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetIsValidAsync(User01, Project01, book, chapter, isValid)
         );
     }
 
     [Test]
-    public void TransceleratorQuestionsAsync_Forbidden()
+    public async Task TransceleratorQuestionsAsync_Forbidden()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.TransceleratorQuestionsAsync(User02, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.TransceleratorQuestionsAsync(User02, Project01));
     }
 
     [Test]
@@ -4488,13 +4496,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetRoleProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
+    public async Task SetRoleProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
     {
         var env = new TestEnvironment();
         env.ProjectRights.HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05), User01, Permissions).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetRoleProjectPermissionsAsync(User01, Project05, Role01, Permissions)
         );
     }
@@ -4520,14 +4528,14 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetRoleProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    public async Task SetRoleProjectPermissionsAsync_NonAdminDoesNotHavePermission()
     {
         var env = new TestEnvironment();
         Project project = env.GetProject(Project05);
         Assert.AreEqual(0, project.RolePermissions.Count, "setup");
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetRoleProjectPermissionsAsync(User02, Project05, Role01, Permissions)
         );
 
@@ -4537,13 +4545,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetUserProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
+    public async Task SetUserProjectPermissionsAsync_AdminCannotGrantPermissionsTheyDoNotHave()
     {
         var env = new TestEnvironment();
         env.ProjectRights.HasPermissions(Arg.Is<SFProject>(p => p.Id == Project05), User01, Permissions).Returns(false);
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetUserProjectPermissionsAsync(User01, Project05, User02, Permissions)
         );
     }
@@ -4569,14 +4577,14 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SetUserProjectPermissionsAsync_NonAdminDoesNotHavePermission()
+    public async Task SetUserProjectPermissionsAsync_NonAdminDoesNotHavePermission()
     {
         var env = new TestEnvironment();
         Project project = env.GetProject(Project05);
         Assert.AreEqual(0, project.UserPermissions.Count, "setup");
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.SetUserProjectPermissionsAsync(User02, Project05, User02, Permissions)
         );
 
@@ -4586,12 +4594,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetEventMetrics_InvalidPageIndex()
+    public async Task GetEventMetrics_InvalidPageIndex()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.GetEventMetricsAsync(
                 User01,
                 systemRoles: [SystemRole.User],
@@ -4605,12 +4613,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetEventMetrics_InvalidPageSize()
+    public async Task GetEventMetrics_InvalidPageSize()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.GetEventMetricsAsync(
                 User01,
                 systemRoles: [SystemRole.User],
@@ -4624,12 +4632,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetEventMetrics_InvalidProject()
+    public async Task GetEventMetrics_InvalidProject()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetEventMetricsAsync(
                 User01,
                 systemRoles: [SystemRole.User],
@@ -4739,12 +4747,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetEventMetrics_UserForbidden()
+    public async Task GetEventMetrics_UserForbidden()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetEventMetricsAsync(
                 User05,
                 systemRoles: [SystemRole.User],
@@ -4758,12 +4766,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetSyncMetrics_InvalidPageIndex()
+    public async Task GetSyncMetrics_InvalidPageIndex()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.GetSyncMetricsAsync(
                 User01,
                 systemRoles: [SystemRole.User],
@@ -4775,12 +4783,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetSyncMetrics_InvalidPageSize()
+    public async Task GetSyncMetrics_InvalidPageSize()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<FormatException>(() =>
+        await Assert.ThrowsAsync<FormatException>(() =>
             env.Service.GetSyncMetricsAsync(
                 User01,
                 systemRoles: [SystemRole.User],
@@ -4792,12 +4800,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetSyncMetrics_InvalidProject()
+    public async Task GetSyncMetrics_InvalidProject()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetSyncMetricsAsync(
                 User01,
                 systemRoles: [SystemRole.User],
@@ -4809,12 +4817,12 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetSyncMetrics_UserForbidden()
+    public async Task GetSyncMetrics_UserForbidden()
     {
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.GetSyncMetricsAsync(
                 User05,
                 systemRoles: [SystemRole.User],
@@ -4935,7 +4943,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void SyncUserRoleAsync_ForbiddenError()
+    public async Task SyncUserRoleAsync_ForbiddenError()
     {
         var env = new TestEnvironment();
         var user = env.GetProject(Project01).UserRoles[User01];
@@ -4944,7 +4952,9 @@ public class SFProjectServiceTests
         // SUT
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(Attempt.Failure(SFProjectRole.Translator)));
-        Assert.ThrowsAsync<ForbiddenException>(async () => await env.Service.SyncUserRoleAsync(User01, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(async () =>
+            await env.Service.SyncUserRoleAsync(User01, Project01)
+        );
     }
 
     [Test]
@@ -4971,10 +4981,10 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void GetProjectProgressAsync_UserNotOnProject_Forbidden()
+    public async Task GetProjectProgressAsync_UserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetProjectProgressAsync(User04, Project01));
+        await Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GetProjectProgressAsync(User04, Project01));
     }
 
     [Test]

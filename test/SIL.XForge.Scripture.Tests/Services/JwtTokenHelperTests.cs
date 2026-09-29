@@ -16,7 +16,7 @@ namespace SIL.XForge.Scripture.Services;
 public class JwtTokenHelperTests
 {
     [Test]
-    public void RefreshAccessTokenAsync_BadRequest()
+    public async Task RefreshAccessTokenAsync_BadRequest()
     {
         var env = new TestEnvironment();
 
@@ -27,7 +27,7 @@ public class JwtTokenHelperTests
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             env.Service.RefreshAccessTokenAsync(new ParatextOptions(), new Tokens(), httpClient, CancellationToken.None)
         );
     }
@@ -118,7 +118,7 @@ public class JwtTokenHelperTests
     }
 
     [Test]
-    public void RefreshAccessTokenAsync_ServerError()
+    public async Task RefreshAccessTokenAsync_ServerError()
     {
         var env = new TestEnvironment();
 
@@ -129,7 +129,7 @@ public class JwtTokenHelperTests
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
-        Assert.ThrowsAsync<HttpRequestException>(() =>
+        await Assert.ThrowsAsync<HttpRequestException>(() =>
             env.Service.RefreshAccessTokenAsync(new ParatextOptions(), new Tokens(), httpClient, CancellationToken.None)
         );
     }
