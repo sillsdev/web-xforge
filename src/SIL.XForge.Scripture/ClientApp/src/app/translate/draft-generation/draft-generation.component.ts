@@ -138,7 +138,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   onboardingRequest?: OpenOnboardingRequest | null;
   responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
-  hasUserSubmittedFeedback = false;
+  hasUserSubmittedFeedback?: boolean;
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 1.5;
@@ -198,7 +198,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get showUserFeedbackNotice(): boolean {
-    return !this.hasUserSubmittedFeedback && this.hasUsedDraftGenerationThreeMonths;
+    return this.hasUserSubmittedFeedback === false && this.hasUsedDraftGenerationThreeMonths;
   }
 
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
@@ -328,13 +328,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
     this.activatedProject.projectId$
       .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish())
-      .subscribe(projectId => {
-        void this.projectService
+      .subscribe(projectId => ({
+        next: this.projectService
           .onlineHasUserSubmittedFeedback(projectId, PageSource.GenerateDraftPage)
           .then(hasFeedback => {
             this.hasUserSubmittedFeedback = hasFeedback;
-          });
-      });
+          }),
+        error: console.error
+      }));
   }
 
   get formattingOptionsRequired(): boolean {

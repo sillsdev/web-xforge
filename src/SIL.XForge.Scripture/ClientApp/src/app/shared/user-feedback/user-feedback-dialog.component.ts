@@ -144,6 +144,7 @@ export class UserFeedbackDialogComponent implements OnInit {
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
         filterNullish(),
+        // Update the current user's list of projects
         tap(projectDocs => {
           this.projects =
             projectDocs
@@ -153,8 +154,9 @@ export class UserFeedbackDialogComponent implements OnInit {
         })
       )
       .subscribe(() => {
+        // Set the selected project only after the list of projects is available
         const selectedProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
-        if (selectedProjectDoc?.data != null) {
+        if (selectedProjectDoc?.data != null && !isPopulatedString(this.selectedParatextId)) {
           this.feedbackForm.controls.paratextId.setValue(selectedProjectDoc.data.paratextId);
         }
       });
