@@ -557,7 +557,7 @@ public class MachineProjectServiceTests
         await env.Projects.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.BuildProjectAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -575,7 +575,7 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.BuildProjectAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -586,13 +586,13 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void BuildProjectAsync_ThrowsExceptionWhenSourceProjectMissing()
+    public async Task BuildProjectAsync_ThrowsExceptionWhenSourceProjectMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<InvalidDataException>(() =>
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
             env.Service.BuildProjectAsync(
                 User01,
                 new BuildConfig { ProjectId = Project04 },
@@ -690,7 +690,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult<IList<ServalCorpusSyncInfo>>([]));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.BuildProjectAsync(
                 User01,
                 buildConfig,
@@ -856,7 +856,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void CreateServalProjectAsync_NoTranslationEngineIdFromServal()
+    public async Task CreateServalProjectAsync_NoTranslationEngineIdFromServal()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -867,7 +867,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new TranslationEngine()));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.CreateServalProjectAsync(project, useEcho: false, CancellationToken.None)
         );
     }
@@ -914,7 +914,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void CreateZipFileFromParatextDirectoryAsync_ThrowsExceptionWhenProjectDirectoryMissing()
+    public async Task CreateZipFileFromParatextDirectoryAsync_ThrowsExceptionWhenProjectDirectoryMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -922,7 +922,7 @@ public class MachineProjectServiceTests
         MemoryStream outputStream = new MemoryStream();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.CreateZipFileFromParatextDirectoryAsync(Project01, outputStream, CancellationToken.None)
         );
     }
@@ -1029,7 +1029,7 @@ public class MachineProjectServiceTests
         await projectDoc.DeleteAsync();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.EnsureTranslationEngineExistsAsync(
                 User01,
                 projectDoc,
@@ -1063,7 +1063,7 @@ public class MachineProjectServiceTests
             .AndDoes(_ => projectDoc.DeleteAsync());
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.EnsureTranslationEngineExistsAsync(
                 User01,
                 projectDoc,
@@ -1130,7 +1130,7 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.EnsureTranslationEngineExistsAsync(
                 User01,
                 projectDoc,
@@ -1159,7 +1159,7 @@ public class MachineProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.EnsureTranslationEngineExistsAsync(
                 "invalid_user_id",
                 projectDoc,
@@ -1222,14 +1222,14 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void GetProjectZipAsync_ThrowsExceptionWhenProjectDocumentMissing()
+    public async Task GetProjectZipAsync_ThrowsExceptionWhenProjectDocumentMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
         MemoryStream outputStream = new MemoryStream();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetProjectZipAsync("invalid_project_id", outputStream, CancellationToken.None)
         );
     }
@@ -2175,13 +2175,13 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void RemoveProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
+    public async Task RemoveProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.RemoveProjectAsync("invalid_project_id", CancellationToken.None)
         );
     }
@@ -2645,7 +2645,7 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Set(p => p.ServalData, new ServalData()));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SyncProjectCorporaAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -2662,7 +2662,7 @@ public class MachineProjectServiceTests
         await env.Projects.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SyncProjectCorporaAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -2679,7 +2679,7 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.DeleteAllAsync(_ => true);
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SyncProjectCorporaAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -2696,7 +2696,7 @@ public class MachineProjectServiceTests
         await env.ProjectSecrets.UpdateAsync(Project01, op => op.Unset(p => p.ServalData));
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.SyncProjectCorporaAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -2713,7 +2713,7 @@ public class MachineProjectServiceTests
         await env.SetupProjectSecretAsync(Project01, new ServalData { PreTranslationEngineId = TranslationEngine01 });
 
         // SUT
-        Assert.ThrowsAsync<InvalidDataException>(() =>
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
             env.Service.SyncProjectCorporaAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },
@@ -2839,7 +2839,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public void TranslationEngineExistsAsync_ThrowsOtherErrors()
+    public async Task TranslationEngineExistsAsync_ThrowsOtherErrors()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2847,7 +2847,7 @@ public class MachineProjectServiceTests
             .Throws(ServalApiExceptions.InternalServerError);
 
         // SUT
-        Assert.ThrowsAsync<ServalApiException>(() =>
+        await Assert.ThrowsAsync<ServalApiException>(() =>
             env.Service.TranslationEngineExistsAsync(Project01, TranslationEngine01, CancellationToken.None)
         );
     }

@@ -18,11 +18,11 @@ namespace SIL.XForge.Realtime;
 public class RealtimeServiceTests
 {
     [Test]
-    public void DeleteProjectAsync_BadArguments()
+    public async Task DeleteProjectAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(null));
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(""));
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(null));
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(""));
     }
 
     [Test]
@@ -67,11 +67,11 @@ public class RealtimeServiceTests
     }
 
     [Test]
-    public void DeleteUserAsync_BadArguments()
+    public async Task DeleteUserAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(null));
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(""));
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(null));
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(""));
     }
 
     [Test]

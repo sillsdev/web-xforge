@@ -27,7 +27,7 @@ public sealed class SFInstallableDblResourceTests
     public async Task ExtractAllAsync_Success(string entryName)
     {
         TestEnvironment env = new TestEnvironment();
-        using MemoryStream zipStream = TestEnvironment.CreateZipStream(entryName, string.Empty);
+        await using MemoryStream zipStream = await TestEnvironment.CreateZipStreamAsync(entryName, string.Empty);
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
@@ -54,14 +54,14 @@ public sealed class SFInstallableDblResourceTests
     [TestCase("foo/..\\../evil.txt")]
     [TestCase("../evil.txt")]
     [TestCase("foo/../../evil.txt")]
-    public void ExtractAllAsync_WithDirectoryTraversalEntry_ThrowsInvalidOperation(string entryName)
+    public async Task ExtractAllAsync_WithDirectoryTraversalEntry_ThrowsInvalidOperation(string entryName)
     {
         TestEnvironment env = new TestEnvironment();
-        using MemoryStream zipStream = TestEnvironment.CreateZipStream(entryName, "malicious");
+        await using MemoryStream zipStream = await TestEnvironment.CreateZipStreamAsync(entryName, "malicious");
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
-        InvalidNameException exception = Assert.ThrowsAsync<InvalidNameException>(async () =>
+        InvalidNameException exception = await Assert.ThrowsAsync<InvalidNameException>(async () =>
             await env.Resource.ExtractAllAsync(zip, env.DestinationRoot)
         );
 
@@ -71,10 +71,10 @@ public sealed class SFInstallableDblResourceTests
     }
 
     [Test]
-    public void ExtractAllAsync_SymbolicLink_ThrowsInvalidOperation()
+    public async Task ExtractAllAsync_SymbolicLink_ThrowsInvalidOperation()
     {
         TestEnvironment env = new TestEnvironment();
-        using MemoryStream zipStream = TestEnvironment.CreateZipStream(
+        await using MemoryStream zipStream = await TestEnvironment.CreateZipStreamAsync(
             "symlink.txt",
             "../destination.txt",
             symlink: true
@@ -82,7 +82,7 @@ public sealed class SFInstallableDblResourceTests
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
-        InvalidOperationException exception = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await env.Resource.ExtractAllAsync(zip, env.DestinationRoot)
         );
 
@@ -132,10 +132,14 @@ public sealed class SFInstallableDblResourceTests
 
         public string DestinationRoot { get; }
 
-        public static MemoryStream CreateZipStream(string entryName, string content, bool symlink = false)
+        public static async Task<MemoryStream> CreateZipStreamAsync(
+            string entryName,
+            string content,
+            bool symlink = false
+        )
         {
             MemoryStream stream = new MemoryStream();
-            using ZipOutputStream zipStream = new ZipOutputStream(stream);
+            await using ZipOutputStream zipStream = new ZipOutputStream(stream);
             zipStream.IsStreamOwner = false;
             ZipEntry entry = new ZipEntry(entryName);
             if (symlink)
@@ -143,7 +147,7 @@ public sealed class SFInstallableDblResourceTests
                 entry.ExternalFileAttributes = 0xA000 << 16;
             }
 
-            zipStream.PutNextEntry(entry);
+            await zipStream.PutNextEntryAsync(entry);
             byte[] payload = Encoding.UTF8.GetBytes(content);
             zipStream.Write(payload, 0, payload.Length);
             zipStream.CloseEntry();

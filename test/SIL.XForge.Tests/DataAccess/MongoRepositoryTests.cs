@@ -73,7 +73,7 @@ public class MongoRepositoryTests
     }
 
     [Test]
-    public void InsertAsync_DuplicateKey()
+    public async Task InsertAsync_DuplicateKey()
     {
         var env = new TestEnvironment();
         var entity = new TestClass();
@@ -81,11 +81,11 @@ public class MongoRepositoryTests
         env.MongoCollection.InsertOneAsync(entity).ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<DuplicateKeyException>(() => env.Service.InsertAsync(entity));
+        await Assert.ThrowsAsync<DuplicateKeyException>(() => env.Service.InsertAsync(entity));
     }
 
     [Test]
-    public void InsertAsync_MongoException()
+    public async Task InsertAsync_MongoException()
     {
         var env = new TestEnvironment();
         var entity = new TestClass();
@@ -93,7 +93,7 @@ public class MongoRepositoryTests
         env.MongoCollection.InsertOneAsync(entity).ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<MongoWriteException>(() => env.Service.InsertAsync(entity));
+        await Assert.ThrowsAsync<MongoWriteException>(() => env.Service.InsertAsync(entity));
     }
 
     [Test]
@@ -108,7 +108,7 @@ public class MongoRepositoryTests
     }
 
     [Test]
-    public void ReplaceAsync_DuplicateKey()
+    public async Task ReplaceAsync_DuplicateKey()
     {
         var env = new TestEnvironment();
         var entity = new TestClass();
@@ -122,11 +122,11 @@ public class MongoRepositoryTests
             .ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<DuplicateKeyException>(() => env.Service.ReplaceAsync(entity));
+        await Assert.ThrowsAsync<DuplicateKeyException>(() => env.Service.ReplaceAsync(entity));
     }
 
     [Test]
-    public void ReplaceAsync_MongoException()
+    public async Task ReplaceAsync_MongoException()
     {
         var env = new TestEnvironment();
         var entity = new TestClass();
@@ -140,7 +140,7 @@ public class MongoRepositoryTests
             .ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<MongoWriteException>(() => env.Service.ReplaceAsync(entity));
+        await Assert.ThrowsAsync<MongoWriteException>(() => env.Service.ReplaceAsync(entity));
     }
 
     [Test]
@@ -220,7 +220,7 @@ public class MongoRepositoryTests
     }
 
     [Test]
-    public void UpdateAsync_DuplicateKey()
+    public async Task UpdateAsync_DuplicateKey()
     {
         var env = new TestEnvironment();
         MongoWriteException ex = TestEnvironment.GetMongoWriteException(duplicateKey: true);
@@ -233,13 +233,13 @@ public class MongoRepositoryTests
             .ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<DuplicateKeyException>(() =>
+        await Assert.ThrowsAsync<DuplicateKeyException>(() =>
             env.Service.UpdateAsync(e => e.Id == "123", u => u.Set(e => e.Id, "124"), upsert: false)
         );
     }
 
     [Test]
-    public void UpdateAsync_MongoException()
+    public async Task UpdateAsync_MongoException()
     {
         var env = new TestEnvironment();
         MongoWriteException ex = TestEnvironment.GetMongoWriteException(duplicateKey: false);
@@ -252,7 +252,7 @@ public class MongoRepositoryTests
             .ThrowsAsync(ex);
 
         // SUT
-        Assert.ThrowsAsync<MongoWriteException>(() =>
+        await Assert.ThrowsAsync<MongoWriteException>(() =>
             env.Service.UpdateAsync(e => e.Id == "123", u => u.Set(e => e.Id, "124"), upsert: false)
         );
     }
