@@ -10,11 +10,6 @@ import ws from 'ws';
 import { ActivityLogger } from './activity-logger';
 import { ExceptionReporter } from './exception-reporter';
 
-function isLocalRequest(request: http.IncomingMessage): boolean {
-  const addr = request.socket.remoteAddress;
-  return addr === '127.0.0.1' || addr === '::ffff:127.0.0.1' || addr === '::1';
-}
-
 export class WebSocketStreamListener {
   private readonly httpServer: http.Server;
   private readonly jwksClient: jwks.JwksClient;
@@ -117,14 +112,8 @@ export class WebSocketStreamListener {
           }
         }
       );
-    } else if (isLocalRequest(req) && url != null && url.includes('?server=true')) {
-      // no access token, but the request is local, so it is allowed
-      done(true);
     } else {
-      // no access token and not local, so it is unauthorized
-      ActivityLogger.instance.log('webSocketRejected', {
-        reason: 'unauthorized request'
-      });
+      ActivityLogger.instance.log('webSocketRejected', { reason: 'unauthorized request' });
       done(false, 401, 'Unauthorized');
     }
   }
