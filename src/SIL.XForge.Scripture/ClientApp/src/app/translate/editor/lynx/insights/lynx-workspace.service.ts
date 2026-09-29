@@ -495,6 +495,13 @@ export class LynxWorkspaceService {
     if (this.textDocId != null && shouldOpenDoc) {
       const uri: string = this.textDocId.toString();
       const textDoc = await this.projectService.getText(this.textDocId);
+
+      // Do not notify Lynx if the document data does not yet exist
+      if (textDoc.data == null) {
+        this.textDocId = undefined;
+        return;
+      }
+
       await this.documentManager.fireOpened(uri, {
         format: 'scripture-delta',
         version: textDoc.adapter.version,
