@@ -1064,7 +1064,7 @@
     "translation_language_name_placeholder": "e.g. Swahili, Tok Pisin"
   },
   "user_feedback": {
-    "close": "close",
+    "close": "Close",
     "error_occurred": "An error occurred. Please try submitting feedback later.",
     "how_has_drafting_helped_your_project": "How has {{ siteName }} drafting helped your project?",
     "send_feedback": "Send Feedback",
@@ -1082,7 +1082,7 @@
     "permission_public_label": "Yes, and mention my name and project name",
     "project_for_feedback": "What project is this feedback about?",
     "project_placeholder": "Project",
-    "required": "required",
+    "required": "Required",
     "submit": "Submit"
   },
   "users": {

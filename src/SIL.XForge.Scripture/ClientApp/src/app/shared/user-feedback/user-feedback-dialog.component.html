@@ -5,7 +5,14 @@
       <p class="feedback-description">{{ t("feedback_subtitle", { siteName }) }}</p>
       <mat-form-field appearance="outline">
         <mat-label>{{ t("feedback_label") }}</mat-label>
-        <textarea appAutofocus matInput cdkTextareaAutosize id="feedback-input" formControlName="feedback"></textarea>
+        <textarea
+          appAutofocus
+          matInput
+          cdkTextareaAutosize
+          [cdkAutosizeMaxRows]="1"
+          id="feedback-input"
+          formControlName="feedback"
+        ></textarea>
         <mat-error>{{ t("required") }}</mat-error>
       </mat-form-field>
       <p class="feedback-description">{{ t("project_for_feedback") }}</p>
