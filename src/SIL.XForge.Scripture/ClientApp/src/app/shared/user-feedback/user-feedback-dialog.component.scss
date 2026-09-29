@@ -1,5 +1,5 @@
 .mat-mdc-dialog-content {
-  overflow: unset;
+  overflow: visible;
 }
 
 .feedback-description {
@@ -8,7 +8,7 @@
 }
 
 #feedback-input {
-  min-height: 3rem;
+  min-height: 4rem;
 }
 
 form {
