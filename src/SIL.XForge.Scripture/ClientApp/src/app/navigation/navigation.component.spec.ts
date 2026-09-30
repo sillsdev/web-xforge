@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { DraftResult, SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -107,10 +107,8 @@ describe('NavigationComponent', () => {
       this.fixture.detectChanges();
     }
 
-    setDraftResultAvailable(value: boolean | undefined): void {
-      when(this.mockedProjectUserConfigDoc.data).thenReturn(
-        createTestProjectUserConfig({ draftResultAvailable: value })
-      );
+    setLatestDraftResult(value: DraftResult | undefined): void {
+      when(this.mockedProjectUserConfigDoc.data).thenReturn(createTestProjectUserConfig({ latestDraftResult: value }));
     }
 
     navigateTo(url: string): void {
@@ -240,7 +238,7 @@ describe('NavigationComponent', () => {
 
     expect(env.draftGenerationBadgeVisible).toBe(false);
 
-    env.projectUserConfig$.next({ draftResultAvailable: true } as SFProjectUserConfig);
+    env.projectUserConfig$.next({ latestDraftResult: DraftResult.Completed } as SFProjectUserConfig);
     env.fixture.detectChanges();
 
     expect(env.draftGenerationBadgeVisible).toBe(true);
@@ -258,17 +256,17 @@ describe('NavigationComponent', () => {
       }
     } as unknown as SFProjectProfileDoc);
 
-    env.projectUserConfig$.next({ draftResultAvailable: false } as SFProjectUserConfig);
+    env.projectUserConfig$.next({} as SFProjectUserConfig);
     env.fixture.detectChanges();
 
     expect(env.draftGenerationBadgeVisible).toBe(false);
     flush();
   }));
 
-  it('resets the draft result available flag when the draft generation page is visited', fakeAsync(() => {
+  it('clears the latest draft result when the draft generation page is visited', fakeAsync(() => {
     const env = new TestEnvironment();
     env.emitProjectChange({ id: 'project01' } as SFProjectProfileDoc);
-    env.setDraftResultAvailable(true);
+    env.setLatestDraftResult(DraftResult.Completed);
 
     env.navigateTo('/projects/project01/draft-generation');
     tick();
@@ -278,10 +276,10 @@ describe('NavigationComponent', () => {
     flush();
   }));
 
-  it('does not reset the draft completed flag when a different page is visited', fakeAsync(() => {
+  it('does not clear the latest draft result when a different page is visited', fakeAsync(() => {
     const env = new TestEnvironment();
     env.emitProjectChange({ id: 'project01' } as SFProjectProfileDoc);
-    env.setDraftResultAvailable(true);
+    env.setLatestDraftResult(DraftResult.Completed);
 
     env.navigateTo('/projects/project01/translate');
     tick();
@@ -291,10 +289,10 @@ describe('NavigationComponent', () => {
     flush();
   }));
 
-  it('does not resubmit when the draft completed flag is already false', fakeAsync(() => {
+  it('does not resubmit when there is no latest draft result', fakeAsync(() => {
     const env = new TestEnvironment();
     env.emitProjectChange({ id: 'project01' } as SFProjectProfileDoc);
-    env.setDraftResultAvailable(false);
+    env.setLatestDraftResult(undefined);
 
     env.navigateTo('/projects/project01/draft-generation');
     tick();
@@ -304,14 +302,14 @@ describe('NavigationComponent', () => {
     flush();
   }));
 
-  it('resets the draft completed flag when a draft result is available while already on the page', fakeAsync(() => {
+  it('clears the latest draft result when a draft result is available while already on the page', fakeAsync(() => {
     const env = new TestEnvironment();
     env.emitProjectChange({ id: 'project01' } as SFProjectProfileDoc);
     when(mockedRouter.url).thenReturn('/projects/project01/draft-generation');
-    env.setDraftResultAvailable(true);
+    env.setLatestDraftResult(DraftResult.Completed);
 
-    // No navigation occurs; the flag flips to true while the user is already viewing the page
-    env.projectUserConfig$.next(createTestProjectUserConfig({ draftResultAvailable: true }));
+    // No navigation occurs; the draft result is set while the user is already viewing the page
+    env.projectUserConfig$.next(createTestProjectUserConfig({ latestDraftResult: DraftResult.Completed }));
     tick();
 
     verify(env.mockedProjectUserConfigDoc.submitJson0Op(anything())).once();

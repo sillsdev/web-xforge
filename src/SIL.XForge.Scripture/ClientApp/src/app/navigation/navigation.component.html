@@ -18,7 +18,7 @@
             aria-hidden="false"
             id="draft-generation-icon"
             matBadge="notification_important"
-            [matBadgeHidden]="(draftResultAvailable$ | async) !== true"
+            [matBadgeHidden]="(latestDraftResult$ | async) == null"
             >auto_awesome</mat-icon
           >
           {{ t("generate_draft") }}

@@ -8,6 +8,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { asyncScheduler, combineLatest, merge, Observable, of } from 'rxjs';
 import { filter, map, shareReplay, switchMap, take, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
@@ -54,9 +55,8 @@ export class NavigationComponent {
   canGenerateDraft$: Observable<boolean> = this.projectChanges$.pipe(
     switchMap(projectDoc => (projectDoc == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectDoc.id)))
   );
-  draftResultAvailable$: Observable<boolean> = this.activatedProjectUserConfigService.projectUserConfig$.pipe(
-    map(config => config?.draftResultAvailable === true)
-  );
+  latestDraftResult$: Observable<DraftResult | undefined> =
+    this.activatedProjectUserConfigService.projectUserConfig$.pipe(map(config => config?.latestDraftResult));
 
   @Output() readonly menuItemClicked = new EventEmitter<void>();
 
@@ -87,15 +87,15 @@ export class NavigationComponent {
         filter(() => this.draftGenerationActive)
       ),
       // A draft completes while the user is already on the draft generation page
-      this.draftResultAvailable$.pipe(filter(result => result && this.draftGenerationActive))
+      this.latestDraftResult$.pipe(filter(result => result != null && this.draftGenerationActive))
     )
       .pipe(
         switchMap(() => this.activatedProjectUserConfigService.projectUserConfigDoc$.pipe(take(1))),
         quietTakeUntilDestroyed(this.destroyRef)
       )
       .subscribe(doc => {
-        if (doc?.data?.draftResultAvailable === true) {
-          void doc.submitJson0Op(op => op.set<boolean | undefined>(puc => puc.draftResultAvailable, false));
+        if (doc?.data?.latestDraftResult != null) {
+          void doc.submitJson0Op(op => op.unset(puc => puc.latestDraftResult));
         }
       });
   }

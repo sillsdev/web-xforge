@@ -785,6 +785,10 @@ public partial class MachineApiService(
         CancellationToken cancellationToken
     )
     {
+        // Let the administrators and translators know that a draft result is available.
+        // This is done first, so that any failure in sending the email does not prevent the users being notified.
+        await machineProjectService.SetDraftResultForProjectUsersAsync(sfProjectId, buildState);
+
         try
         {
             string? draftGenerationRequestId = await GetDraftGenerationRequestIdForBuildAsync(sfProjectId, buildId);
@@ -828,9 +832,6 @@ public partial class MachineApiService(
                     sfProjectId.Sanitize()
                 );
             }
-
-            // Let the administrators and translators know that a draft result is available
-            await SetDraftResultForProjectUsersAsync(sfProjectId);
         }
         catch (Exception e)
         {
@@ -842,37 +843,6 @@ public partial class MachineApiService(
             );
             exceptionHandler.ReportException(e);
         }
-    }
-
-    /// <summary>
-    /// Sets <see cref="SFProjectUserConfig.DraftResultAvailable"/> to <see langword="true"/> for each administrator
-    /// and translator on the project, so the frontend can notify them that a draft has been generated.
-    /// </summary>
-    private async Task SetDraftResultForProjectUsersAsync(string sfProjectId)
-    {
-        await using IConnection conn = await realtimeService.ConnectAsync();
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
-        if (!projectDoc.IsLoaded)
-        {
-            return;
-        }
-
-        IEnumerable<string> userIds = projectDoc
-            .Data.UserRoles.Where(ur => ur.Value is SFProjectRole.Administrator or SFProjectRole.Translator)
-            .Select(ur => ur.Key);
-
-        async Task setDraftResultAsync(string userId)
-        {
-            IDocument<SFProjectUserConfig> userConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
-                SFProjectUserConfig.GetDocId(sfProjectId, userId)
-            );
-            if (userConfigDoc.IsLoaded)
-            {
-                await userConfigDoc.SubmitJson0OpAsync(op => op.Set(puc => puc.DraftResultAvailable, true));
-            }
-        }
-
-        await Task.WhenAll(userIds.Select(setDraftResultAsync));
     }
 
     public async Task<string?> CancelPreTranslationBuildAsync(

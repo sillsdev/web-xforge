@@ -5,6 +5,7 @@ import { Meta, StoryObj } from '@storybook/angular';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { NEVER, of } from 'rxjs';
 import { expect } from 'storybook/test';
@@ -66,7 +67,7 @@ function setUpMocks(args: StoryState): void {
   when(mockedResumeCheckingService.resumeLink$).thenReturn(of(['']));
   when(mockedResumeTranslateService.resumeLink$).thenReturn(of(['']));
   when(mockedActivatedProjectUserConfigService.projectUserConfig$).thenReturn(
-    of(createTestProjectUserConfig({ draftResultAvailable: args.draftResultAvailable }))
+    of(createTestProjectUserConfig({ latestDraftResult: args.latestDraftResult }))
   );
   when(mockedActivatedProjectUserConfigService.projectUserConfigDoc$).thenReturn(of(undefined));
 
@@ -110,6 +111,10 @@ const meta: Meta<StoryState> = {
   argTypes: {
     role: {
       options: Object.values(SFProjectRole),
+      control: { type: 'select' }
+    },
+    latestDraftResult: {
+      options: [undefined, ...Object.values(DraftResult)],
       control: { type: 'select' }
     }
   },
@@ -179,7 +184,7 @@ interface StoryState {
   lastSyncSuccessful: boolean;
   checkingEnabled: boolean;
   path: string;
-  draftResultAvailable: boolean;
+  latestDraftResult?: DraftResult;
 }
 
 type Story = StoryObj<StoryState>;
@@ -191,8 +196,7 @@ export const Default: Story = {
     syncInProgress: false,
     lastSyncSuccessful: true,
     checkingEnabled: true,
-    path: '',
-    draftResultAvailable: false
+    path: ''
   }
 };
 
@@ -279,7 +283,7 @@ export const SyncFailed: Story = {
 };
 
 export const DraftCompleted: Story = {
-  args: { ...Default.args, draftResultAvailable: true },
+  args: { ...Default.args, latestDraftResult: DraftResult.Completed },
   play: async ({ canvasElement }) => {
     // The mat-badge is not rendered immediately, so we need to wait for it to appear
     await new Promise(resolve => setTimeout(resolve, 0));

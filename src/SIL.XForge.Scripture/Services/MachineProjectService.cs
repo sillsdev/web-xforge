@@ -119,6 +119,8 @@ public class MachineProjectService(
                 cancellationToken: cancellationToken
             );
 
+            await SetDraftResultForProjectUsersAsync(buildConfig.ProjectId, JobState.Canceled);
+
             // Send the cancellation email, if specified
             if (buildConfig.SendEmailOnBuildFinished)
             {
@@ -144,6 +146,8 @@ public class MachineProjectService(
                 },
                 cancellationToken: cancellationToken
             );
+
+            await SetDraftResultForProjectUsersAsync(buildConfig.ProjectId, JobState.Canceled);
 
             // Send the cancellation email, if specified
             if (buildConfig.SendEmailOnBuildFinished)
@@ -187,6 +191,8 @@ public class MachineProjectService(
                 },
                 cancellationToken: cancellationToken
             );
+
+            await SetDraftResultForProjectUsersAsync(buildConfig.ProjectId, JobState.Faulted);
 
             // Send the failure email, if specified
             if (buildConfig.SendEmailOnBuildFinished)
@@ -387,6 +393,64 @@ public class MachineProjectService(
                 sfProjectId.Sanitize(),
                 curUserId.Sanitize()
             );
+        }
+    }
+
+    /// <summary>
+    /// Sets <see cref="SFProjectUserConfig.LatestDraftResult"/> to the result of the build for each administrator
+    /// and translator on the project, so the frontend can notify them that a draft build has finished.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildState">The final state of the build.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <remarks>
+    /// Any errors are logged and reported, but not thrown, so that a failure to notify users does not affect
+    /// the processing of the build or the sending of any emails.
+    /// </remarks>
+    public async Task SetDraftResultForProjectUsersAsync(string sfProjectId, JobState buildState)
+    {
+        string? draftResult = buildState switch
+        {
+            JobState.Completed => DraftResult.Completed,
+            JobState.Faulted => DraftResult.Faulted,
+            JobState.Canceled => DraftResult.Cancelled,
+            _ => null,
+        };
+        if (draftResult is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await using IConnection conn = await realtimeService.ConnectAsync();
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+            if (!projectDoc.IsLoaded)
+            {
+                return;
+            }
+
+            IEnumerable<string> userIds = projectDoc
+                .Data.UserRoles.Where(ur => ur.Value is SFProjectRole.Administrator or SFProjectRole.Translator)
+                .Select(ur => ur.Key);
+
+            async Task setDraftResultAsync(string userId)
+            {
+                IDocument<SFProjectUserConfig> userConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
+                    SFProjectUserConfig.GetDocId(sfProjectId, userId)
+                );
+                if (userConfigDoc.IsLoaded)
+                {
+                    await userConfigDoc.SubmitJson0OpAsync(op => op.Set(puc => puc.LatestDraftResult, draftResult));
+                }
+            }
+
+            await Task.WhenAll(userIds.Select(setDraftResultAsync));
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "The draft result could not be set for project {projectId}.", sfProjectId.Sanitize());
+            exceptionHandler.ReportException(e);
         }
     }
 
