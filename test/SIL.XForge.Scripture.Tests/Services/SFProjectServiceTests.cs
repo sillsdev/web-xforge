@@ -4152,7 +4152,7 @@ public class SFProjectServiceTests
         };
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, Project01, feedbackParams));
+        await Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, Project01, feedbackParams));
     }
 
     [Test]
@@ -4168,7 +4168,7 @@ public class SFProjectServiceTests
         };
 
         // SUT
-        Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, string.Empty, feedbackParams));
+        await Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, string.Empty, feedbackParams));
     }
 
     [Test]
@@ -4184,7 +4184,7 @@ public class SFProjectServiceTests
         };
 
         // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(() =>
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.AddUserFeedbackAsync(User01, "ProjectNotExist", feedbackParams)
         );
     }
@@ -4202,7 +4202,7 @@ public class SFProjectServiceTests
         };
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() =>
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
             env.Service.AddUserFeedbackAsync(User04, Project01, feedbackParams)
         );
     }
