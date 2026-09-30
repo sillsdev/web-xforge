@@ -100,8 +100,8 @@ public interface ISFProjectService : IProjectService
         string curUserId,
         string[] systemRoles,
         string projectId,
-        IEnumerable<string> draftingSourcesParatextIds,
-        IEnumerable<string> trainingSourcesParatextIds
+        string[] draftingSourcesParatextIds,
+        string[] trainingSourcesParatextIds
     );
 
     [LogEventMetric(EventScope.Drafting, nameof(curUserId))]
