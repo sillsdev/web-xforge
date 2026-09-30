@@ -122,6 +122,7 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.Delete(Project01);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]
@@ -1302,6 +1303,195 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task SetDraftSources_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.SetDraftSources(
+            Project01,
+            draftingSourcesParatextIds: [],
+            trainingSourcesParatextIds: []
+        );
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env
+            .SFProjectService.Received()
+            .SetDraftSourcesAsync(
+                User01,
+                Roles,
+                Project01,
+                draftingSourcesParatextIds: [],
+                trainingSourcesParatextIds: []
+            );
+    }
+
+    [Test]
+    public async Task SetDraftSources_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetDraftSourcesAsync(
+                User01,
+                Roles,
+                Project01,
+                draftingSourcesParatextIds: [],
+                trainingSourcesParatextIds: []
+            )
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.SetDraftSources(
+            Project01,
+            draftingSourcesParatextIds: [],
+            trainingSourcesParatextIds: []
+        );
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetDraftSources_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Invalid format";
+        env.SFProjectService.SetDraftSourcesAsync(
+                User01,
+                Roles,
+                Project01,
+                draftingSourcesParatextIds: [],
+                trainingSourcesParatextIds: []
+            )
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetDraftSources(
+            Project01,
+            draftingSourcesParatextIds: [],
+            trainingSourcesParatextIds: []
+        );
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetDraftSources_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetDraftSourcesAsync(
+                User01,
+                Roles,
+                Project01,
+                draftingSourcesParatextIds: [],
+                trainingSourcesParatextIds: []
+            )
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetDraftSources(
+            Project01,
+            draftingSourcesParatextIds: [],
+            trainingSourcesParatextIds: []
+        );
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetDraftSources_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetDraftSourcesAsync(
+                User01,
+                Roles,
+                Project01,
+                draftingSourcesParatextIds: [],
+                trainingSourcesParatextIds: []
+            )
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetDraftSources(Project01, draftingSourcesParatextIds: [], trainingSourcesParatextIds: [])
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task UpdateDraftSources_Success()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+
+        // SUT
+        var result = await env.Controller.UpdateDraftSources(Project01, draftSourceConfiguration);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration);
+    }
+
+    [Test]
+    public async Task UpdateDraftSources_Forbidden()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+        env.SFProjectService.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.UpdateDraftSources(Project01, draftSourceConfiguration);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task UpdateDraftSources_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+        const string errorMessage = "Invalid format";
+        env.SFProjectService.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.UpdateDraftSources(Project01, draftSourceConfiguration);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task UpdateDraftSources_NotFound()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.UpdateDraftSources(Project01, draftSourceConfiguration);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task UpdateDraftSources_UnknownError()
+    {
+        var env = new TestEnvironment();
+        var draftSourceConfiguration = new DraftSourceConfiguration();
+        env.SFProjectService.UpdateDraftSourcesAsync(User01, Project01, draftSourceConfiguration)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.UpdateDraftSources(Project01, draftSourceConfiguration)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task UpdateSettings_Success()
     {
         var env = new TestEnvironment();
@@ -1324,6 +1514,22 @@ public class SFProjectsRpcControllerTests
         var result = await env.Controller.UpdateSettings(Project01, settings);
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task UpdateSettings_InvalidOperation()
+    {
+        var env = new TestEnvironment();
+        var settings = new SFProjectSettings();
+        const string errorMessage = "Please update your client.";
+        env.SFProjectService.UpdateSettingsAsync(User01, Project01, settings)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.UpdateSettings(Project01, settings);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
     }
 
     [Test]

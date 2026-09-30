@@ -7,11 +7,6 @@ export interface SFProjectSettings {
   sourceParatextId?: string | null;
   biblicalTermsEnabled?: boolean | null;
 
-  /* DraftSourcesSettingsChange */
-  additionalTrainingDataFiles?: string[] | null;
-  draftingSourcesParatextIds?: string[] | null;
-  trainingSourcesParatextIds?: string[] | null;
-
   checkingEnabled?: boolean | null;
   usersSeeEachOthersResponses?: boolean | null;
   checkingAnswerExport?: CheckingAnswerExport | null;

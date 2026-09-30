@@ -27,10 +27,10 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { hasData, notNull, WithData } from '../../../../type-utils';
+import { DraftSourceConfiguration } from '../../../core/models/draft-source-configuration';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SelectableProjectWithLanguageCode } from '../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
-import { SFProjectSettings } from '../../../core/models/sf-project-settings';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TrainingDataDoc } from '../../../core/models/training-data-doc';
 import { ParatextService } from '../../../core/paratext.service';
@@ -135,14 +135,14 @@ describe('ConfigureSourcesComponent', () => {
       env.clickLanguageCodesConfirmationCheckbox();
       // Suppose the user loads up the sources configuration page, changes no projects, and clicks Save. The settings
       // change request will just correspond to what the project already has for its settings.
-      const expectedSettingsChangeRequest: SFProjectSettings = {
+      const expectedDraftSourceConfiguration: DraftSourceConfiguration = {
         draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
           s => s.paratextId
         ),
         trainingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources.map(
           s => s.paratextId
         ),
-        additionalTrainingDataFiles:
+        selectedTrainingDataFiles:
           env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
 
@@ -155,11 +155,11 @@ describe('ConfigureSourcesComponent', () => {
       // SUT
       env.component.save();
       tick();
-      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
-      const actualSettingsChangeRequest: SFProjectSettings = capture(
-        mockedSFProjectService.onlineUpdateSettings
+      verify(mockedSFProjectService.onlineUpdateDraftSources(env.activatedProjectDoc.id, anything())).once();
+      const actualDraftSourceConfiguration: DraftSourceConfiguration = capture(
+        mockedSFProjectService.onlineUpdateDraftSources
       ).last()[1];
-      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(actualDraftSourceConfiguration).toEqual(expectedDraftSourceConfiguration);
     }));
 
     it('clearing second training source works', fakeAsync(() => {
@@ -171,14 +171,14 @@ describe('ConfigureSourcesComponent', () => {
 
       // Suppose the user loads up the page, clears the second training/reference project box, and clicks Save. The
       // settings change request will show a requested change for unsetting the additional-training-source.
-      const expectedSettingsChangeRequest: SFProjectSettings = {
+      const expectedDraftSourceConfiguration: DraftSourceConfiguration = {
         draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
           s => s.paratextId
         ),
         trainingSourcesParatextIds: [
           env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources[0].paratextId
         ],
-        additionalTrainingDataFiles:
+        selectedTrainingDataFiles:
           env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
 
@@ -196,11 +196,11 @@ describe('ConfigureSourcesComponent', () => {
       // SUT
       env.component.save();
       tick();
-      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
-      const actualSettingsChangeRequest: SFProjectSettings = capture(
-        mockedSFProjectService.onlineUpdateSettings
+      verify(mockedSFProjectService.onlineUpdateDraftSources(env.activatedProjectDoc.id, anything())).once();
+      const actualDraftSourceConfiguration: DraftSourceConfiguration = capture(
+        mockedSFProjectService.onlineUpdateDraftSources
       ).last()[1];
-      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(actualDraftSourceConfiguration).toEqual(expectedDraftSourceConfiguration);
     }));
 
     it('clearing first training source works', fakeAsync(() => {
@@ -213,14 +213,14 @@ describe('ConfigureSourcesComponent', () => {
       // Suppose the user comes to the page, leaves the second reference/training project selection alone, and clears
       // the first reference/training project selection. Let's respond by clearing the additional-training-source, and
       // setting the first-training-source to the remaining reference/training project that is still specified.
-      const expectedSettingsChangeRequest: SFProjectSettings = {
+      const expectedDraftSourceConfiguration: DraftSourceConfiguration = {
         draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
           s => s.paratextId
         ),
         trainingSourcesParatextIds: [
           env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources[1].paratextId
         ],
-        additionalTrainingDataFiles:
+        selectedTrainingDataFiles:
           env.activatedProjectDoc.data!.translateConfig.draftConfig.lastSelectedTrainingDataFiles
       };
 
@@ -234,11 +234,11 @@ describe('ConfigureSourcesComponent', () => {
       // SUT
       env.component.save();
       tick();
-      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
-      const actualSettingsChangeRequest: SFProjectSettings = capture(
-        mockedSFProjectService.onlineUpdateSettings
+      verify(mockedSFProjectService.onlineUpdateDraftSources(env.activatedProjectDoc.id, anything())).once();
+      const actualDraftSourceConfiguration: DraftSourceConfiguration = capture(
+        mockedSFProjectService.onlineUpdateDraftSources
       ).last()[1];
-      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(actualDraftSourceConfiguration).toEqual(expectedDraftSourceConfiguration);
     }));
 
     it('fails to save and sync', fakeAsync(() => {
@@ -255,14 +255,14 @@ describe('ConfigureSourcesComponent', () => {
       tick();
 
       // Simulate failed response
-      when(mockedSFProjectService.onlineUpdateSettings(anything(), anything())).thenReject(
+      when(mockedSFProjectService.onlineUpdateDraftSources(anything(), anything())).thenReject(
         new CommandError(CommandErrorCode.Other, '504 Gateway Timeout')
       );
 
       // SUT
       env.component.save();
       tick();
-      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
+      verify(mockedSFProjectService.onlineUpdateDraftSources(env.activatedProjectDoc.id, anything())).once();
     }));
 
     it('can edit second source after first is cleared', fakeAsync(() => {
@@ -291,25 +291,25 @@ describe('ConfigureSourcesComponent', () => {
       env.fixture.detectChanges();
       env.clickLanguageCodesConfirmationCheckbox();
 
-      const expectedSettingsChangeRequest: SFProjectSettings = {
+      const expectedDraftSourceConfiguration: DraftSourceConfiguration = {
         draftingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.draftingSources.map(
           s => s.paratextId
         ),
         trainingSourcesParatextIds: env.activatedProjectDoc.data!.translateConfig.draftConfig.trainingSources.map(
           s => s.paratextId
         ),
-        additionalTrainingDataFiles: ['test1', 'test2']
+        selectedTrainingDataFiles: ['test1', 'test2']
       };
 
       env.component.onTrainingDataSelect([{ dataId: 'test1' } as TrainingData, { dataId: 'test2' } as TrainingData]);
 
       env.component.save();
       tick();
-      verify(mockedSFProjectService.onlineUpdateSettings(env.activatedProjectDoc.id, anything())).once();
-      const actualSettingsChangeRequest: SFProjectSettings = capture(
-        mockedSFProjectService.onlineUpdateSettings
+      verify(mockedSFProjectService.onlineUpdateDraftSources(env.activatedProjectDoc.id, anything())).once();
+      const actualDraftSourceConfiguration: DraftSourceConfiguration = capture(
+        mockedSFProjectService.onlineUpdateDraftSources
       ).last()[1];
-      expect(actualSettingsChangeRequest).toEqual(expectedSettingsChangeRequest);
+      expect(actualDraftSourceConfiguration).toEqual(expectedDraftSourceConfiguration);
     }));
 
     it('creates training data for added files', fakeAsync(() => {
@@ -470,7 +470,7 @@ describe('ConfigureSourcesComponent', () => {
       );
 
       expect(result).toEqual({
-        additionalTrainingDataFiles: [],
+        selectedTrainingDataFiles: [],
         trainingSourcesParatextIds: [],
         draftingSourcesParatextIds: []
       });
@@ -491,7 +491,7 @@ describe('ConfigureSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingDataFiles: [],
+        selectedTrainingDataFiles: [],
         trainingSourcesParatextIds: [mockProject1.paratextId],
         draftingSourcesParatextIds: []
       });
@@ -512,7 +512,7 @@ describe('ConfigureSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingDataFiles: [],
+        selectedTrainingDataFiles: [],
         trainingSourcesParatextIds: [mockProject1.paratextId, mockProject2.paratextId],
         draftingSourcesParatextIds: []
       });
@@ -533,7 +533,7 @@ describe('ConfigureSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingDataFiles: [],
+        selectedTrainingDataFiles: [],
         trainingSourcesParatextIds: [],
         draftingSourcesParatextIds: [mockProject1.paratextId]
       });
@@ -554,7 +554,7 @@ describe('ConfigureSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingDataFiles: [],
+        selectedTrainingDataFiles: [],
         trainingSourcesParatextIds: [mockProject1.paratextId, mockProject2.paratextId],
         draftingSourcesParatextIds: [mockProject1.paratextId]
       });
@@ -593,7 +593,7 @@ describe('ConfigureSourcesComponent', () => {
         currentProjectParatextId
       );
       expect(result).toEqual({
-        additionalTrainingDataFiles: [],
+        selectedTrainingDataFiles: [],
         trainingSourcesParatextIds: [],
         draftingSourcesParatextIds: []
       });

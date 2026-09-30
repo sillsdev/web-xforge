@@ -24,10 +24,11 @@ import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
-import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
 import { BookProgressWithChapterProgress } from '../shared/progress-service/progress.service';
 import { expandNumbers } from '../shared/utils';
+import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
+import { DraftSourceConfiguration } from './models/draft-source-configuration';
 import { InviteeStatus } from './models/invitee-status';
 import { NoteThreadDoc } from './models/note-thread-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
@@ -381,6 +382,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       projectId,
       draftingSourcesParatextIds,
       trainingSourcesParatextIds
+    });
+  }
+
+  onlineUpdateDraftSources(projectId: string, draftSourceConfiguration: DraftSourceConfiguration): Promise<void> {
+    return this.onlineInvoke<void>('updateDraftSources', {
+      projectId,
+      draftSourceConfiguration
     });
   }
 

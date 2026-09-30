@@ -175,7 +175,14 @@ export class PermissionsService {
 
   /** Whether the user is allowed to configure drafting sources for the project. */
   canConfigureSources(projectDoc?: SFProjectProfileDoc, userId?: string): boolean {
-    return this.isProjectAdmin(projectDoc, userId);
+    if (projectDoc?.data == null) {
+      return false;
+    }
+
+    const role: string = projectDoc.data.userRoles[userId ?? this.userService.currentUserId];
+
+    // Only PT admin and PT translator can configure sources
+    return role === SFProjectRole.ParatextAdministrator || role === SFProjectRole.ParatextTranslator;
   }
 
   /** Whether the user's role on the project is Paratext administrator. */

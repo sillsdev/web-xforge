@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
+import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -9,7 +10,6 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { EMPTY, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -261,9 +261,9 @@ describe('DraftGenerationComponent', () => {
       expect(env.configureDraftButton).not.toBeNull();
     });
 
-    it('should not show configure drafting source button for translators', () => {
+    it('should show configure drafting source button for translators', () => {
       const env = new TestEnvironment(() => TestEnvironment.initProject('user02'));
-      expect(env.configureDraftButton).toBeNull();
+      expect(env.configureDraftButton).not.toBeNull();
     });
 
     it('does not subscribe to build when project does not have drafting enabled', () => {
@@ -416,22 +416,6 @@ describe('DraftGenerationComponent', () => {
         env.component.isTargetLanguageSupported = true;
         env.fixture.detectChanges();
         expect(env.getElementByTestId('warning-source-no-access')).toBeNull();
-      });
-
-      it('should show warning when source project is not set and user is a translator', () => {
-        const env = new TestEnvironment(() => {
-          mockDraftSourcesService.getDraftProjectSources.and.returnValue(
-            of({
-              draftingSources: [],
-              trainingSources: [{} as DraftSource],
-              trainingTargets: [{} as DraftSource]
-            } as DraftSourcesAsArrays)
-          );
-          TestEnvironment.initProject('user02');
-        });
-        env.component.isTargetLanguageSupported = true;
-        env.fixture.detectChanges();
-        expect(env.getElementByTestId('warning-admin-must-configure-sources')).not.toBeNull();
       });
 
       it('should not show warning when access to source project', () => {
