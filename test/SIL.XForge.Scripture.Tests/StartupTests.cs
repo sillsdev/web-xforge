@@ -308,6 +308,16 @@ public class StartupTests
         {
             Context.Request.Method = HttpMethods.Get;
             var configuration = Substitute.For<IConfiguration>();
+            configuration
+                .GetSection("Site")
+                .Returns(
+                    new ConfigurationBuilder()
+                        .AddInMemoryCollection(
+                            new Dictionary<string, string?> { ["Site:Origin"] = "https://scriptureforge.org" }
+                        )
+                        .Build()
+                        .GetSection("Site")
+                );
             var environment = Substitute.For<IWebHostEnvironment>();
             if (!string.IsNullOrWhiteSpace(environmentName))
             {
