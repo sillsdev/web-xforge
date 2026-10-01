@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.AspNetCore.SpaServices.StaticFiles;
@@ -151,6 +150,8 @@ public class Startup
 
         services.AddConfiguration(Configuration);
 
+        services.AddHostValidation(Configuration);
+
         services.AddFeatureManagement();
 
         services.AddSignalR();
@@ -232,7 +233,7 @@ public class Startup
 
         app.UseStatusCodePagesWithReExecute("/Status/Error", "?code={0}");
 
-        app.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All });
+        app.UseForwardedHeaders();
 
         app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
 
