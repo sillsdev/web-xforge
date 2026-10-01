@@ -26,7 +26,7 @@
                 }
               } @else if (row.syncState === "pending") {
                 @if (row.canSync) {
-                  <button mat-stroked-button (click)="syncProject(row)">
+                  <button mat-stroked-button (click)="syncProject(row)" [disabled]="!isOnline">
                     <mat-icon>sync</mat-icon>{{ t("sync") }}
                   </button>
                 } @else {
@@ -41,6 +41,9 @@
         </div>
       }
     </div>
+    @if (!isOnline) {
+      <p class="offline-text">{{ t("offline_message") }}</p>
+    }
 
     <div class="status-line" aria-live="polite">
       @if (autoAdvancing) {
@@ -58,9 +61,11 @@
         </button>
       }
       @if (continueIsPrimary) {
-        <button mat-flat-button color="primary" (click)="continueAnyway()">{{ t("continue_anyway") }}</button>
+        <button mat-flat-button color="primary" (click)="continueAnyway()" [disabled]="!isOnline">
+          {{ t("continue_anyway") }}
+        </button>
       } @else {
-        <button mat-stroked-button [disabled]="userSyncInProgress" (click)="continueAnyway()">
+        <button mat-stroked-button [disabled]="userSyncInProgress || !isOnline" (click)="continueAnyway()">
           {{ t("continue_anyway") }}
         </button>
         @if (userSyncInProgress) {
