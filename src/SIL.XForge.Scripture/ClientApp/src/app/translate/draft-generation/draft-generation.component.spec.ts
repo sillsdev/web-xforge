@@ -35,7 +35,6 @@ import { StartBuildResult } from './draft-generation';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHandlingService } from './draft-handling.service';
-import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftSource, DraftSourcesAsArrays } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
 import { TrainingDataService } from './training-data/training-data.service';
@@ -251,9 +250,10 @@ describe('DraftGenerationComponent', () => {
     }
 
     setBuildHistory(dates: string[]): void {
-      this.component.draftHistoryList = {
-        history: dates.map(date => ({ additionalInfo: { dateRequested: date } }) as BuildDto)
-      } as unknown as DraftHistoryListComponent;
+      // Set the history on the rendered child, as the view child query is refreshed on change detection
+      this.component.draftHistoryList!.history = dates.map(
+        date => ({ ...buildDto, state: BuildStates.Completed, additionalInfo: { dateRequested: date } }) as BuildDto
+      );
     }
 
     getElementByTestId(testId: string): HTMLElement | null {
@@ -1451,57 +1451,78 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('showUserFeedbackNotice', () => {
-    it('should be false when the user has no historical draft builds', () => {
+    it('should be false when the user has no historical draft builds', fakeAsync(() => {
       const env = new TestEnvironment();
+      tick();
       expect(env.component.showUserFeedbackNotice).toBe(false);
-    });
+    }));
 
-    it('should be false when the user has used drafting for less than three months', () => {
+    it('should be false when the user has used drafting for less than three months', fakeAsync(() => {
       const env = new TestEnvironment();
+      tick();
       env.setBuildHistory(['2025-01-01', '2025-02-01']);
       expect(env.component.showUserFeedbackNotice).toBe(false);
-    });
+    }));
 
-    it('should be true when the user has used drafting for more than three months and has not given feedback', () => {
+    it('should be true when the user has used drafting for more than three months and has not given feedback', fakeAsync(() => {
       const env = new TestEnvironment();
+      tick();
       env.setBuildHistory(['2025-01-01', '2025-06-01']);
       expect(env.component.showUserFeedbackNotice).toBe(true);
-    });
+    }));
 
-    it('should be false when the user has already submitted feedback, even after three months of use', () => {
-      const env = new TestEnvironment();
+    it('should be false when the user has already submitted feedback, even after three months of use', fakeAsync(() => {
+      const env = new TestEnvironment(() =>
+        mockSFProjectService.onlineHasUserSubmittedFeedback.and.returnValue(Promise.resolve(true))
+      );
+      tick();
       env.setBuildHistory(['2025-01-01', '2025-06-01']);
-      env.component.hasUserSubmittedFeedback = true;
       expect(env.component.showUserFeedbackNotice).toBe(false);
-    });
+    }));
 
-    it('should show the user feedback notice when showUserFeedbackNotice is true', () => {
-      const env = new TestEnvironment();
+    it('should be false when checking for submitted feedback fails', fakeAsync(() => {
+      const env = new TestEnvironment(() =>
+        mockSFProjectService.onlineHasUserSubmittedFeedback.and.returnValue(Promise.reject(new Error('error')))
+      );
+      tick();
       env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      expect(env.component.showUserFeedbackNotice).toBe(false);
+    }));
+
+    it('should show the user feedback notice when showUserFeedbackNotice is true', fakeAsync(() => {
+      const env = new TestEnvironment();
+      tick();
+      env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      env.component.isTargetLanguageSupported = true;
       env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
 
       expect(env.component.showUserFeedbackNotice).toBe(true);
       env.fixture.detectChanges();
       expect(env.userFeedbackNotice).not.toBeNull();
-    });
+    }));
 
-    it('should not show the user feedback notice when showUserFeedbackNotice is false', () => {
+    it('should not show the user feedback notice when showUserFeedbackNotice is false', fakeAsync(() => {
       const env = new TestEnvironment();
+      tick();
+      env.component.isTargetLanguageSupported = true;
       env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
 
       expect(env.component.showUserFeedbackNotice).toBe(false);
       env.fixture.detectChanges();
       expect(env.userFeedbackNotice).toBeNull();
-    });
+    }));
 
-    it('should not show the user feedback notice while the draft build has faulted, even if showUserFeedbackNotice is true', () => {
+    it('should not show the user feedback notice while the draft build has faulted, even if showUserFeedbackNotice is true', fakeAsync(() => {
       const env = new TestEnvironment();
+      tick();
       env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      env.component.isTargetLanguageSupported = true;
       env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
 
       expect(env.component.showUserFeedbackNotice).toBe(true);
       env.fixture.detectChanges();
+      expect(env.getElementByTestId('warning-generation-failed')).not.toBeNull();
       expect(env.userFeedbackNotice).toBeNull();
-    });
+    }));
   });
 });
