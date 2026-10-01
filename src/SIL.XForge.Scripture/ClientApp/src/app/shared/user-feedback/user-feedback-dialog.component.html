@@ -10,7 +10,7 @@
           matInput
           cdkTextareaAutosize
           [cdkAutosizeMinRows]="3"
-          [cdkAutosizeMaxRows]="5"
+          [cdkAutosizeMaxRows]="10"
           id="feedback-input"
           formControlName="feedback"
         ></textarea>
@@ -22,7 +22,6 @@
         [placeholder]="t('project_placeholder')"
         [projects]="projects"
         [value]="selectedParatextId"
-        class="project-select"
       ></app-project-select>
       <p class="feedback-description">{{ t("permission_question") }}</p>
       <mat-radio-group class="permission-options" formControlName="permission">
