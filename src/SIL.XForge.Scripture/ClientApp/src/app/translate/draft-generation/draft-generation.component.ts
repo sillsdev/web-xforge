@@ -326,16 +326,21 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
     });
 
-    this.activatedProject.projectId$
-      .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish())
-      .subscribe(projectId => ({
-        next: this.projectService
+    this.onlineStatusService.onlineStatus$
+      .pipe(
+        switchMap(() => this.activatedProject.projectId$),
+        quietTakeUntilDestroyed(this.destroyRef),
+        filterNullish()
+      )
+      .subscribe(projectId =>
+        this.projectService
           .onlineHasUserSubmittedFeedback(projectId, PageSource.GenerateDraftPage)
           .then(hasFeedback => {
             this.hasUserSubmittedFeedback = hasFeedback;
-          }),
-        error: console.error
-      }));
+          })
+          // Leaves the flag undefined on failure so that the notice remains hidden
+          .catch(() => {})
+      );
   }
 
   get formattingOptionsRequired(): boolean {
