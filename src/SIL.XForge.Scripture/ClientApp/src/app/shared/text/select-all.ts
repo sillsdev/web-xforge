@@ -35,8 +35,10 @@ export class SelectAll {
           return;
         }
 
-        // Only emit to Quill (and the onSelectionChanged handler in TextComponent) if the selection has actually changed
-        const quillRange: Range = quill.getSelection(true);
+        // Only emit to Quill (and the onSelectionChanged handler in TextComponent) if the selection has actually changed.
+        // Do not pass focus=true: Quill's focus() scrolls to its last known range, which is stale while the mouse button
+        // is down, so clicking a verse would scroll the editor back to the previously selected segment.
+        const quillRange: Range | null = quill.getSelection();
         if (quillRange == null) return;
         if (lastRange == null || quillRange.index !== lastRange.index || quillRange.length !== lastRange.length) {
           quill.emitter.emit('selection-change', quillRange, lastRange, 'user');
