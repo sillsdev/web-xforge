@@ -326,13 +326,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
     });
 
-    this.onlineStatusService.onlineStatus$
-      .pipe(
-        switchMap(() => this.activatedProject.projectId$),
-        quietTakeUntilDestroyed(this.destroyRef),
-        filterNullish()
-      )
-      .subscribe(projectId =>
+    const projectId: string | undefined = this.activatedProject.projectId;
+    if (projectId != null) {
+      void this.onlineStatusService.online.then(() =>
         this.projectService
           .onlineHasUserSubmittedFeedback(projectId, PageSource.GenerateDraftPage)
           .then(hasFeedback => {
@@ -341,6 +337,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           // Leaves the flag undefined on failure so that the notice remains hidden
           .catch(() => {})
       );
+    }
   }
 
   get formattingOptionsRequired(): boolean {
