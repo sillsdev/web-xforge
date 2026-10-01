@@ -267,19 +267,23 @@ export class QuestionService extends SFProjectDataService<Question> {
     const parts = docId.split(':');
     const projectId = parts[0];
     const conn = this.server!.connectAsServer(userId);
-    const query = await createFetchQuery(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, { projectRef: projectId });
-    const promises: Promise<boolean>[] = [];
-    for (const doc of query.results) {
-      switch (projectDomain) {
-        case SFProjectDomain.Answers:
-          promises.push(this.removeAnswerReadRefs(doc, entity as Answer));
-          break;
-        case SFProjectDomain.AnswerComments:
-          promises.push(this.removeCommentReadRefs(doc, entity as Comment));
-          break;
+    try {
+      const query = await createFetchQuery(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, { projectRef: projectId });
+      const promises: Promise<boolean>[] = [];
+      for (const doc of query.results) {
+        switch (projectDomain) {
+          case SFProjectDomain.Answers:
+            promises.push(this.removeAnswerReadRefs(doc, entity as Answer));
+            break;
+          case SFProjectDomain.AnswerComments:
+            promises.push(this.removeCommentReadRefs(doc, entity as Comment));
+            break;
+        }
       }
+      await Promise.all(promises);
+    } finally {
+      conn.close();
     }
-    await Promise.all(promises);
   }
 
   private removeAnswerReadRefs(doc: Doc, answer: Answer): Promise<boolean> {

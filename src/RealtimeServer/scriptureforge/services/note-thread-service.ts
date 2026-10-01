@@ -258,21 +258,26 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     const parts: string[] = docId.split(':');
     const projectId: string = parts[0];
     const conn: Connection = this.server.connectAsServer(userId);
-    const pucDocs: Doc[] = (await createFetchQuery(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, { projectRef: projectId }))
-      .results;
-    const promises: Promise<boolean>[] = [];
-    for (const doc of pucDocs) {
-      switch (projectDomain) {
-        case SFProjectDomain.PTNoteThreads:
-        case SFProjectDomain.SFNoteThreads:
-          (entity as NoteThread).notes.forEach((note: Note) => promises.push(this.removeNoteHaveReadRefs(doc, note)));
-          break;
-        case SFProjectDomain.Notes:
-          promises.push(this.removeNoteHaveReadRefs(doc, entity as Note));
-          break;
+    try {
+      const pucDocs: Doc[] = (
+        await createFetchQuery(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, { projectRef: projectId })
+      ).results;
+      const promises: Promise<boolean>[] = [];
+      for (const doc of pucDocs) {
+        switch (projectDomain) {
+          case SFProjectDomain.PTNoteThreads:
+          case SFProjectDomain.SFNoteThreads:
+            (entity as NoteThread).notes.forEach((note: Note) => promises.push(this.removeNoteHaveReadRefs(doc, note)));
+            break;
+          case SFProjectDomain.Notes:
+            promises.push(this.removeNoteHaveReadRefs(doc, entity as Note));
+            break;
+        }
       }
+      await Promise.all(promises);
+    } finally {
+      conn.close();
     }
-    await Promise.all(promises);
   }
 
   private removeNoteHaveReadRefs(sfProjectUserConfigDoc: Doc, note: Note): Promise<boolean> {
