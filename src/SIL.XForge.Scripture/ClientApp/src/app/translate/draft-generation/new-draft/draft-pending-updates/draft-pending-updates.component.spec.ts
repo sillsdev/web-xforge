@@ -6,6 +6,7 @@ import { Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
@@ -627,12 +628,14 @@ class TestEnvironment {
   component: DraftPendingUpdatesComponent;
   readonly mockedProjectService = mock(SFProjectService);
   readonly mockedErrorReportingService = mock(ErrorReportingService);
+  readonly mockedOnlineStatusService = mock(OnlineStatusService);
   readonly destroyRef = new FakeDestroyRef();
   private readonly mockedUserService = mock(UserService);
   private readonly projectDocs = new Map<string, { data: any; remoteChanges$: Subject<void> }>();
 
   constructor(projects: ProjectSpec[]) {
     when(this.mockedUserService.currentUserId).thenReturn(USER_ID);
+    when(this.mockedOnlineStatusService.isOnline).thenReturn(true);
 
     for (const spec of projects) {
       if (spec.failsToLoad) {
@@ -656,10 +659,12 @@ class TestEnvironment {
       instance(this.mockedUserService),
       instance(this.mockedProjectService)
     );
+
     this.component = new DraftPendingUpdatesComponent(
       instance(this.mockedProjectService),
       permissionsService,
       instance(this.mockedErrorReportingService),
+      instance(this.mockedOnlineStatusService),
       this.destroyRef
     );
     this.component.pendingProjects = projects.map(p => ({ projectId: p.projectId, name: p.name }));
