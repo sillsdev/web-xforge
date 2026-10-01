@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.AspNetCore.SpaServices.StaticFiles;
@@ -150,8 +151,6 @@ public class Startup
 
         services.AddConfiguration(Configuration);
 
-        services.AddHostValidation(Configuration);
-
         services.AddFeatureManagement();
 
         services.AddSignalR();
@@ -233,7 +232,12 @@ public class Startup
 
         app.UseStatusCodePagesWithReExecute("/Status/Error", "?code={0}");
 
-        app.UseForwardedHeaders();
+        IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetService<IOptions<SiteOptions>>();
+        string[] allowedHosts = siteOptions.Value.GetOriginHosts();
+        app.UseForwardedHeaders(
+            new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All, AllowedHosts = allowedHosts }
+        );
+        app.UseHostValidation(allowedHosts);
 
         app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
 
@@ -245,7 +249,6 @@ public class Startup
                 OnPrepareResponse = ctx => ctx.Context.Response.Headers.Append("Cache-Control", "must-revalidate"),
             }
         );
-        IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetService<IOptions<SiteOptions>>();
         app.UseStaticFiles(
             new StaticFileOptions
             {

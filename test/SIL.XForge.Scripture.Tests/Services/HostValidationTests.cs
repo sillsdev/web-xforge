@@ -1,20 +1,15 @@
-using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.HostFiltering;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using NUnit.Framework;
 
 namespace SIL.XForge.Scripture.Services;
 
 [TestFixture]
-public class HostValidationServiceCollectionExtensionsTests
+public class HostValidationTests
 {
     [Test]
     public async Task AllowedHost_IsAccepted()
@@ -26,6 +21,18 @@ public class HostValidationServiceCollectionExtensionsTests
 
         Assert.That(statusCode, Is.EqualTo(StatusCodes.Status200OK));
         Assert.That(host, Is.EqualTo("scriptureforge.org"));
+    }
+
+    [Test]
+    public async Task AllowedHostWithPortAndDifferentCase_IsAccepted()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        (int statusCode, string? host) = await env.SendRequestAsync("ScriptureForge.org:443");
+
+        Assert.That(statusCode, Is.EqualTo(StatusCodes.Status200OK));
+        Assert.That(host, Is.EqualTo("ScriptureForge.org"));
     }
 
     [Test]
@@ -41,19 +48,44 @@ public class HostValidationServiceCollectionExtensionsTests
     }
 
     [Test]
-    public async Task AllowedForwardedHost_IsApplied()
+    public async Task MissingHost_IsRejected()
     {
         var env = new TestEnvironment();
 
         // SUT
-        (int statusCode, string? host) = await env.SendRequestAsync("scriptureforge.org", "example.org");
+        (int statusCode, string? host) = await env.SendRequestAsync("");
+
+        Assert.That(statusCode, Is.EqualTo(StatusCodes.Status400BadRequest));
+        Assert.That(host, Is.Null);
+    }
+
+    [Test]
+    public async Task AllowedForwardedHost_IsAcceptedWhenProxyHostIsNotListed()
+    {
+        // A reverse proxy connects to the app at its own address and forwards the host the user requested
+        var env = new TestEnvironment();
+
+        // SUT
+        (int statusCode, string? host) = await env.SendRequestAsync("localhost:5000", "example.org");
 
         Assert.That(statusCode, Is.EqualTo(StatusCodes.Status200OK));
         Assert.That(host, Is.EqualTo("example.org"));
     }
 
     [Test]
-    public async Task UnlistedForwardedHost_IsNotApplied()
+    public async Task UnlistedForwardedHost_IsRejected()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        (int statusCode, string? host) = await env.SendRequestAsync("localhost:5000", "evil.example");
+
+        Assert.That(statusCode, Is.EqualTo(StatusCodes.Status400BadRequest));
+        Assert.That(host, Is.Null);
+    }
+
+    [Test]
+    public async Task UnlistedForwardedHost_IsNotAppliedOverAllowedHost()
     {
         var env = new TestEnvironment();
 
@@ -71,32 +103,21 @@ public class HostValidationServiceCollectionExtensionsTests
 
         public TestEnvironment()
         {
-            IConfiguration configuration = new ConfigurationBuilder()
-                .AddInMemoryCollection(
-                    new Dictionary<string, string?>
-                    {
-                        ["Site:Origin"] = "https://scriptureforge.org;https://example.org",
-                    }
-                )
-                .Build();
-            ServiceProvider services = new ServiceCollection().AddHostValidation(configuration).BuildServiceProvider();
+            string[] allowedHosts = ["scriptureforge.org", "example.org"];
+            ServiceProvider services = new ServiceCollection().AddLogging().BuildServiceProvider();
 
-            // In the app, host filtering is added ahead of the whole pipeline, so it runs before forwarded headers
-            var forwardedHeaders = new ForwardedHeadersMiddleware(
-                context =>
-                {
-                    _hostSeenByApp = context.Request.Host.Host;
-                    return Task.CompletedTask;
-                },
-                NullLoggerFactory.Instance,
-                services.GetRequiredService<IOptions<ForwardedHeadersOptions>>()
+            // Same as in Startup
+            var app = new ApplicationBuilder(services);
+            app.UseForwardedHeaders(
+                new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All, AllowedHosts = allowedHosts }
             );
-            var hostFiltering = new HostFilteringMiddleware(
-                forwardedHeaders.Invoke,
-                NullLogger<HostFilteringMiddleware>.Instance,
-                services.GetRequiredService<IOptionsMonitor<HostFilteringOptions>>()
-            );
-            _pipeline = hostFiltering.Invoke;
+            app.UseHostValidation(allowedHosts);
+            app.Run(context =>
+            {
+                _hostSeenByApp = context.Request.Host.Host;
+                return Task.CompletedTask;
+            });
+            _pipeline = app.Build();
         }
 
         public async Task<(int statusCode, string? host)> SendRequestAsync(string host, string? forwardedHost = null)
