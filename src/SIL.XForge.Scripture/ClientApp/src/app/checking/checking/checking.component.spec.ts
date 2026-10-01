@@ -77,6 +77,7 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { AudioRecorderDialogComponent } from '../../shared/audio-recorder-dialog/audio-recorder-dialog.component';
+import { AudioPlayer } from '../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { provideQuillRegistrations } from '../../shared/text/quill-editor-registration/quill-providers';
@@ -1553,6 +1554,20 @@ describe('CheckingComponent', () => {
       flush();
     }));
 
+    it('keeps the audio source of an answer when another user answers', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      env.selectQuestion(9);
+      const answerWithAudio = env.component.answersPanel!.answers.find(answer => answer.audioUrl != null)!;
+      const source = env.component.answersPanel!.getFileSource(answerWithAudio.audioUrl);
+      expect(source).toBeDefined();
+
+      env.simulateNewRemoteAnswer();
+
+      // A new source would restart any audio that is playing
+      expect(env.component.answersPanel!.getFileSource(answerWithAudio.audioUrl)).toBe(source);
+      flush();
+    }));
+
     it('highlights remotely edited answer', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(9);
@@ -1576,6 +1591,21 @@ describe('CheckingComponent', () => {
       env.simulateSync(answerIndex);
       expect(env.getAnswer(answerIndex).classes['attention']).toBeUndefined();
       expect(env.getAnswerText(answerIndex)).toBe('Answer 1 on question');
+      flush();
+    }));
+
+    it('does not reload answer audio when a comment is added remotely', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      env.selectQuestion(9);
+      const answerIndex = 1;
+      env.waitForAudioPlayer();
+      const audio = env.getAnswerAudio(answerIndex);
+      expect(audio).withContext('setup problem').not.toBeUndefined();
+
+      env.simulateRemoteAddComment(answerIndex);
+
+      expect(env.getAnswerComments(answerIndex).length).toEqual(1);
+      expect(env.getAnswerAudio(answerIndex)).withContext('the audio should not have been reloaded').toBe(audio);
       flush();
     }));
 
@@ -1606,6 +1636,22 @@ describe('CheckingComponent', () => {
       const otherAnswerIndex = 1;
       expect(env.getAnswer(myAnswerIndex).classes['attention']).toBe(true);
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
+      flush();
+    }));
+
+    it('keeps the audio source of an answer when the question is edited remotely', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      const data: FileOfflineData = { id: 'a6Id', dataCollection: 'questions', blob: getAudioBlob() };
+      when(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', 'a6Id', '/audio.mp3')).thenResolve(data);
+      env.selectQuestion(6);
+      env.waitForSliderUpdate();
+      const answer = env.component.answersPanel!.answers[0];
+      const source: string | undefined = env.component.answersPanel!.getFileSource(answer.audioUrl);
+      expect(source).withContext('setup').toBeDefined();
+
+      env.simulateRemoteEditAnswer(0, 'Answer 6 edited on question');
+
+      expect(env.component.answersPanel!.getFileSource(answer.audioUrl)).toBe(source);
       flush();
     }));
 
@@ -3460,6 +3506,14 @@ class TestEnvironment {
     return this.getAnswer(answerIndex).queryAll(By.css('.comment'));
   }
 
+  /** The audio the answer's player has loaded, if any. */
+  getAnswerAudio(answerIndex: number): AudioPlayer | undefined {
+    const player: CheckingAudioPlayerComponent = this.getAnswer(answerIndex).query(
+      By.css('app-checking-audio-player')
+    ).componentInstance;
+    return player.audioPlayer?.audio;
+  }
+
   getAnswerComment(answerIndex: number, commentIndex: number): DebugElement {
     return this.getAnswerComments(answerIndex)[commentIndex];
   }
@@ -3711,6 +3765,23 @@ class TestEnvironment {
     questionDoc.submitJson0Op(op => {
       op.set(q => q.answers[index].text!, text);
       op.set(q => q.answers[index].dateModified, new Date().toJSON());
+    }, false);
+    tick(this.questionReadTimer);
+    this.fixture.detectChanges();
+    tick();
+  }
+
+  simulateRemoteAddComment(answerIndex: number): void {
+    const questionDoc = this.component.questionsList!.activeQuestionDoc!;
+    questionDoc.submitJson0Op(op => {
+      op.insert(q => q.answers[answerIndex].comments, 0, {
+        dataId: objectId(),
+        ownerRef: ADMIN_USER.id,
+        text: 'A comment from another user',
+        dateCreated: new Date().toJSON(),
+        dateModified: new Date().toJSON(),
+        deleted: false
+      });
     }, false);
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
