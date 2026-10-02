@@ -1,5 +1,4 @@
 import { Doc, Op } from 'sharedb/lib/client';
-import { submitMigrationOp } from '../../common/realtime-server';
 import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../migration';
 
 class UserMigration1 extends DocMigration {
@@ -16,7 +15,7 @@ class UserMigration1 extends DocMigration {
       }
     }
     if (ops.length > 0) {
-      await submitMigrationOp(UserMigration1.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
