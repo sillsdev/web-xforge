@@ -205,7 +205,6 @@
     "info_alert_no_training_source_access": "No tiene acceso al proyecto fuente de formación {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
     "info_alert_download_error": "Ha habido un problema al descargar su borrador. Por favor, compruebe su conexión a Internet e inténtelo de nuevo en varios minutos.",
     "info_alert_no_additional_training_source_access": "No tiene acceso al proyecto fuente de formación adicional {{ name }}. Póngase en contacto con su administrador de Paratext para obtener acceso y, a continuación, [link:connectProjectUrl]conéctese a este proyecto[/link] antes de poder generar un borrador.",
-    "info_alert_please_have_admin_configure_sources": "Por favor, haga que un administrador del proyecto configure las fuentes de borradores. Entonces podrá generar borradores.",
     "instructions_draft_process": "Generar un borrador suele llevar al menos {{ count }} horas.",
     "instructions_draft_process_subtext": "Puede tardar mucho más cuando el sistema está ocupado.",
     "instructions_help": "Para más información, { 1 } consulte el sitio de ayuda{ 2 }.",
@@ -321,8 +320,8 @@
   },
   "draft_confidence": {
     "low_confidence": "Baja confianza",
-    "low_confidence_book": "Draft quality for {{ book }} may be lower than normal. [link:learnMoreLink]Learn more[/link]",
-    "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal. [link:learnMoreLink]Learn more[/link]",
+    "low_confidence_book": "La calidad del borrador de « {{ book }} » puede ser inferior a la habitual. [link:learnMoreLink]Más información[/link]",
+    "low_confidence_books": "La calidad del borrador de « {{ number }} » libros puede ser inferior a la habitual. [link:learnMoreLink]Más información[/link]",
     "one_book": "1 libro"
   },
   "draft_generation_steps": {

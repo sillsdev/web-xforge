@@ -205,7 +205,6 @@
     "info_alert_no_training_source_access": "Du hast keinen Zugriff auf das Ausgangsprojekt für Schulung {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
     "info_alert_download_error": "Beim Herunterladen Deines Entwurfs ist ein Problem aufgetreten. Bitte überprüfe Deine Internetverbindung und versuche es in einigen Minuten erneut.",
     "info_alert_no_additional_training_source_access": "Du hast keinen Zugriff auf das zusätzliche Ausgangsprojekt für die Schulung {{ name }}. Bitte wende Dich an Deinen Paratext-Administrator, um Zugang zu erhalten, und stelle dann eine [link:connectProjectUrl]Verbindung zu diesem Projekt[/link] her, bevor Du einen Entwurf generieren kannst.",
-    "info_alert_please_have_admin_configure_sources": "Bitte lass einen Projektadministratoren die Ausgangstexte für den Entwurf bearbeiten. Danach kannst Du Entwürfe generieren lassen.",
     "instructions_draft_process": "Das Generieren eines Entwurfs dauert in der Regel mindestens {{ count }} Stunden.",
     "instructions_draft_process_subtext": "Wenn das System ausgelastet ist, kann es viel länger dauern.",
     "instructions_help": "Weitere Informationen findest Du unter { 1 } auf der Hilfeseite{ 2 }.",
