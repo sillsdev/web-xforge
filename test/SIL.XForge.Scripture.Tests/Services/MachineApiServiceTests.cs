@@ -50,6 +50,7 @@ public class MachineApiServiceTests
     private const string TrainingDataId01 = "trainingDataId01";
     private const string User01 = "user01";
     private const string User02 = "user02";
+    private const string User03 = "user03";
     private const string Paratext01 = "paratext01";
     private const string Paratext02 = "paratext02";
     private const string ParatextUserId01 = "paratextUser01";
@@ -605,6 +606,61 @@ public class MachineApiServiceTests
                 "Activity should contain draftGenerationRequestId tag with correct value"
             );
         }
+    }
+
+    [TestCase(JobState.Completed)]
+    [TestCase(JobState.Faulted)]
+    [TestCase(JobState.Canceled)]
+    public async Task BuildCompletedAsync_SetsDraftResultForProjectUsers(JobState buildState)
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetEmptyDraftGenerationMetricAssociations();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(QueryResults<EventMetric>.Empty));
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            ServalBuildId01,
+            buildState,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
+        );
+
+        await env.MachineProjectService.Received(1).SetDraftResultForProjectUsersAsync(Project01, buildState);
+    }
+
+    [Test]
+    public async Task BuildCompletedAsync_SetsDraftResultWhenEmailFails()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.SetEmptyDraftGenerationMetricAssociations();
+        env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
+            .Returns(Task.FromResult(env.GetEventMetricsForBuildCompleted(true)));
+        var ex = new InvalidOperationException();
+        env.MachineProjectService.SendBuildCompletedEmailAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<JobState>(),
+                Arg.Any<Uri>(),
+                CancellationToken.None
+            )
+            .ThrowsAsync(ex);
+
+        // SUT
+        await env.Service.BuildCompletedAsync(
+            Project01,
+            ServalBuildId01,
+            JobState.Completed,
+            env.SiteOptions.Value.WebsiteUrl,
+            CancellationToken.None
+        );
+
+        await env.MachineProjectService.Received(1).SetDraftResultForProjectUsersAsync(Project01, JobState.Completed);
+        env.ExceptionHandler.Received().ReportException(ex);
     }
 
     [Test]

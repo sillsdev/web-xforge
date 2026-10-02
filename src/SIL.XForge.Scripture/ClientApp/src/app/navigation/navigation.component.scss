@@ -77,6 +77,18 @@ mat-nav-list .mdc-list-item {
   line-height: 1.4rem;
 }
 
+#draft-generation-icon ::ng-deep .mat-badge-content {
+  font-family: 'Material Icons';
+  background: transparent;
+  color: var(--sf-navigation-icon-badge);
+  font-weight: normal;
+  font-size: 1.4rem;
+  top: 4px;
+  width: 1.4em;
+  height: 1.4em;
+  line-height: 1.4rem;
+}
+
 .navigation-header {
   --mat-list-list-item-hover-state-layer-opacity: 0;
   cursor: initial;
