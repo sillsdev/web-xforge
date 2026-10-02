@@ -3,7 +3,7 @@ import ajvBsonType from 'ajv-bsontype';
 import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
-import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
+import { Connection, Doc, RawOp } from 'sharedb/lib/client';
 import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
@@ -217,30 +217,6 @@ class MigrationAgent extends ShareDB.Agent {
       super._handleMessage(request, callback);
     }
   }
-}
-
-/**
- * Submits a migration op to the specified doc.
- *
- * @param {number} version The migration version.
- * @param {Doc} doc The doc.
- * @param {Op[]} ops The ops.
- * @returns {Promise<void>}
- */
-export function submitMigrationOp(version: number, doc: Doc, ops: Op[]): Promise<void> {
-  if (ops.length === 0) {
-    return Promise.resolve();
-  }
-  return new Promise<void>((resolve, reject) => {
-    const op: RawOp = { op: ops, mv: version };
-    doc._submit(op, undefined, err => {
-      if (err != null) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
 }
 
 /**

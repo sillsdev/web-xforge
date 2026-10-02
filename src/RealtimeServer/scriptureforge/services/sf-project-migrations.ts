@@ -2,7 +2,6 @@ import { Canon } from '@sillsdev/scripture';
 import { Doc, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
 import { Operation } from '../../common/models/project-rights';
-import { submitMigrationOp } from '../../common/realtime-server';
 import { NoteTag } from '../models/note-tag';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -24,7 +23,7 @@ class SFProjectMigration1 extends DocMigration {
       }
     }
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration1.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -54,7 +53,7 @@ class SFProjectMigration2 extends DocMigration {
       }
     }
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration2.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -86,7 +85,7 @@ class SFProjectMigration3 extends DocMigration {
       }
     }
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration3.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -96,7 +95,7 @@ class SFProjectMigration4 extends DocMigration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [{ p: ['userPermissions'], oi: {} }];
-    await submitMigrationOp(SFProjectMigration4.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -110,7 +109,7 @@ class SFProjectMigration5 extends DocMigration {
     }
     ops.push({ p: ['translateConfig', 'shareEnabled'], oi: false });
     ops.push({ p: ['translateConfig', 'shareLevel'], oi: TranslateShareLevel.Specific });
-    await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -122,7 +121,7 @@ class SFProjectMigration6 extends DocMigration {
     if (doc.data.editable == null) {
       ops.push({ p: ['editable'], oi: true });
     }
-    await submitMigrationOp(SFProjectMigration6.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -135,7 +134,7 @@ class SFProjectMigration7 extends DocMigration {
     if (tagIcon != null) {
       ops.push({ p: ['tagIcon'], od: tagIcon });
     }
-    await submitMigrationOp(SFProjectMigration7.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -149,7 +148,7 @@ class SFProjectMigration8 extends DocMigration {
       ops.push({ p: ['sync', 'percentCompleted'], od: percentCompleted });
     }
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -172,7 +171,7 @@ class SFProjectMigration9 extends DocMigration {
     if (checkingConfigShareLevel != null) {
       ops.push({ p: ['checkingConfig', 'shareLevel'], od: checkingConfigShareLevel });
     }
-    await submitMigrationOp(SFProjectMigration9.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -184,7 +183,7 @@ class SFProjectMigration10 extends DocMigration {
     if (doc.data.translateConfig != null) {
       ops.push({ p: ['translateConfig', 'preTranslate'], oi: false });
     }
-    await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -202,7 +201,7 @@ class SFProjectMigration11 extends DocMigration {
     if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.hasRenderings === undefined) {
       ops.push({ p: ['biblicalTermsConfig', 'hasRenderings'], oi: false });
     }
-    await submitMigrationOp(SFProjectMigration11.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -214,7 +213,7 @@ class SFProjectMigration12 extends DocMigration {
     if (doc.data.translateConfig.draftConfig == null) {
       ops.push({ p: ['translateConfig', 'draftConfig'], oi: {} });
     }
-    await submitMigrationOp(SFProjectMigration12.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -226,7 +225,7 @@ class SFProjectMigration13 extends DocMigration {
     if (doc.data.translateConfig.draftConfig.lastSelectedBooks == null) {
       ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedBooks'], oi: [] });
     }
-    await submitMigrationOp(SFProjectMigration13.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -253,7 +252,7 @@ class SFProjectMigration14 extends DocMigration {
       ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedTranslationBooks'], oi: [] });
     }
 
-    await submitMigrationOp(SFProjectMigration14.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -269,7 +268,7 @@ class SFProjectMigration15 extends DocMigration {
         ops.push({ p: ['noteTags', i, 'creatorResolve'], oi: true });
       }
     }
-    await submitMigrationOp(SFProjectMigration15.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -282,7 +281,7 @@ class SFProjectMigration16 extends DocMigration {
       ops.push({ p: ['translateConfig', 'draftConfig', 'sendAllSegments'], oi: false });
     }
 
-    await submitMigrationOp(SFProjectMigration16.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -297,7 +296,7 @@ class SFProjectMigration17 extends DocMigration {
     if (doc.data.translateConfig.draftConfig.additionalTrainingData == null) {
       ops.push({ p: ['translateConfig', 'draftConfig', 'additionalTrainingData'], oi: false });
     }
-    await submitMigrationOp(SFProjectMigration17.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -314,7 +313,7 @@ class SFProjectMigration18 extends DocMigration {
       }
     }
 
-    await submitMigrationOp(SFProjectMigration18.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -330,7 +329,7 @@ class SFProjectMigration19 extends DocMigration {
       });
     }
 
-    await submitMigrationOp(SFProjectMigration19.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -343,7 +342,7 @@ class SFProjectMigration20 extends DocMigration {
       ops.push({ p: ['translateConfig', 'draftConfig', 'additionalTrainingSourceEnabled'], oi: false });
     }
 
-    await submitMigrationOp(SFProjectMigration20.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -385,7 +384,7 @@ class SFProjectMigration21 extends DocMigration {
       }
     }
 
-    await submitMigrationOp(SFProjectMigration21.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -417,7 +416,7 @@ class SFProjectMigration22 extends DocMigration {
       }
     }
 
-    await submitMigrationOp(SFProjectMigration22.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -432,7 +431,7 @@ class SFProjectMigration23 extends DocMigration {
         od: doc.data.translateConfig.draftConfig.usfmConfig
       });
     }
-    await submitMigrationOp(SFProjectMigration23.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -449,7 +448,7 @@ class SFProjectMigration24 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration24.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -474,7 +473,7 @@ class SFProjectMigration25 extends DocMigration {
     if (doc.data.lynxConfig?.allowedCharacterCheckerEnabled == null) {
       ops.push({ p: ['lynxConfig', 'allowedCharacterCheckerEnabled'], oi: false });
     }
-    await submitMigrationOp(SFProjectMigration25.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -549,7 +548,7 @@ class SFProjectMigration26 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration26.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -627,7 +626,7 @@ class SFProjectMigration27 extends DocMigration {
       });
     }
 
-    await submitMigrationOp(SFProjectMigration27.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -658,7 +657,7 @@ class SFProjectMigration28 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(SFProjectMigration28.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -672,7 +671,7 @@ class SFProjectMigration29 extends DocMigration {
     if (qualityEstimationConfig != null) {
       ops.push({ p: ['translateConfig', 'draftConfig', 'qualityEstimationConfig'], od: qualityEstimationConfig });
     }
-    await submitMigrationOp(SFProjectMigration29.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 

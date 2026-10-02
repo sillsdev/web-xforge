@@ -1,6 +1,5 @@
 import { Doc, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
-import { submitMigrationOp } from '../../common/realtime-server';
 
 class NoteThreadMigration1 extends DocMigration {
   static readonly VERSION = 1;
@@ -13,7 +12,7 @@ class NoteThreadMigration1 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(NoteThreadMigration1.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -36,7 +35,7 @@ class NoteThreadMigration2 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(NoteThreadMigration2.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
@@ -49,7 +48,7 @@ class NoteThreadMigration3 extends DocMigration {
     if (doc.data.threadId != null) return;
     ops.push({ p: ['threadId'], oi: doc.data.dataId });
 
-    await submitMigrationOp(NoteThreadMigration2.VERSION, doc, ops);
+    await this.submitMigrationOp(doc, ops);
   }
 }
 
@@ -64,7 +63,7 @@ class NoteThreadMigration4 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(NoteThreadMigration3.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
