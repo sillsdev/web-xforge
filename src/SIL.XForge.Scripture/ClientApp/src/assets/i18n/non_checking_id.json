@@ -205,7 +205,6 @@
     "info_alert_no_training_source_access": "Anda tidak memiliki akses ke proyek sumber terjemahan {{ name }}. Silakan hubungi Administrator Paratext Anda untuk mendapatkan akses, kemudian [link:connectProjectUrl] sambungkan ke proyek ini [/link] sebelum Anda dapat membuat konsep.",
     "info_alert_download_error": "Ada masalah saat mengunduh konsep Anda. Periksa koneksi Internet Anda dan coba lagi dalam beberapa menit.",
     "info_alert_no_additional_training_source_access": "Anda tidak memiliki akses ke proyek sumber pelatihan tambahan {{ name }}. Silakan hubungi Administrator Paratext Anda untuk mendapatkan akses, kemudian [link:connectProjectUrl] sambungkan ke proyek ini [/link] sebelum Anda dapat membuat konsep.",
-    "info_alert_please_have_admin_configure_sources": "Mintalah administrator proyek untuk mengelola sumber konsep. Kemudian Anda akan dapat membuat konsep.",
     "instructions_draft_process": "Membuat konsep biasanya membutuhkan waktu setidaknya {{ count }} jam.",
     "instructions_draft_process_subtext": "Hal ini dapat memakan waktu lebih lama apabila sistem sedang sibuk.",
     "instructions_help": "Untuk informasi lebih lanjut, { 1 } lihat situs bantuan{ 2 }.",

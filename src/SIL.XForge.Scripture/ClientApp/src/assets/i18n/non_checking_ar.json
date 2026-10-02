@@ -205,7 +205,6 @@
     "info_alert_no_training_source_access": "ليس لديك حق الوصول إلى مشروع مصدر التَّرْجَمَة {{ name }}. الرجاء الاتصال بمسؤول Paratext للوصول، ثم [link:connectProjectUrl]الاتصال بهذا المشروع[/link] قبل أن تتمكن من إنشاء مُسَوَّدة.",
     "info_alert_download_error": "حدثت مشكلة في أثناء تنزيل مسودتك. يرجى التحقق من اتصالك بالإنترنت ومحاولة التنزيل مرة أخرى بعد بضع دقائق.",
     "info_alert_no_additional_training_source_access": "ليس لديك حق الوصول إلى مشروع مصدر التدريب الإضافي {{ name }}. يرجى الاتصال بمسؤول Paratext الخاص بك للحصول على حق الوصول، ثم [link:connectProjectUrl]الاتصال بهذا المشروع[/link] قبل أن تتمكن من إنشاء مُسَوَّدة.",
-    "info_alert_please_have_admin_configure_sources": "يرجى الطلب من أحد مسؤولي المشروع تهيئة مصادر المسودات. وعندها ستتمكن من إنشاء المسودات.",
     "instructions_draft_process": "عادةً ما يستغرق إعداد مُسَوَّدة ما لا يقل عن {{ count }} ساعات.",
     "instructions_draft_process_subtext": "قد يستغرق الأمر وقتًا أطول بكثير عندما يكون النظام مشغولاً.",
     "instructions_help": "للحصول على مزيد من المعلومات، انظر { 1 } موقع المساعدة{ 2 }.",

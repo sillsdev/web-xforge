@@ -205,7 +205,6 @@
     "info_alert_no_training_source_access": "Vous n'avez pas accès au projet source de formation {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer une ébauche.",
     "info_alert_download_error": "Un problème est survenu lors du téléchargement de votre ébauche. Veuillez vérifier votre connexion Internet et réessayer dans quelques minutes.",
     "info_alert_no_additional_training_source_access": "Vous n'avez pas accès au projet source de formation supplémentaire {{ name }}. Veuillez contacter votre administrateur Paratext pour y accéder, puis [link:connectProjectUrl]vous connecter à ce projet[/link] avant de pouvoir générer une ébauche.",
-    "info_alert_please_have_admin_configure_sources": "Veuillez demander à un administrateur de projet de configurer les sources d'ébauche. Vous serez alors en mesure de générer des ébauches.",
     "instructions_draft_process": "La génération d'une ébauche prend généralement au moins {{ count }} heures.",
     "instructions_draft_process_subtext": "Cela peut prendre beaucoup plus de temps lorsque le système est occupé.",
     "instructions_help": "Pour plus d'informations, { 1 } consultez le site d'aide{ 2 }.",
