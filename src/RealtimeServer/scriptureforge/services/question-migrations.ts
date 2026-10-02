@@ -1,6 +1,5 @@
 import { Doc, Op } from 'sharedb/lib/client';
 import { DocMigration, MigrationConstructor, monotonicallyIncreasingMigrationList } from '../../common/migration';
-import { submitMigrationOp } from '../../common/realtime-server';
 
 class QuestionMigration1 extends DocMigration {
   static readonly VERSION = 1;
@@ -19,7 +18,7 @@ class QuestionMigration1 extends DocMigration {
     }
 
     if (ops.length > 0) {
-      await submitMigrationOp(QuestionMigration1.VERSION, doc, ops);
+      await this.submitMigrationOp(doc, ops);
     }
   }
 }
