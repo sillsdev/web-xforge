@@ -1133,10 +1133,31 @@ public class ParatextSyncRunner : IParatextSyncRunner
     )
     {
         XDocument oldUsxDoc = GetBookUsx(paratextId, text.BookNum);
+        List<ChapterDelta>? paratextChapterDeltas = null;
+        ChapterDelta ToChapterDelta(Chapter chapter)
+        {
+            TextData textData = textDocs[chapter.Number].Data;
+
+            // ToUsx only writes chapters marked as valid, because converting an invalid chapter back to USX can lose
+            // data. A draft applied to an invalid chapter is still written, as otherwise the draft never reaches
+            // Paratext, and the sync then replaces it with whatever Paratext has. The local repo holds the text from
+            // the last sync, so if the chapter differs from it, the draft has not been written yet.
+            bool writeChapter = chapter.IsValid;
+            if (!chapter.IsValid && chapter.DraftApplied == true)
+            {
+                paratextChapterDeltas ??= [.. _deltaUsxMapper.ToChapterDeltas(oldUsxDoc)];
+                ChapterDelta? paratextChapterDelta = paratextChapterDeltas.FirstOrDefault(cd =>
+                    cd.Number == chapter.Number
+                );
+                writeChapter = paratextChapterDelta?.Delta.DeepEquals(textData) != true;
+            }
+
+            return new ChapterDelta(chapter.Number, chapter.LastVerse, writeChapter, textData);
+        }
+
         XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
             oldUsxDoc,
-            text.Chapters.OrderBy(c => c.Number)
-                .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data))
+            text.Chapters.OrderBy(c => c.Number).Select(ToChapterDelta)
         );
 
         if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))

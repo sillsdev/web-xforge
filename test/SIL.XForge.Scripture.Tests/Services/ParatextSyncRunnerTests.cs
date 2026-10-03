@@ -3372,6 +3372,117 @@ public class ParatextSyncRunnerTests
             );
     }
 
+    [Test]
+    public async Task UpdateParatextBook_InvalidChapterWithUnsyncedDraft_WritesDraft()
+    {
+        // A table cell marker inside a paragraph makes the chapter invalid
+        const string draftUsx =
+            "<usx version=\"3.0\"><book code=\"NUM\" style=\"id\" /><chapter number=\"1\" style=\"c\" />"
+            + "<para style=\"p\"><verse number=\"1\" style=\"v\" />Draft <char style=\"tc2\" closed=\"false\">cell</char>"
+            + "</para></usx>";
+        const string paratextUsx =
+            "<usx version=\"3.0\"><book code=\"NUM\" style=\"id\" /><chapter number=\"1\" style=\"c\" />"
+            + "<para style=\"p\"><verse number=\"1\" style=\"v\" />Old</para></usx>";
+
+        // SUT
+        TestEnvironment env = await UpdateBookWithOneChapterAsync(paratextUsx, draftUsx, draftApplied: true);
+
+        await env
+            .ParatextService.Received(1)
+            .PutBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Is((XDocument usx) => XNode.DeepEquals(ParatextSyncRunner.UsxToXDocument(draftUsx), usx)),
+                Arg.Any<Dictionary<int, string>>()
+            );
+    }
+
+    [Test]
+    public async Task UpdateParatextBook_InvalidChapterWithSyncedDraft_Unchanged()
+    {
+        // An earlier sync wrote the draft to Paratext, then updated the chapter from Paratext
+        const string usx =
+            "<usx version=\"3.0\"><book code=\"NUM\" style=\"id\" /><chapter number=\"1\" style=\"c\" />"
+            + "<para style=\"p\"><verse number=\"1\" style=\"v\" />Draft <char style=\"tc2\" closed=\"false\">cell</char>"
+            + "</para></usx>";
+
+        // SUT
+        TestEnvironment env = await UpdateBookWithOneChapterAsync(usx, usx, draftApplied: true);
+
+        await env.ParatextService.DidNotReceiveWithAnyArgs().PutBookText(default, default, default, default, default);
+    }
+
+    [Test]
+    public async Task UpdateParatextBook_InvalidChapterWithoutDraft_Unchanged()
+    {
+        const string sfUsx =
+            "<usx version=\"3.0\"><book code=\"NUM\" style=\"id\" /><chapter number=\"1\" style=\"c\" />"
+            + "<para style=\"p\"><verse number=\"1\" style=\"v\" />SF <char style=\"tc2\" closed=\"false\">cell</char>"
+            + "</para></usx>";
+        const string paratextUsx =
+            "<usx version=\"3.0\"><book code=\"NUM\" style=\"id\" /><chapter number=\"1\" style=\"c\" />"
+            + "<para style=\"p\"><verse number=\"1\" style=\"v\" />Old</para></usx>";
+
+        // SUT
+        TestEnvironment env = await UpdateBookWithOneChapterAsync(paratextUsx, sfUsx, draftApplied: false);
+
+        await env.ParatextService.DidNotReceiveWithAnyArgs().PutBookText(default, default, default, default, default);
+    }
+
+    /// <summary>
+    /// Runs <see cref="ParatextSyncRunner.UpdateParatextBookAsync"/> with a real <see cref="DeltaUsxMapper"/>, for a
+    /// book whose only chapter is invalid in SF.
+    /// </summary>
+    /// <param name="paratextUsx">The book in the Paratext local repo.</param>
+    /// <param name="sfUsx">The book that the chapter's text doc in SF was converted from.</param>
+    /// <param name="draftApplied">Whether a draft was applied to the chapter.</param>
+    private static async Task<TestEnvironment> UpdateBookWithOneChapterAsync(
+        string paratextUsx,
+        string sfUsx,
+        bool draftApplied
+    )
+    {
+        DeltaUsxMapper mapper = new(
+            new TestGuidService(),
+            Substitute.For<ILogger<DeltaUsxMapper>>(),
+            Substitute.For<IExceptionHandler>()
+        );
+        TestEnvironment env = new(false, mapper);
+        env.Runner._syncMetrics = new SyncMetrics();
+        env.RealtimeService.LastModifiedUserId = "user01";
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>()).Returns(paratextUsx);
+
+        ChapterDelta chapterDelta = mapper.ToChapterDeltas(ParatextSyncRunner.UsxToXDocument(sfUsx)).Single();
+        Assert.That(chapterDelta.IsValid, Is.False, "setup");
+        IDocument<TextData> textDoc = Substitute.For<IDocument<TextData>>();
+        textDoc.Id.Returns(TextData.GetTextDocId("project01", 4, 1));
+        textDoc.Data.Returns(new TextData(chapterDelta.Delta));
+        TextInfo text = new()
+        {
+            BookNum = 4,
+            Chapters =
+            [
+                new Chapter
+                {
+                    Number = 1,
+                    LastVerse = chapterDelta.LastVerse,
+                    IsValid = false,
+                    DraftApplied = draftApplied,
+                    Permissions = [],
+                },
+            ],
+            Permissions = new Dictionary<string, string> { { "user01", TextInfoPermission.Write } },
+        };
+
+        await env.Runner.UpdateParatextBookAsync(
+            text,
+            "pt01",
+            new SortedList<int, IDocument<TextData>> { { 1, textDoc } }
+        );
+        return env;
+    }
+
     private class Book
     {
         public Book(string bookId, int highestChapter, bool hasSource = true)
