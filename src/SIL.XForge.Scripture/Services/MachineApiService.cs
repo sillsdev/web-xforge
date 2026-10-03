@@ -1045,8 +1045,8 @@ public partial class MachineApiService(
         );
         if (queuedState is not null && queuedState.State != BuildStateFinishing)
         {
-            // The last build started will match the queued state
-            EventMetric? eventMetric = eventMetrics.Results.LastOrDefault(e =>
+            // The most recently started build is the queued one. Event metrics are ordered newest first.
+            EventMetric? eventMetric = eventMetrics.Results.FirstOrDefault(e =>
                 e.EventType == nameof(StartPreTranslationBuildAsync)
             );
             if (eventMetric is not null)
