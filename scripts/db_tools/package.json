@@ -20,8 +20,8 @@
     "sharedb": "^1.9.2",
     "sharedb-access": "^5.0.0",
     "sharedb-mongo": "^1.0.0",
-    "socket.io-client": "^4.8.3",
-    "ws": "^8.21.3",
+    "socket.io-client": "^4.8.4",
+    "ws": "^8.22.0",
     "yargs": "^17.7.3"
   },
   "devDependencies": {
