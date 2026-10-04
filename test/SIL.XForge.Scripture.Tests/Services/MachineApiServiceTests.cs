@@ -2167,8 +2167,47 @@ public class MachineApiServiceTests
                                 TimeStamp = requestedDateTime,
                                 UserId = User01,
                             },
+                            // An earlier build, which is returned after the newer one
+                            new EventMetric
+                            {
+                                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                                Payload =
+                                {
+                                    {
+                                        "buildConfig",
+                                        BsonDocument.Parse(
+                                            JsonConvert.SerializeObject(
+                                                new BuildConfig
+                                                {
+                                                    TrainingScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project03,
+                                                            ScriptureRange = "MAT",
+                                                        },
+                                                    ],
+                                                    TranslationScriptureRanges =
+                                                    [
+                                                        new ProjectScriptureRange
+                                                        {
+                                                            ProjectId = Project02,
+                                                            ScriptureRange = "MRK",
+                                                        },
+                                                    ],
+                                                    ProjectId = Project01,
+                                                }
+                                            )
+                                        )
+                                    },
+                                },
+                                ProjectId = Project01,
+                                Scope = EventScope.Drafting,
+                                TimeStamp = requestedDateTime.AddDays(-1),
+                                UserId = User02,
+                            },
                         ],
-                        UnpagedCount = 1,
+                        UnpagedCount = 2,
                     }
                 )
             );
