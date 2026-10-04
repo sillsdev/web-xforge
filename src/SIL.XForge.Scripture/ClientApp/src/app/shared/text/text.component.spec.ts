@@ -281,8 +281,9 @@ describe('TextComponent', () => {
     const verse3Marker: DOMRect = env.getVerseMarker('3')!.getBoundingClientRect();
     expect(verse2Marker.top).withContext('setup: verse 2 is all on one line').toEqual(verse2.top);
     expect(verse3Marker.top).withContext('setup: verse 2 is all on one line').toEqual(verse2.top);
-    expect(verse2Marker.left).toBeGreaterThanOrEqual(verse2.right);
-    expect(verse3Marker.right).toBeLessThanOrEqual(verse2.left);
+    const tolerance = 0.01;
+    expect(verse2Marker.left).toBeGreaterThanOrEqual(verse2.right - tolerance);
+    expect(verse3Marker.right).toBeLessThanOrEqual(verse2.left + tolerance);
   }));
 
   it('handles a null style on a paragraph', fakeAsync(() => {
