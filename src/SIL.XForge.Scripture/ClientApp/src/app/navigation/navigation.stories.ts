@@ -23,6 +23,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { provideCustomIcons } from '../shared/custom-icons';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
 
@@ -46,6 +47,12 @@ function setUpMocks(args: StoryState): void {
     sync: {
       queuedCount: args.syncInProgress ? 1 : 0,
       lastSyncSuccessful: args.lastSyncSuccessful
+    },
+    translateConfig: {
+      draftConfig: {
+        draftInProgress: args.draftInProgress,
+        lastDraftSuccessful: args.lastDraftSuccessful
+      }
     },
     userRoles: {
       [userId]: args.role
@@ -162,6 +169,8 @@ export default meta;
 interface StoryState {
   role: SFProjectRole;
   online: boolean;
+  draftInProgress: boolean;
+  lastDraftSuccessful: boolean;
   syncInProgress: boolean;
   lastSyncSuccessful: boolean;
   checkingEnabled: boolean;
@@ -174,6 +183,8 @@ export const Default: Story = {
   args: {
     role: SFProjectRole.ParatextAdministrator,
     online: true,
+    draftInProgress: false,
+    lastDraftSuccessful: true,
     syncInProgress: false,
     lastSyncSuccessful: true,
     checkingEnabled: true,
@@ -243,6 +254,30 @@ export const Commenter: Story = {
   args: { ...Default.args, role: SFProjectRole.Commenter },
   play: async ({ canvasElement }) => {
     expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review']);
+  }
+};
+
+export const DraftNotGenerated: Story = {
+  args: { ...Default.args, lastDraftSuccessful: undefined, draftInProgress: false },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('mat-spinner.status-icon')).toBeNull();
+    expect(canvasElement.querySelector('mat-icon.status-icon')).toBeNull();
+  }
+};
+
+export const DraftInProgress: Story = {
+  args: { ...Default.args, draftInProgress: true },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('mat-icon.status-icon')).toBeNull();
+    expect(canvasElement.querySelector('mat-spinner.status-icon')).toBeTruthy();
+  }
+};
+
+export const DraftFailed: Story = {
+  args: { ...Default.args, lastDraftSuccessful: false },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('mat-spinner.status-icon')).toBeNull();
+    expect(canvasElement.querySelector('mat-icon.status-icon')).toBeTruthy();
   }
 };
 
