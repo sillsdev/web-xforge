@@ -16,6 +16,11 @@
         <a mat-list-item [appRouterLink]="draftGenerationLink" [class.active]="draftGenerationActive">
           <mat-icon class="mirror-rtl">auto_awesome</mat-icon>
           {{ t("generate_draft") }}
+          @if (draftInProgress) {
+            <mat-spinner class="status-icon" [diameter]="20" [strokeWidth]="3"></mat-spinner>
+          } @else if (lastDraftFailed) {
+            <mat-icon class="status-icon" color="warn">error</mat-icon>
+          }
         </a>
       }
     }

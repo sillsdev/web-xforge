@@ -47,6 +47,12 @@ function setUpMocks(args: StoryState): void {
       queuedCount: args.syncInProgress ? 1 : 0,
       lastSyncSuccessful: args.lastSyncSuccessful
     },
+    translateConfig: {
+      draftConfig: {
+        draftInProgress: args.draftInProgress,
+        lastDraftSuccessful: args.lastDraftSuccessful
+      }
+    },
     userRoles: {
       [userId]: args.role
     }
@@ -162,6 +168,8 @@ export default meta;
 interface StoryState {
   role: SFProjectRole;
   online: boolean;
+  draftInProgress: boolean;
+  lastDraftSuccessful: boolean;
   syncInProgress: boolean;
   lastSyncSuccessful: boolean;
   checkingEnabled: boolean;
@@ -174,6 +182,8 @@ export const Default: Story = {
   args: {
     role: SFProjectRole.ParatextAdministrator,
     online: true,
+    draftInProgress: false,
+    lastDraftSuccessful: true,
     syncInProgress: false,
     lastSyncSuccessful: true,
     checkingEnabled: true,
@@ -244,6 +254,40 @@ export const Commenter: Story = {
   play: async ({ canvasElement }) => {
     expect(menuItems(canvasElement)).toEqual(['Overview', 'Edit & review']);
   }
+};
+
+export const DraftNotGenerated: Story = {
+  args: { ...Default.args, lastDraftSuccessful: undefined, draftInProgress: false },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('mat-spinner.status-icon')).toBeNull();
+    expect(canvasElement.querySelector('mat-icon.status-icon')).toBeNull();
+  }
+};
+
+export const DraftInProgress: Story = {
+  args: { ...Default.args, draftInProgress: true },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('mat-icon.status-icon')).toBeNull();
+    expect(canvasElement.querySelector('mat-spinner.status-icon')).toBeTruthy();
+  }
+};
+
+export const DraftInProgressRTL: Story = {
+  args: { ...Default.args, draftInProgress: true },
+  parameters: { locale: 'ar' }
+};
+
+export const DraftFailed: Story = {
+  args: { ...Default.args, lastDraftSuccessful: false },
+  play: async ({ canvasElement }) => {
+    expect(canvasElement.querySelector('mat-spinner.status-icon')).toBeNull();
+    expect(canvasElement.querySelector('mat-icon.status-icon')).toBeTruthy();
+  }
+};
+
+export const DraftFailedRTL: Story = {
+  args: { ...Default.args, lastDraftSuccessful: false },
+  parameters: { locale: 'ar' }
 };
 
 export const SyncInProgress: Story = {

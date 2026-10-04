@@ -91,3 +91,13 @@ mat-nav-list .mdc-list-item {
     color: var(--sf-disabled-foreground) !important;
   }
 }
+
+.status-icon {
+  margin-inline-start: auto;
+  margin-inline-end: 8px;
+}
+
+:host-context([dir='rtl']) .status-icon {
+  margin-inline-end: auto;
+  margin-inline-start: 8px;
+}
