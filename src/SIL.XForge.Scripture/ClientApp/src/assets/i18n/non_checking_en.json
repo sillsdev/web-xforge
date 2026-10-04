@@ -282,6 +282,7 @@
       "heading": "Sync before drafting",
       "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
       "checking_projects": "Checking project status...",
+      "offline_message": "Draft generation is not available offline.",
       "sync": "Sync",
       "sync_all": "Sync all",
       "continue_anyway": "Continue anyway",

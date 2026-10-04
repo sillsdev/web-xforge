@@ -4,12 +4,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { TranslocoModule } from '@ngneat/transloco';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { isSFProjectSyncing } from '../../../../sync/sync.component';
 import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
+import { isSFProjectSyncing } from '../../../../sync/sync.component';
 
 /** How long the "All synced" state lingers before auto-advancing, so the transition isn't jarring. */
 const AUTO_ADVANCE_DELAY_MS = 1500;
@@ -56,6 +57,7 @@ export class DraftPendingUpdatesComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
     private readonly errorReportingService: ErrorReportingService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly destroyRef: DestroyRef
   ) {
     this.destroyRef.onDestroy(() => {
@@ -141,6 +143,10 @@ export class DraftPendingUpdatesComponent implements OnInit {
    */
   get userSyncInProgress(): boolean {
     return this.rows.some(r => r.userInitiated && r.syncState === 'syncing');
+  }
+
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
   }
 
   syncProject(row: PendingProjectRow): void {
