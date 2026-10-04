@@ -6,12 +6,12 @@ import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ActivityLogger } from './activity-logger';
 import { ConnectSession } from './connect-session';
 import { MetadataDB } from './metadata-db';
-import { Migration } from './migration';
+import { DocMigration, Migration } from './migration';
 import { Project } from './models/project';
 import { SystemRole } from './models/system-role';
 import { User, USERS_COLLECTION } from './models/user';
 import { createTestUser } from './models/user-test-data';
-import { identifiersInClientRequest, RealtimeServer, submitMigrationOp } from './realtime-server';
+import { identifiersInClientRequest, RealtimeServer } from './realtime-server';
 import { ConnectionInternal, ResourceMonitor, sizeof } from './resource-monitor';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { ProjectService } from './services/project-service';
@@ -45,6 +45,20 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
+/** Submits ops to the doc as a migration with the specified version would. */
+function submitTestMigrationOp(version: number, doc: Doc, ops: Op[]): Promise<void> {
+  class TestMigration extends DocMigration {
+    static readonly VERSION = version;
+
+    async migrateDoc(_doc: Doc): Promise<void> {}
+
+    submit(): Promise<void> {
+      return this.submitMigrationOp(doc, ops);
+    }
+  }
+  return new TestMigration().submit();
+}
+
 describe('RealtimeServer', () => {
   it('migrates docs when schema version does not exist', async () => {
     const env = new TestEnvironment(false, true);
@@ -53,7 +67,7 @@ describe('RealtimeServer', () => {
     const mockedMigration = mock<Migration>();
     when(env.mockedUserService.getMigration(1)).thenReturn(instance(mockedMigration));
     when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) =>
-      submitMigrationOp(1, doc, [{ p: ['test'], oi: 'test_op' }])
+      submitTestMigrationOp(1, doc, [{ p: ['test'], oi: 'test_op' }])
     );
 
     await env.server.migrateIfNecessary();
@@ -71,7 +85,7 @@ describe('RealtimeServer', () => {
     const mockedMigration = mock<Migration>();
     when(env.mockedProjectService.getMigration(2)).thenReturn(instance(mockedMigration));
     when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) =>
-      submitMigrationOp(2, doc, [{ p: ['test'], oi: 'test_op' }])
+      submitTestMigrationOp(2, doc, [{ p: ['test'], oi: 'test_op' }])
     );
 
     await env.server.migrateIfNecessary();
@@ -88,7 +102,7 @@ describe('RealtimeServer', () => {
     when(env.mockedProjectService.schemaVersion).thenReturn(2);
     const mockedMigration = mock<Migration>();
     when(env.mockedProjectService.getMigration(2)).thenReturn(instance(mockedMigration));
-    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) => submitMigrationOp(2, doc, []));
+    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) => submitTestMigrationOp(2, doc, []));
 
     await env.server.migrateIfNecessary();
 
@@ -1420,7 +1434,7 @@ class TestEnvironment {
     const conn = this.server.connect();
     const doc = conn.get(collection, id);
     await docFetch(doc);
-    await submitMigrationOp(version, doc, ops);
+    await submitTestMigrationOp(version, doc, ops);
   }
 
   createDoc<T>(collection: string, id: string, data: T): Promise<void> {
