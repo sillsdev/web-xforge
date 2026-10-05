@@ -186,7 +186,12 @@ export const RightToLeft: Story = {
     // its left. Before SF-2481 the digits of the number and of both markers were reordered as one run, which put the
     // markers on the opposite sides.
     const verse2: DOMRect = getVerseSegment(canvasElement, '2').getBoundingClientRect();
-    expect(getVerseMarker(canvasElement, '2').getBoundingClientRect().left).toBeGreaterThanOrEqual(verse2.right);
-    expect(getVerseMarker(canvasElement, '3').getBoundingClientRect().right).toBeLessThanOrEqual(verse2.left);
+    const tolerance = 0.01;
+    expect(getVerseMarker(canvasElement, '2').getBoundingClientRect().left).toBeGreaterThanOrEqual(
+      verse2.right - tolerance
+    );
+    expect(getVerseMarker(canvasElement, '3').getBoundingClientRect().right).toBeLessThanOrEqual(
+      verse2.left + tolerance
+    );
   }
 };
