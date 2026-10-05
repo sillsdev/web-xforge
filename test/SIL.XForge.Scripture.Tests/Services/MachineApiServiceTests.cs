@@ -2122,6 +2122,8 @@ public class MachineApiServiceTests
         await env.QueueBuildAsync(Project01, dateTime: DateTime.UtcNow);
         env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<IList<TranslationBuild>>([]));
+
+        // Event metrics are returned newest first
         env.EventMetricService.GetEventMetricsAsync(Project01, Arg.Any<EventScope[]?>(), Arg.Any<string[]>())
             .Returns(
                 Task.FromResult(
@@ -2129,85 +2131,25 @@ public class MachineApiServiceTests
                     {
                         Results =
                         [
-                            new EventMetric
-                            {
-                                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
-                                Payload =
-                                {
-                                    {
-                                        "buildConfig",
-                                        BsonDocument.Parse(
-                                            JsonConvert.SerializeObject(
-                                                new BuildConfig
-                                                {
-                                                    TrainingScriptureRanges =
-                                                    [
-                                                        new ProjectScriptureRange
-                                                        {
-                                                            ProjectId = Project02,
-                                                            ScriptureRange = trainingScriptureRange,
-                                                        },
-                                                    ],
-                                                    TranslationScriptureRanges =
-                                                    [
-                                                        new ProjectScriptureRange
-                                                        {
-                                                            ProjectId = Project03,
-                                                            ScriptureRange = translationScriptureRange,
-                                                        },
-                                                    ],
-                                                    ProjectId = Project01,
-                                                }
-                                            )
-                                        )
-                                    },
-                                },
-                                ProjectId = Project01,
-                                Scope = EventScope.Drafting,
-                                TimeStamp = requestedDateTime,
-                                UserId = User01,
-                            },
-                            // An earlier build, which is returned after the newer one
-                            new EventMetric
-                            {
-                                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
-                                Payload =
-                                {
-                                    {
-                                        "buildConfig",
-                                        BsonDocument.Parse(
-                                            JsonConvert.SerializeObject(
-                                                new BuildConfig
-                                                {
-                                                    TrainingScriptureRanges =
-                                                    [
-                                                        new ProjectScriptureRange
-                                                        {
-                                                            ProjectId = Project03,
-                                                            ScriptureRange = "MAT",
-                                                        },
-                                                    ],
-                                                    TranslationScriptureRanges =
-                                                    [
-                                                        new ProjectScriptureRange
-                                                        {
-                                                            ProjectId = Project02,
-                                                            ScriptureRange = "MRK",
-                                                        },
-                                                    ],
-                                                    ProjectId = Project01,
-                                                }
-                                            )
-                                        )
-                                    },
-                                },
-                                ProjectId = Project01,
-                                Scope = EventScope.Drafting,
-                                TimeStamp = requestedDateTime.AddDays(-1),
-                                UserId = User02,
-                            },
+                            // A later request that was rejected because the build was already queued
+                            StartBuildEvent(
+                                User02,
+                                requestedDateTime.AddMinutes(1),
+                                "RUT",
+                                "1SA",
+                                exception: "BuildAlreadyRunningException"
+                            ),
+                            // The queued build
+                            StartBuildEvent(
+                                User01,
+                                requestedDateTime,
+                                trainingScriptureRange,
+                                translationScriptureRange
+                            ),
+                            // An earlier build
+                            StartBuildEvent(User02, requestedDateTime.AddDays(-1), "MAT", "MRK"),
                         ],
-                        UnpagedCount = 2,
+                        UnpagedCount = 3,
                     }
                 )
             );
@@ -2235,6 +2177,53 @@ public class MachineApiServiceTests
             translationScriptureRange,
             builds[0].AdditionalInfo?.TranslationScriptureRanges.First().ScriptureRange
         );
+
+        static EventMetric StartBuildEvent(
+            string userId,
+            DateTime timeStamp,
+            string trainingRange,
+            string translationRange,
+            string? exception = null
+        ) =>
+            new EventMetric
+            {
+                EventType = nameof(MachineApiService.StartPreTranslationBuildAsync),
+                Exception = exception,
+                Payload =
+                {
+                    {
+                        "buildConfig",
+                        BsonDocument.Parse(
+                            JsonConvert.SerializeObject(
+                                new BuildConfig
+                                {
+                                    TrainingScriptureRanges =
+                                    [
+                                        new ProjectScriptureRange
+                                        {
+                                            ProjectId = Project02,
+                                            ScriptureRange = trainingRange,
+                                        },
+                                    ],
+                                    TranslationScriptureRanges =
+                                    [
+                                        new ProjectScriptureRange
+                                        {
+                                            ProjectId = Project03,
+                                            ScriptureRange = translationRange,
+                                        },
+                                    ],
+                                    ProjectId = Project01,
+                                }
+                            )
+                        )
+                    },
+                },
+                ProjectId = Project01,
+                Scope = EventScope.Drafting,
+                TimeStamp = timeStamp,
+                UserId = userId,
+            };
     }
 
     [Test]
