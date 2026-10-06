@@ -3,6 +3,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { TranslocoModule } from '@ngneat/transloco';
 import { firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
+import { issuesEmailTemplate } from 'xforge-common/utils';
 import { BrandingService } from '../../core/branding.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../notice/notice.component';
@@ -11,8 +12,7 @@ import { UserFeedbackDialogComponent, UserFeedbackDialogResult } from './user-fe
 @Component({
   selector: 'app-user-feedback',
   imports: [NoticeComponent, TranslocoModule],
-  templateUrl: './user-feedback.component.html',
-  styleUrls: ['./user-feedback.component.scss']
+  templateUrl: './user-feedback.component.html'
 })
 export class UserFeedbackComponent {
   @Output() submitted = new EventEmitter<void>();
@@ -25,6 +25,10 @@ export class UserFeedbackComponent {
 
   get siteName(): string {
     return this.brandingService.siteName;
+  }
+
+  get issueMailTo(): string {
+    return issuesEmailTemplate();
   }
 
   async onSendFeedback(): Promise<void> {

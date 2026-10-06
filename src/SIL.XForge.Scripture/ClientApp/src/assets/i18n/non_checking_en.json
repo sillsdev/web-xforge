@@ -1064,6 +1064,7 @@
     "translation_language_name_placeholder": "e.g. Swahili, Tok Pisin"
   },
   "user_feedback": {
+    "ask_for_help": "ask for help",
     "close": "Close",
     "error_occurred": "An error occurred. Please try submitting feedback later.",
     "how_has_drafting_helped_your_project": "How has {{ siteName }} drafting helped your project?",
