@@ -3,7 +3,6 @@ import { Component, DestroyRef, EventEmitter, OnInit } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardHeader, MatCardTitle } from '@angular/material/card';
 import { MatDivider } from '@angular/material/divider';
-import { MatError } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
@@ -65,7 +64,6 @@ export interface ProjectStatus {
     MatCardHeader,
     MatCardContent,
     MatCardTitle,
-    MatError,
     TranslocoModule,
     MatProgressSpinner,
     LanguageCodesConfirmationComponent,

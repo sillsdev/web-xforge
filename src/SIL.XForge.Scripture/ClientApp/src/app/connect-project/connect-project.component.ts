@@ -5,7 +5,6 @@ import { MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDivider } from '@angular/material/divider';
-import { MatError } from '@angular/material/form-field';
 import { Router } from '@angular/router';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import { AuthService } from 'xforge-common/auth.service';
@@ -45,7 +44,6 @@ interface ConnectProjectFormValues {
     MatCardTitle,
     MatCardSubtitle,
     ProjectSelectComponent,
-    MatError,
     MatDivider,
     MatCheckbox,
     MatButton
