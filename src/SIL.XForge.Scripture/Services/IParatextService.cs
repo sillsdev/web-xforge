@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using SIL.Converters.Usj;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
@@ -112,8 +111,6 @@ public interface IParatextService
         string book,
         int chapter
     );
-
-    Task<Delta> GetDeltaFromUsfmAsync(string curUserId, string sfProjectId, string usfm, int bookNum);
 
     /// <summary>
     /// Gets the chapters in the USFM file as individual USJ objects.

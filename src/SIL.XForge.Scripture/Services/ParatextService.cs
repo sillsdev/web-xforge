@@ -2410,41 +2410,6 @@ public class ParatextService : DisposableBase, IParatextService
         scrText.Dispose();
     }
 
-    /// <summary>
-    /// Gets a delta from USFM data, utilising the Paratext scripture text underlying it.
-    /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The SF project identifer.</param>
-    /// <param name="usfm">The USFM data.</param>
-    /// <param name="bookNum">The book number</param>
-    /// <returns>The USFM as a Delta.</returns>
-    /// <exception cref="DataNotFoundException">The project or user was not found.</exception>
-    public async Task<Delta> GetDeltaFromUsfmAsync(string curUserId, string sfProjectId, string usfm, int bookNum)
-    {
-        // Load the user secret
-        if (!(await _userSecretRepository.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
-        {
-            throw new DataNotFoundException("The user secret cannot be found.");
-        }
-
-        // Connect to the realtime server
-        await using IConnection connection = await _realtimeService.ConnectAsync(userSecret.Id);
-
-        // Load the project so we can check security and get the Paratext identifier
-        IDocument<SFProject> projectDoc = connection.Get<SFProject>(sfProjectId);
-        await projectDoc.FetchAsync();
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("Project does not exist.");
-        }
-
-        // Load the Paratext project
-        using ScrText scrText = GetScrText(userSecret, projectDoc.Data.ParatextId);
-
-        // Get the USFM as a Delta
-        return GetDeltaFromUsfm(scrText, bookNum, usfm).Delta;
-    }
-
     protected override void DisposeManagedResources()
     {
         _registryClient.Dispose();
