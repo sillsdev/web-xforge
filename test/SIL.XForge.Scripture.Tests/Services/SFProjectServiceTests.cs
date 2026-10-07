@@ -5265,6 +5265,74 @@ public class SFProjectServiceTests
         Assert.That(thirdUnchangedSource.WritingSystem.Tag, Is.EqualTo(willNotChange));
     }
 
+    [Test]
+    public async Task EnsureUserCanApplyDraftToProjectAsync_Administrator()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.EnsureUserCanApplyDraftToProjectAsync(User01, Project01, "MAT");
+    }
+
+    [Test]
+    public async Task EnsureUserCanApplyDraftToProjectAsync_Consultant()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.EnsureUserCanApplyDraftToProjectAsync(User03, Project01, "MAT")
+        );
+    }
+
+    [Test]
+    public async Task EnsureUserCanApplyDraftToProjectAsync_InvalidTargetProject()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.EnsureUserCanApplyDraftToProjectAsync(User01, "invalid_project", "MAT")
+        );
+    }
+
+    [Test]
+    public async Task EnsureUserCanApplyDraftToProjectAsync_InvalidUser()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.EnsureUserCanApplyDraftToProjectAsync("invalid_user", Project01, "MAT")
+        );
+    }
+
+    [Test]
+    public async Task EnsureUserCanApplyDraftToProjectAsync_TranslatorWithEditPermission()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        const string scriptureRange = "MAT";
+        env.ParatextService.UserCanEdit(Arg.Any<UserSecret>(), paratextId, scriptureRange).Returns(true);
+
+        // SUT
+        await env.Service.EnsureUserCanApplyDraftToProjectAsync(User05, Project01, "MAT");
+    }
+
+    [Test]
+    public async Task EnsureUserCanApplyDraftToProjectAsync_TranslatorWithoutEditPermission()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        const string scriptureRange = "MAT";
+        env.ParatextService.UserCanEdit(Arg.Any<UserSecret>(), paratextId, scriptureRange).Returns(false);
+
+        // SUT
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.EnsureUserCanApplyDraftToProjectAsync(User05, Project01, scriptureRange)
+        );
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);

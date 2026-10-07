@@ -57,15 +57,36 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task ApplyPreTranslationToProject_Forbidden()
+    {
+        var env = new TestEnvironment();
+        const string scriptureRange = "GEN-EXO";
+        env.SFProjectService.EnsureUserCanApplyDraftToProjectAsync(User01, Project01, scriptureRange)
+            .Throws(new ForbiddenException());
+
+        var result = await env.Controller.ApplyPreTranslationToProject(
+            Project01,
+            scriptureRange,
+            Project01,
+            DateTime.UtcNow
+        );
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
     public async Task ApplyPreTranslationToProject_NotFound()
     {
         var env = new TestEnvironment();
         const string errorMessage = "Project Not Found";
-        env.SFProjectService.GetProjectAsync(Project01).Throws(new DataNotFoundException(errorMessage));
+        const string scriptureRange = "GEN-EXO";
+        env.SFProjectService.EnsureUserCanApplyDraftToProjectAsync(User01, Project01, scriptureRange)
+            .Throws(new DataNotFoundException(errorMessage));
 
         var result = await env.Controller.ApplyPreTranslationToProject(
             Project01,
-            "GEN-EXO",
+            scriptureRange,
             Project01,
             DateTime.UtcNow
         );
@@ -79,11 +100,13 @@ public class SFProjectsRpcControllerTests
     public async Task ApplyPreTranslationToProject_UnknownError()
     {
         var env = new TestEnvironment();
-        env.BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Throws(new ArgumentNullException());
+        const string scriptureRange = "GEN-EXO";
+        env.SFProjectService.EnsureUserCanApplyDraftToProjectAsync(User01, Project01, scriptureRange)
+            .Throws(new ArgumentNullException());
 
         // SUT
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Controller.ApplyPreTranslationToProject(Project01, "GEN-EXO", Project01, DateTime.UtcNow)
+            env.Controller.ApplyPreTranslationToProject(Project01, scriptureRange, Project01, DateTime.UtcNow)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }

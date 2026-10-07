@@ -45,8 +45,8 @@ public class SFProjectsRpcController(
     {
         try
         {
-            // Ensure the target project exists
-            _ = await projectService.GetProjectAsync(targetProjectId);
+            // Ensure the user can apply the draft to at least one of the chapters selected
+            await projectService.EnsureUserCanApplyDraftToProjectAsync(UserId, targetProjectId, scriptureRange);
 
             // Run the background job
             string jobId = backgroundJobClient.Enqueue<IMachineApiService>(r =>
@@ -60,6 +60,10 @@ public class SFProjectsRpcController(
                 )
             );
             return Ok(jobId);
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
         }
         catch (DataNotFoundException dnfe)
         {
