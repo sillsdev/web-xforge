@@ -115,6 +115,8 @@ public interface ISFProjectService : IProjectService
     [LogEventMetric(EventScope.Drafting)]
     Task SetDraftAppliedAsync(string userId, string projectId, int book, int chapter, bool draftApplied, int lastVerse);
 
+    Task EnsureUserCanApplyDraftToProjectAsync(string userId, string projectId, string scriptureRange);
+
     [LogEventMetric(EventScope.Drafting)]
     Task SetIsValidAsync(string userId, string projectId, int book, int chapter, bool isValid);
     Task SetRoleProjectPermissionsAsync(string curUserId, string projectId, string role, string[] permissions);

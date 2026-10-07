@@ -5137,6 +5137,176 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void UserCanEdit_Administrator()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(scrText);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "2PE");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorWithUserCanEditAllBooks()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Allow User 02 to edit all books
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(env.Username02, 0, PermissionSet.Manual, true);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCanEditChapter()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Allow User 02 to edit the chapter
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(
+            env.Username02,
+            40,
+            3,
+            scrText.Settings.Versification,
+            PermissionSet.Manual,
+            true
+        );
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT 3");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCanEditOneChapterInTheBook()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Allow User 02 to edit one chapter in the book
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(
+            env.Username02,
+            40,
+            3,
+            scrText.Settings.Versification,
+            PermissionSet.Manual,
+            true
+        );
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCannotEditTheBook()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Forbid User 02 from editing the book
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(env.Username02, 40, PermissionSet.Manual, false);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCannotEditTheChapter()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Forbid User 02 from editing the chapter
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(
+            env.Username02,
+            40,
+            3,
+            scrText.Settings.Versification,
+            PermissionSet.Manual,
+            false
+        );
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT 3");
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void UserCanEdit_Consultant()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // User 02 is a consultant
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.Consultant);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
     public void ResourceDocsNeedUpdating_NotResource()
     {
         // Setup test environment

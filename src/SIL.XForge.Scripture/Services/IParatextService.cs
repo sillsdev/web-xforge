@@ -96,6 +96,7 @@ public interface IParatextService
     WritingSystem GetWritingSystem(UserSecret userSecret, string paratextId);
     void ClearParatextDataCaches(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
+    bool UserCanEdit(UserSecret userSecret, string paratextId, string scriptureRange);
 
     Task<TextSnapshot> GetSnapshotAsync(
         UserSecret userSecret,
