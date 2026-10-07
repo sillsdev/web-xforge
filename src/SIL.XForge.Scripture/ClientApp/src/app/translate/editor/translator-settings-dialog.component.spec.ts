@@ -86,6 +86,25 @@ describe('TranslatorSettingsDialogComponent', () => {
       env.closeDialog();
     }));
 
+    it('should hide Lynx settings when a user does not have edit rights', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({
+        projectConfig: {
+          lynxConfig: {
+            autoCorrectionsEnabled: true,
+            assessmentsEnabled: true,
+            punctuationCheckerEnabled: false,
+            allowedCharacterCheckerEnabled: false
+          }
+        },
+        userRole: SFProjectRole.ParatextObserver
+      });
+      env.openDialog();
+
+      expect(env.lynxSettingsSection == null).toBeTrue();
+      env.closeDialog();
+    }));
+
     it('should hide Lynx settings when project features are disabled', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({
@@ -266,10 +285,12 @@ class TestEnvironment {
 
   setupProject({
     userConfig = {},
-    projectConfig = {}
+    projectConfig = {},
+    userRole = SFProjectRole.ParatextTranslator
   }: {
     userConfig?: Partial<SFProjectUserConfig>;
     projectConfig?: Partial<SFProjectProfile>;
+    userRole?: string;
   } = {}): void {
     const user1Config: SFProjectUserConfig = createTestProjectUserConfig({
       ownerRef: 'user01',
@@ -283,7 +304,7 @@ class TestEnvironment {
 
     const projectProfile = {
       ...createTestProjectProfile({
-        userRoles: { user01: SFProjectRole.ParatextTranslator }
+        userRoles: { user01: userRole }
       }),
       ...projectConfig
     };

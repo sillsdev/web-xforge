@@ -12,6 +12,8 @@ import {
 } from '@angular/material/dialog';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { TranslocoModule } from '@ngneat/transloco';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { startWith } from 'rxjs/operators';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -103,6 +105,15 @@ export class TranslatorSettingsDialogComponent implements OnInit {
     return this.projectUserConfigDoc.data?.lynxInsightState?.autoCorrectionsEnabled ?? true;
   }
 
+  private get userHasEditRight(): boolean {
+    const project = this.projectDoc.data;
+    const userId = this.projectUserConfigDoc.data?.ownerRef;
+    if (project == null || userId == null) {
+      return false;
+    }
+    return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Texts, Operation.Edit);
+  }
+
   private get lynxMasterEnabled(): boolean {
     return (
       (this.lynxAssessmentsProjectEnabled && this.lynxAssessmentsUserEnabled) ||
@@ -113,7 +124,8 @@ export class TranslatorSettingsDialogComponent implements OnInit {
   private updateComponentState(): void {
     this.lynxAssessmentsProjectEnabled = !!this.projectDoc.data?.lynxConfig?.assessmentsEnabled;
     this.lynxAutoCorrectProjectEnabled = !!this.projectDoc.data?.lynxConfig?.autoCorrectionsEnabled;
-    this.showLynxSettings = this.lynxAssessmentsProjectEnabled || this.lynxAutoCorrectProjectEnabled;
+    this.showLynxSettings =
+      this.userHasEditRight && (this.lynxAssessmentsProjectEnabled || this.lynxAutoCorrectProjectEnabled);
 
     // Update form control state
     this.showEditorTabsInSinglePaneSwitch.setValue(this.showEditorTabsInSinglePaneUserEnabled, { emitEvent: false });
