@@ -10,7 +10,6 @@ import {
   MatDialogRef,
   MatDialogTitle
 } from '@angular/material/dialog';
-import { MatError } from '@angular/material/form-field';
 import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { map, repeat, take, timer } from 'rxjs';
@@ -42,7 +41,6 @@ export interface EditorTabAddResourceDialogData {
     FormsModule,
     ReactiveFormsModule,
     ProjectSelectComponent,
-    MatError,
     MatDialogActions,
     MatButton,
     AsyncPipe

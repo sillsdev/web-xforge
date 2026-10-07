@@ -5,7 +5,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCard, MatCardActions, MatCardContent, MatCardTitle } from '@angular/material/card';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogConfig } from '@angular/material/dialog';
-import { MatError } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -62,7 +61,6 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
     MatIconModule,
     ProjectSelectComponent,
     WriteStatusComponent,
-    MatError,
     MatCheckbox,
     InfoComponent,
     MatRadioGroup,
