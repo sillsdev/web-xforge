@@ -11,7 +11,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -615,6 +615,28 @@ describe('EditorDraftComponent', () => {
       fixture.detectChanges();
       tick(EDITOR_READY_TIMEOUT);
 
+      // Does not report permission issues to bugsnag
+      when(
+        mockSFProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
+      ).thenReject(new CommandError(CommandErrorCode.Forbidden, 'No Permission'));
+      component.applyDraft();
+      tick();
+      verify(
+        mockSFProjectService.onlineApplyPreTranslationToProject(
+          component.textDocId!.projectId,
+          Canon.bookNumberToId(component.textDocId!.bookNum) + ' ' + component.textDocId!.chapterNum,
+          component.textDocId!.projectId,
+          anything()
+        )
+      ).once();
+      verify(mockNoticeService.showError(anything())).once();
+      verify(mockErrorReportingService.silentError(anything())).never();
+      expect(component.isDraftApplied).toBe(false);
+
+      // Reset calls for next test
+      resetCalls(mockSFProjectService);
+      resetCalls(mockNoticeService);
+
       // Does not report network related issues to bugsnag
       when(
         mockSFProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
@@ -633,6 +655,10 @@ describe('EditorDraftComponent', () => {
       verify(mockErrorReportingService.silentError(anything())).never();
       expect(component.isDraftApplied).toBe(false);
 
+      // Reset calls for next test
+      resetCalls(mockSFProjectService);
+      resetCalls(mockNoticeService);
+
       // Reports to bugsnag if error is not network related
       when(
         mockSFProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
@@ -646,8 +672,8 @@ describe('EditorDraftComponent', () => {
           component.textDocId!.projectId,
           anything()
         )
-      ).twice();
-      verify(mockNoticeService.showError(anything())).twice();
+      ).once();
+      verify(mockNoticeService.showError(anything())).once();
       verify(mockErrorReportingService.silentError(anything(), anything())).once();
       expect(component.isDraftApplied).toBe(false);
       flush();
