@@ -3,6 +3,7 @@ import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
 import { MatBadge } from '@angular/material/badge';
 import { MatIcon } from '@angular/material/icon';
 import { MatListItem, MatNavList } from '@angular/material/list';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -28,7 +29,16 @@ import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } f
   selector: 'app-navigation',
   templateUrl: './navigation.component.html',
   styleUrls: ['./navigation.component.scss'],
-  imports: [TranslocoModule, MatNavList, MatListItem, RouterLinkDirective, MatIcon, MatBadge, AsyncPipe]
+  imports: [
+    AsyncPipe,
+    MatBadge,
+    MatIcon,
+    MatListItem,
+    MatNavList,
+    MatProgressSpinner,
+    RouterLinkDirective,
+    TranslocoModule
+  ]
 })
 export class NavigationComponent {
   private readonly projectChanges$ = this.activatedProjectService.changes$.pipe(
@@ -90,6 +100,14 @@ export class NavigationComponent {
 
   get isAppOnline(): boolean {
     return this.onlineStatusService.isOnline;
+  }
+
+  get lastDraftFailed(): boolean {
+    return this.selectedProjectDoc?.data?.translateConfig.draftConfig.lastDraftSuccessful === false;
+  }
+
+  get draftInProgress(): boolean {
+    return this.selectedProjectDoc?.data?.translateConfig.draftConfig.draftInProgress === true;
   }
 
   get lastSyncFailed(): boolean {
