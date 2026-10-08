@@ -1,3 +1,194 @@
 export type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
+
+/**
+ * Determines whether a value is a non-null object, and narrows the type to object if so.
+ */
+export function isObj(value: unknown): value is object {
+  return typeof value === 'object' && value !== null;
+}
+
+// The guards below return the broad Function type that their ClientApp callers were written against.
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export function isFn(value: unknown): value is Function {
+  return typeof value === 'function';
+}
+
+/**
+ * Checks if `value` is classified as a string primitive.  This function differs from lodash `isString()`
+ * in that this function will return false for string objects, e.g. `new String('hi')`.
+ *
+ * @param value The value to check.
+ * @return Returns true if value is a string primitive.
+ */
+export function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+/**
+ * Whether `value` has `property`, either as its own property or inherited, for example from Object.prototype. Because
+ * it uses `in`, `hasProp({}, 'constructor')` is true. Use hasOwnProp to check what an untrusted object really carries.
+ */
+export function hasProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, unknown> {
+  return (isObj(value) || isFn(value)) && property in value;
+}
+
+export function hasArrayProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, unknown[]> {
+  return hasProp(value, property) && Array.isArray(value[property]);
+}
+
+export function hasStringProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, string> {
+  return hasProp(value, property) && typeof value[property] === 'string';
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+export function hasFunctionProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, Function> {
+  return hasProp(value, property) && typeof value[property] === 'function';
+}
+
+export function hasObjectProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, object> {
+  return hasProp(value, property) && isObj(value[property]);
+}
+
+export function hasNumberProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, number> {
+  return hasProp(value, property) && typeof value[property] === 'number';
+}
+
+export function hasPropWithValue<X, Y extends PropertyKey>(
+  obj: X,
+  prop: Y,
+  val: unknown
+): obj is X & Record<Y, unknown> {
+  return hasProp(obj, prop) && obj[prop] === val;
+}
+
+/**
+ * Whether `value` is an object or function that carries `property` itself, not through its prototype chain. Unlike
+ * hasProp, `hasOwnProp({}, 'constructor')` is false.
+ */
+export function hasOwnProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, unknown> {
+  return (isObj(value) || isFn(value)) && Object.prototype.hasOwnProperty.call(value, property);
+}
+
+/**
+ * Whether `value` is a plain data object: not null, not an array, and made by an object literal, `JSON.parse` or
+ * `Object.create(null)`, so that it inherits nothing beyond Object.prototype.
+ */
+export function isPlainObject(value: unknown): value is Readonly<Record<string, unknown>> {
+  if (!isObj(value) || Array.isArray(value)) {
+    return false;
+  }
+  const prototype: unknown = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+/**
+ * Whether `value` is a plain data object (see isPlainObject) whose own properties are all of `requiredKeys`, plus
+ * any of `optionalKeys`, and nothing else. Symbol-keyed and non-enumerable properties count as extra keys. So do
+ * accessor properties, whose value would be computed each time it is read rather than stored.
+ */
+export function hasExactKeys(
+  value: unknown,
+  requiredKeys: readonly string[],
+  optionalKeys: readonly string[] = []
+): value is Readonly<Record<string, unknown>> {
+  if (!isPlainObject(value) || Object.getOwnPropertySymbols(value).length > 0) {
+    return false;
+  }
+  const ownKeys: string[] = Object.getOwnPropertyNames(value);
+  for (const key of ownKeys) {
+    if (!requiredKeys.includes(key) && !optionalKeys.includes(key)) {
+      return false;
+    }
+    const descriptor: PropertyDescriptor | undefined = Object.getOwnPropertyDescriptor(value, key);
+    if (
+      descriptor == null ||
+      descriptor.enumerable !== true ||
+      !Object.prototype.hasOwnProperty.call(descriptor, 'value')
+    ) {
+      return false;
+    }
+  }
+  return requiredKeys.every(key => ownKeys.includes(key));
+}
+
+/** Guarantees that the value is not null or undefined. */
+export function notNull<T>(value: T): value is NonNullable<T> {
+  return value != null;
+}
+
+/**
+ * Guarantees that the input object has a non-null data property.
+ */
+export function hasData<T extends { data: any }>(input: T | null | undefined): input is WithData<T> {
+  return hasProp(input, 'data') && input.data != null;
+}
+
+// The following types up to ObjectPaths are fairly complicated. The earlier types are supporting types for the
+// ObjectPaths type definition
+// See https://stackoverflow.com/a/58436959 for an explanation of how this works.
+// Look up type manipulation in the TypeScript handbook for an explanation of the operators that are being used.
+
+// Define an array type that contains types that correspond to values ones less than the index they are at. This allows
+// subtracting one when evaluating the ObjectPaths type below, thereby preventing excessive recursion (which would
+// produce a compiler error).
+// This is not a list of values. This is a list of types. For example, `5` is a type that contains only the number 5.
+type OneLessThan = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ...10[]];
+
+/**
+ * Given two types K and P:
+ * - If `K` is a string or number, and `P` is a string or number, and P is not the empty string, constructs a string
+ * type consisting of the concatenation of `K` and `P` with a `.` between them.
+ * - If `K` is a string or number, and `P` is the empty string, constructs a string type consisting of `K` converted to
+ * a string.
+ * - Otherwise resolves to `never`.
+ */
+type JoinWithDot<K, P> = K extends string | number
+  ? P extends string | number
+    ? `${K}${'' extends P ? '' : '.'}${P}`
+    : never
+  : never;
+
+/**
+ * Given an object type `T`, where T has properties, and the keys to those properties are numbers or strings, and the
+ * values of those properties are strings or objects (which objects in turn satisfy the same conditions, recursively):
+ * Resolves to a type that is the union of all string paths to string values within the object structure, formed joining
+ * the key paths with the `.` character between each key.
+ *
+ * For example, `ObjectPaths<{ a: { b: 'c' }, d: 'e' }>` will resolve to `"d" | "a.b"`.
+ *
+ * @param T The type from which to derive paths.
+ * @param Depth The maximum recursive depth to search for string values. Default is 10. Maximum is 10, and setting it
+ * higher than 10 will have the same effect as setting it to 10. This should be considered an approximate value, rather
+ * than a precise value, since the meaning of searching to a given depth is not clearly defined, and the implementation
+ * has not been carefully crafted to ensure it is precisely followed with no off-by-one-errors (since the precise
+ * value is considered unimportant).
+ */
+// prettier-ignore
+export type ObjectPaths<T, Depth extends number = 10> = Depth extends never
+  ? never
+  : T extends object
+    ? { [Key in keyof T]-?: JoinWithDot<Key, ObjectPaths<T[Key], OneLessThan[Depth]>> }[keyof T]
+    : '';
+
+/**
+ * This has a data field that is not null. Such as for a realtime document that has a non-null data field.
+ */
+export type WithData<T extends { data: any }> = T & { data: NonNullable<T['data']> };
+
+/** This type indicates that the array has at least one element; the array is not empty. Briefer but less flexible
+ * definitions can be seen at https://stackoverflow.com/q/56006111. */
+export type PopulatedArray<T> = [T, ...T[]] | [...T[], T] | [T, ...T[], T];
+
+/** The input array has one or more elements; it is not empty. */
+export function hasElements<T>(array: T[]): array is PopulatedArray<T> {
+  return array.length > 0;
+}
+
+/** The input is a string, and it is not empty (''). It is not null or undefined. This method could alternatively be known as "isNonEmptyString".
+ *
+ * If the negation of this is true, then the input is '' or null or undefined or another non-string. */
+export function isPopulatedString(value: unknown): value is Exclude<string, ''> {
+  return typeof value === 'string' && value !== '';
+}
