@@ -65,8 +65,7 @@ export class DateRangePickerComponent implements OnInit {
 
   /** When true, initialize the control with null as the selected default range. */
   @Input() set startWithEmptyRange(value: boolean | null) {
-    if (value == null) return;
-    if (value) {
+    if (!!value) {
       this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
       this.defaultRange = undefined;
       this.isDefaultRange = true;
