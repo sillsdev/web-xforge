@@ -9,6 +9,10 @@ import { Connection, Doc, OTType } from 'sharedb/lib/client';
 import { ActivityLogger } from './activity-logger';
 import './diagnostics';
 import { ExceptionReporter } from './exception-reporter';
+import { loadOrCreateSrcKey } from './gateway/connection-src';
+import { GatewayApplication } from './gateway/gateway-application';
+import { MongoGatewayEventSink } from './gateway/gateway-event-log';
+import { RealtimeGateway } from './gateway/realtime-gateway';
 import { InteropCallback, InteropCallContext, withActivityLogging } from './interop';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
@@ -84,6 +88,20 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     await server.createIndexes(db);
     await server.addValidationSchema(db);
 
+    const gatewayApplication: GatewayApplication =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require(`../${options.appModuleName}/gateway/gateway-application`).default;
+    const gatewayEventSink = new MongoGatewayEventSink(db);
+    await gatewayEventSink.createIndexes();
+    const gateway = new RealtimeGateway({
+      backend: server,
+      protocol: gatewayApplication.protocol,
+      policies: gatewayApplication.createPolicies(server, db),
+      srcKey: await loadOrCreateSrcKey(db),
+      eventSink: gatewayEventSink,
+      exceptionReporter: exceptionReporter
+    });
+
     streamListener = new WebSocketStreamListener(
       options.audience,
       options.scope,
@@ -94,7 +112,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       options.origin.split(';').filter(s => s !== ''),
       exceptionReporter
     );
-    streamListener.listen(server);
+    streamListener.listen(gateway);
     await streamListener.start();
 
     // Open a secure port, if one was specified
@@ -115,7 +133,7 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
         options.origin.split(';').filter(s => s !== ''),
         exceptionReporter
       );
-      secureStreamListener.listen(server);
+      secureStreamListener.listen(gateway);
       await secureStreamListener.start();
     }
     running = true;

@@ -76,10 +76,14 @@ export interface AgentInternal extends ShareDB.Agent {
   src: string | null;
   connectTime: number;
   /**
-   * The stream the agent sends over. For a frontend client this is a WebSocketJSONStream, which has a `ws` beneath it;
-   * but for this server's own connections and for the dotnet process it is a plain in-process stream.
+   * The stream the agent sends over. For a frontend client this is the realtime gateway's stream, which has a `ws`
+   * beneath it; but for this server's own connections and for the dotnet process it is a plain in-process stream.
    */
-  stream: Duplex & { ws?: { bufferedAmount?: number } };
+  stream: Duplex & {
+    ws?: { bufferedAmount?: number };
+    /** Only on the gateway's stream: what ShareDB wrote that is still waiting to be authorized and sent. */
+    queuedOutbound?: { readonly messages: number; readonly bytes: number };
+  };
 }
 
 /**
@@ -109,13 +113,13 @@ export interface AgentInfo {
   subscribedQueriesBytes: number;
   /**
    * Bytes written towards this agent's client that the operating system has not yet taken, so memory the server is
-   * still holding on the client's behalf. Only web socket clients have this; it is undefined for the in-process
-   * streams.
+   * still holding on the client's behalf: those in the socket's buffer, and those in the realtime gateway's outbound
+   * queue. Only web socket clients have this; it is undefined for the in-process streams.
    */
   outboundBufferedBytes: number | undefined;
   /**
    * For in-process, this is messages queued in the agent's stream itself.
-   * For a web socket client, this stays at zero.
+   * For a web socket client, this is messages waiting in the realtime gateway's outbound queue.
    */
   outboundQueuedCount: number;
 }
@@ -845,8 +849,11 @@ export class ResourceMonitor {
       subscribedPresencesBytes: sizeof(ag.subscribedPresences),
       subscribedQueriesCount: Object.keys(ag.subscribedQueries).length,
       subscribedQueriesBytes,
-      outboundBufferedBytes: ag.stream?.ws?.bufferedAmount,
-      outboundQueuedCount: ag.stream?.writableLength ?? 0
+      outboundBufferedBytes:
+        ag.stream?.ws?.bufferedAmount == null
+          ? undefined
+          : ag.stream.ws.bufferedAmount + (ag.stream.queuedOutbound?.bytes ?? 0),
+      outboundQueuedCount: (ag.stream?.writableLength ?? 0) + (ag.stream?.queuedOutbound?.messages ?? 0)
     };
     return agentInfo;
   }

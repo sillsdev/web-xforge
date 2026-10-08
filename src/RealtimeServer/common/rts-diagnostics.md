@@ -336,7 +336,9 @@ part of a sample - it is an event with its own start and end, which is what `ope
 - **`opValidationFailed.errorMessage` names the path within the document, not the value.** A rejected op is reported
   by its JSON path (`op.p`).
 - **`outboundBufferedBytes` is memory held for a client that is not keeping up.** It is what has been written towards
-  a web socket and not yet taken by the operating system. Nothing in ShareDB waits for a client to catch up before
-  sending it more, so a slow client subscribed to a busy document makes this grow without limit. Only web socket
-  clients have it; for the in-process streams it is empty and `outboundQueuedCount` is the figure to read instead.
+  a web socket and not yet taken by the operating system, plus what waits in the realtime gateway's outbound queue.
+  Nothing in ShareDB waits for a client to catch up before sending it more; the gateway closes a connection whose queue
+  passes its limit, but the socket's own buffer has none. Only web socket clients have it; for the in-process streams
+  it is empty and `outboundQueuedCount` is the figure to read instead (for web socket clients, that counts the messages
+  in the gateway's queue).
   `pubsub-info.csv` `streamsBytes` is the same concern seen from the other end.

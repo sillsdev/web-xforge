@@ -9226,9 +9226,6 @@ packages:
     resolution: {integrity: sha512-OqedPIGOfsDlo31UNwYbCFMSaO9m9G/0faIHj5/dZFDMFqPTcx6UwqyOy3COEaEOg/9VsGIpdqn62W5KhoKSpg==}
     engines: {node: '>=0.8.0'}
 
-  websocket-json-stream@0.0.3:
-    resolution: {integrity: sha512-QX++vQMcP/efvHoqHPcua/ET6I02EumuvEuhUPkk6E0XiDdSrnZtyxSlmQUeOJii7XSyHQ1oYlYfd9adRSm7zQ==}
-
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
@@ -18229,7 +18226,6 @@ snapshots:
       sharedb-milestone-mongo: 2.1.0
       sharedb-mongo: 5.1.0
       ts-object-path: 0.1.2
-      websocket-json-stream: 0.0.3
       ws: 8.22.0
     transitivePeerDependencies:
       - bufferutil
@@ -19675,8 +19671,6 @@ snapshots:
       websocket-extensions: 0.1.4
 
   websocket-extensions@0.1.4: {}
-
-  websocket-json-stream@0.0.3: {}
 
   whatwg-encoding@3.1.1:
     dependencies:

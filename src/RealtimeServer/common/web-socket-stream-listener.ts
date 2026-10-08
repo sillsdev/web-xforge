@@ -4,11 +4,11 @@ import http from 'http';
 import https from 'https';
 import { JwtHeader, SigningKeyCallback, verify } from 'jsonwebtoken';
 import jwks from 'jwks-rsa';
-import ShareDB from 'sharedb';
-import WebSocketJSONStream from 'websocket-json-stream';
 import ws from 'ws';
 import { ActivityLogger } from './activity-logger';
 import { ExceptionReporter } from './exception-reporter';
+import { RealtimeGateway } from './gateway/realtime-gateway';
+import { MAX_FRAME_BYTES } from './gateway/transport';
 
 export class WebSocketStreamListener {
   private readonly httpServer: http.Server;
@@ -49,19 +49,20 @@ export class WebSocketStreamListener {
     });
   }
 
-  listen(backend: ShareDB): void {
-    // Connect any incoming WebSocket connection to ShareDB
+  /** Hands every websocket whose access token verifies to the gateway, which connects it to ShareDB. */
+  listen(gateway: RealtimeGateway): void {
     const wss = new ws.Server({
       server: this.httpServer,
-      verifyClient: this.verifyClient
+      verifyClient: this.verifyClient,
+      // ws closes the connection itself when a frame is larger than this. The gateway checks it again.
+      maxPayload: MAX_FRAME_BYTES
     });
 
-    wss.on('connection', (webSocket: WebSocket, req: http.IncomingMessage) => {
+    wss.on('connection', (webSocket: ws.WebSocket, req: http.IncomingMessage) => {
       ActivityLogger.instance.log('webSocketConnected', {
         origin: req.headers.origin
       });
-      const stream = new WebSocketJSONStream(webSocket);
-      backend.listen(stream, req);
+      gateway.acceptConnection(webSocket, req);
     });
   }
 

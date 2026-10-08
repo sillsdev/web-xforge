@@ -819,7 +819,8 @@ export class RealtimeServer extends ShareDB {
   }
 
   listen(stream: any, req?: any): ShareDB.Agent {
-    // Streams of types WebSocketJSONStream and ServerStream are received by this method.
+    // This receives the realtime gateway's streams for client websockets, and ShareDB's ServerStream for in-process
+    // server connections.
     const agent = new MigrationAgent(this, stream);
     if (!this.dataValidationDisabled) {
       ResourceMonitor.instance.monitorAgent(agent, stream);

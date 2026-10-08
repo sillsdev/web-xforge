@@ -69,9 +69,6 @@ importers:
       ts-object-path:
         specifier: ^0.1.2
         version: 0.1.2
-      websocket-json-stream:
-        specifier: ^0.0.3
-        version: 0.0.3
       ws:
         specifier: ^8.22.0
         version: 8.22.0
@@ -2755,9 +2752,6 @@ packages:
   webidl-conversions@7.0.0:
     resolution: {integrity: sha512-VwddBukDzu71offAQR975unBIGqfKZpM+8ZX6ySk8nYhVoo5CYaZyzt3YBvYtRtO+aoGlqxPg/B87NGVZ/fu6g==}
     engines: {node: '>=12'}
-
-  websocket-json-stream@0.0.3:
-    resolution: {integrity: sha512-QX++vQMcP/efvHoqHPcua/ET6I02EumuvEuhUPkk6E0XiDdSrnZtyxSlmQUeOJii7XSyHQ1oYlYfd9adRSm7zQ==}
 
   whatwg-url@11.0.0:
     resolution: {integrity: sha512-RKT8HExMpoYx4igMiVMY83lN6UeITKJlBQ+vR/8ZJ8OCdSiN3RwCq+9gH0+Xzj0+5IrM6i4j/6LuvzbZIQgEcQ==}
@@ -6159,8 +6153,6 @@ snapshots:
       makeerror: 1.0.12
 
   webidl-conversions@7.0.0: {}
-
-  websocket-json-stream@0.0.3: {}
 
   whatwg-url@11.0.0:
     dependencies:
