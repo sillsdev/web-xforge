@@ -60,6 +60,8 @@ declare class ShareDB {
   addProjection(name: string, collection: string, fields: ShareDB.ProjectionFields): void;
   /** Every projection addProjection has registered, keyed by the name clients address it by. */
   readonly projections: { [name: string]: ShareDB.Projection };
+  /** Where milestone snapshots are kept. ShareDB uses a MilestoneDB that keeps none when it was given none. */
+  readonly milestoneDb: ShareDB.MilestoneDB;
   listen(stream: any, req?: any): void;
   close(callback?: (err?: Error) => any): void;
   /**
@@ -119,7 +121,7 @@ declare namespace ShareDB {
     getSnapshot(collection: string, id: string, fields: any, options: any, callback: (...args: any[]) => any): void;
     getSnapshotBulk(
       collection: string,
-      ids: string,
+      ids: string[],
       fields: any,
       options: any,
       callback: (...args: any[]) => any
@@ -177,6 +179,11 @@ declare namespace ShareDB {
 
     /** Identifies this connection. ShareDB gives every agent one when it is created. */
     clientId: string;
+    /**
+     * The stream passed to the constructor (from Backend.listen), which the agent reads requests from and writes
+     * replies to. ShareDB does not check its type. Streams for in-process server connections have `isServer: true`.
+     */
+    stream: unknown;
     /** Map of collection -> document id -> stream. */
     subscribedDocs: Record<string, Record<string, unknown>>;
     /** Map of query id -> emitter. */
@@ -222,7 +229,15 @@ declare namespace ShareDB {
 
   abstract class MilestoneDB {
     close(callback: (err: Error | null) => void): void;
-    getMilestoneSnapshot(collection: string, id: string, version: number, callback: (err: Error | null) => void): void;
+    /**
+     * The latest milestone snapshot of the doc at or before `version`, or undefined (or null) when there is none.
+     */
+    getMilestoneSnapshot(
+      collection: string,
+      id: string,
+      version: number,
+      callback: (err: Error | null, snapshot?: Snapshot | null) => void
+    ): void;
     saveMilestoneSnapshot(collection: string, snapshot: Snapshot, callback: (err: Error | null) => void): void;
     getMilestoneSnapshotAtOrBeforeTime(
       collection: string,
