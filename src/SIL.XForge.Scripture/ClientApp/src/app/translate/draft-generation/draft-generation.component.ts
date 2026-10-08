@@ -232,7 +232,8 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       .map(d => new Date(d).getTime());
 
     if (dates.length === 0) return false;
-    const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000;
+    // Temporarily 5 minuts for the sake of testing
+    const threeMonthsInMs = 5 * 60 * 1000;
     return Math.max(...dates) - Math.min(...dates) >= threeMonthsInMs;
   }
 
