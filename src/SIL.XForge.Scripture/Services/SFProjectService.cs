@@ -1942,6 +1942,49 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary>
+    /// Ensures that a user can apply a draft to at least one of the chapters specified.
+    /// </summary>
+    /// <param name="userId">The user identifier</param>
+    /// <param name="projectId">The project to apply the draft to.</param>
+    /// <param name="scriptureRange">The scripture range.</param>
+    /// <returns>No exception is thrown if the user has permission.</returns>
+    /// <exception cref="DataNotFoundException">The user or project could not be found.</exception>
+    /// <exception cref="ForbiddenException">The user does not have permission to apply the draft.</exception>
+    /// <remarks>
+    /// This function first checks if the user is an administrator or a translator with the edit all books permission.
+    /// If the user is a translator but can ony edit some books or chapters, SF permissions are checked to see if the
+    /// user has permission to write to at least one of the books or chapters in the draft.
+    /// If one of those checks fails, an exception is thrown.
+    /// </remarks>
+    public async Task EnsureUserCanApplyDraftToProjectAsync(string userId, string projectId, string scriptureRange)
+    {
+        SFProject project = await GetProjectAsync(projectId);
+        Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
+        if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+        {
+            throw new DataNotFoundException("The user does not exist");
+        }
+
+        // If the user is an administrator, they can apply the draft
+        if (IsProjectAdmin(project, userId))
+        {
+            return;
+        }
+
+        // If the user is a translator, ensure that at least one of the chapters can be edited
+        if (
+            IsProjectTranslator(project, userId)
+            && _paratextService.UserCanEdit(userSecret, project.ParatextId, scriptureRange)
+        )
+        {
+            return;
+        }
+
+        // The user does not have permission
+        throw new ForbiddenException();
+    }
+
+    /// <summary>
     /// Sets the draft applied flag for the specified text.
     /// </summary>
     /// <param name="userId">The user identifier</param>

@@ -5137,6 +5137,176 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void UserCanEdit_Administrator()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(scrText);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "2PE");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorWithUserCanEditAllBooks()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Allow User 02 to edit all books
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(env.Username02, 0, PermissionSet.Manual, true);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCanEditChapter()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Allow User 02 to edit the chapter
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(
+            env.Username02,
+            40,
+            3,
+            scrText.Settings.Versification,
+            PermissionSet.Manual,
+            true
+        );
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT 3");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCanEditOneChapterInTheBook()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Allow User 02 to edit one chapter in the book
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(
+            env.Username02,
+            40,
+            3,
+            scrText.Settings.Versification,
+            PermissionSet.Manual,
+            true
+        );
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.True);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCannotEditTheBook()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Forbid User 02 from editing the book
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(env.Username02, 40, PermissionSet.Manual, false);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void UserCanEdit_TranslatorCannotEditTheChapter()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // Forbid User 02 from editing the chapter
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.TeamMember);
+        scrText.Permissions.SetPermission(
+            env.Username02,
+            40,
+            3,
+            scrText.Settings.Versification,
+            PermissionSet.Manual,
+            false
+        );
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT 3");
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
+    public void UserCanEdit_Consultant()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+
+        // Create the ScrText with User 01 as the administrator
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        MockScrText scrText = env.GetScrText(associatedPtUser, ptProjectId);
+        env.MockScrTextCollection.FindById(env.Username02, ptProjectId).Returns(scrText);
+
+        // User 02 is a consultant
+        scrText.Permissions.CreateUser(env.Username02, UserRoles.Consultant);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User02, env.Username02, env.ParatextUserId02);
+
+        // SUT
+        var result = env.Service.UserCanEdit(userSecret, ptProjectId, "MAT");
+        Assert.That(result, Is.False);
+    }
+
+    [Test]
     public void ResourceDocsNeedUpdating_NotResource()
     {
         // Setup test environment
@@ -5938,100 +6108,6 @@ public class ParatextServiceTests
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
             env.Service.GetSnapshotAsync(userSecret, project.Id, "RUT", 1, DateTime.MinValue)
         );
-    }
-
-    [Test]
-    public async Task GetDeltaFromUsfmAsync_MissingProject()
-    {
-        // Setup the test environment
-        var env = new TestEnvironment();
-        SFProject project = env.NewSFProject();
-        env.AddProjectRepository(project);
-        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
-
-        // SUT
-        await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetDeltaFromUsfmAsync(env.User01, "invalid_project_id", env.RuthBookUsfm, 8)
-        );
-    }
-
-    [Test]
-    public async Task GetDeltaFromUsfmAsync_MissingUserSecret()
-    {
-        // Setup the test environment
-        var env = new TestEnvironment();
-        SFProject project = env.NewSFProject();
-        env.AddProjectRepository(project);
-        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
-
-        // SUT
-        await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.GetDeltaFromUsfmAsync("invalid_user_id", project.Id, env.RuthBookUsfm, 8)
-        );
-    }
-
-    [Test]
-    public async Task GetDeltaFromUsfmAsync_Success()
-    {
-        // Setup the test environment
-        var env = new TestEnvironment();
-        SFProject project = env.NewSFProject();
-        env.AddProjectRepository(project);
-        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
-
-        // Create the expected delta
-        JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
-        JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
-        JToken token3 = JToken.Parse(
-            "{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }"
-        );
-        JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
-        JToken token5 = JToken.Parse(
-            "{\"insert\": \"Verse 2 here.\"," + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
-        );
-        JToken token6 = JToken.Parse("{\"insert\": \"\n\" }");
-        Delta expected = new Delta([token1, token2, token3, token4, token5, token6]);
-
-        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
-            .Returns([new ChapterDelta(-1, -1, false, expected)]);
-
-        // SUT
-        var delta = await env.Service.GetDeltaFromUsfmAsync(env.User01, project.Id, env.RuthBookUsfm, 8);
-        Assert.IsTrue(delta.DeepEquals(expected));
-    }
-
-    [Test]
-    public async Task GetDeltaFromUsfmAsync_WithVariantBookId()
-    {
-        // Set up the test environment
-        var env = new TestEnvironment();
-        SFProject project = env.NewSFProject();
-        env.AddProjectRepository(project);
-        env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
-
-        // Create the expected delta
-        JToken token1 = JToken.Parse("{\"insert\": { \"chapter\": { \"number\": \"1\", \"style\": \"c\" } } }");
-        JToken token2 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"1\", \"style\": \"v\" } } }");
-        JToken token3 = JToken.Parse(
-            "{\"insert\": \"Verse 1 here. \", \"attributes\": { \"segment\": \"verse_1_1\" } }"
-        );
-        JToken token4 = JToken.Parse("{\"insert\": { \"verse\": { \"number\": \"2\", \"style\": \"v\" } } }");
-        JToken token5 = JToken.Parse(
-            "{\"insert\": \"Verse 2 here.\"," + "\"attributes\": { \"segment\": \"verse_1_2\" } }"
-        );
-        JToken token6 = JToken.Parse("{\"insert\": \"\n\" }");
-        Delta expected = new Delta([token1, token2, token3, token4, token5, token6]);
-
-        env.MockDeltaUsxMapper.ToChapterDeltas(Arg.Any<XDocument>())
-            .Returns([new ChapterDelta(-1, -1, false, expected)]);
-
-        const string ruthBookUsfm =
-            "\\id Rut - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
-        ;
-
-        // SUT
-        var delta = await env.Service.GetDeltaFromUsfmAsync(env.User01, project.Id, ruthBookUsfm, 8);
-        Assert.IsTrue(delta.DeepEquals(expected));
     }
 
     [Test]

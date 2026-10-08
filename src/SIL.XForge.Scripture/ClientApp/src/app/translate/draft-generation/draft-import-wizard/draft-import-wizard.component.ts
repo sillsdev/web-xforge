@@ -738,6 +738,8 @@ export class DraftImportWizardComponent implements OnInit {
         this.importError = this.i18n.translateStatic('draft_import_wizard.project_deleted');
         // Reload the projects
         void this.loadProjects();
+      } else if (error instanceof CommandError && error.code === CommandErrorCode.Forbidden) {
+        this.importError = this.i18n.translateStatic('draft_import_wizard.permission_error');
       } else {
         this.importError = error instanceof Error ? error.message : 'Unknown error occurred';
       }

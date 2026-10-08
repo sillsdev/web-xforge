@@ -7,7 +7,6 @@ using System.Xml.Linq;
 using SIL.Converters.Usj;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
@@ -97,6 +96,7 @@ public interface IParatextService
     WritingSystem GetWritingSystem(UserSecret userSecret, string paratextId);
     void ClearParatextDataCaches(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
+    bool UserCanEdit(UserSecret userSecret, string paratextId, string scriptureRange);
 
     Task<TextSnapshot> GetSnapshotAsync(
         UserSecret userSecret,
@@ -112,8 +112,6 @@ public interface IParatextService
         string book,
         int chapter
     );
-
-    Task<Delta> GetDeltaFromUsfmAsync(string curUserId, string sfProjectId, string usfm, int bookNum);
 
     /// <summary>
     /// Gets the chapters in the USFM file as individual USJ objects.

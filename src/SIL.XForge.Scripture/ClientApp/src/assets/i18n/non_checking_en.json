@@ -422,6 +422,7 @@
     "overwrite_books_description": "One or more chapters have existing content that will be overwritten in [b]{{ projectNameLabel }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
     "overwrite_books_question": "Overwrite books?",
     "overwrite_chapter_link": "[link:chapterLink]Chapter {{ chapterNum }}[/link]",
+    "permission_error": "You do not have permission to apply this draft to this project. Please contact your project administrator.",
     "please_select_valid_project": "Please select a valid project",
     "project_context_unavailable": "Project context unavailable. Please close the dialog and try again.",
     "project_deleted": "This project has been deleted. Please contact your project administrator.",
@@ -547,6 +548,7 @@
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "permission_error": "You do not have permission to edit this chapter. Please contact your project administrator.",
     "reapply_to_project": "Re-add to project",
     "yes": "Overwrite chapter"
   },

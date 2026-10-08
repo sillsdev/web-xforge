@@ -2178,6 +2178,52 @@ public class ParatextService : DisposableBase, IParatextService
         }
     }
 
+    /// <summary>
+    /// Determines if a user has the Paratext permissions to edit at least one book or chapter in the scripture range.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The project's paratext identifier.</param>
+    /// <param name="scriptureRange">The scripture range to check.</param>
+    /// <returns>
+    /// <c>true</c> if at least one book or chapter in the scripture range can be edited; otherwise, <c>false</c>.
+    /// </returns>
+    public bool UserCanEdit(UserSecret userSecret, string paratextId, string scriptureRange)
+    {
+        string userName = GetParatextUsername(userSecret);
+        if (!string.IsNullOrEmpty(userName))
+        {
+            using ScrText? scrText = ScrTextCollection.FindById(userName, paratextId);
+            if (scrText is not null)
+            {
+                if (scrText.Permissions.CanEditAllBooks(userName))
+                {
+                    return true;
+                }
+
+                ScriptureRangeParser scriptureRangeParser = new ScriptureRangeParser(scrText.Settings.Versification);
+                foreach ((string? bookId, List<int> chapters) in scriptureRangeParser.GetChapters(scriptureRange))
+                {
+                    int bookNum = Canon.BookIdToNumber(bookId);
+
+                    // If no chapters were specified, populate all chapters in the project
+                    if (chapters.Count == 0)
+                    {
+                        int lastChapter = scrText.Settings.Versification.GetLastChapter(bookNum);
+                        chapters.AddRange([.. Enumerable.Range(1, lastChapter)]);
+                    }
+
+                    // See if the user can edit any of the chapters in the book
+                    if (chapters.Any(chapterNum => scrText.Permissions.CanEdit(bookNum, chapterNum, userName)))
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     public async Task<TextSnapshot> GetSnapshotAsync(
         UserSecret userSecret,
         string sfProjectId,
@@ -2408,41 +2454,6 @@ public class ParatextService : DisposableBase, IParatextService
 
         // Clean up the scripture text
         scrText.Dispose();
-    }
-
-    /// <summary>
-    /// Gets a delta from USFM data, utilising the Paratext scripture text underlying it.
-    /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="sfProjectId">The SF project identifer.</param>
-    /// <param name="usfm">The USFM data.</param>
-    /// <param name="bookNum">The book number</param>
-    /// <returns>The USFM as a Delta.</returns>
-    /// <exception cref="DataNotFoundException">The project or user was not found.</exception>
-    public async Task<Delta> GetDeltaFromUsfmAsync(string curUserId, string sfProjectId, string usfm, int bookNum)
-    {
-        // Load the user secret
-        if (!(await _userSecretRepository.TryGetAsync(curUserId)).TryResult(out UserSecret userSecret))
-        {
-            throw new DataNotFoundException("The user secret cannot be found.");
-        }
-
-        // Connect to the realtime server
-        await using IConnection connection = await _realtimeService.ConnectAsync(userSecret.Id);
-
-        // Load the project so we can check security and get the Paratext identifier
-        IDocument<SFProject> projectDoc = connection.Get<SFProject>(sfProjectId);
-        await projectDoc.FetchAsync();
-        if (!projectDoc.IsLoaded)
-        {
-            throw new DataNotFoundException("Project does not exist.");
-        }
-
-        // Load the Paratext project
-        using ScrText scrText = GetScrText(userSecret, projectDoc.Data.ParatextId);
-
-        // Get the USFM as a Delta
-        return GetDeltaFromUsfm(scrText, bookNum, usfm).Delta;
     }
 
     protected override void DisposeManagedResources()

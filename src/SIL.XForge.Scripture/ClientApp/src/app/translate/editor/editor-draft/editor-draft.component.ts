@@ -34,7 +34,7 @@ import {
   throttleTime
 } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { isNetworkError } from 'xforge-common/command.service';
+import { CommandError, CommandErrorCode, isNetworkError } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -421,12 +421,16 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
       );
       this.draftCheckState = 'draft-applying';
     } catch (err) {
-      this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
-      if (!isNetworkError(err)) {
-        this.errorReportingService.silentError(
-          'Error applying a draft to a chapter',
-          ErrorReportingService.normalizeError(err)
-        );
+      if (err instanceof CommandError && err.code === CommandErrorCode.Forbidden) {
+        this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.permission_error'));
+      } else {
+        this.noticeService.showError(this.i18n.translateStatic('editor_draft_tab.error_applying_draft'));
+        if (!isNetworkError(err)) {
+          this.errorReportingService.silentError(
+            'Error applying a draft to a chapter',
+            ErrorReportingService.normalizeError(err)
+          );
+        }
       }
     }
   }

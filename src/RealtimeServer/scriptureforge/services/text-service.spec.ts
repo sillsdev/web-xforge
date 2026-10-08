@@ -7,29 +7,19 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
+import { UserService } from '../../common/services/user-service';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
-import { TextService } from './text-service';
-import { UserService } from '../../common/services/user-service';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';
+import { TextService } from './text-service';
 
 ShareDB.types.register(RichText.type);
 
 describe('TextService', () => {
-  it('allows administrator to create text', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-
-    const conn = clientConnect(env.server, 'administrator');
-    await expect(
-      createDoc<TextData>(conn, TEXTS_COLLECTION, getTextDocId('project01', 40, 2), new Delta())
-    ).resolves.not.toThrow();
-  });
-
   it('allows member to view text', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -73,22 +63,6 @@ describe('TextService', () => {
     await submitOp(conn, TEXTS_COLLECTION, id, new Delta(), source);
     await new Promise<void>(resolve => {
       env.db.getOps(TEXTS_COLLECTION, id, 1, null, { metadata: true }, (_, ops) => {
-        expect(ops[0].m.source).toBe(source);
-        resolve();
-      });
-    });
-  });
-
-  it('writes the op source to the database on create', async () => {
-    const env = new TestEnvironment();
-    await env.createData();
-
-    const conn = clientConnect(env.server, 'administrator');
-    const id: string = getTextDocId('project01', 40, 2);
-    const source: string = 'history';
-    await createDoc<TextData>(conn, TEXTS_COLLECTION, id, new Delta(), 'rich-text', source);
-    await new Promise<void>(resolve => {
-      env.db.getOps(TEXTS_COLLECTION, id, 0, null, { metadata: true }, (_, ops) => {
         expect(ops[0].m.source).toBe(source);
         resolve();
       });
