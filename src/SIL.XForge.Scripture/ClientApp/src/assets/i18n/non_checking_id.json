@@ -141,33 +141,6 @@
     "please_type_project_name": "Silakan ketik nama proyek untuk mengonfirmasi.",
     "project_name": "Nama Proyek"
   },
-  "draft_apply_dialog": {
-    "add_to_project": "Tambahkan ke proyek",
-    "book_does_not_exist": "{{ bookName }} pada proyek yang dipilih tidak ada",
-    "book_is_empty": "{{ bookName }} dalam proyek {{ projectName }} kosong.",
-    "cancel": "Batal",
-    "confirm_create_chapters": "Konfirmasikan bahwa Anda ingin membuat pasal yang hilang dalam kitab.",
-    "confirm_overwrite": "Harap konfirmasikan bahwa Anda ingin menimpa kitab tersebut.",
-    "connect_to_the_internet": "Harap sambungkan ke internet untuk menambahkan konsep ke proyek Anda.",
-    "choose_project": "Pilih Proyek",
-    "i_understand_overwrite_book": "Saya memahami bahwa konsep tersebut akan menimpa {{ bookName }} dalam proyek {{ projectName }}",
-    "i_understand_missing_chapters_are_created": "Saya memahami bahwa konsep ini akan membuat pasal yang hilang di {{ bookName }} dalam proyek {{ projectName }}",
-    "looking_for_unlisted_project": "Mencari proyek yang tidak terdaftar? Hubungkan terlebih dahulu di {{ underlineStart }}halaman proyek{{ underlineEnd }} .",
-    "no_write_permissions": "Anda tidak memiliki izin untuk menulis pada kitab ini. Hubungi administrator proyek Anda untuk mendapatkan izin.",
-    "project_has_chapters_missing": "{{ bookName }} dalam proyek ini memiliki pasal yang hilang. Silakan tambahkan pasal yang hilang di Paratext",
-    "project_has_text_in_chapters": "{{ bookName }} dalam {{ projectName }} memiliki teks dalam pasal {{ numChapters }}",
-    "project_has_text_in_one_chapter": "{{ bookName }} dalam {{ projectName }} memiliki teks dalam 1 pasal",
-    "select_alternate_project": "Pilih proyek yang ingin Anda tambahkan konsepnya"
-  },
-  "draft_apply_progress-dialog": {
-    "add_draft_to_book": "Menambahkan konsep ke {{ bookName }}",
-    "close": "Tutup",
-    "failed_to_apply_chapters": "Gagal menerapkan pasal:",
-    "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
-    "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
-    "some_chapters_not_applied": "Konsep dari satu atau beberapa pasal tidak dapat diterapkan ke {{ bookName }}",
-    "successfully_applied_all_chapters": "Berhasil menerapkan semua pasal ke {{ bookName }}"
-  },
   "draft_generation": {
     "choose_formatting_options": "Choose formatting options to continue",
     "choose_formatting_options_before_new_draft": "Before you can create a new draft, you need to choose formatting options.",
@@ -282,6 +255,7 @@
       "heading": "Sync before drafting",
       "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
       "checking_projects": "Checking project status...",
+      "offline_message": "Draft generation is not available offline.",
       "sync": "Sync",
       "sync_all": "Sync all",
       "continue_anyway": "Tetap lanjutkan",
@@ -448,6 +422,7 @@
     "overwrite_books_description": "One or more chapters have existing content that will be overwritten in [b]{{ projectNameLabel }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
     "overwrite_books_question": "Overwrite books?",
     "overwrite_chapter_link": "[link:chapterLink]Chapter {{ chapterNum }}[/link]",
+    "permission_error": "You do not have permission to apply this draft to this project. Please contact your project administrator.",
     "please_select_valid_project": "Pilih proyek yang benar",
     "project_context_unavailable": "Project context unavailable. Please close the dialog and try again.",
     "project_deleted": "This project has been deleted. Please contact your project administrator.",
@@ -573,6 +548,7 @@
     "no_draft_notice": "{{ bookChapterName }} tidak memiliki konsep.",
     "offline_notice": "Konsep yang dihasilkan tidak tersedia secara luring.",
     "overwrite": "Menambahkan konsep akan menimpa pasal yang sedang berjalan. Apakah Anda yakin ingin melanjutkan?",
+    "permission_error": "You do not have permission to edit this chapter. Please contact your project administrator.",
     "reapply_to_project": "Tambahkan kembali ke proyek",
     "yes": "Menimpa pasal"
   },

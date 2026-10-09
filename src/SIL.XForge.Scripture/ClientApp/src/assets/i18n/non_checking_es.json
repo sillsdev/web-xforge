@@ -141,33 +141,6 @@
     "please_type_project_name": "Por favor, escriba el nombre del proyecto para confirmar.",
     "project_name": "Nombre del proyecto"
   },
-  "draft_apply_dialog": {
-    "add_to_project": "Añadir al proyecto",
-    "book_does_not_exist": "{{ bookName }} en el proyecto seleccionado no existe",
-    "book_is_empty": "{{ bookName }} en el proyecto {{ projectName }} está vacío.",
-    "cancel": "Cancelar",
-    "confirm_create_chapters": "Por favor, confirme que desea crear los capítulos que faltan en el libro.",
-    "confirm_overwrite": "Por favor, confirme que desea sobrescribir el libro.",
-    "connect_to_the_internet": "Por favor, conéctate a internet para añadir el borrador a tu proyecto.",
-    "choose_project": "Elegir proyecto",
-    "i_understand_overwrite_book": "Entiendo que el borrador sobrescribirá {{ bookName }} en el proyecto {{ projectName }}",
-    "i_understand_missing_chapters_are_created": "Entiendo que el borrador creará capítulos perdidos en {{ bookName }} en el proyecto {{ projectName }}",
-    "looking_for_unlisted_project": "¿Buscas un proyecto que no esté en la lista? Conéctalo en {{ underlineStart }}la página de proyectos{{ underlineEnd }} primero.",
-    "no_write_permissions": "No tiene permiso para escribir a este libro en este proyecto. Póngase en contacto con el administrador del proyecto para obtener el permiso.",
-    "project_has_chapters_missing": "{{ bookName }} en este proyecto tiene capítulos que faltan. Por favor agregue los capítulos que faltan en Paratext",
-    "project_has_text_in_chapters": "{{ bookName }} en {{ projectName }} tiene texto en los capítulos {{ numChapters }}",
-    "project_has_text_in_one_chapter": "{{ bookName }} en {{ projectName }} tiene texto en 1 capítulo",
-    "select_alternate_project": "Seleccione el proyecto al que desea añadir el borrador"
-  },
-  "draft_apply_progress-dialog": {
-    "add_draft_to_book": "Añadir borrador a {{ bookName }}",
-    "close": "Cerrar",
-    "failed_to_apply_chapters": "Fallo al aplicar estos capítulos:",
-    "fail_cannot_edit": "El capítulo de destino no es editable. Ver ese capítulo para más información.",
-    "fail_unknown": "Error desconocido. Inténtalo de nuevo más tarde. Si el error persiste, por favor reporta un problema.",
-    "some_chapters_not_applied": "Los borradores de uno o más capítulos no pudieron aplicarse a {{ bookName }}",
-    "successfully_applied_all_chapters": "Aplicación exitosa de todos los capítulos a {{ bookName }}"
-  },
   "draft_generation": {
     "choose_formatting_options": "Elija las opciones de formato para continuar",
     "choose_formatting_options_before_new_draft": "Antes de poder crear un nuevo borrador, necesita elegir opciones de formato.",
@@ -282,6 +255,7 @@
       "heading": "Sincronizar antes de redactar",
       "body": "Estos proyectos presentan cambios en Paratext que aún no se han reflejado aquí. Redactar sin sincronizar puede reducir la calidad del borrador.",
       "checking_projects": "Comprobando el estado del proyecto...",
+      "offline_message": "La generación de borradores no está disponible sin conexión.",
       "sync": "Sincronizar",
       "sync_all": "Sincronizar todo",
       "continue_anyway": "Continuar de todos modos",
@@ -448,6 +422,7 @@
     "overwrite_books_description": "Uno o más capítulos tienen contenido existente que se sobrescribirá en [b]{{ projectNameLabel }}[/b]. Los capítulos con contenido existente se enumeran a continuación. Haga clic en cada capítulo para ver el contenido.",
     "overwrite_books_question": "¿Sobreescribir libros?",
     "overwrite_chapter_link": "[link:chapterLink]Capítulo {{ chapterNum }}[/link]",
+    "permission_error": "No tienes permiso para aplicar este borrador a este proyecto. Ponte en contacto con el administrador del proyecto.",
     "please_select_valid_project": "Seleccione un producto válido",
     "project_context_unavailable": "El contexto del proyecto no está disponible. Cierre el cuadro de diálogo e inténtelo de nuevo.",
     "project_deleted": "Este proyecto ha sido eliminado. Póngase en contacto con el administrador del proyecto.",
@@ -573,6 +548,7 @@
     "no_draft_notice": "{{ bookChapterName }} no tiene borrador.",
     "offline_notice": "Los borradores generados no están disponibles sin conexión.",
     "overwrite": "Añadir el borrador sobrescribirá el capítulo actual. ¿Está seguro de que desea continuar?",
+    "permission_error": "No tienes permiso para editar este capítulo. Ponte en contacto con el administrador del proyecto.",
     "reapply_to_project": "Volver a añadir al proyecto",
     "yes": "Sobrescribir capítulo"
   },

@@ -141,33 +141,6 @@
     "please_type_project_name": "يُرجى طباعة اسم المشروع من أجل التأكيد.",
     "project_name": "اسم المشروع"
   },
-  "draft_apply_dialog": {
-    "add_to_project": "الإضافة إلى المشروع",
-    "book_does_not_exist": "{{ bookName }} لا يوجد في المشروع المختار ",
-    "book_is_empty": "{{ bookName }} في مشروع {{ projectName }} فارغ.",
-    "cancel": "إلغاء",
-    "confirm_create_chapters": "يرجى التأكيد على رغبتك في إنشاء الإصحاحات الناقصة في السفر.",
-    "confirm_overwrite": "يرجى التأكيد على رغبتك في استبدال محتويات السفر.",
-    "connect_to_the_internet": "يرجى الاتصال بالإنترنت لإضافة المُسَوَّدة إلى مشروعك.",
-    "choose_project": "اختيار  مشروع",
-    "i_understand_overwrite_book": "أفهم أن المُسَوَّدَة ستحل محل مِلَفّ {{ bookName }} في مشروع {{ projectName }}",
-    "i_understand_missing_chapters_are_created": "أفهم أن المُسَوَّدَة ستنشئ إصحاحات مفقودة في سفر {{ bookName }} ضمن مشروع {{ projectName }}",
-    "looking_for_unlisted_project": "هل تبحث عن مشروع غير مدرج في القائمة؟ أضفه أولاً على موقع {{ underlineStart }}في صفحة المشاريع {{ underlineEnd }}.",
-    "no_write_permissions": "ليس لديك إذن بالكتابة في هذا السفر ضمن هذا المشروع. يرجى الاتصال بمسؤول المشروع للحصول على الإذن.",
-    "project_has_chapters_missing": "يحتوي سفر {{ bookName }} في هذا المشروع على إصحاحات مفقودة. يرجى إضافة الإصحاحات المفقودة في Paratext",
-    "project_has_text_in_chapters": "يحتوي سفر {{ bookName }} ضمن مشروع {{ projectName }} على نص موجود في {{ numChapters }} إصحاحًا",
-    "project_has_text_in_one_chapter": "يحتوي سفر {{ bookName }} ضمن مشروع {{ projectName }} على نص موجود في 1 إصحاح",
-    "select_alternate_project": "اختيار المشروع الذي تريد إضافة المُسَوَّدَة إليه"
-  },
-  "draft_apply_progress-dialog": {
-    "add_draft_to_book": "إضافة مُسَوَّدة إلى {{ bookName }}",
-    "close": "إغلاق",
-    "failed_to_apply_chapters": "أخفقنا في تطبيق هذه الإصحاحات:",
-    "fail_cannot_edit": "الإصحاح المستهدف غير قابل للتحرير. اطلع على هذا الإصحاح لمزيد من المعلومات.",
-    "fail_unknown": "حدث خطأ مجهول. يرجى المحاولة مرة أخرى لاحقًا. إذا استمر الخطأ، يرجى الإبلاغ عن المشكلة.",
-    "some_chapters_not_applied": "لا يمكن تطبيق مسودات إصحاح واحد أو أكثر على {{ bookName }}",
-    "successfully_applied_all_chapters": "تم تطبيق جميع الإصحاحات بنجاح على {{ bookName }}"
-  },
   "draft_generation": {
     "choose_formatting_options": "اختر خيارات التنسيق للمتابعة",
     "choose_formatting_options_before_new_draft": "قبل أن تتمكن من إنشاء مُسَوَّدة جديدة، عليك اختيار خيارات التنسيق.",
@@ -282,6 +255,7 @@
       "heading": "المزامنة قبل البَدْء في الصياغة",
       "body": "تتضمن هذه المشاريع تغييرات في Paratext لم تنعكس هنا بعد. وقد يؤدي العمل على المُسَوَّدَة دون مزامنة إلى انخفاض جودتها.",
       "checking_projects": "جارٍ التحقق من حالة المشروع...",
+      "offline_message": "إنشاء المُسَوَّدَة غير متوفر بدون إنترنت.",
       "sync": "مزامنة",
       "sync_all": "مزامنة الكل",
       "continue_anyway": "المتابعة على أي حال",
@@ -448,6 +422,7 @@
     "overwrite_books_description": "يحتوي إصحاح واحد أو أكثر على محتوى موجود سيتم استبداله في [b]{{ projectNameLabel }}[/b]. وفيما يلي قائمة بالإصحاحات  التي تحتوي على محتوى موجود. انقر على كل إصحاح لعرض المحتوى.",
     "overwrite_books_question": "هل تريد استبدال الأسفار؟",
     "overwrite_chapter_link": "[link:chapterLink] الإصحاح {{ chapterNum }}[/link]",
+    "permission_error": "You do not have permission to apply this draft to this project. Please contact your project administrator.",
     "please_select_valid_project": "يرجى اختيار مشروع صالح",
     "project_context_unavailable": "سياق المشروع غير متوفر. يرجى إغلاق مربع الحوار والمحاولة مرة أخرى.",
     "project_deleted": "تم حذف هذا المشروع. يرجى الاتصال بمسؤول المشروع.",
@@ -573,6 +548,7 @@
     "no_draft_notice": "{{ bookChapterName }} ليس له مسودة.",
     "offline_notice": "المسودات التي تم إنشاؤها غير متاحة في وضع عدم الاتصال بالإنترنت.",
     "overwrite": "ستؤدي إضافة المُسَوَّدَة إلى استبدال الإصحاح الحالي. هل أنت متأكد من رغبتك في المتابعة؟",
+    "permission_error": "You do not have permission to edit this chapter. Please contact your project administrator.",
     "reapply_to_project": "إعادة الإضافة إلى المشروع",
     "yes": "استبدال الإصحاح"
   },

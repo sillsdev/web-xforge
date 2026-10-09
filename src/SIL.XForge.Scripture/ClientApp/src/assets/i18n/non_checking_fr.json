@@ -141,33 +141,6 @@
     "please_type_project_name": "Veuillez saisir le nom du projet pour confirmer.",
     "project_name": "Nom du projet"
   },
-  "draft_apply_dialog": {
-    "add_to_project": "Ajouter au Projet",
-    "book_does_not_exist": "{{ bookName }} sur le projet sélectionné n'existe pas",
-    "book_is_empty": "{{ bookName }} dans le projet {{ projectName }} est vide.",
-    "cancel": "Annuler",
-    "confirm_create_chapters": "Veuillez confirmer que vous souhaitez créer des chapitres manquants dans le livre.",
-    "confirm_overwrite": "Veuillez confirmer que vous voulez écraser le livre.",
-    "connect_to_the_internet": "Veuillez vous connecter à l'internet pour ajouter l'ébauche à votre projet.",
-    "choose_project": "Choisir projet",
-    "i_understand_overwrite_book": "Je comprends que l'ébauche va écraser {{ bookName }} dans le projet {{ projectName }}",
-    "i_understand_missing_chapters_are_created": "Je comprends que l'ébauche créera des chapitres manquants dans {{ bookName }} dans le projet {{ projectName }} .",
-    "looking_for_unlisted_project": "Vous cherchez un projet qui n'est pas répertorié ? Connectez-le à {{ underlineStart }}la page du projet{{ underlineEnd }} d'abord.",
-    "no_write_permissions": "Vous n'avez pas l'autorisation d'écrire dans ce livre sur ce projet. Contactez l'administrateur du projet pour obtenir cette autorisation.",
-    "project_has_chapters_missing": "{{ bookName }} dans ce projet il y a des chapitres manquants. Veuillez ajouter les chapitres manquants dans Paratext",
-    "project_has_text_in_chapters": "{{ bookName }} dans {{ projectName }} a du texte dans les chapitres {{ numChapters }}",
-    "project_has_text_in_one_chapter": "{{ bookName }} dans {{ projectName }} a un texte dans 1 chapitre",
-    "select_alternate_project": "Sélectionnez le projet auquel vous souhaitez ajouter l'ébauche"
-  },
-  "draft_apply_progress-dialog": {
-    "add_draft_to_book": "Ajout d'ébauche à {{ bookName }}",
-    "close": "Fermer",
-    "failed_to_apply_chapters": "Impossible d'appliquer les chapitres :",
-    "fail_cannot_edit": "Le chapitre cible n'est pas modifiable. Voir ce chapitre pour plus d'informations.",
-    "fail_unknown": "Erreur inconnue. Veuillez réessayer plus tard. Si l'erreur persiste, veuillez signaler un problème.",
-    "some_chapters_not_applied": "Les ébauches d'un ou plusieurs chapitres n'ont pas pu être appliqués à {{ bookName }}",
-    "successfully_applied_all_chapters": "Application réussie de tous les chapitres sur {{ bookName }}"
-  },
   "draft_generation": {
     "choose_formatting_options": "Choisissez les options de mise en forme pour continuer",
     "choose_formatting_options_before_new_draft": "Avant de pouvoir créer une nouvelle ébauche, vous devez choisir les options de mise en forme.",
@@ -282,6 +255,7 @@
       "heading": "Synchroniser avant de rédiger",
       "body": "Ces projets ont des modifications dans Paratext qui ne sont pas encore reflétées ici. Le fait de rédiger sans synchroniser peut réduire la qualité des ébauches.",
       "checking_projects": "Vérification de l'état d'avancement du projet...",
+      "offline_message": "La génération d'une ébauche n'est pas disponible hors connexion.",
       "sync": "Synchroniser",
       "sync_all": "Tout synchroniser",
       "continue_anyway": "Continuer quand même",
@@ -448,6 +422,7 @@
     "overwrite_books_description": "Un ou plusieurs chapitres ont un contenu existant qui sera écrasé dans [b]{{ projectNameLabel }}[/b]. Les chapitres ayant un contenu existant sont listés ci-dessous. Cliquez sur chaque chapitre pour en afficher le contenu.",
     "overwrite_books_question": "Écraser les livres ?",
     "overwrite_chapter_link": "[link:chapterLink]Chapitre {{ chapterNum }}[/link]",
+    "permission_error": "Vous n'êtes pas autorisé à soumettre cette ébauche à ce projet. Veuillez contacter l'administrateur du projet.",
     "please_select_valid_project": "Veuillez sélectionner un projet valide",
     "project_context_unavailable": "Le contexte du projet n'est pas disponible. Veuillez fermer la boîte de dialogue et réessayer.",
     "project_deleted": "Ce projet a été supprimé. Veuillez contacter l'administrateur de votre projet.",
@@ -573,6 +548,7 @@
     "no_draft_notice": "{{ bookChapterName }} n'a pas d'ébauche.",
     "offline_notice": "L'ébauche automatique n'est pas disponible hors connexion.",
     "overwrite": "L'ajout d'une ébauche écrasera le chapitre actuel. Êtes-vous sûr de vouloir continuer ?",
+    "permission_error": "Vous n'êtes pas autorisé à modifier ce chapitre. Veuillez contacter l'administrateur de votre projet.",
     "reapply_to_project": "Rajouter au projet",
     "yes": "Écraser le chapitre"
   },

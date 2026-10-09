@@ -141,33 +141,6 @@
     "please_type_project_name": "Please type in the name of the project to confirm.",
     "project_name": "نام پروژه"
   },
-  "draft_apply_dialog": {
-    "add_to_project": "Add to project",
-    "book_does_not_exist": "{{ bookName }} on the selected project does not exist",
-    "book_is_empty": "{{ bookName }} in {{ projectName }} project is empty.",
-    "cancel": "لغو",
-    "confirm_create_chapters": "Please confirm you want to create missing chapters in the book.",
-    "confirm_overwrite": "Please confirm you want to overwrite the book.",
-    "connect_to_the_internet": "Please connect to the internet to add the draft to your project.",
-    "choose_project": "پروژه را انتخاب کنید",
-    "i_understand_overwrite_book": "I understand the draft will overwrite {{ bookName }} in {{ projectName }} project",
-    "i_understand_missing_chapters_are_created": "I understand the draft will create missing chapters in {{ bookName }} in {{ projectName }} project",
-    "looking_for_unlisted_project": "Looking for a project that is not listed? Connect it on {{ underlineStart }}the projects page{{ underlineEnd }} first.",
-    "no_write_permissions": "You do not have permission to write to this book on this project. Contact the project's administrator to get permission.",
-    "project_has_chapters_missing": "{{ bookName }} in this project has chapters missing. Please add the missing chapters in Paratext",
-    "project_has_text_in_chapters": "{{ bookName }} in {{ projectName }} has text in {{ numChapters }} chapters",
-    "project_has_text_in_one_chapter": "{{ bookName }} in {{ projectName }} has text in 1 chapter",
-    "select_alternate_project": "Select the project you want to add the draft to"
-  },
-  "draft_apply_progress-dialog": {
-    "add_draft_to_book": "Adding draft to {{ bookName }}",
-    "close": "بستن",
-    "failed_to_apply_chapters": "Failed to apply these chapters:",
-    "fail_cannot_edit": "The target chapter is not editable. View that chapter for more information.",
-    "fail_unknown": "Unknown error. Please try again later. If the error persists, please report an issue.",
-    "some_chapters_not_applied": "Drafts of one or more chapters could not be applied to {{ bookName }}",
-    "successfully_applied_all_chapters": "Successfully applied all chapters to {{ bookName }}"
-  },
   "draft_generation": {
     "choose_formatting_options": "Choose formatting options to continue",
     "choose_formatting_options_before_new_draft": "Before you can create a new draft, you need to choose formatting options.",
@@ -282,6 +255,7 @@
       "heading": "Sync before drafting",
       "body": "These projects have changes in Paratext that aren't reflected here yet. Drafting without syncing may reduce draft quality.",
       "checking_projects": "Checking project status...",
+      "offline_message": "Draft generation is not available offline.",
       "sync": "Sync",
       "sync_all": "Sync all",
       "continue_anyway": "Continue anyway",
@@ -448,6 +422,7 @@
     "overwrite_books_description": "One or more chapters have existing content that will be overwritten in [b]{{ projectNameLabel }}[/b]. Chapters with existing content are listed below. Click each chapter to view the content.",
     "overwrite_books_question": "Overwrite books?",
     "overwrite_chapter_link": "[link:chapterLink]Chapter {{ chapterNum }}[/link]",
+    "permission_error": "You do not have permission to apply this draft to this project. Please contact your project administrator.",
     "please_select_valid_project": "Please select a valid project",
     "project_context_unavailable": "Project context unavailable. Please close the dialog and try again.",
     "project_deleted": "This project has been deleted. Please contact your project administrator.",
@@ -573,6 +548,7 @@
     "no_draft_notice": "{{ bookChapterName }} has no draft.",
     "offline_notice": "Generated drafts are not available offline.",
     "overwrite": "Adding the draft will overwrite the current chapter. Are you sure you want to continue?",
+    "permission_error": "You do not have permission to edit this chapter. Please contact your project administrator.",
     "reapply_to_project": "Re-add to project",
     "yes": "Overwrite chapter"
   },
