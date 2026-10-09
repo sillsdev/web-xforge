@@ -225,7 +225,9 @@ export class NoteDialogComponent implements OnInit {
     if (verseRef == null) {
       return '';
     }
-    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum.toString());
+    return XmlUtils.encodeForXml(
+      this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum.toString())
+    );
   }
 
   get canInsertNote(): boolean {
@@ -356,11 +358,11 @@ export class NoteDialogComponent implements OnInit {
         return '';
       }
       return (
-        this.threadDoc.data.originalContextBefore +
+        XmlUtils.encodeForXml(this.threadDoc.data.originalContextBefore) +
         (plainText ? '' : '<b>') +
-        this.threadDoc.data.originalSelectedText +
+        XmlUtils.encodeForXml(this.threadDoc.data.originalSelectedText) +
         (plainText ? '' : '</b>') +
-        this.threadDoc.data.originalContextAfter
+        XmlUtils.encodeForXml(this.threadDoc.data.originalContextAfter)
       );
     }
   }
@@ -549,7 +551,13 @@ export class NoteDialogComponent implements OnInit {
     const selectedText: string = reattachedParts[1];
     const contextBefore: string = reattachedParts[3];
     const contextAfter: string = reattachedParts[4];
-    return contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
+    return (
+      XmlUtils.encodeForXml(contextBefore) +
+      '<b>' +
+      XmlUtils.encodeForXml(selectedText) +
+      '</b>' +
+      XmlUtils.encodeForXml(contextAfter)
+    );
   }
 
   private reattachedVerse(note: Note): string | undefined {
