@@ -28,4 +28,6 @@ public interface IMachineProjectService
         Uri websiteUrl,
         CancellationToken cancellationToken
     );
+
+    Task SetDraftResultForProjectUsersAsync(string sfProjectId, JobState buildState);
 }
