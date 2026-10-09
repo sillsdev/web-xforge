@@ -9,7 +9,6 @@ import { JsonDocService } from './json-doc-service';
  */
 export abstract class ProjectService<T extends Project = Project> extends JsonDocService<T> {
   protected abstract get projectAdminRole(): string;
-  protected readonly immutableProps = [this.pathTemplate(p => p.name), this.pathTemplate(p => p.userRoles)];
 
   // This is static to aide with testing, and allow SFProjectService to utilize it
   static readonly validationSchema: ValidationSchema = {
@@ -82,16 +81,17 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
     );
   }
 
-  protected allowUpdate(_docId: string, _oldDoc: T, newDoc: T, ops: any, session: ConnectSession): boolean {
+  protected allowUpdate(_docId: string, oldDoc: T, _newDoc: T, ops: any, session: ConnectSession): boolean {
     if (session.isServer || session.roles.includes(SystemRole.SystemAdmin)) {
       return true;
     }
 
-    const projectRole = newDoc.userRoles != null ? newDoc.userRoles[session.userId] : '';
+    // Only project admins may change editable properties. SF project docs have none, so this applies to any that are added.
+    const projectRole = oldDoc.userRoles != null ? oldDoc.userRoles[session.userId] : '';
     if (projectRole !== this.projectAdminRole) {
       return false;
     }
 
-    return this.checkImmutableProps(ops);
+    return this.changesOnlyEditableProps(ops);
   }
 }

@@ -173,19 +173,15 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
   constructor() {
     super(NOTE_THREAD_MIGRATIONS);
 
-    const immutableProps = [
-      this.pathTemplate(t => t.dataId),
-      this.pathTemplate(t => t.verseRef),
-      this.pathTemplate(t => t.originalSelectedText),
-      this.pathTemplate(t => t.notes[ANY_INDEX].dataId),
-      this.pathTemplate(t => t.notes[ANY_INDEX].ownerRef),
-      this.pathTemplate(t => t.notes[ANY_INDEX].editable),
-      this.pathTemplate(t => t.notes[ANY_INDEX].versionNumber),
-      this.pathTemplate(t => t.notes[ANY_INDEX].dateCreated),
-      this.pathTemplate(t => t.biblicalTermId),
-      this.pathTemplate(t => t.extraHeadingInfo)
+    const editableProps = [
+      this.pathTemplate(t => t.status),
+      this.pathTemplate(t => t.position),
+      this.pathTemplate(t => t.notes[ANY_INDEX].content!),
+      this.pathTemplate(t => t.notes[ANY_INDEX].status),
+      this.pathTemplate(t => t.notes[ANY_INDEX].dateModified),
+      this.pathTemplate(t => t.notes[ANY_INDEX].deleted)
     ];
-    this.immutableProps.push(...immutableProps);
+    this.editableProps.push(...editableProps);
   }
 
   /** The translate editor, the Biblical Terms panel and the checking tool query a project's note threads. */

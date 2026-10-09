@@ -56,9 +56,6 @@ export class TextAudioService extends SFProjectDataService<TextAudio> {
 
   constructor() {
     super(TEXT_AUDIO_MIGRATIONS);
-
-    const immutableProps = [this.pathTemplate(t => t.dataId)];
-    this.immutableProps.push(...immutableProps);
   }
 
   /** The checking tool and the chapter audio dialog query a project's chapter audio. */

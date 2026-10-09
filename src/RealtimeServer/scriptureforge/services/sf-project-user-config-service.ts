@@ -164,6 +164,29 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
 
   constructor(sfProjectUserConfigMigrations: MigrationConstructor[]) {
     super(sfProjectUserConfigMigrations);
+
+    const editableProps = [
+      this.pathTemplate(puc => puc.selectedTask!),
+      this.pathTemplate(puc => puc.selectedQuestionRef!),
+      this.pathTemplate(puc => puc.selectedBookNum!),
+      this.pathTemplate(puc => puc.selectedChapterNum!),
+      this.pathTemplate(puc => puc.selectedBiblicalTermsCategory!),
+      this.pathTemplate(puc => puc.selectedBiblicalTermsFilter!),
+      this.pathTemplate(puc => puc.selectedDraftTargetParatextId!),
+      this.pathTemplate(puc => puc.selectedSegment),
+      this.pathTemplate(puc => puc.selectedSegmentChecksum!),
+      this.pathTemplate(puc => puc.isTargetTextRight),
+      this.pathTemplate(puc => puc.biblicalTermsEnabled!),
+      this.pathTemplate(puc => puc.transliterateBiblicalTerms),
+      this.pathTemplate(puc => puc.showEditorTabsInSinglePane!),
+      this.pathTemplate(puc => puc.editorTabsOpen),
+      this.pathTemplate(puc => puc.lynxInsightState),
+      this.pathTemplate(puc => puc.noteRefsRead),
+      this.pathTemplate(puc => puc.questionRefsRead),
+      this.pathTemplate(puc => puc.answerRefsRead),
+      this.pathTemplate(puc => puc.commentRefsRead)
+    ];
+    this.editableProps.push(...editableProps);
   }
 
   protected setupDomains(): ProjectDomainConfig[] {

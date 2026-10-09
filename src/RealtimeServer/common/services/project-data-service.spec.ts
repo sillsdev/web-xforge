@@ -11,7 +11,7 @@ import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
 import { ANY_INDEX, ObjPathTemplate } from '../utils/obj-path';
-import { allowAll, clientConnect, createDoc, deleteDoc, fetchDoc, submitJson0Op } from '../utils/test-utils';
+import { allowAll, clientConnect, createDoc, deleteDoc, fetchDoc, submitJson0Op, submitOp } from '../utils/test-utils';
 import { ProjectDataService, ProjectDomainConfig } from './project-data-service';
 import { ProjectService } from './project-service';
 import { UserService } from './user-service';
@@ -121,6 +121,18 @@ describe('ProjectDataService', () => {
     ).resolves.not.toThrow();
   });
 
+  it('controls access to replacing root entity', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    // The user may edit only the test data that they own, which test01 is not
+    const userConn = clientConnect(env.server, 'user');
+    const testData: TestData = (await fetchDoc(userConn, TEST_DATA_COLLECTION, 'test01')).data;
+    await expect(
+      submitOp(userConn, TEST_DATA_COLLECTION, 'test01', { p: [], od: testData, oi: { ...testData, num: 1 } })
+    ).rejects.toThrow('Permission denied');
+  });
+
   it('controls access to edit child entity', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -205,14 +217,14 @@ describe('ProjectDataService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('controls access to immutable properties', async () => {
+  it('controls access to properties that are not editable', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
     const adminConn = clientConnect(env.server, 'admin');
     await expect(
       submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test01', ops =>
-        ops.set<string>(d => d.immutable!, 'test')
+        ops.set<string>(d => d.notEditable!, 'test')
       )
     ).rejects.toThrow();
   });
@@ -314,7 +326,7 @@ interface TestSubData extends OwnedData {
 
 interface TestData extends ProjectData {
   num?: number;
-  immutable?: string;
+  notEditable?: string;
   children: TestSubData[];
 }
 
@@ -322,7 +334,12 @@ class TestDataService extends ProjectDataService<TestData> {
   readonly collection = 'test_data';
 
   protected readonly indexPaths = [];
-  protected readonly immutableProps: ObjPathTemplate[] = [this.pathTemplate(d => d.immutable!)];
+  protected readonly editableProps: ObjPathTemplate[] = [
+    this.pathTemplate(d => d.num!),
+    this.pathTemplate(d => d.children[ANY_INDEX].num!),
+    this.pathTemplate(d => d.children[ANY_INDEX].children[ANY_INDEX].num!),
+    this.pathTemplate(d => d.children[ANY_INDEX].children[ANY_INDEX].deleted!)
+  ];
   readonly validationSchema: ValidationSchema = {
     bsonType: ProjectDataService.validationSchema.bsonType,
     required: ProjectDataService.validationSchema.required,
@@ -335,7 +352,7 @@ class TestDataService extends ProjectDataService<TestData> {
       num: {
         bsonType: 'int'
       },
-      immutable: {
+      notEditable: {
         bsonType: 'string'
       },
       children: {

@@ -92,18 +92,8 @@ export class BiblicalTermService extends SFProjectDataService<BiblicalTerm> {
   constructor() {
     super(BIBLICAL_TERM_MIGRATIONS);
 
-    // Only renderings and description are user updatable
-    const immutableProps = [
-      this.pathTemplate(t => t.projectRef),
-      this.pathTemplate(t => t.dataId),
-      this.pathTemplate(t => t.termId),
-      this.pathTemplate(t => t.transliteration),
-      this.pathTemplate(t => t.language),
-      this.pathTemplate(t => t.links),
-      this.pathTemplate(t => t.references),
-      this.pathTemplate(t => t.definitions)
-    ];
-    this.immutableProps.push(...immutableProps);
+    const editableProps = [this.pathTemplate(t => t.renderings), this.pathTemplate(t => t.description)];
+    this.editableProps.push(...editableProps);
   }
 
   /** The Biblical Terms panel queries a project's terms. */

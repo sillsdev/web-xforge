@@ -27,7 +27,7 @@ describe('TrainingDataService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('allows administrator to edit training data', async () => {
+  it('does not allow administrator to edit training data, which clients only create', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
@@ -36,7 +36,7 @@ describe('TrainingDataService', () => {
       submitJson0Op<TrainingData>(conn, TRAINING_DATA_COLLECTION, getTrainingDataId('project01', 'dataid01'), op =>
         op.set<number>(n => n.skipRows, 1)
       )
-    ).resolves.not.toThrow();
+    ).rejects.toThrow('Permission denied');
   });
 
   it('does not allow consultant to view training data', async () => {

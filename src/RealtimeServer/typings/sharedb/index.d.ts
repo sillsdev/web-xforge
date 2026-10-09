@@ -38,6 +38,19 @@ declare class ShareDB {
   });
   connect(connection?: Connection, req?: any): Connection;
   /**
+   * Submits an op as the agent's client would, through the same middleware. The op is the raw op of the client's
+   * message, which ShareDB checks only to be an object with an op, create or del. A middleware error reaches the
+   * callback as the middleware gave it, which for sharedb-access is a string.
+   */
+  submit(
+    agent: ShareDB.Agent,
+    index: string,
+    id: string,
+    op: common.RawOp,
+    options: SubmitRequest['options'],
+    callback: (err: Error | string | undefined, ops: common.RawOp[] | undefined, request: SubmitRequest) => void
+  ): void;
+  /**
    * Registers a projection that can be used from clients just like a normal collection.
    *
    * @param name name of the projection
@@ -335,6 +348,8 @@ interface SubmitRequest {
   projection: ShareDB.Projection | undefined;
   collection: string;
   extra: any | null;
+  // For custom use in middleware
+  custom: any;
   id: string;
   op: common.RawOp;
   options: any;
