@@ -33,6 +33,7 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { projectLabel } from '../shared/utils';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
+import { ServalAdminParams } from './serval-administration.component';
 import { ServalAdministrationService } from './serval-administration.service';
 interface SourceData {
   id: string;
@@ -171,12 +172,12 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
   }
 
   viewDraftJobs(projectId: string): void {
-    void this.router.navigate(['/serval-administration'], {
-      queryParams: {
-        tab: 'serval-builds',
-        q: projectId
-      }
-    });
+    const queryParams: ServalAdminParams = {
+      tab: 'serval-builds',
+      q: projectId,
+      noDateRange: true
+    };
+    void this.router.navigate(['/serval-administration'], { queryParams });
   }
 
   private generateRows(): void {
