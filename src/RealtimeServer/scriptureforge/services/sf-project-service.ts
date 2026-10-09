@@ -1,6 +1,5 @@
 import ShareDB from 'sharedb';
 import { ConnectSession } from '../../common/connect-session';
-import { MigrationConstructor } from '../../common/migration';
 import { Operation } from '../../common/models/project-rights';
 import { SystemRole } from '../../common/models/system-role';
 import { ValidationSchema } from '../../common/models/validation-schema';
@@ -551,26 +550,6 @@ export class SFProjectService extends ProjectService<SFProject> {
     },
     additionalProperties: false
   };
-
-  constructor(sfProjectMigrations: MigrationConstructor[]) {
-    super(sfProjectMigrations);
-
-    const immutableProps = [
-      this.pathTemplate(p => p.sync),
-      this.pathTemplate(p => p.paratextId),
-      this.pathTemplate(p => p.paratextUsers),
-      this.pathTemplate(p => p.texts),
-      this.pathTemplate(p => p.translateConfig),
-      this.pathTemplate(p => p.checkingConfig),
-      this.pathTemplate(p => p.lynxConfig),
-      this.pathTemplate(p => p.shortName),
-      this.pathTemplate(p => p.writingSystem),
-      this.pathTemplate(p => p.copyrightBanner),
-      this.pathTemplate(p => p.copyrightNotice),
-      this.pathTemplate(p => p.visibility)
-    ];
-    this.immutableProps.push(...immutableProps);
-  }
 
   init(server: RealtimeServer): void {
     server.addProjection(SF_PROJECT_PROFILES_COLLECTION, this.collection, SF_PROJECT_PROFILE_FIELDS);

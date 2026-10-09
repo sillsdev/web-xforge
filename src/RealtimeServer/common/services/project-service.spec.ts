@@ -70,7 +70,7 @@ describe('ProjectService', () => {
     await expect(fetchDoc(conn, PROJECTS_COLLECTION, 'project01')).rejects.toThrow();
   });
 
-  it('allows system admin to edit immutable properties', async () => {
+  it('allows system admin to edit properties that clients may not', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
@@ -80,7 +80,7 @@ describe('ProjectService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('does not allow user to edit immutable properties', async () => {
+  it('does not allow user to edit properties that clients may not', async () => {
     const env = new TestEnvironment();
     await env.createData();
 

@@ -21,16 +21,10 @@ export class UserService extends JsonDocService<User> {
 
   protected readonly indexPaths = USER_INDEX_PATHS;
 
-  protected readonly immutableProps: ObjPathTemplate[] = [
-    this.pathTemplate(u => u.authId),
-    this.pathTemplate(u => u.paratextId!),
-    this.pathTemplate(u => u.roles),
-    this.pathTemplate(u => u.avatarUrl),
-    this.pathTemplate(u => u.email),
-    this.pathTemplate(u => u.name),
-    this.pathTemplate(u => u.sites, false),
-    this.pathTemplate(u => u.sites[ANY_KEY], false),
-    this.pathTemplate(u => u.sites[ANY_KEY].projects)
+  protected readonly editableProps: ObjPathTemplate[] = [
+    this.pathTemplate(u => u.displayName),
+    this.pathTemplate(u => u.isDisplayNameConfirmed),
+    this.pathTemplate(u => u.sites[ANY_KEY].currentProjectId!)
   ];
 
   readonly validationSchema: ValidationSchema = {
@@ -139,6 +133,6 @@ export class UserService extends JsonDocService<User> {
       return false;
     }
 
-    return this.checkImmutableProps(ops);
+    return this.changesOnlyEditableProps(ops);
   }
 }

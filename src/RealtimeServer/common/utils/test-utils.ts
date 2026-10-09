@@ -1,3 +1,4 @@
+import ShareDB from 'sharedb';
 import { Connection, Doc, OTType, Query } from 'sharedb/lib/client';
 import { Snapshot } from 'sharedb/lib/common';
 import { SystemRole } from '../models/system-role';
@@ -109,6 +110,33 @@ export async function submitJson0Op<T>(
     doc.submitSource = true;
   }
   return await docSubmitJson0Op(doc, build, source);
+}
+
+/**
+ * Submits the op data exactly as given, as a client that sends its own messages could. Doc.submitOp always submits a list
+ * of components.
+ */
+export async function submitOpData(
+  server: RealtimeServer,
+  conn: Connection,
+  collection: string,
+  id: string,
+  opData: unknown
+): Promise<void> {
+  // Fetching the doc makes sure that the connection has its session
+  await fetchDoc(conn, collection, id);
+  // ShareDB.connect stores the agent on the connection, which the typings do not declare
+  const agent: ShareDB.Agent = (conn as Connection & { agent: ShareDB.Agent }).agent;
+  return new Promise((resolve, reject) =>
+    server.submit(agent, collection, id, { op: opData } as ShareDB.RawOp, {}, err => {
+      if (err == null) {
+        resolve();
+      } else {
+        // An access denial is a string, which the ShareDB client turns into an error, so this does too
+        reject(typeof err === 'string' ? new Error(err) : err);
+      }
+    })
+  );
 }
 
 export async function deleteDoc(conn: Connection, collection: string, id: string): Promise<void> {

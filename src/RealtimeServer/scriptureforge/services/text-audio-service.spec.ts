@@ -5,7 +5,15 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { allowAll, clientConnect, createDoc, fetchDoc, fetchQuery, submitJson0Op } from '../../common/utils/test-utils';
+import {
+  allowAll,
+  clientConnect,
+  createDoc,
+  fetchDoc,
+  fetchQuery,
+  submitJson0Op,
+  submitOpData
+} from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
@@ -25,7 +33,7 @@ describe('TextAudioService', () => {
     await expect(fetchDoc(conn, TEXT_AUDIO_COLLECTION, getTextDocId('project01', 40, 1))).resolves.not.toThrow();
   });
 
-  it('allows administrator to edit text audio timings', async () => {
+  it('does not allow administrator to edit text audio timings, which the server changes', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
@@ -38,7 +46,7 @@ describe('TextAudioService', () => {
           to: 1.5
         })
       )
-    ).resolves.not.toThrow();
+    ).rejects.toThrow('Permission denied');
   });
 
   it('does not allow non-member to view text audio timings', async () => {
@@ -82,6 +90,20 @@ describe('TextAudioService', () => {
     await expect(fetchQuery(conn, TEXT_AUDIO_COLLECTION, { projectRef: 'project01' })).rejects.toThrow(
       'Query is not allowed for collection: text_audio'
     );
+  });
+
+  it('does not allow user to submit an op that is not a list of components', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    // JSON0 applies this op as no change, but ShareDB would still commit it if it were allowed
+    const conn = clientConnect(env.server, 'observer');
+    await expect(
+      submitOpData(env.server, conn, TEXT_AUDIO_COLLECTION, getTextDocId('project01', 40, 1), {
+        p: ['ownerRef'],
+        oi: 'aaaa'
+      })
+    ).rejects.toThrow('Permission denied');
   });
 });
 

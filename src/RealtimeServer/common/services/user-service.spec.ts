@@ -7,7 +7,15 @@ import { User, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user
 import { createTestUser } from '../models/user-test-data';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
-import { clientConnect, createDoc, fetchDoc, fetchQuery, submitJson0Op, submitOp } from '../utils/test-utils';
+import {
+  clientConnect,
+  createDoc,
+  fetchDoc,
+  fetchQuery,
+  submitJson0Op,
+  submitOp,
+  submitOpData
+} from '../utils/test-utils';
 import { UserService } from './user-service';
 
 describe('UserService', () => {
@@ -51,6 +59,16 @@ describe('UserService', () => {
     await expect(submitOp(conn, USERS_COLLECTION, 'user02', [])).resolves.not.toThrow();
   });
 
+  it('does not allow user to submit an op that is not a list of components', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'user02', SystemRole.User);
+    await expect(
+      submitOpData(env.server, conn, USERS_COLLECTION, 'user02', { p: ['displayName'], oi: 'New name' })
+    ).rejects.toThrow('Permission denied');
+  });
+
   it('does not allow user to view others', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -75,7 +93,7 @@ describe('UserService', () => {
     await expect(fetchDoc(conn, USER_PROFILES_COLLECTION, 'user01')).resolves.not.toThrow();
   });
 
-  it('allows system admin to edit immutable properties', async () => {
+  it('allows system admin to edit properties that clients may not', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
@@ -87,7 +105,7 @@ describe('UserService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('does not allow user to edit immutable properties', async () => {
+  it('does not allow user to edit properties that clients may not', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
@@ -96,6 +114,17 @@ describe('UserService', () => {
       submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops =>
         ops.set<string[]>(u => u.roles, [SystemRole.SystemAdmin])
       )
+    ).rejects.toThrow();
+  });
+
+  it('does not allow user to replace their whole user doc', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'user02', SystemRole.User);
+    const user: User = (await fetchDoc(conn, USERS_COLLECTION, 'user02')).data;
+    await expect(
+      submitOp(conn, USERS_COLLECTION, 'user02', { p: [], od: user, oi: { ...user, roles: [SystemRole.SystemAdmin] } })
     ).rejects.toThrow();
   });
 

@@ -31,10 +31,6 @@ function isWholeDocDomain(domain: ProjectDomainConfig): boolean {
  * This is the abstract base class for all doc services that manage JSON0 project data.
  */
 export abstract class ProjectDataService<T extends ProjectData> extends JsonDocService<T> {
-  protected readonly immutableProps: ObjPathTemplate[] = [
-    this.pathTemplate(pd => pd.projectRef),
-    this.pathTemplate(pd => pd.ownerRef)
-  ];
   protected abstract get projectRights(): ProjectRights;
   /**
    * Set this property to "true" in services that need to override "onInsert", "onUpdate", and "onDelete"
@@ -148,7 +144,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   protected async allowUpdate(
     _docId: string,
     oldDoc: T,
-    newDoc: T,
+    _newDoc: T,
     ops: ShareDB.Op[],
     session: ConnectSession
   ): Promise<boolean> {
@@ -164,17 +160,18 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       return false;
     }
 
-    for (const op of ops) {
-      const domain: ProjectDomainConfig | undefined = this.getUpdatedDomain(op.p, newDoc);
+    // Each op is authorized against the doc that it applies to, rather than the old doc, where an index may be to a
+    // different entity
+    for (const { op, doc } of this.opsWithDocs(oldDoc, ops)) {
+      const domain: ProjectDomainConfig | undefined = this.getUpdatedDomain(op.p, doc);
       if (domain == null) {
         return false;
       }
 
-      let checkImmutableProps = true;
+      let checkEditableProps = true;
       if (domain.pathTemplate.template.length < op.p.length) {
         // property update
-        const entityPath = op.p.slice(0, domain.pathTemplate.template.length);
-        const oldEntity = this.deepGet(entityPath, oldDoc);
+        const entity = this.deepGet(op.p.slice(0, domain.pathTemplate.template.length), doc);
 
         // Changing the deleted property should be treated as a delete operation
         let operation: Operation = Operation.Edit;
@@ -182,16 +179,16 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
           operation = Operation.Delete;
         }
 
-        // if the entity doesn't exist in the old doc, then it must be inserted by a previous op that the user has a
-        // right to perform, so we don't need to check this edit right
-        if (oldEntity != null && !this.hasRight(project, domain, operation, session.userId, oldEntity)) {
+        if (!this.hasRight(project, domain, operation, session.userId, entity)) {
           return false;
         }
       } else {
+        // The entity is taken from the doc, as JSON0 does not check that an op's "ld" is the entity that it deletes
+        const entity = this.deepGet(op.p, doc);
         const listOp = op as ShareDB.ListReplaceOp;
         if (listOp.li != null && listOp.ld != null) {
           // replace
-          if (!this.hasRight(project, domain, Operation.Edit, session.userId, listOp.ld)) {
+          if (entity == null || !this.hasRight(project, domain, Operation.Edit, session.userId, entity)) {
             return false;
           }
         } else if (listOp.li != null) {
@@ -199,18 +196,21 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
           if (!this.hasRight(project, domain, Operation.Create, session.userId, listOp.li)) {
             return false;
           }
-          checkImmutableProps = false;
+          checkEditableProps = false;
         } else if (listOp.ld != null) {
-          // delete
-          if (!this.hasRight(project, domain, Operation.Delete, session.userId, listOp.ld)) {
+          // delete, which JSON0 also allows of an entity past the end of the list
+          if (entity == null || !this.hasRight(project, domain, Operation.Delete, session.userId, entity)) {
             return false;
           }
-          checkImmutableProps = false;
+          checkEditableProps = false;
+        } else if (!this.hasRight(project, domain, Operation.Edit, session.userId, entity)) {
+          // any other op on the entity, such as replacing it with "oi" or a property domain's value
+          return false;
         }
       }
 
-      if (checkImmutableProps) {
-        if (!this.checkImmutableProps(op)) {
+      if (checkEditableProps) {
+        if (!this.changesOnlyEditableProps(op)) {
           return false;
         }
       }
@@ -327,6 +327,27 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     return this.domains;
   }
 
+  /**
+   * Yields each op with the doc that it applies to, which is the old doc as the ops before it left it. The old doc is not
+   * changed.
+   */
+  private *opsWithDocs(oldDoc: T, ops: ShareDB.Op[]): Generator<{ op: ShareDB.Op; doc: T }> {
+    let doc: T = oldDoc;
+    for (let i = 0; i < ops.length; i++) {
+      const op: ShareDB.Op = ops[i];
+      yield { op, doc };
+      if (i < ops.length - 1) {
+        // JSON0 applies an op in place, so the first op is applied to a copy of the old doc, which belongs to ShareDB, and
+        // the later ops to that copy
+        if (i === 0) {
+          doc = structuredClone(oldDoc);
+        }
+        // The op is cloned, as applying it puts its values into the doc, where later ops would change them
+        doc = ShareDB.types.map['json0'].apply(doc, [structuredClone(op)]);
+      }
+    }
+  }
+
   private getUpdatedDomain(path: ShareDB.Path, entity: OwnedData): ProjectDomainConfig | undefined {
     const domainConfigs: ProjectDomainConfig[] = this.getApplicableDomains(entity);
     const index: number = this.getMatchingPathTemplate(
@@ -371,6 +392,15 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       if (domain != null) {
         await this.onBeforeDelete(connectSession.userId, context.id, domain.projectDomain, context.snapshot!.data);
       }
+    } else if (Array.isArray(context.op.op) && context.op.op.some(op => (op as ShareDB.ListDeleteOp).ld != null)) {
+      // The deleted entities are kept for "onDelete", as JSON0 does not check that an op's "ld" is the entity it deletes
+      const deletedEntities = new Map<ShareDB.Op, OwnedData>();
+      for (const { op, doc } of this.opsWithDocs(context.snapshot!.data, context.op.op)) {
+        if ((op as ShareDB.ListDeleteOp).ld != null) {
+          deletedEntities.set(op, this.deepGet(op.p, doc));
+        }
+      }
+      context.custom.deletedEntities = deletedEntities;
     }
   }
 
@@ -403,7 +433,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         } else {
           const listOp = op as ShareDB.ListReplaceOp;
           if (listOp.ld != null) {
-            await this.onDelete(connectSession.userId, context.id, domain.projectDomain, listOp.ld);
+            const entity: OwnedData | undefined = context.custom.deletedEntities.get(op);
+            if (entity != null) {
+              await this.onDelete(connectSession.userId, context.id, domain.projectDomain, entity);
+            }
           }
           if (listOp.li != null) {
             await this.onInsert(connectSession.userId, context.id, domain.projectDomain, listOp.li);

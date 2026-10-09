@@ -4,7 +4,7 @@ import { instance, mock } from 'ts-mockito';
 import { SystemRole } from '../../common/models/system-role';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
-import { clientConnect, createDoc, fetchDoc, fetchQuery } from '../../common/utils/test-utils';
+import { clientConnect, createDoc, fetchDoc, fetchQuery, submitOp } from '../../common/utils/test-utils';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
 import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { createTestProject } from '../models/sf-project-test-data';
@@ -60,6 +60,31 @@ describe('SFProjectService', () => {
 
     const conn = clientConnect(env.server, 'non_member');
     await expect(fetchDoc(conn, SF_PROJECT_PROFILES_COLLECTION, 'project01')).rejects.toThrow();
+  });
+
+  it('does not allow user to replace project with a different role for themselves', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'translator');
+    const project: SFProject = (await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01')).data;
+    await expect(
+      submitOp(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        p: [],
+        od: project,
+        oi: { ...project, userRoles: { ...project.userRoles, translator: 'pt_administrator' } }
+      })
+    ).rejects.toThrow();
+  });
+
+  it('does not allow project admin to change the project directly', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'projectAdmin');
+    await expect(
+      submitOp(conn, SF_PROJECTS_COLLECTION, 'project01', { p: ['syncDisabled'], oi: true })
+    ).rejects.toThrow('Permission denied');
   });
 
   it('lets only system admins query projects', async () => {

@@ -201,20 +201,28 @@ export class QuestionService extends SFProjectDataService<Question> {
   constructor() {
     super(QUESTION_MIGRATIONS);
 
-    const immutableProps = [
-      this.pathTemplate(q => q.dataId),
-      this.pathTemplate(q => q.dateCreated),
-      this.pathTemplate(q => q.answers[ANY_INDEX].dataId),
-      this.pathTemplate(q => q.answers[ANY_INDEX].ownerRef),
-      this.pathTemplate(q => q.answers[ANY_INDEX].syncUserRef!),
-      this.pathTemplate(q => q.answers[ANY_INDEX].dateCreated),
-      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].dataId),
-      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].ownerRef),
-      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].syncUserRef!),
-      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].dateCreated),
-      this.pathTemplate(q => q.answers[ANY_INDEX].likes[ANY_INDEX].ownerRef)
+    const editableProps = [
+      this.pathTemplate(q => q.text!),
+      this.pathTemplate(q => q.verseRef),
+      this.pathTemplate(q => q.audioUrl!),
+      this.pathTemplate(q => q.isArchived),
+      this.pathTemplate(q => q.dateArchived!),
+      this.pathTemplate(q => q.dateModified),
+      this.pathTemplate(q => q.answers[ANY_INDEX].text!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].scriptureText!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].verseRef!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].selectionStartClipped!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].selectionEndClipped!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].audioUrl!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].status!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].dateModified),
+      this.pathTemplate(q => q.answers[ANY_INDEX].deleted),
+      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].text!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].audioUrl!),
+      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].dateModified),
+      this.pathTemplate(q => q.answers[ANY_INDEX].comments[ANY_INDEX].deleted)
     ];
-    this.immutableProps.push(...immutableProps);
+    this.editableProps.push(...editableProps);
   }
 
   /** The checking tool and the question import dialog query a project's questions. */

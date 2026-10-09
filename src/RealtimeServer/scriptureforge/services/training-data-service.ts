@@ -48,9 +48,6 @@ export class TrainingDataService extends SFProjectDataService<TrainingData> {
 
   constructor() {
     super(TRAINING_DATA_MIGRATIONS);
-
-    const immutableProps = [this.pathTemplate(t => t.dataId)];
-    this.immutableProps.push(...immutableProps);
   }
 
   protected async allowRead(docId: string, doc: TrainingData, session: ConnectSession): Promise<boolean> {
