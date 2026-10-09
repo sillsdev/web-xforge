@@ -6,6 +6,7 @@ import { By } from '@angular/platform-browser';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
+import { Delta } from 'quill';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
@@ -309,6 +310,28 @@ describe('NoteDialogComponent', () => {
     expect(env.verseRef).toEqual('Matthew 1:1');
     expect(env.noteText.nativeElement.innerText).toEqual('target: chapter 1, verse 1.');
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Unassigned');
+  }));
+
+  it('shows verse text that starts with < in insert note dialog', fakeAsync(() => {
+    env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1') });
+    const textDoc: TextDoc = env.realtimeService.get<TextDoc>(
+      TextDoc.COLLECTION,
+      new TextDocId(TestEnvironment.PROJECT01, 40, 1).toString()
+    );
+    // Insert at the start of the verse 1 text
+    textDoc.submit(new Delta().retain(23).insert('<', { segment: 'verse_1_1' }));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.noteText.nativeElement.textContent).toEqual('<target: chapter 1, verse 1.');
+  }));
+
+  it('shows note context text containing <', fakeAsync(() => {
+    const noteThread: NoteThread = TestEnvironment.getNoteThread();
+    noteThread.originalContextBefore = '<before ';
+    noteThread.originalSelectedText = '<selected>';
+    noteThread.originalContextAfter = ' after & more';
+    env = new TestEnvironment({ noteThread });
+    expect(env.noteText.nativeElement.textContent).toEqual('<before <selected> after & more');
   }));
 
   it('can insert a note', fakeAsync(() => {
