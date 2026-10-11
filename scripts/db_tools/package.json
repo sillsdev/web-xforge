@@ -28,7 +28,7 @@
     "@types/ajv-bsontype": "^1.0.4",
     "@types/mongodb": "^3.6.20",
     "@types/node": "^16.18.126",
-    "@types/ws": "^8.18.1",
+    "@types/ws": "^8.18.2",
     "@types/yargs": "^17.0.35",
     "sharedb-mingo-memory": "^1.2.0",
     "ts-node": "^10.9.2",
