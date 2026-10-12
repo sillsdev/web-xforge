@@ -2,6 +2,7 @@ import { NgZone } from '@angular/core';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -50,6 +51,7 @@ describe('cache service', () => {
 
       const mockProject = mock(SFProjectProfileDoc);
       when(mockProject.id).thenReturn('new project');
+      when(mockProject.delete$).thenReturn(new Subject<void>());
       const data = createTestProjectProfile({
         texts: env.createTexts()
       });
@@ -85,6 +87,39 @@ describe('cache service', () => {
       flush();
       expect(true).toBeTruthy();
     }));
+
+    it('stops getting texts when the project is deleted', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      let textsGotten = 0;
+      when(mockedProjectService.getText(anything())).thenCall(() => {
+        textsGotten++;
+        if (textsGotten === 10) env.projectDeleted$.next();
+        return Promise.resolve();
+      });
+
+      await env.service.cache(env.projectDoc);
+      env.wait();
+
+      verify(mockedProjectService.getText(anything())).times(10);
+
+      flush();
+      expect(true).toBeTruthy();
+    }));
+
+    it('ignores a text that fails to load because the project was deleted', fakeAsync(async () => {
+      const env = new TestEnvironment();
+      when(mockedProjectService.getText(anything())).thenCall(() => {
+        env.projectDeleted$.next();
+        return Promise.reject(new Error('Permission denied'));
+      });
+
+      await expectAsync(env.service.cache(env.projectDoc)).toBeResolved();
+      env.wait();
+
+      verify(mockedProjectService.getText(anything())).once();
+
+      flush();
+    }));
   });
 });
 
@@ -92,6 +127,7 @@ class TestEnvironment {
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly service: CacheService;
   readonly projectDoc: SFProjectProfileDoc = instance(mockedProjectDoc);
+  readonly projectDeleted$ = new Subject<void>();
 
   constructor() {
     this.service = TestBed.inject(CacheService);
@@ -106,6 +142,7 @@ class TestEnvironment {
     });
 
     when(mockedProjectDoc.data).thenReturn(data);
+    when(mockedProjectDoc.delete$).thenReturn(this.projectDeleted$);
     when(mockedPermissionService.canAccessTextAsync(anything())).thenResolve(true);
   }
 
