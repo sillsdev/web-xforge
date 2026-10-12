@@ -193,7 +193,7 @@ public class SFProjectsUploadControllerTests
 
         // Set up the URI to the uploaded file
         Uri relativeUri = new Uri(
-            $"/assets/audio/{Project01}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
+            $"/assets/{AudioService.DirectoryName}/{Project01}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
             UriKind.Relative
         );
         env.SFProjectService.SaveAudioAsync(User01, Project01, Data01, Arg.Any<string>()).Returns(relativeUri);
