@@ -17,6 +17,5 @@ public interface IFileSystemService
     void MoveDirectory(string sourceDirPath, string targetDirPath);
     void MoveFile(string sourceFilePath, string targetFilePath);
     IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*");
-    IEnumerable<string> EnumerateDirectories(string path);
     void WriteXmlFile<T>(Stream stream, T data);
 }

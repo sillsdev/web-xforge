@@ -46,8 +46,6 @@ public class FileSystemService : IFileSystemService
     public IEnumerable<string> EnumerateFiles(string path, string searchPattern = "*") =>
         Directory.EnumerateFiles(path, searchPattern);
 
-    public IEnumerable<string> EnumerateDirectories(string path) => Directory.EnumerateDirectories(path);
-
     public void WriteXmlFile<T>(Stream stream, T data)
     {
         XmlSerializerNamespaces xsn = new XmlSerializerNamespaces();
