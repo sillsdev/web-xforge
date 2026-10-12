@@ -223,7 +223,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         }
         string outputFileName = Path.GetFileName(outputPath);
         var uri = new Uri(
-            $"/assets/audio/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}",
+            $"/assets/{AudioService.DirectoryName}/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}",
             UriKind.Relative
         );
         return uri;
@@ -330,7 +330,8 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     protected bool IsProjectAdmin(TModel project, string userId) =>
         project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
 
-    protected string GetAudioDir(string projectId) => Path.Join(SiteOptions.Value.SiteDir, "audio", projectId);
+    protected string GetAudioDir(string projectId) =>
+        Path.Join(SiteOptions.Value.SiteDir, AudioService.DirectoryName, projectId);
 
     protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
 

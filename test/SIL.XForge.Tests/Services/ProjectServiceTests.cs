@@ -30,11 +30,14 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
         const string path = "file.wav";
-        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", AudioService.DirectoryName, Project01, $"{User01}_{dataId}.mp3");
 
         // SUT
         Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
-        Assert.That(uri.ToString().StartsWith($"/assets/audio/{Project01}/{User01}_{dataId}.mp3?t="), Is.True);
+        Assert.That(
+            uri.ToString().StartsWith($"/assets/{AudioService.DirectoryName}/{Project01}/{User01}_{dataId}.mp3?t="),
+            Is.True
+        );
         await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
     }
 
@@ -44,12 +47,15 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
         const string path = "file.mp3";
-        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", AudioService.DirectoryName, Project01, $"{User01}_{dataId}.mp3");
         env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(true));
 
         // SUT
         Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
-        Assert.That(uri.ToString().StartsWith($"/assets/audio/project01/user01_{dataId}.mp3?t="), Is.True);
+        Assert.That(
+            uri.ToString().StartsWith($"/assets/{AudioService.DirectoryName}/project01/user01_{dataId}.mp3?t="),
+            Is.True
+        );
         env.FileSystemService.Received().MoveFile(path, filePath);
         await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
     }
@@ -81,7 +87,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Join("site", "audio", Project01, $"{User02}_{dataId}.mp3");
+        string filePath = Path.Join("site", AudioService.DirectoryName, Project01, $"{User02}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         await env.Service.DeleteAudioAsync(User02, Project01, User02, dataId);
@@ -93,7 +99,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Join("site", "audio", Project01, $"{User02}_{dataId}.mp3");
+        string filePath = Path.Join("site", AudioService.DirectoryName, Project01, $"{User02}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         await env.Service.DeleteAudioAsync(User01, Project01, User02, dataId);
@@ -105,7 +111,7 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", AudioService.DirectoryName, Project01, $"{User01}_{dataId}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
