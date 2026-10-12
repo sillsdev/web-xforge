@@ -18,18 +18,19 @@ export class CacheService {
   }
 
   private async loadAllChapters(project: SFProjectProfileDoc): Promise<void> {
-    let abort = false;
-    const sub = this.abortCurrent.subscribe(() => (abort = true));
+    if (project?.data == null) return;
 
-    if (project?.data != null) {
+    let abort = false;
+    const abortSub = this.abortCurrent.subscribe(() => (abort = true));
+    // Stop caching if the project is deleted, because its chapters can no longer be loaded
+    const deleteSub = project.delete$.subscribe(() => (abort = true));
+
+    try {
       const sourceId = project.data.translateConfig.source?.projectRef;
 
       for (const text of project.data.texts) {
         for (const chapter of text.chapters) {
-          if (abort) {
-            sub.unsubscribe();
-            return;
-          }
+          if (abort) return;
 
           const textDocId = new TextDocId(project.id, text.bookNum, chapter.number, 'target');
           if (await this.permissionsService.canAccessTextAsync(textDocId)) {
@@ -44,6 +45,12 @@ export class CacheService {
           }
         }
       }
+    } catch (error) {
+      // A chapter that was loading when the project was deleted can fail to load. Caching has stopped, so ignore it.
+      if (!abort) throw error;
+    } finally {
+      abortSub.unsubscribe();
+      deleteSub.unsubscribe();
     }
   }
 }
