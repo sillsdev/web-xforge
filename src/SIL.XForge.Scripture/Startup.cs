@@ -252,7 +252,7 @@ public class Startup
         app.UseStaticFiles(
             new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Path.Join(siteOptions.Value.SiteDir, "audio")),
+                FileProvider = new PhysicalFileProvider(Path.Join(siteOptions.Value.SiteDir, AudioService.DirectoryName)),
                 RequestPath = "/assets/audio",
             }
         );
