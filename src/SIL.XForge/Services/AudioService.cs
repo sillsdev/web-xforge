@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -8,30 +7,24 @@ using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Services;
 
-public class AudioService : IAudioService
+public class AudioService(IOptions<AudioOptions> audioOptions, IFileSystemService fileSystemService) : IAudioService
 {
-    private readonly IOptions<AudioOptions> _audioOptions;
-    private readonly IFileSystemService _fileSystemService;
-
-    public AudioService(IOptions<AudioOptions> audioOptions, IFileSystemService fileSystemService)
-    {
-        _audioOptions = audioOptions;
-        _fileSystemService = fileSystemService;
-    }
+    /// <summary>
+    /// The audio name. This is not the full path to the directory.
+    /// </summary>
+    public const string DirectoryName = "audio";
 
     public async Task ConvertToMp3Async(string inputPath, string outputPath)
     {
-        using var process = new Process
+        using var process = new Process();
+        process.StartInfo = new ProcessStartInfo
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = _audioOptions.Value.FfmpegPath,
-                // Pass each argument as a discrete entry rather than formatting them into a single string,
-                // so that quotes or spaces in a path can never be reinterpreted as additional ffmpeg options.
-                ArgumentList = { "-y", "-i", inputPath, outputPath },
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            },
+            FileName = audioOptions.Value.FfmpegPath,
+            // Pass each argument as a discrete entry rather than formatting them into a single string,
+            // so that quotes or spaces in a path can never be reinterpreted as additional ffmpeg options.
+            ArgumentList = { "-y", "-i", inputPath, outputPath },
+            UseShellExecute = false,
+            CreateNoWindow = true,
         };
         process.Start();
         await WaitForExitAsync(process);
@@ -48,7 +41,7 @@ public class AudioService : IAudioService
     public async Task<bool> IsMp3FileAsync(string path)
     {
         // Open the file
-        await using Stream stream = _fileSystemService.OpenFile(path, FileMode.Open);
+        await using Stream stream = fileSystemService.OpenFile(path, FileMode.Open);
 
         // Declare variables for stream reading
         byte[] buffer;
@@ -96,9 +89,9 @@ public class AudioService : IAudioService
 
     private static Task WaitForExitAsync(Process process)
     {
-        var tcs = new TaskCompletionSource<object>();
+        var tcs = new TaskCompletionSource<object?>();
         process.EnableRaisingEvents = true;
-        process.Exited += (sender, args) => tcs.TrySetResult(null);
+        process.Exited += (_, _) => tcs.TrySetResult(null);
         return tcs.Task;
     }
 }
