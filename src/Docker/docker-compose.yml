@@ -2,6 +2,9 @@ services:
   db-xforge:
     image: mongo:8.0
 
+  files-xforge:
+    image: adobe/s3mock:latest
+
   realtimeserver:
     image: ${DOCKER_REGISTRY-}sillsdev/web-xforge/realtimeserver
     build:
@@ -15,6 +18,7 @@ services:
       dockerfile: src/SIL.XForge.Scripture/Dockerfile
 
 volumes:
+  file-data:
   mongo_config:
   mongo_data:
   scriptureforge-data:
