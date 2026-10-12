@@ -6,7 +6,7 @@ ARG UBUNTU_NAME=noble
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
 
 ARG NODE_MAJOR=22
-ARG PNPM_VERSION=12.3.4
+ARG PNPM_VERSION=12.11.2
 
 # Avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
