@@ -34,6 +34,15 @@
           "Castle.Core": "5.2.1"
         }
       },
+      "AWSSDK.S3": {
+        "type": "Direct",
+        "requested": "[4.0.104.3, )",
+        "resolved": "4.0.104.3",
+        "contentHash": "AWtrk6Nn9v2+9HdD1qR3o/7zqFnSNWymqAYGQgzs53i2WJHM58avatVJROtF8WjaUzi1k463+uQUsYtUBA8Elg==",
+        "dependencies": {
+          "AWSSDK.Core": "[4.0.102.10, 5.0.0)"
+        }
+      },
       "Bugsnag.AspNet.Core": {
         "type": "Direct",
         "requested": "[4.1.1, )",
@@ -171,6 +180,11 @@
         "requested": "[10.0.13, )",
         "resolved": "10.0.13",
         "contentHash": "a+EovgC1fBnwdlQ6cn3j4JFBfKqiFaFvoAhjisOoSvazLAcIznaBzPQP0oYnvccmeXfqUH1KebVZOxSeH6rMaw=="
+      },
+      "AWSSDK.Core": {
+        "type": "Transitive",
+        "resolved": "4.0.102.10",
+        "contentHash": "ngedi+19mHnszODbUrZLtpU6JeIXVbR/MxslGZPJIcC5YVZcJSZxasnde3+0iboQj9V9bKri7b8D+TXTrOW6Aw=="
       },
       "BouncyCastle.Cryptography": {
         "type": "Transitive",
