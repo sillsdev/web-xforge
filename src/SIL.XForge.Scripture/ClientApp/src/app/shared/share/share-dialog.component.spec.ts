@@ -1,4 +1,4 @@
-import { DebugElement } from '@angular/core';
+import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -32,6 +32,7 @@ const mockedNavigator = mock(Navigator);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
 const mockedBrandingService = mock(BrandingService);
+const mockedErrorHandler = mock(ErrorHandler);
 
 enum TestUsers {
   CommunityChecker = 'user01',
@@ -50,7 +51,8 @@ describe('ShareDialogComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: BrandingService, useMock: mockedBrandingService }
+      { provide: BrandingService, useMock: mockedBrandingService },
+      { provide: ErrorHandler, useMock: mockedErrorHandler }
     ]
   }));
 
@@ -93,6 +95,47 @@ describe('ShareDialogComponent', () => {
     env.wait();
     expect(env.shareButton.disabled).toBe(false);
     expect(env.copyLinkButton.disabled).toBe(false);
+  }));
+
+  it('ignores a share key that arrives after a newer request was made', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Admin });
+    let resolveViewerKey: (value: string) => void;
+    let resolveCommenterKey: (value: string) => void;
+    when(
+      mockedProjectService.onlineGetLinkSharingKey(anything(), SFProjectRole.Viewer, anything(), anything())
+    ).thenReturn(new Promise<string>(resolve => (resolveViewerKey = resolve)));
+    when(
+      mockedProjectService.onlineGetLinkSharingKey(anything(), SFProjectRole.Commenter, anything(), anything())
+    ).thenReturn(new Promise<string>(resolve => (resolveCommenterKey = resolve)));
+    env.component.setLocale(env.locale);
+
+    env.component.setRole(SFProjectRole.Viewer);
+    env.component.setRole(SFProjectRole.Commenter);
+    resolveCommenterKey!('commenterKey');
+    env.wait();
+    resolveViewerKey!('viewerKey');
+    env.wait();
+
+    expect(env.copyLinkButton.disabled).toBe(false);
+    expect(env.component.shareableLink).toContain('/join/commenterKey/en');
+  }));
+
+  it('still fetches share keys after a request fails', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Admin });
+    when(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything(), anything()))
+      .thenReject(new Error('server error'))
+      .thenResolve('newKey');
+    env.component.setLocale(env.locale);
+
+    env.component.setRole(SFProjectRole.Viewer);
+    env.wait();
+    verify(mockedErrorHandler.handleError(anything())).once();
+    expect(env.copyLinkButton.disabled).toBe(true);
+
+    env.component.setRole(SFProjectRole.Commenter);
+    env.wait();
+    expect(env.copyLinkButton.disabled).toBe(false);
+    expect(env.component.shareableLink).toContain('/join/newKey/en');
   }));
 
   it('does not allow sharing or copying link when offline', fakeAsync(() => {

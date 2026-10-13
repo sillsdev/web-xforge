@@ -1,6 +1,6 @@
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgClass } from '@angular/common';
-import { Component, DestroyRef, Inject } from '@angular/core';
+import { Component, DestroyRef, ErrorHandler, Inject } from '@angular/core';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -19,6 +19,7 @@ import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { catchError, EMPTY, from, Subject, switchMap, tap } from 'rxjs';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
@@ -81,6 +82,7 @@ export class ShareDialogComponent extends ShareBaseComponent {
   private readonly projectId?: string;
   private linkSharingKey: string | undefined;
   private linkSharingReady: boolean = false;
+  private readonly sharingKeyRequests$ = new Subject<void>();
   private _error: string | undefined;
 
   constructor(
@@ -93,10 +95,41 @@ export class ShareDialogComponent extends ShareBaseComponent {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly brandingService: BrandingService,
     userService: UserService,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private readonly errorHandler: ErrorHandler
   ) {
     super(userService);
     this.projectId = this.data.projectId;
+    this.sharingKeyRequests$
+      .pipe(
+        tap(() => (this.linkSharingReady = false)),
+        switchMap(() => {
+          if (!this.onlineStatusService.isOnline || this.projectId == null || this.shareRole == null) {
+            return EMPTY;
+          }
+          return from(
+            this.projectService.onlineGetLinkSharingKey(
+              this.projectId,
+              this.shareRole,
+              this.shareLinkType,
+              this.shareExpiration
+            )
+          ).pipe(
+            // Catch errors per request so that one failure doesn't end the sharingKeyRequests$ subscription.
+            // Otherwise no later setting change would fetch a key, and the copy and share buttons would stay
+            // disabled until the dialog is reopened.
+            catchError(error => {
+              this.errorHandler.handleError(error);
+              return EMPTY;
+            })
+          );
+        }),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(shareKey => {
+        this.linkSharingKey = shareKey;
+        this.linkSharingReady = true;
+      });
     void Promise.all([
       this.projectService.getProfile(this.projectId),
       this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId)
@@ -291,15 +324,6 @@ export class ShareDialogComponent extends ShareBaseComponent {
    * Generates a new share key from the server based on the sharing requirements
    */
   private updateSharingKey(): void {
-    this.linkSharingReady = false;
-    if (!this.onlineStatusService.isOnline || this.projectId == null || this.shareRole == null) {
-      return;
-    }
-    void this.projectService
-      .onlineGetLinkSharingKey(this.projectId, this.shareRole, this.shareLinkType, this.shareExpiration)
-      .then((shareKey: string) => {
-        this.linkSharingKey = shareKey;
-        this.linkSharingReady = true;
-      });
+    this.sharingKeyRequests$.next();
   }
 }
