@@ -8,17 +8,23 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Services;
 
-public class TestProjectService : ProjectService<TestProject, TestProjectSecret>
-{
-    public TestProjectService(
-        IRealtimeService realtimeService,
-        IOptions<SiteOptions> siteOptions,
-        IAudioService audioService,
-        IRepository<TestProjectSecret> projectSecrets,
-        IFileSystemService fileSystemService
+public class TestProjectService(
+    IRealtimeService realtimeService,
+    IOptions<SiteOptions> siteOptions,
+    IAudioService audioService,
+    IRepository<TestProjectSecret> projectSecrets,
+    IFileSystemService fileSystemService,
+    IStorageProvider storageProvider
+)
+    : ProjectService<TestProject, TestProjectSecret>(
+        realtimeService,
+        siteOptions,
+        audioService,
+        projectSecrets,
+        fileSystemService,
+        storageProvider
     )
-        : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService) { }
-
+{
     protected override string ProjectAdminRole => TestProjectRole.Administrator;
 
     protected override Task<Attempt<string>> TryGetProjectRoleAsync(TestProject project, string userId) =>
