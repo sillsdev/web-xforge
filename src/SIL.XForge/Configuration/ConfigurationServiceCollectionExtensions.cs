@@ -14,7 +14,8 @@ public static class ConfigurationServiceCollectionExtensions
             .AddOptions<AuthOptions>(configuration)
             .AddOptions<AudioOptions>(configuration)
             .AddOptions<ServalOptions>(configuration)
-            .AddOptions<BugsnagOptions>(configuration);
+            .AddOptions<BugsnagOptions>(configuration)
+            .AddOptions<StorageConfigOptions>(configuration);
 
     private static IServiceCollection AddOptions<T>(this IServiceCollection services, IConfiguration configuration)
         where T : class
