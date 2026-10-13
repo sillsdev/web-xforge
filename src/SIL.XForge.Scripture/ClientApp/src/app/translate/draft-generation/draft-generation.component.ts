@@ -246,15 +246,16 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.loadingStarted();
 
     // Clear the latest draft result notification, as the user is now viewing the draft generation page
-    this.activatedProjectUserConfigService.projectUserConfigDoc$
+    combineLatest([
+      this.activatedProjectUserConfigService.projectUserConfigDoc$,
+      this.onlineStatusService.onlineStatus$
+    ])
       .pipe(
-        filterNullish(),
-        filter(projectUserConfigDoc => projectUserConfigDoc.data?.latestDraftResult != null),
+        filter(([projectUserConfigDoc, isOnline]) => isOnline && projectUserConfigDoc?.data?.latestDraftResult != null),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(async projectUserConfigDoc => {
-        await this.onlineStatusService.online;
-        void projectUserConfigDoc.submitJson0Op(op => op.unset(puc => puc.latestDraftResult));
+      .subscribe(async ([projectUserConfigDoc]) => {
+        void projectUserConfigDoc!.submitJson0Op(op => op.unset(puc => puc.latestDraftResult));
       });
 
     // Display dialog for supported languages when route fragment is 'supported-languages'
