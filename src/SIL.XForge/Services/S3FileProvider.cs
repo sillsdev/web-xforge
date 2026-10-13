@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using Amazon.S3;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
@@ -16,31 +15,12 @@ namespace SIL.XForge.Services;
 public class S3FileProvider(IAmazonS3 amazonS3, string bucketName) : DisposableBase, IFileProvider
 {
     private static readonly char[] pathSeparators = ['/'];
-    private static readonly char[] invalidFileNameChars =
-    [
-        '\\',
-        '{',
-        '}',
-        '^',
-        '%',
-        '`',
-        '[',
-        ']',
-        '\'',
-        '"',
-        '>',
-        '<',
-        '~',
-        '#',
-        '|',
-        .. Enumerable.Range(128, 255).Select(x => (char)x),
-    ];
 
     /// <inheritdoc />
     public IDirectoryContents GetDirectoryContents(string subpath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(subpath);
-        if (HasInvalidFileNameChars(subpath))
+        if (HasInvalidFilePathChars(subpath))
             return NotFoundDirectoryContents.Singleton;
 
         // Relative paths starting with leading slashes are okay
@@ -51,7 +31,7 @@ public class S3FileProvider(IAmazonS3 amazonS3, string bucketName) : DisposableB
     public IFileInfo GetFileInfo(string subpath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(subpath);
-        if (HasInvalidFileNameChars(subpath))
+        if (HasInvalidFilePathChars(subpath))
             return new NotFoundFileInfo(subpath);
 
         // Relative paths starting with leading slashes are okay
@@ -70,5 +50,6 @@ public class S3FileProvider(IAmazonS3 amazonS3, string bucketName) : DisposableB
 
     protected override void DisposeManagedResources() => amazonS3.Dispose();
 
-    private static bool HasInvalidFileNameChars(string path) => path.IndexOfAny(invalidFileNameChars) != -1;
+    private static bool HasInvalidFilePathChars(string path) =>
+        path.IndexOfAny(S3StorageProvider.InvalidFilePathChars) != -1;
 }
