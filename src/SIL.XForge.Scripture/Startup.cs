@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon.S3;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
@@ -259,7 +260,7 @@ public class Startup
         IFileProvider trainingDataFileProvider;
         if (storageConfigOptions.StorageProvider == StorageConfigOptions.S3)
         {
-            var amazonS3 = S3StorageProvider.GetAmazonS3Client(storageConfigOptions);
+            IAmazonS3 amazonS3 = app.ApplicationServices.GetRequiredService<IAmazonS3>();
             audioFileProvider = new S3FileProvider(amazonS3, AudioService.DirectoryName);
             trainingDataFileProvider = new S3FileProvider(amazonS3, TrainingDataService.DirectoryName);
         }
