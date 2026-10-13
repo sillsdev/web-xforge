@@ -1,12 +1,11 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Event, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRoute, Event, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/draft-result';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
@@ -91,30 +90,18 @@ describe('NavigationComponent', () => {
       when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
       when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canGenerateDraft$);
       when(mockedActivatedProjectUserConfigService.projectUserConfig$).thenReturn(this.projectUserConfig$);
-      when(mockedActivatedProjectUserConfigService.projectUserConfigDoc$).thenReturn(this.projectUserConfigDoc$);
-      when(this.mockedProjectUserConfigDoc.submitJson0Op(anything())).thenResolve(true);
       when(mockedUserService.currentUserId).thenReturn('user01');
       when(mockedAuthService.currentUserRoles).thenReturn([]);
       when(mockedRouter.url).thenReturn('/projects/project01');
-      when(mockedRouter.events).thenReturn(this.routerEvents$);
       when(mockedRouter.createUrlTree(anything(), anything())).thenReturn([] as any);
       when(mockedRouter.serializeUrl(anything())).thenReturn('');
-      when(mockedResumeCheckingService.resumeLink$).thenReturn(of([]));
-      when(mockedResumeTranslateService.resumeLink$).thenReturn(of(undefined));
+      when(mockedResumeCheckingService.resumeLink$).thenReturn(of(['/projects', 'project01', 'checking']));
+      when(mockedResumeTranslateService.resumeLink$).thenReturn(of(['/projects', 'project01', 'translate']));
       when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
 
       this.fixture = TestBed.createComponent(NavigationComponent);
       this.component = this.fixture.componentInstance;
       this.fixture.detectChanges();
-    }
-
-    setLatestDraftResult(value: DraftResult | undefined): void {
-      when(this.mockedProjectUserConfigDoc.data).thenReturn(createTestProjectUserConfig({ latestDraftResult: value }));
-    }
-
-    navigateTo(url: string): void {
-      when(mockedRouter.url).thenReturn(url);
-      this.routerEvents$.next(new NavigationEnd(1, url, url));
     }
 
     get adminPagesList(): DebugElement | null {
