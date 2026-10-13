@@ -58,11 +58,13 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
   readonly roles: FormControl<any> = new FormControl<string>('');
   readonly canAddEditQuestions = new FormControl(false);
   readonly canManageAudio = new FormControl(false);
+  readonly canChangeAnswerStatus = new FormControl(false);
 
   readonly form = new FormGroup({
     roles: this.roles,
     canAddEditQuestions: this.canAddEditQuestions,
-    canManageAudio: this.canManageAudio
+    canManageAudio: this.canManageAudio,
+    canChangeAnswerStatus: this.canChangeAnswerStatus
   });
 
   private projectDoc?: SFProjectDoc;
@@ -103,6 +105,14 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Edit) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Delete);
     this.canManageAudio.setValue(canManageAudio);
+
+    const canChangeAnswerStatus: boolean = SF_PROJECT_RIGHTS.hasRight(
+      project,
+      this.data.userId,
+      SFProjectDomain.AnswerStatus,
+      Operation.Edit
+    );
+    this.canChangeAnswerStatus.setValue(canChangeAnswerStatus);
   }
 
   private updateFormEditability(isOnline: boolean): void {
@@ -134,6 +144,8 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Edit),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete)
     ].forEach(right => (this.canManageAudio.value ? permissions.add(right) : permissions.delete(right)));
+    const answerStatusRight = SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.AnswerStatus, Operation.Edit);
+    this.canChangeAnswerStatus.value ? permissions.add(answerStatusRight) : permissions.delete(answerStatusRight);
 
     await this.projectService.onlineSetUserProjectPermissions(
       this.data.projectId,

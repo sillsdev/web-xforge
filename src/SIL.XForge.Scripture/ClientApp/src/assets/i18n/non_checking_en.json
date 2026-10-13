@@ -84,6 +84,7 @@
   "collaborators": {
     "all": "All",
     "allow_add_edit_questions": "Can add & edit questions",
+    "allow_change_answer_status": "Can resolve answers & mark them for export",
     "allow_manage_audio": "Can manage scripture audio",
     "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
     "cancel_invite": "Cancel invite",
@@ -786,6 +787,7 @@
   },
   "roles": {
     "allow_add_edit_questions": "Can add & edit questions",
+    "allow_change_answer_status": "Can resolve answers & mark them for export",
     "allow_manage_audio": "Can manage scripture audio",
     "cancel": "Cancel",
     "none": "None",

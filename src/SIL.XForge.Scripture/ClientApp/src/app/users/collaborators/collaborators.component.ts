@@ -45,6 +45,7 @@ interface Row {
   readonly inviteeStatus?: InviteeStatus;
   readonly allowCreatingQuestions: boolean;
   readonly canManageAudio: boolean;
+  readonly canChangeAnswerStatus: boolean;
   readonly userEligibleForQuestionPermission: boolean;
   readonly paratextMemberNotConnected?: boolean;
 }
@@ -143,10 +144,11 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get tableColumns(): string[] {
-    const columns: string[] = ['avatar', 'name', 'questions_permission', 'audio_permission', 'role', 'more'];
+    const checkingColumns: string[] = ['questions_permission', 'audio_permission', 'answer_status_permission'];
+    const columns: string[] = ['avatar', 'name', ...checkingColumns, 'role', 'more'];
     return this.projectDoc?.data?.checkingConfig.checkingEnabled
       ? columns
-      : columns.filter(s => s !== 'questions_permission' && s !== 'audio_permission');
+      : columns.filter(s => !checkingColumns.includes(s));
   }
 
   ngOnInit(): void {
@@ -240,12 +242,20 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Edit) &&
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
 
+      const canChangeAnswerStatus = SF_PROJECT_RIGHTS.hasRight(
+        project,
+        userId,
+        SFProjectDomain.AnswerStatus,
+        Operation.Edit
+      );
+
       userRows.push({
         id: userProfile.id,
         user: userProfile.data || {},
         role,
         allowCreatingQuestions,
         canManageAudio,
+        canChangeAnswerStatus,
         userEligibleForQuestionPermission: isParatextRole(role)
       });
     }

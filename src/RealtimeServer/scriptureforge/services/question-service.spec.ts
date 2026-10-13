@@ -1,6 +1,7 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { Operation } from '../../common/models/project-rights';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
@@ -19,6 +20,7 @@ import {
 import { Answer, AnswerStatus } from '../models/answer';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import {
@@ -38,6 +40,7 @@ import { SFProjectUserConfigService } from './sf-project-user-config-service';
 const PROJECT_ADMIN_ID = 'a1';
 const CHECKER_ID = 'c1';
 const OTHER_CHECKER_ID = 'c2';
+const TRANSLATOR_ID = 't1';
 const QUESTION_ID = 'd1';
 const ANSWER_ID = 'd2';
 const COMMENT_ID = 'd3';
@@ -156,6 +159,30 @@ describe('QuestionService', () => {
     ).resolves.not.toThrow();
   });
 
+  it('does not allow translator to set answer status by default', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    await env.addTranslator([]);
+
+    const conn = clientConnect(env.server, TRANSLATOR_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
+    await expect(
+      submitOp(conn, QUESTIONS_COLLECTION, docId, { p: ['answers', 0, 'status'], oi: AnswerStatus.Resolved })
+    ).rejects.toThrow();
+  });
+
+  it('allows translator who was granted the answer status permission to set answer status', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    await env.addTranslator([SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.AnswerStatus, Operation.Edit)]);
+
+    const conn = clientConnect(env.server, TRANSLATOR_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
+    await expect(
+      submitOp(conn, QUESTIONS_COLLECTION, docId, { p: ['answers', 0, 'status'], oi: AnswerStatus.Resolved })
+    ).resolves.not.toThrow();
+  });
+
   it('does not allow user to delete answer comment of another user by claiming it as theirs', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -259,6 +286,13 @@ class TestEnvironment {
     allowAll(this.server, USERS_COLLECTION);
     allowAll(this.server, SF_PROJECTS_COLLECTION);
     allowAll(this.server, SF_PROJECT_USER_CONFIGS_COLLECTION);
+  }
+
+  async addTranslator(permissions: string[]): Promise<void> {
+    await submitJson0Op<SFProject>(this.server.connect(), SF_PROJECTS_COLLECTION, 'project01', op => {
+      op.set<string>(p => p.userRoles[TRANSLATOR_ID], SFProjectRole.ParatextTranslator);
+      op.set(p => p.userPermissions[TRANSLATOR_ID], permissions);
+    });
   }
 
   createAnswer(ownerRef: string): Answer {

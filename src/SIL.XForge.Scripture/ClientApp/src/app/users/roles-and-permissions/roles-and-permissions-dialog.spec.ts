@@ -95,7 +95,8 @@ describe('RolesAndPermissionsComponent', () => {
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit),
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create),
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Edit),
-        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete)
+        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete),
+        SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.AnswerStatus, Operation.Edit)
       ]
     });
     env.openDialog();
@@ -104,6 +105,31 @@ describe('RolesAndPermissionsComponent', () => {
     //translator does not have these permissions by default
     expect(env.component?.canAddEditQuestions.value).toBe(true);
     expect(env.component?.canManageAudio.value).toBe(true);
+    expect(env.component?.canChangeAnswerStatus.value).toBe(true);
+  }));
+
+  it('leaves answer status unchecked for a translator without the permission', fakeAsync(() => {
+    env.setupProjectData(rolesByUser);
+    env.openDialog();
+
+    expect(env.component?.canChangeAnswerStatus.value).toBe(false);
+  }));
+
+  it('removes the answer status permission when unchecked', fakeAsync(() => {
+    const answerStatusRight = SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.AnswerStatus, Operation.Edit);
+    const otherRight = SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete);
+    env.setupProjectData(rolesByUser, { ptTranslator: [otherRight, answerStatusRight] });
+    env.openDialog();
+    expect(env.component?.canChangeAnswerStatus.value).toBe(true);
+
+    env.component?.canChangeAnswerStatus.setValue(false);
+    env.component?.save();
+    tick();
+
+    verify(
+      mockedProjectService.onlineSetUserProjectPermissions('project01', 'ptTranslator', deepEqual([otherRight]))
+    ).once();
+    expect().nothing();
   }));
 
   it('reflects whether or not the user is from Paratext', fakeAsync(() => {
@@ -172,6 +198,7 @@ describe('RolesAndPermissionsComponent', () => {
 
     env.component?.canAddEditQuestions.setValue(true);
     env.component?.canManageAudio.setValue(true);
+    env.component?.canChangeAnswerStatus.setValue(true);
     env.component?.roles.setValue(SFProjectRole.Viewer);
     env.component?.save();
     tick();
@@ -183,7 +210,8 @@ describe('RolesAndPermissionsComponent', () => {
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Edit),
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete)
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.AnswerStatus, Operation.Edit)
     ]);
 
     verify(
