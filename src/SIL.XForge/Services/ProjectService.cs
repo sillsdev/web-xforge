@@ -28,7 +28,8 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         IOptions<SiteOptions> siteOptions,
         IAudioService audioService,
         IRepository<TSecret> projectSecrets,
-        IFileSystemService fileSystemService
+        IFileSystemService fileSystemService,
+        IStorageProvider storageProvider
     )
     {
         RealtimeService = realtimeService;
@@ -36,11 +37,13 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         _audioService = audioService;
         ProjectSecrets = projectSecrets;
         FileSystemService = fileSystemService;
+        StorageProvider = storageProvider;
     }
 
     protected IRealtimeService RealtimeService { get; }
     protected IOptions<SiteOptions> SiteOptions { get; }
     protected IRepository<TSecret> ProjectSecrets { get; }
+    protected IStorageProvider StorageProvider { get; }
     protected IFileSystemService FileSystemService { get; }
     protected abstract string ProjectAdminRole { get; }
 
@@ -190,24 +193,16 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         if (!project.UserRoles.ContainsKey(curUserId))
             throw new ForbiddenException();
 
-        string audioDir = GetAudioDir(projectId);
-        if (!FileSystemService.DirectoryExists(audioDir))
-            FileSystemService.CreateDirectory(audioDir);
-        string outputPath = Path.Join(audioDir, $"{curUserId}_{dataId}.mp3");
+        string outputPath;
         if (await _audioService.IsMp3FileAsync(path))
         {
-            // Delete the existing file, if it exists
-            if (FileSystemService.FileExists(outputPath))
-            {
-                FileSystemService.DeleteFile(outputPath);
-            }
-
-            // Relocate the temporary file to the new directory
-            FileSystemService.MoveFile(path, outputPath);
+            // The file does not require conversion
+            outputPath = path;
         }
         else
         {
             // Convert the file to mp3
+            outputPath = Path.GetTempFileName();
             try
             {
                 await _audioService.ConvertToMp3Async(path, outputPath);
@@ -221,12 +216,13 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
                 }
             }
         }
-        string outputFileName = Path.GetFileName(outputPath);
-        var uri = new Uri(
-            $"/assets/{AudioService.DirectoryName}/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}",
-            UriKind.Relative
+
+        return await StorageProvider.PutFileAsync(
+            outputPath,
+            AudioService.DirectoryName,
+            projectId,
+            $"{curUserId}_{dataId}.mp3"
         );
-        return uri;
     }
 
     public async Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId)
@@ -239,10 +235,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         if (curUserId != ownerId && !IsProjectAdmin(project, curUserId))
             throw new ForbiddenException();
 
-        string audioDir = GetAudioDir(projectId);
-        string filePath = Path.Join(audioDir, $"{ownerId}_{dataId}.mp3");
-        if (FileSystemService.FileExists(filePath))
-            FileSystemService.DeleteFile(filePath);
+        await StorageProvider.DeleteFileAsync(AudioService.DirectoryName, projectId, $"{ownerId}_{dataId}.mp3");
     }
 
     public async Task<TModel> GetProjectAsync(string projectId)
@@ -329,9 +322,6 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
 
     protected bool IsProjectAdmin(TModel project, string userId) =>
         project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
-
-    protected string GetAudioDir(string projectId) =>
-        Path.Join(SiteOptions.Value.SiteDir, AudioService.DirectoryName, projectId);
 
     protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
 

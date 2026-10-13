@@ -6304,6 +6304,7 @@ public class SFProjectServiceTests
             SyncMetrics = new MemoryRepository<SyncMetrics>();
             UserFeedback = new MemoryRepository<UserFeedback>();
             FileSystemService = Substitute.For<IFileSystemService>();
+            StorageProvider = Substitute.For<IStorageProvider>();
             var options = Options.Create(new LocalizationOptions { ResourcesPath = "Resources" });
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
             Localizer = new StringLocalizer<SharedResource>(factory);
@@ -6435,6 +6436,7 @@ public class SFProjectServiceTests
                 ProjectSecrets,
                 SecurityService,
                 FileSystemService,
+                StorageProvider,
                 Logger,
                 MachineProjectService,
                 SyncService,
@@ -6459,6 +6461,7 @@ public class SFProjectServiceTests
         public ISyncService SyncService { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public IFileSystemService FileSystemService { get; }
+        public IStorageProvider StorageProvider { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public IEmailService EmailService { get; }
         public IEventMetricService EventMetricService { get; }
