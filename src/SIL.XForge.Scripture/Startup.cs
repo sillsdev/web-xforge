@@ -5,8 +5,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Amazon;
-using Amazon.S3;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
@@ -161,6 +159,8 @@ public class Startup
 
         services.AddSFServices();
 
+        services.AddStorageProvider(Configuration);
+
         services.AddXFAuthentication(Configuration);
 
         services.AddSFDataAccess(Configuration);
@@ -251,6 +251,7 @@ public class Startup
             }
         );
 
+        // Set up file providers for static file hosting
         StorageConfigOptions storageConfigOptions = app
             .ApplicationServices.GetService<IOptions<StorageConfigOptions>>()
             .Value;
@@ -258,26 +259,7 @@ public class Startup
         IFileProvider trainingDataFileProvider;
         if (storageConfigOptions.StorageProvider == StorageConfigOptions.S3)
         {
-            // Load S3 configuration
-            var config = new AmazonS3Config();
-            if (!string.IsNullOrWhiteSpace(storageConfigOptions.S3ServiceUrl))
-            {
-                config.ServiceURL = storageConfigOptions.S3ServiceUrl;
-                config.ForcePathStyle = true;
-                config.UseHttp = storageConfigOptions.S3ServiceUrl.StartsWith(
-                    "http://",
-                    StringComparison.OrdinalIgnoreCase
-                );
-            }
-            else
-            {
-                config.RegionEndpoint = RegionEndpoint.GetBySystemName(storageConfigOptions.S3Region);
-            }
-
-            // Use the credentials in the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables
-            var amazonS3 = new AmazonS3Client(config);
-
-            // Set up file providers for static file hosting
+            var amazonS3 = S3StorageProvider.GetAmazonS3Client(storageConfigOptions);
             audioFileProvider = new S3FileProvider(amazonS3, AudioService.DirectoryName);
             trainingDataFileProvider = new S3FileProvider(amazonS3, TrainingDataService.DirectoryName);
         }
