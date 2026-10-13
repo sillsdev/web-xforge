@@ -1,5 +1,6 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, DestroyRef, EventEmitter, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Output, Signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatBadge } from '@angular/material/badge';
 import { MatIcon } from '@angular/material/icon';
 import { MatListItem, MatNavList } from '@angular/material/list';
@@ -65,8 +66,10 @@ export class NavigationComponent {
   canGenerateDraft$: Observable<boolean> = this.projectChanges$.pipe(
     switchMap(projectDoc => (projectDoc == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectDoc.id)))
   );
-  latestDraftResult$: Observable<DraftResult | undefined> =
-    this.activatedProjectUserConfigService.projectUserConfig$.pipe(map(config => config?.latestDraftResult));
+  /** A signal rather than an async pipe, so that changes made during change detection do not cause NG0100. */
+  readonly latestDraftResult: Signal<DraftResult | undefined> = toSignal(
+    this.activatedProjectUserConfigService.projectUserConfig$.pipe(map(config => config?.latestDraftResult))
+  );
 
   @Output() readonly menuItemClicked = new EventEmitter<void>();
 
