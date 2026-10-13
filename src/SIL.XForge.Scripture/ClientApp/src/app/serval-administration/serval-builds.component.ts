@@ -265,9 +265,11 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       this.useUnspecifiedDateRange$.pipe(take(1))
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([isOnline, range]) => {
-        this.loadingStarted();
-        void this.loadBuilds(range, isOnline);
+      .subscribe(([isOnline, range, noDateRange]) => {
+        if (range != null || noDateRange) {
+          this.loadingStarted();
+          void this.loadBuilds(range, isOnline);
+        }
       });
 
     this.route.queryParams
