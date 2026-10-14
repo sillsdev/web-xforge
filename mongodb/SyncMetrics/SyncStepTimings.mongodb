@@ -1,0 +1,149 @@
+use('xforge');
+
+// Where does sync time actually go?
+//
+// Every sync_metrics doc has a `log` array whose entries are prefixed with a UTC timestamp
+// ("yyyy-MM-dd HH:mm:ssZ message", written by ParatextSyncRunner.Log/LogMetric and
+// ParatextService "SR:" callbacks). This script attributes the time between consecutive log
+// entries to the earlier entry's message (normalized to remove book numbers, ids, and quoted
+// values), sums per step per sync, then aggregates across syncs.
+//
+// Output (TSV):
+//   1. Per-step table sorted by total time: syncs it appeared in, total hours, % of all
+//      attributed time, mean/median/p90/p95/max seconds per sync.
+//   2. Top N slowest successful syncs with their three most expensive steps, to spot
+//      pathological projects.
+//
+// Caveats:
+//   - Log entries written before millisecond timestamps were introduced have 1-second
+//     resolution: sub-second steps mostly read as 0 and each step is under-counted by up to
+//     ~1s per occurrence. Rankings of the slow steps are still reliable for those syncs;
+//     ignore the tail of near-zero steps.
+//   - Time from dateStarted to the first log entry and from the last entry to dateFinished is
+//     attributed to pseudo-steps in parentheses.
+//   - Only top-level syncs are examined; nested previousSyncs (hangfire retries) are not.
+
+// ---- Config ----
+const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // look-back window
+const statuses = ['Successful']; // timings from failed/cancelled runs would skew results
+const slowestSyncsToShow = 20;
+
+function normalizeMessage(message) {
+  return message
+    .split('\n')[0]
+    .replaceAll(/'[^']*'/g, "'…'")
+    .replaceAll(/"[^"]*"/g, '"…"')
+    .replaceAll(/\b[0-9a-f]{16,}\b/g, '<id>')
+    .replaceAll(/\d+/g, 'N')
+    .slice(0, 120);
+}
+
+// "2026-07-06 12:34:56Z message" -> { time, message }, or null if the line has no timestamp
+function parseLogEntry(entry) {
+  const match = /^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{1,3})?)Z (.*)$/s.exec(entry);
+  if (match == null) return null;
+  return { time: new Date(match[1].replace(' ', 'T') + 'Z'), message: match[2] };
+}
+
+function percentile(sortedValues, p) {
+  if (sortedValues.length === 0) return 0;
+  return sortedValues[Math.min(sortedValues.length - 1, Math.ceil(p * sortedValues.length) - 1)];
+}
+
+// step -> { syncCount, totalMs, perSyncMs: [sum for each sync it appeared in] }
+const stepStats = new Map();
+const slowestSyncs = [];
+let syncCount = 0;
+let unparsableLines = 0;
+
+const cursor = db.sync_metrics.find(
+  {
+    status: { $in: statuses },
+    dateStarted: { $gte: since },
+    dateFinished: { $exists: true },
+    'log.0': { $exists: true },
+  },
+  { log: 1, dateQueued: 1, dateStarted: 1, dateFinished: 1, projectRef: 1 }
+);
+
+while (cursor.hasNext()) {
+  const metric = cursor.next();
+  const entries = [];
+  for (const line of metric.log) {
+    const entry = parseLogEntry(line);
+    if (entry == null) unparsableLines++;
+    else entries.push(entry);
+  }
+  if (entries.length === 0) continue;
+  syncCount++;
+
+  // Attribute time between consecutive entries to the earlier entry's step
+  const perSync = new Map();
+  const addTime = (step, ms) => {
+    if (ms < 0) return; // clock skew or out-of-order entry
+    perSync.set(step, (perSync.get(step) ?? 0) + ms);
+  };
+  addTime('(before first log entry)', entries[0].time - metric.dateStarted);
+  for (let i = 0; i < entries.length - 1; i++) {
+    addTime(normalizeMessage(entries[i].message), entries[i + 1].time - entries[i].time);
+  }
+  const last = entries[entries.length - 1];
+  addTime(normalizeMessage(last.message), metric.dateFinished - last.time);
+
+  for (const [step, ms] of perSync) {
+    let stats = stepStats.get(step);
+    if (stats == null) stepStats.set(step, (stats = { syncCount: 0, totalMs: 0, perSyncMs: [] }));
+    stats.syncCount++;
+    stats.totalMs += ms;
+    stats.perSyncMs.push(ms);
+  }
+
+  const runTimeMs = metric.dateFinished - metric.dateStarted;
+  slowestSyncs.push({
+    projectRef: metric.projectRef,
+    dateStarted: metric.dateStarted,
+    runTimeMs,
+    topSteps: [...perSync].sort((a, b) => b[1] - a[1]).slice(0, 3),
+  });
+  slowestSyncs.sort((a, b) => b.runTimeMs - a.runTimeMs);
+  if (slowestSyncs.length > slowestSyncsToShow) slowestSyncs.pop();
+}
+
+const grandTotalMs = [...stepStats.values()].reduce((sum, s) => sum + s.totalMs, 0);
+const seconds = ms => Math.round(ms / 100) / 10;
+
+print(`Syncs analyzed: ${syncCount} (status in [${statuses}] since ${since.toISOString().slice(0, 10)})`);
+print(`Log lines without a parsable timestamp: ${unparsableLines}`);
+print('');
+print(['Step', 'Syncs', 'Total hours', '% of total', 'Mean s', 'p50 s', 'p90 s', 'p95 s', 'Max s'].join('\t'));
+const rows = [...stepStats].sort((a, b) => b[1].totalMs - a[1].totalMs);
+for (const [step, stats] of rows) {
+  const sorted = stats.perSyncMs.sort((a, b) => a - b);
+  print(
+    [
+      step,
+      stats.syncCount,
+      Math.round((stats.totalMs / 3600000) * 100) / 100,
+      Math.round((stats.totalMs / grandTotalMs) * 1000) / 10 + '%',
+      seconds(stats.totalMs / stats.syncCount),
+      seconds(percentile(sorted, 0.5)),
+      seconds(percentile(sorted, 0.9)),
+      seconds(percentile(sorted, 0.95)),
+      seconds(sorted[sorted.length - 1]),
+    ].join('\t')
+  );
+}
+
+print('');
+print(`Slowest ${slowestSyncs.length} syncs`);
+print(['Project', 'Started', 'Run time (s)', 'Top steps'].join('\t'));
+for (const sync of slowestSyncs) {
+  print(
+    [
+      sync.projectRef,
+      sync.dateStarted.toISOString(),
+      seconds(sync.runTimeMs),
+      sync.topSteps.map(([step, ms]) => `${step} (${seconds(ms)}s)`).join(' | '),
+    ].join('\t')
+  );
+}

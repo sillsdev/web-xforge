@@ -1782,34 +1782,43 @@ public class ParatextSyncRunner : IParatextSyncRunner
             );
             if (!restoreSucceeded)
             {
-                string repoVersion = _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
-                dataInSync = repoVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
+                string latestSharedVersion = _paratextService.GetLatestSharedVersion(
+                    _userSecret,
+                    _projectDoc.Data.ParatextId
+                );
+                dataInSync = latestSharedVersion == _projectDoc.Data.Sync.SyncedToRepositoryVersion;
             }
         }
 
+        LogMetric("CompleteSync: Getting Paratext settings and latest shared repo version.");
         ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, _projectDoc.Data.ParatextId);
 
+        // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
+        // is known to be out of sync if the revision does not match the corresponding revision stored
+        // on the project doc.
+        string repoVersion = _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
+
+        if (successful)
+        {
+            LogMetric($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
+        }
+        else
+        {
+            LogMetric(
+                $"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'."
+            );
+        }
+
         // Update the project
+        LogMetric("CompleteSync: Updating project doc, project references, and users.");
         await _projectDoc.SubmitJson0OpAsync(op =>
         {
-            // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
-            // is known to be out of sync if the revision does not match the corresponding revision stored
-            // on the project doc.
-            string repoVersion = _paratextService.GetLatestSharedVersion(_userSecret, _projectDoc.Data.ParatextId);
-
             if (successful)
             {
-                LogMetric($"CompleteSync: Successfully synchronized to PT repo commit id '{repoVersion}'.");
                 op.Set(pd => pd.Sync.DateLastSuccessfulSync, DateTime.UtcNow);
                 op.Set(pd => pd.Sync.SyncedToRepositoryVersion, repoVersion);
                 // If the sync was successful, then the last sync error code should be cleared
                 op.Unset(pd => pd.Sync.LastSyncErrorCode);
-            }
-            else
-            {
-                LogMetric(
-                    $"CompleteSync: Failed to synchronize. PT repo latest shared version is '{repoVersion}'. SF DB project SyncedToRepositoryVersion is '{_projectDoc.Data.Sync.SyncedToRepositoryVersion}'."
-                );
             }
 
             if (updateRoles)
@@ -1997,6 +2006,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Backup the repository
             if (!_paratextService.IsResource(_projectDoc.Data.ParatextId))
             {
+                LogMetric("CompleteSync: Backing up local PT repo.");
                 bool backupOutcome = _paratextService.BackupRepository(_userSecret, _projectDoc.Data.ParatextId);
                 _syncMetrics?.RepositoryBackupCreated = backupOutcome;
 
@@ -2007,6 +2017,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             // Write the operations to the database
+            LogMetric("CompleteSync: Committing SF DB transaction.");
             await _conn.CommitTransactionAsync();
         }
         else
@@ -2017,6 +2028,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // NOTE: This is executed outside the transaction because QueuedCount updates the frontend,
         // and dataInSync must record the real value if a transaction fails.
+        LogMetric("CompleteSync: Finalizing sync status.");
         await _projectDoc.SubmitJson0OpAsync(op =>
         {
             op.Set(pd => pd.Sync.DataInSync, dataInSync);
@@ -2217,8 +2229,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
         projectSFId ??= _projectDoc?.Id ?? "unknown";
         userId ??= _userSecret?.Id ?? "unknown";
         _logger.LogInformation($"SyncLog ({projectSFId.Sanitize()} {userId.Sanitize()}): {message}");
-        _syncMetrics?.Log.Add($"{DateTime.UtcNow:u} {message}");
+        _syncMetrics?.Log.Add($"{SyncMetricsTimestamp()} {message}");
     }
 
-    private void LogMetric(string message) => _syncMetrics?.Log.Add($"{DateTime.UtcNow:u} {message}");
+    private void LogMetric(string message) => _syncMetrics?.Log.Add($"{SyncMetricsTimestamp()} {message}");
+
+    /// <summary>
+    /// The timestamp that should be prefixed to sync metrics log entries.
+    /// </summary>
+    internal static string SyncMetricsTimestamp() =>
+        DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture);
 }

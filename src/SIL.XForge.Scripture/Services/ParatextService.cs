@@ -210,7 +210,8 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         // Note that SyncMetricsLog does not call _logger.Log, to not recurse into the trace listener.
-        void SyncMetricsLog(string message) => syncMetrics?.Log.Add($"{DateTime.UtcNow:u} SR: {message}");
+        void SyncMetricsLog(string message) =>
+            syncMetrics?.Log.Add($"{ParatextSyncRunner.SyncMetricsTimestamp()} SR: {message}");
         void traceListener(string message) => SyncMetricsLog($"Trace {message}");
         void alertListener(string message) => SyncMetricsLog($"Alert {message}");
         LambdaTraceListener listener = new LambdaTraceListener(traceListener);
