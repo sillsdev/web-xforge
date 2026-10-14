@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,6 +10,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.ObjectModel;
 
 namespace SIL.XForge.Services;
 
@@ -18,7 +20,7 @@ public class S3FileProviderTests
     [Test]
     public void GetFileAndCheckInformation_Success()
     {
-        var env = new TestEnvironment();
+        using var env = new TestEnvironment();
         var fileInfo = env.Service.GetFileInfo("/dummy.pdf");
 
         Assert.That(fileInfo.Exists, Is.True);
@@ -32,7 +34,7 @@ public class S3FileProviderTests
     [Test]
     public void GetRootContents_Success()
     {
-        var env = new TestEnvironment();
+        using var env = new TestEnvironment();
         var folderInfo = env.Service.GetDirectoryContents("/");
 
         Assert.That(folderInfo.Exists, Is.True);
@@ -44,7 +46,7 @@ public class S3FileProviderTests
     [Test]
     public void GetContentsOfSubFolder_Success()
     {
-        var env = new TestEnvironment();
+        using var env = new TestEnvironment();
         var folderInfo1 = env.Service.GetDirectoryContents("/folder-1");
         var folderInfo2 = env.Service.GetDirectoryContents("/folder-1/");
 
@@ -67,7 +69,7 @@ public class S3FileProviderTests
     [Test]
     public void GetContentsOfEmptySubFolder_Success()
     {
-        var env = new TestEnvironment();
+        using var env = new TestEnvironment();
         var folderInfo1 = env.Service.GetDirectoryContents("/folder-1/folder-1-b");
         var folderInfo2 = env.Service.GetDirectoryContents("/folder-1/folder-1-b/");
 
@@ -81,7 +83,7 @@ public class S3FileProviderTests
     [Test]
     public void GetContentsOfNotExistingSubFolder_Success()
     {
-        var env = new TestEnvironment();
+        using var env = new TestEnvironment();
         var folderInfo1 = env.Service.GetDirectoryContents("/folder-1-not-exists");
         var folderInfo2 = env.Service.GetDirectoryContents("/folder-1/folder-1-a/not-exists");
         var folderInfo3 = env.Service.GetDirectoryContents("/not-exists");
@@ -98,7 +100,7 @@ public class S3FileProviderTests
     [Test]
     public void GetFileAndCheckContent_Success()
     {
-        var env = new TestEnvironment();
+        using var env = new TestEnvironment();
         var fileInfo = env.Service.GetFileInfo("/folder-1/folder-1-a/ContentTest.txt");
 
         Assert.That(fileInfo.Exists, Is.True);
@@ -107,9 +109,10 @@ public class S3FileProviderTests
         Assert.That(textReader.ReadToEnd(), Is.EqualTo("Test Data"));
     }
 
-    private class TestEnvironment
+    private class TestEnvironment : DisposableBase
     {
         public readonly DateTime LastModified = new DateTime(2017, 5, 13, 15, 25, 10, 0, DateTimeKind.Utc);
+        private readonly List<GetObjectResponse> _getObjectResponses = [];
 
         public TestEnvironment()
         {
@@ -179,6 +182,7 @@ public class S3FileProviderTests
                             _ => 0,
                         },
                     };
+                    _getObjectResponses.Add(response);
 
                     return Task.FromResult(response);
                 });
@@ -186,5 +190,13 @@ public class S3FileProviderTests
         }
 
         public S3FileProvider Service { get; }
+
+        protected override void DisposeManagedResources()
+        {
+            foreach (GetObjectResponse response in _getObjectResponses)
+            {
+                response.Dispose();
+            }
+        }
     }
 }

@@ -49,7 +49,7 @@ public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystem
 
             ListObjectsV2Response response = await amazonS3.ListObjectsV2Async(request);
 
-            foreach (S3Object obj in response.S3Objects.Where(obj => !obj.Key.EndsWith('/')))
+            foreach (S3Object obj in (response.S3Objects ?? []).Where(obj => !obj.Key.EndsWith('/')))
             {
                 try
                 {
@@ -121,6 +121,8 @@ public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystem
 
         await amazonS3.PutObjectAsync(request);
 
+        // Remove the old file from disk, as it is now on S3
+        fileSystemService.DeleteFile(path);
         return new Uri($"/assets/{bucket}/{projectId}/{fileName}?t={DateTime.UtcNow.ToFileTime()}", UriKind.Relative);
     }
 
