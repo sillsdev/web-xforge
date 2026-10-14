@@ -251,11 +251,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       this.onlineStatusService.onlineStatus$
     ])
       .pipe(
-        filter(([projectUserConfigDoc, isOnline]) => isOnline && projectUserConfigDoc?.data?.latestDraftResult != null),
+        filter(([projectUserConfigDoc, isOnline]) => isOnline && projectUserConfigDoc?.data?.unreadDraftResult != null),
         quietTakeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(async ([projectUserConfigDoc]) => {
-        void projectUserConfigDoc!.submitJson0Op(op => op.unset(puc => puc.latestDraftResult));
+      .subscribe(([projectUserConfigDoc]) => {
+        void projectUserConfigDoc!.submitJson0Op(op => op.unset(puc => puc.unreadDraftResult));
       });
 
     // Display dialog for supported languages when route fragment is 'supported-languages'

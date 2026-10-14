@@ -1,13 +1,13 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Event, Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/draft-result';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject, of, Subject } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -21,7 +21,6 @@ import { UserService } from 'xforge-common/user.service';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 import { ResumeTranslateService } from '../checking/checking/resume-translate.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
@@ -76,11 +75,6 @@ describe('NavigationComponent', () => {
     readonly canSync$ = new BehaviorSubject<boolean>(false);
     readonly canGenerateDraft$ = new BehaviorSubject<boolean>(false);
     readonly projectUserConfig$ = new BehaviorSubject<SFProjectUserConfig | undefined>(undefined);
-    readonly routerEvents$ = new Subject<Event>();
-    readonly mockedProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
-    readonly projectUserConfigDoc$ = new BehaviorSubject<SFProjectUserConfigDoc | undefined>(
-      instance(this.mockedProjectUserConfigDoc)
-    );
 
     constructor() {
       when(mockedActivatedProjectService.changes$).thenReturn(this.changes$);
@@ -228,7 +222,7 @@ describe('NavigationComponent', () => {
 
     expect(env.draftGenerationResultUnread).toBe(false);
 
-    env.projectUserConfig$.next({ latestDraftResult: DraftResult.Completed } as SFProjectUserConfig);
+    env.projectUserConfig$.next({ unreadDraftResult: DraftResult.Completed } as SFProjectUserConfig);
     env.fixture.detectChanges();
 
     expect(env.draftGenerationResultUnread).toBe(true);
