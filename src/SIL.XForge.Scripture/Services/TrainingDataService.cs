@@ -237,7 +237,7 @@ public class TrainingDataService(
         }
 
         // Validate the file, and convert to CSV if required
-        string outputPath = Path.GetTempFileName();
+        string outputPath = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         await ConvertToCsvAsync(path, outputPath);
 
         // Upload and return the URL to the file
