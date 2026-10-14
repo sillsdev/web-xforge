@@ -67,8 +67,8 @@ export class NavigationComponent {
     switchMap(projectDoc => (projectDoc == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectDoc.id)))
   );
   /** A signal rather than an async pipe, so that changes made during change detection do not cause NG0100. */
-  readonly latestDraftResult: Signal<DraftResult | undefined> = toSignal(
-    this.activatedProjectUserConfigService.projectUserConfig$.pipe(map(config => config?.latestDraftResult))
+  readonly unreadDraftResult: Signal<DraftResult | undefined> = toSignal(
+    this.activatedProjectUserConfigService.projectUserConfig$.pipe(map(config => config?.unreadDraftResult))
   );
 
   @Output() readonly menuItemClicked = new EventEmitter<void>();
