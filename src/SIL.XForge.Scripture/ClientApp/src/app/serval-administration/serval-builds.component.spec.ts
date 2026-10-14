@@ -390,25 +390,17 @@ describe('ServalBuildsComponent', () => {
       expect(env.component['rows']).toEqual([matchingRow]);
     }));
 
-    it('uses unspecified date range', fakeAsync(() => {
+    it('requests only builds for the project in the URL', fakeAsync(() => {
       const env = new TestEnvironment();
-      const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
-      const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
-
-      // The date range mode is only read from the initial query params.
-      env.queryParams$.next({ q: 'sf-project-123', noDateRange: true });
+      env.queryParams$.next({ projectId: 'sf-project-123' });
 
       // SUT
       env.component.ngOnInit();
       env.waitForRowUpdate();
-      env.component['allRows'] = [matchingRow, otherRow];
-      env.component['applyFiltersAndStats']();
-      env.waitForRowUpdate();
-      expect(env.component['searchControl'].value).toBe('sf-project-123');
-      expect(env.component['rows']).toEqual([matchingRow]);
 
+      verify(mockDraftGenerationService.getBuildsSince(anything(), 'sf-project-123')).once();
       let useUnspecifiedDateRange: boolean | undefined;
-      env.component.useUnspecifiedDateRange$.pipe(take(1)).subscribe(v => (useUnspecifiedDateRange = v));
+      env.component.useUnspecifiedDateRange$.subscribe(v => (useUnspecifiedDateRange = v));
       expect(useUnspecifiedDateRange).toBe(true);
     }));
 
@@ -2181,7 +2173,7 @@ class TestEnvironment {
 
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
     when(mockNoticeService.loadingFinished(anything())).thenReturn(undefined);
-    when(mockDraftGenerationService.getBuildsSince(anything())).thenReturn(this.builds$);
+    when(mockDraftGenerationService.getBuildsSince(anything(), anything())).thenReturn(this.builds$);
     when(mockDialogService.openMatDialog(anything(), anything())).thenReturn(undefined as never);
     when(mockDialogService.openGenericDialog(anything())).thenReturn({
       dialogRef: undefined as never,

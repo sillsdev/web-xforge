@@ -13,7 +13,7 @@ import { ServalProjectsComponent } from './serval-projects.component';
 export interface ServalAdminParams {
   tab?: string;
   q?: string;
-  noDateRange?: boolean;
+  projectId?: string;
 }
 
 /**

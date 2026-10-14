@@ -1541,7 +1541,13 @@ public class MachineApiServiceTests
 
         // SUT
         await Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.GetBuildsSinceAsync(User02, DateTimeOffset.UtcNow, isServalAdmin: false, CancellationToken.None)
+            env.Service.GetBuildsSinceAsync(
+                User02,
+                isServalAdmin: false,
+                DateTimeOffset.UtcNow,
+                sfProjectId: null,
+                CancellationToken.None
+            )
         );
     }
 
@@ -1582,8 +1588,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            dateCreated.AddDays(-3),
             isServalAdmin: true,
+            dateCreated.AddDays(-3),
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1603,6 +1610,83 @@ public class MachineApiServiceTests
         Assert.NotZero(report.BuildConfidences!.BookConfidences.Count);
         Assert.NotZero(report.BuildConfidences!.ChapterConfidences.Count);
         Assert.NotZero(report.BuildConfidences!.VerseConfidences.Count);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_OnlyQueriesProjectBuildsWhenProjectSpecified()
+    {
+        var env = new TestEnvironment();
+        DateTimeOffset beginning = DateTimeOffset.UtcNow.AddDays(-5);
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        DateCreated = DateTimeOffset.UtcNow.AddDays(-1),
+                    },
+                    new TranslationBuild
+                    {
+                        Id = "oldBuild",
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        DateCreated = beginning.AddDays(-1),
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            isServalAdmin: true,
+            beginning,
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(1, reports.Count);
+        Assert.AreEqual(ServalBuildId01, reports[0].Build!.AdditionalInfo!.BuildId);
+        await env.TranslationBuildsClient.DidNotReceiveWithAnyArgs().GetAllBuildsCreatedAfterAsync(default, default);
+    }
+
+    [Test]
+    public async Task GetBuildsSinceAsync_ReturnsAllProjectBuildsWhenNoDateSpecified()
+    {
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>([
+                    new TranslationBuild
+                    {
+                        Id = ServalBuildId01,
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        DateCreated = DateTimeOffset.UtcNow.AddYears(-3),
+                    },
+                    new TranslationBuild
+                    {
+                        Id = "otherBuild",
+                        Engine = { Id = TranslationEngine01 },
+                        State = JobState.Completed,
+                        DateCreated = DateTimeOffset.UtcNow.AddDays(-1),
+                    },
+                ])
+            );
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            isServalAdmin: true,
+            beginning: null,
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.AreEqual(2, reports.Count);
     }
 
     [Test]
@@ -1628,8 +1712,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1705,8 +1790,9 @@ public class MachineApiServiceTests
 
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1782,8 +1868,9 @@ public class MachineApiServiceTests
 
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1822,8 +1909,9 @@ public class MachineApiServiceTests
 
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1855,8 +1943,9 @@ public class MachineApiServiceTests
 
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1899,8 +1988,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> result = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -1933,8 +2023,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -2042,8 +2133,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            dateCreated.AddDays(-3),
             isServalAdmin: true,
+            dateCreated.AddDays(-3),
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -2112,8 +2204,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
@@ -2169,8 +2262,9 @@ public class MachineApiServiceTests
         // SUT
         IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
             User01,
-            beginning,
             isServalAdmin: true,
+            beginning,
+            sfProjectId: null,
             CancellationToken.None
         );
 
