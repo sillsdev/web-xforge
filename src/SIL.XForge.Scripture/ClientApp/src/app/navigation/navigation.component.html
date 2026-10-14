@@ -17,8 +17,8 @@
           mat-list-item
           [appRouterLink]="draftGenerationLink"
           [class.active]="draftGenerationActive"
-          [class.draft-completed]="latestDraftResult() === draftResult.Completed"
-          [class.draft-failed]="latestDraftResult() === draftResult.Faulted"
+          [class.draft-completed]="unreadDraftResult() === draftResult.Completed"
+          [class.draft-failed]="unreadDraftResult() === draftResult.Faulted"
         >
           <mat-icon class="mirror-rtl" id="draft-generation-icon">auto_awesome</mat-icon>
           {{ t("generate_draft") }}<span><!-- notification anchor --></span>

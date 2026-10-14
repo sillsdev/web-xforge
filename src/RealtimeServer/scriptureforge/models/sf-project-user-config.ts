@@ -33,5 +33,5 @@ export interface SFProjectUserConfig extends ProjectData {
   lynxInsightState: LynxInsightUserData;
   selectedDraftTargetParatextId?: string;
   showEditorTabsInSinglePane?: boolean;
-  latestDraftResult?: DraftResult;
+  unreadDraftResult?: DraftResult;
 }
