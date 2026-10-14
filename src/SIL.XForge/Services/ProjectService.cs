@@ -201,8 +201,8 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         }
         else
         {
-            // Convert the file to mp3
-            outputPath = Path.GetTempFileName();
+            // Convert the file to mp3. The file extension must be ml3 for conversion to work
+            outputPath = Path.ChangeExtension(Path.Join(Path.GetTempPath(), Path.GetRandomFileName()), ".mp3");
             try
             {
                 await _audioService.ConvertToMp3Async(path, outputPath);
