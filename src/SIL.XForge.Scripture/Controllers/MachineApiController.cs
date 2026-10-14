@@ -261,7 +261,8 @@ public class MachineApiController : ControllerBase
     /// <summary>
     /// Gets all Serval builds created after the specified date, across all projects.
     /// </summary>
-    /// <param name="dateTime">The beginning date to filter build results.</param>
+    /// <param name="dateTime">(Optional) The beginning date to filter build results.</param>
+    /// <param name="projectId">(Optional) If specified, only builds relating to this SF project are returned.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The builds are returned.</response>
     /// <response code="403">You do not have permission to retrieve builds.</response>
@@ -269,13 +270,20 @@ public class MachineApiController : ControllerBase
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetBuildsSince)]
     public async Task<ActionResult<IReadOnlyList<ServalBuildReportDto>>> GetBuildsSinceAsync(
-        string dateTime,
+        [FromQuery] string? dateTime,
+        [FromQuery] string? projectId,
         CancellationToken cancellationToken
     )
     {
-        if (!DateTimeOffset.TryParse(dateTime, out DateTimeOffset beginning))
+        DateTimeOffset? beginning = null;
+        if (dateTime is not null)
         {
-            return BadRequest($"Could not parse provided datetime: {dateTime}");
+            if (!DateTimeOffset.TryParse(dateTime, out DateTimeOffset parsedBeginning))
+            {
+                return BadRequest($"Could not parse provided datetime: {dateTime}");
+            }
+
+            beginning = parsedBeginning;
         }
 
         try
@@ -284,8 +292,9 @@ public class MachineApiController : ControllerBase
             return Ok(
                 await _machineApiService.GetBuildsSinceAsync(
                     _userAccessor.UserId,
-                    beginning,
                     isServalAdmin,
+                    beginning,
+                    projectId,
                     cancellationToken
                 )
             );
