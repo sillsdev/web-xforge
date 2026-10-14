@@ -7,7 +7,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
-import { NEVER, of } from 'rxjs';
+import { of } from 'rxjs';
 import { expect } from 'storybook/test';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
@@ -69,11 +69,10 @@ function setUpMocks(args: StoryState): void {
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedRouter.url).thenReturn(`/projects/${projectId}/${args.path}`);
   when(mockedRouter.createUrlTree(anything(), anything())).thenCall((portions: any[]) => portions.join('/'));
-  when(mockedRouter.events).thenReturn(NEVER);
   when(mockedResumeCheckingService.resumeLink$).thenReturn(of(['']));
   when(mockedResumeTranslateService.resumeLink$).thenReturn(of(['']));
   when(mockedActivatedProjectUserConfigService.projectUserConfig$).thenReturn(
-    of(createTestProjectUserConfig({ latestDraftResult: args.latestDraftResult }))
+    of(createTestProjectUserConfig({ unreadDraftResult: args.unreadDraftResult }))
   );
 
   TestBed.resetTestingModule();
@@ -118,7 +117,7 @@ const meta: Meta<StoryState> = {
       options: Object.values(SFProjectRole),
       control: { type: 'select' }
     },
-    latestDraftResult: {
+    unreadDraftResult: {
       options: [undefined, ...Object.values(DraftResult)],
       control: { type: 'select' }
     }
@@ -191,7 +190,7 @@ interface StoryState {
   lastSyncSuccessful: boolean;
   checkingEnabled: boolean;
   path: string;
-  latestDraftResult: DraftResult;
+  unreadDraftResult: DraftResult;
 }
 
 type Story = StoryObj<StoryState>;
@@ -206,7 +205,7 @@ export const Default: Story = {
     lastSyncSuccessful: true,
     checkingEnabled: true,
     path: '',
-    latestDraftResult: undefined
+    unreadDraftResult: undefined
   }
 };
 
@@ -327,7 +326,7 @@ export const SyncFailed: Story = {
 };
 
 export const DraftCompleted: Story = {
-  args: { ...Default.args, latestDraftResult: DraftResult.Completed },
+  args: { ...Default.args, unreadDraftResult: DraftResult.Completed },
   play: async ({ canvasElement }) => {
     // The component is not rendered immediately, so we need to wait for it to appear
     await new Promise(resolve => setTimeout(resolve, 0));

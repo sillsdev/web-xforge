@@ -158,7 +158,7 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       showEditorTabsInSinglePane: {
         bsonType: 'bool'
       },
-      latestDraftResult: {
+      unreadDraftResult: {
         bsonType: 'string'
       }
     },
@@ -184,7 +184,7 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       this.pathTemplate(puc => puc.showEditorTabsInSinglePane!),
       this.pathTemplate(puc => puc.editorTabsOpen),
       this.pathTemplate(puc => puc.lynxInsightState),
-      this.pathTemplate(puc => puc.latestDraftResult),
+      this.pathTemplate(puc => puc.unreadDraftResult),
       this.pathTemplate(puc => puc.noteRefsRead),
       this.pathTemplate(puc => puc.questionRefsRead),
       this.pathTemplate(puc => puc.answerRefsRead),

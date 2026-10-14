@@ -162,9 +162,9 @@ describe('DraftGenerationComponent', () => {
       mockTrainingDataService.getTrainingData.and.returnValue(of([]));
     }
 
-    static initProjectUserConfig(latestDraftResult: DraftResult | undefined): void {
+    static initProjectUserConfig(unreadDraftResult: DraftResult | undefined): void {
       mockProjectUserConfigDoc = jasmine.createSpyObj<SFProjectUserConfigDoc>(['submitJson0Op'], {
-        data: createTestProjectUserConfig({ projectRef: projectId, ownerRef: 'user01', latestDraftResult })
+        data: createTestProjectUserConfig({ projectRef: projectId, ownerRef: 'user01', unreadDraftResult })
       });
       mockActivatedProjectUserConfigService = jasmine.createSpyObj<ActivatedProjectUserConfigService>([], {
         projectUserConfigDoc$: of(mockProjectUserConfigDoc)
