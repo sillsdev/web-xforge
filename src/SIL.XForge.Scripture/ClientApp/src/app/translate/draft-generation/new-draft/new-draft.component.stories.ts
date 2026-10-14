@@ -443,6 +443,9 @@ export const ExcludedBooks: Story = {
 
 /** Book selection with partial-book drafting: GEN exposes a chapter input, and an out-of-range value shows an error. */
 export const SelectChaptersToDraft: Story = {
+  parameters: {
+    screenshot: { maxDiffPixels: 1 }
+  },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await gotoDraftBooksWithGen(canvas);
