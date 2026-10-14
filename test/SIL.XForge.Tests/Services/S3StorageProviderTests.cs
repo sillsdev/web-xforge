@@ -172,9 +172,9 @@ public class S3StorageProviderTests
     {
         var env = new TestEnvironment();
         using var expectedStream = new MemoryStream([1, 2, 3]);
-
-        env.AmazonS3.GetObjectAsync(Bucket, $"{Project01}/{FileName}")
-            .Returns(Task.FromResult(new GetObjectResponse { ResponseStream = expectedStream }));
+        using var response = new GetObjectResponse();
+        response.ResponseStream = expectedStream;
+        env.AmazonS3.GetObjectAsync(Bucket, $"{Project01}/{FileName}").Returns(Task.FromResult(response));
 
         // SUT
         Stream result = await env.Service.GetFileAsync(Bucket, Project01, FileName);
@@ -198,9 +198,9 @@ public class S3StorageProviderTests
     {
         var env = new TestEnvironment();
         using var expectedStream = new MemoryStream();
-
-        env.AmazonS3.GetObjectAsync(Arg.Any<string>(), Arg.Any<string>())
-            .Returns(Task.FromResult(new GetObjectResponse { ResponseStream = expectedStream }));
+        using var response = new GetObjectResponse();
+        response.ResponseStream = expectedStream;
+        env.AmazonS3.GetObjectAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(response));
 
         // SUT
         await env.Service.GetFileAsync("bad/bucket", "bad/project", "bad/file.txt");
