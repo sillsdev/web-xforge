@@ -58,8 +58,9 @@ public interface IMachineApiService
     );
     Task<IReadOnlyList<ServalBuildReportDto>> GetBuildsSinceAsync(
         string curUserId,
-        DateTimeOffset beginning,
         bool isServalAdmin,
+        DateTimeOffset? beginning,
+        string? sfProjectId,
         CancellationToken cancellationToken
     );
     Task<IReadOnlyList<ServalBuildDto>> GetBuildsAsync(
