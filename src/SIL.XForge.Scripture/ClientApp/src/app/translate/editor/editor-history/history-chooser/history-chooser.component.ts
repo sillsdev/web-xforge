@@ -144,7 +144,7 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   ) {
     this.projectId$.pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1)).subscribe(async projectId => {
       // Start the connection to SignalR
-      await projectNotificationService.start();
+      await projectNotificationService.start(this);
       // Subscribe to notifications for this project
       await projectNotificationService.subscribeToProject(projectId);
       // When build notifications are received, reload the build history
@@ -153,8 +153,8 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     });
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
       projectNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+      await projectNotificationService.stop(this);
     });
   }
 
