@@ -39,7 +39,8 @@ import {
   ReplaySubject,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
+  take
 } from 'rxjs';
 import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -261,7 +262,12 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
-    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$, this.useUnspecifiedDateRange$])
+    combineLatest([
+      this.onlineStatusService.onlineStatus$,
+      this.dateRange$,
+      // only take the first value since we don't want the search filter to trigger a new query
+      this.useUnspecifiedDateRange$.pipe(take(1))
+    ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([isOnline, range, noDateRange]) => {
         if (range != null || noDateRange) {
