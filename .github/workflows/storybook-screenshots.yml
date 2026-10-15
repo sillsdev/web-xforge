@@ -2,8 +2,12 @@ name: "Storybook Screenshots"
 permissions: {}
 
 # Runs on every PR and merge-group event to produce a visual diff between the target branch and
-# the PR branch.  Two screenshot jobs run in parallel, one for each commit, and a third job then
-# compares the results and deploys any changed screenshots to Netlify for visual review.
+# the target branch with the PR merged in.  Two screenshot jobs run in parallel, one for each
+# commit, and a third job then compares the results and deploys any changed screenshots to Netlify
+# for visual review.
+#
+# For PRs the branch side is GitHub's merge commit, not the PR head. Comparing the head against the
+# target branch would show target-branch changes made since the PR branched off as reversed diffs.
 #
 # For manual runs the 'base_ref' input lets you choose which ref to treat as the baseline.
 
@@ -19,20 +23,42 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Job 0 – check for pnpm lock files
+  # Job 0 – resolve the base commit and check it for pnpm lock files
   # ---------------------------------------------------------------------------
   check-lockfiles:
     runs-on: ubuntu-24.04
     outputs:
+      base-ref: ${{ steps.base.outputs.ref }}
       has-pnpm-lockfiles: ${{ steps.check.outputs.exists }}
     steps:
+      - name: Checkout commit under test
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          # Depth 2 so the merge commit's parents are available.
+          fetch-depth: 2
+          path: tested
+      # For PRs the base is the merge commit's first parent, so both jobs start from the same
+      # target-branch commit. pull_request.base.sha isn't guaranteed to be that commit, and any
+      # difference shows up as reversed diffs on the PR.
+      - name: "Resolve base commit"
+        id: base
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          NON_PR_BASE_REF: ${{ github.event.merge_group.base_sha || inputs.base_ref || 'master' }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            echo "ref=$(git -C tested rev-parse HEAD^1)" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${NON_PR_BASE_REF}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Checkout base
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Resolve the base ref in priority order: PR base SHA → merge-group base SHA → manual
-          # input → default branch.
-          ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || inputs.base_ref || 'master' }}
+          ref: ${{ steps.base.outputs.ref }}
       - id: check
         shell: bash
         run: |
@@ -61,9 +87,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # Resolve the base ref in priority order: PR base SHA → merge-group base SHA → manual
-          # input → default branch.
-          ref: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || inputs.base_ref || 'master' }}
+          ref: ${{ needs.check-lockfiles.outputs.base-ref }}
 
       - name: "Deps: pnpm"
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
@@ -119,14 +143,14 @@ jobs:
           npx playwright install chromium
 
       # The screenshot script may not exist on the base branch (or may be outdated). Always use the
-      # version from the PR branch so that any script improvements in the PR also apply to the base
-      # branch screenshots, and so the base branch screenshots can be taken even if the script
-      # didn't exist on the base branch at all.
+      # version from the commit under test so that any script improvements in the PR also apply to
+      # the base branch screenshots, and so the base branch screenshots can be taken even if the
+      # script didn't exist on the base branch at all.
       - name: "Checkout screenshot script from PR branch"
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.sha }}
           path: pr-branch-scripts
           sparse-checkout: scripts/storybook-screenshots/take-screenshots.mts
           sparse-checkout-cone-mode: false
@@ -146,7 +170,7 @@ jobs:
           path: screenshots
 
   # ---------------------------------------------------------------------------
-  # Job 2 – screenshot the PR / head commit (runs in parallel with job 1)
+  # Job 2 – screenshot the commit under test (runs in parallel with job 1)
   # ---------------------------------------------------------------------------
   screenshots-branch:
     name: "Screenshots: Branch"
@@ -162,8 +186,9 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          # For PR events use the PR head SHA; for all other events use the triggering commit.
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          # For PRs, GitHub's merge of the PR into the target branch; otherwise the triggering
+          # commit.
+          ref: ${{ github.sha }}
 
       - name: "Deps: pnpm"
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
