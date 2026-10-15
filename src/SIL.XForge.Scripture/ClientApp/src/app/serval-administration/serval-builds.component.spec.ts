@@ -400,7 +400,7 @@ describe('ServalBuildsComponent', () => {
 
       verify(mockDraftGenerationService.getBuildsSince(anything(), 'sf-project-123')).once();
       let useUnspecifiedDateRange: boolean | undefined;
-      env.component.useUnspecifiedDateRange$.subscribe(v => (useUnspecifiedDateRange = v));
+      env.component.useUnspecifiedDateRange$.pipe(take(1)).subscribe(v => (useUnspecifiedDateRange = v));
       expect(useUnspecifiedDateRange).toBe(true);
     }));
 
