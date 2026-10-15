@@ -138,7 +138,11 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   private draftDelta?: Delta;
   private targetDelta?: Delta;
   private builds: BuildDto[] = [];
-  private readonly notifyBuildProgressHandler = (projectId: string): void => this.refreshBuildHistory(projectId);
+  private readonly notifyBuildProgressHandler = (projectId: string): void => {
+    // The SignalR connection is shared, so we may be notified about other projects
+    if (projectId !== this.textDocId?.projectId) return;
+    this.refreshBuildHistory(projectId);
+  };
 
   constructor(
     private readonly activatedProjectService: ActivatedProjectService,
