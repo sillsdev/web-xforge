@@ -17,7 +17,6 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
-import { UserFeedbackComponent } from 'src/app/shared/user-feedback/user-feedback.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -42,6 +41,7 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
 import { FeedbackSourcePage } from '../../shared/user-feedback/user-feedback-dialog.component';
+import { UserFeedbackComponent } from '../../shared/user-feedback/user-feedback.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
@@ -198,11 +198,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get showUserFeedbackNotice(): boolean {
-    return (
-      this.featureFlags.userFeedbackNotice.enabled &&
-      this.hasUserSubmittedFeedback === false &&
-      this.hasUsedDraftGenerationThreeMonths
-    );
+    return this.featureFlags.userFeedbackNotice.enabled && this.hasUsedDraftGenerationThreeMonths;
   }
 
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
@@ -228,6 +224,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   private get hasUsedDraftGenerationThreeMonths(): boolean {
+    return true;
     // search the dates that builds were requested. If a new build was just started
     // its date would count towards the 90 day threshold
     const dates: number[] = (this.draftHistoryList?.history ?? [])
@@ -236,7 +233,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       .map(d => new Date(d).getTime());
 
     if (dates.length === 0) return false;
-    const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000;
+    const threeMonthsInMs = 1000;
     return Math.max(...dates) - Math.min(...dates) >= threeMonthsInMs;
   }
 

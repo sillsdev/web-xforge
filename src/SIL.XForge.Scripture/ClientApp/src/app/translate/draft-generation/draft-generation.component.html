@@ -187,7 +187,8 @@
                   </a>
                 </div>
               </app-notice>
-            } @else if (showUserFeedbackNotice) {
+            }
+            @if (showUserFeedbackNotice) {
               <app-user-feedback (submitted)="hasUserSubmittedFeedback = true"></app-user-feedback>
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
