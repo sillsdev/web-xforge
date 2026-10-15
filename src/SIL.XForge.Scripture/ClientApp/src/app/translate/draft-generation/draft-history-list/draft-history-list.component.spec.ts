@@ -1,9 +1,9 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -186,6 +186,27 @@ describe('DraftHistoryListComponent', () => {
     env.component.loadHistory('project01');
     env.fixture.detectChanges();
     expect(env.component.history).toEqual([newBuild, build]);
+  }));
+
+  it('should only reload history for build notifications about the current project', fakeAsync(() => {
+    const build = {
+      state: BuildStates.Completed,
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
+    } as BuildDto;
+    const env = new TestEnvironment({ buildHistory: [build] });
+    tick();
+    const [buildProgressHandler] = capture<(projectId: string) => void>(
+      mockedProjectNotificationService.setNotifyBuildProgressHandler
+    ).last();
+    verify(mockedDraftGenerationService.getBuildHistory(anything())).once();
+
+    buildProgressHandler('otherProject');
+    verify(mockedDraftGenerationService.getBuildHistory('otherProject')).never();
+    verify(mockedDraftGenerationService.getBuildHistory(anything())).once();
+    expect(env.component.history).toEqual([build]);
+
+    buildProgressHandler('project01');
+    verify(mockedDraftGenerationService.getBuildHistory('project01')).twice();
   }));
 
   it('should show history with faulted and canceled builds', fakeAsync(() => {
