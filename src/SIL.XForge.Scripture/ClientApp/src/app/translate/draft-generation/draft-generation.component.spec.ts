@@ -1527,14 +1527,14 @@ describe('DraftGenerationComponent', () => {
       expect(env.userFeedbackNotice).toBeNull();
     }));
 
-    it('should not show the user feedback notice while the draft build has faulted, even if showUserFeedbackNotice is true', fakeAsync(() => {
+    it('should not show the user feedback notice while the draft build has faulted', fakeAsync(() => {
       const env = new TestEnvironment();
       tick();
       env.setBuildHistory(['2025-01-01', '2025-06-01']);
       env.component.isTargetLanguageSupported = true;
       env.component.draftJob = { ...buildDto, state: BuildStates.Faulted };
 
-      expect(env.component.showUserFeedbackNotice).toBe(true);
+      expect(env.component.showUserFeedbackNotice).toBe(false);
       env.fixture.detectChanges();
       expect(env.getElementByTestId('warning-generation-failed')).not.toBeNull();
       expect(env.userFeedbackNotice).toBeNull();
