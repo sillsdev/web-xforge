@@ -11,7 +11,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
-import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -151,6 +151,29 @@ describe('EditorDraftComponent', () => {
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-unknown');
     expect(component.draftText).not.toBeUndefined();
+    flush();
+  }));
+
+  it('should only refresh build history for build notifications about the current project', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    const [buildProgressHandler] = capture<(projectId: string) => void>(
+      mockProjectNotificationService.setNotifyBuildProgressHandler
+    ).last();
+
+    buildProgressHandler('otherProject');
+    verify(mockDraftGenerationService.getBuildHistory('otherProject')).never();
+
+    buildProgressHandler('targetProjectId');
+    verify(mockDraftGenerationService.getBuildHistory('targetProjectId')).atLeast(1);
     flush();
   }));
 
