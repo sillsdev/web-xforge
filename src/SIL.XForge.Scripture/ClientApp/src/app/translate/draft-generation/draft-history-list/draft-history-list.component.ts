@@ -27,8 +27,11 @@ export class DraftHistoryListComponent {
     this.draftGenerationService.draftHistoryCutOffDate,
     { showTime: false, showTimeZone: false }
   );
-  private readonly notifyBuildProgressHandler = (projectId: string): void => {
-    this.loadHistory(projectId);
+  private currentProjectId?: string;
+  private readonly notifyBuildProgressHandler = (notifiedProjectId: string): void => {
+    // The SignalR connection is shared, so we may be notified about other projects
+    if (notifiedProjectId !== this.currentProjectId) return;
+    this.loadHistory(notifiedProjectId);
   };
 
   private readonly projectId$ = this.activatedProject.projectId$.pipe(filterNullish(), take(1));
@@ -45,6 +48,7 @@ export class DraftHistoryListComponent {
     combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline))])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(async ([projectId]) => {
+        this.currentProjectId = projectId;
         // Determine whether to show or hide the older drafts warning
         this.showOlderDraftsNotSupportedWarning =
           ObjectID.isValid(projectId) &&
@@ -57,12 +61,14 @@ export class DraftHistoryListComponent {
         await projectNotificationService.subscribeToProject(projectId);
         // When build notifications are received, reload the build history
         // NOTE: We do not need the build state, so just ignore it.
+        // Remove first so the handler is not registered more than once if we come back online
+        projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
         projectNotificationService.setNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
       });
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
       projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
+      await projectNotificationService.stop();
     });
   }
 

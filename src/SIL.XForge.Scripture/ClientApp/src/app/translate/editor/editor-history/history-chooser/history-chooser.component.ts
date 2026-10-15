@@ -104,7 +104,9 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   selectedSnapshot: TextSnapshot | undefined;
 
   private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
+    // The SignalR connection is shared, so we may be notified about other projects
     if (
+      projectId === this.projectId &&
       draftApplyState.bookNum === this.bookNum &&
       draftApplyState.chapterNum === this.chapter &&
       draftApplyState.status === DraftApplyStatus.Successful

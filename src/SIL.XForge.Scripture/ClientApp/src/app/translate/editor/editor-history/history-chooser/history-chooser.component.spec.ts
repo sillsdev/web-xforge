@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -20,6 +20,10 @@ import { ParatextService } from '../../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../../core/project-notification.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
+import {
+  DraftApplyState,
+  DraftApplyStatus
+} from '../../../draft-generation/draft-import-wizard/draft-import-wizard.component';
 import { HistoryChooserComponent } from './history-chooser.component';
 import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 
@@ -97,6 +101,30 @@ describe('HistoryChooserComponent', () => {
     env.wait();
     expect(env.component.selectedRevision).toBeDefined();
     expect(env.historySelect).toBeDefined();
+  }));
+
+  it('should only reload revisions when a draft is applied to the current project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.triggerNgOnChanges();
+    env.wait();
+    const [draftApplyHandler] = capture<(projectId: string, state: DraftApplyState) => void>(
+      mockedProjectNotificationService.setNotifyDraftApplyProgressHandler
+    ).last();
+    const state: DraftApplyState = {
+      bookNum: 40,
+      chapterNum: 1,
+      totalChapters: 1,
+      status: DraftApplyStatus.Successful
+    };
+    verify(mockedParatextService.getRevisions(anything(), anything(), anything())).once();
+
+    draftApplyHandler('otherProject', state);
+    env.wait();
+    verify(mockedParatextService.getRevisions(anything(), anything(), anything())).once();
+
+    draftApplyHandler('project01', state);
+    env.wait();
+    verify(mockedParatextService.getRevisions(anything(), anything(), anything())).twice();
   }));
 
   it('should allow no revisions', fakeAsync(() => {
