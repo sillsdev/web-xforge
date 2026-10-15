@@ -32,5 +32,10 @@ export default meta;
 type Story = StoryObj;
 
 export const AllFonts: Story = {
-  args: { text: 'This is example text.' }
+  args: { text: 'This is example text.' },
+  parameters: {
+    // Disabled because some of the fonts often fail to download from the font CDNs in CI, so the text renders in a
+    // fallback font and the snapshot differs from run to run
+    chromatic: { disableSnapshot: true }
+  }
 };
