@@ -11,11 +11,12 @@ import {
   MatDialogTitle
 } from '@angular/material/dialog';
 import { MatError, MatFormField, MatLabel } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
 import { MatInput } from '@angular/material/input';
 import { MatRadioButton, MatRadioGroup } from '@angular/material/radio';
 import { TranslocoModule } from '@ngneat/transloco';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { filter, firstValueFrom, tap } from 'rxjs';
+import { tap } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AutofocusDirective } from 'xforge-common/autofocus.directive';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -52,6 +53,7 @@ export enum FeedbackPermission {
 }
 
 export interface UserFeedbackDialogResult {
+  /** The SF project the feedback is about, or an empty string if the user did not select a project. */
   sfProjectId: string;
   feedbackParams: UserFeedbackParams;
 }
@@ -68,6 +70,7 @@ export interface UserFeedbackDialogResult {
     MatRadioButton,
     MatDialogActions,
     MatButton,
+    MatIcon,
     MatDialogClose,
     MatError,
     MatDialogContent,
@@ -88,10 +91,13 @@ export class UserFeedbackDialogComponent implements OnInit {
   projects: SFProjectProfile[] | undefined;
 
   feedbackForm = new FormGroup({
-    feedback: new FormControl('', [Validators.required, XFValidators.someNonWhitespace]),
-    // ParatextId may be null since feedback does not have to be specific to a project
+    feedback: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, XFValidators.someNonWhitespace]
+    }),
+    // Left empty if the feedback is not about a particular project
     paratextId: new FormControl(''),
-    permission: new FormControl(FeedbackPermission.Private, { nonNullable: true })
+    permission: new FormControl<FeedbackPermission | null>(null, Validators.required)
   });
 
   constructor(
@@ -111,6 +117,11 @@ export class UserFeedbackDialogComponent implements OnInit {
     return this.onlineStatusService.isOnline;
   }
 
+  get showPermissionRequiredError(): boolean {
+    const permission = this.feedbackForm.controls.permission;
+    return permission.hasError('required') && permission.touched;
+  }
+
   get selectedParatextId(): string | undefined {
     return this.feedbackForm.controls.paratextId.value ?? undefined;
   }
@@ -120,13 +131,18 @@ export class UserFeedbackDialogComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.isOnline || this.feedbackForm.invalid) return;
-    const feedback = this.feedbackForm.controls.feedback.value;
-    if (!isPopulatedString(feedback?.trim())) return;
+    if (!this.isOnline) return;
+    const permission: FeedbackPermission | null = this.feedbackForm.controls.permission.value;
+    if (this.feedbackForm.invalid || permission == null) {
+      // Errors only show on touched fields, so mark them touched to show the user why nothing was submitted
+      this.feedbackForm.markAllAsTouched();
+      return;
+    }
+    const feedback: string = this.feedbackForm.controls.feedback.value;
     const feedbackParams: UserFeedbackParams = {
       type: FeedbackType.HowSfImpactedProject,
       source: FeedbackSourcePage.GenerateDraftPage,
-      permission: this.feedbackForm.controls.permission.value,
+      permission,
       feedback
     };
 
@@ -139,7 +155,7 @@ export class UserFeedbackDialogComponent implements OnInit {
   }
 
   private async loadProjects(): Promise<void> {
-    await firstValueFrom(this.onlineStatusService.onlineStatus$.pipe(filter(online => online)));
+    await this.onlineStatusService.online;
     this.userProjectsService.projectDocs$
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
