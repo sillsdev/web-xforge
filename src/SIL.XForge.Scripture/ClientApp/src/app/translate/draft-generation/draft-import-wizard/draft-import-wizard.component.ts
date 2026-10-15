@@ -329,7 +329,7 @@ export class DraftImportWizardComponent implements OnInit {
     this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
-      await draftNotificationService.stop();
+      await draftNotificationService.stop(this);
       this.draftNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     });
   }
@@ -710,7 +710,7 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     // Subscribe to SignalR updates
-    await this.draftNotificationService.start();
+    await this.draftNotificationService.start(this);
     await this.draftNotificationService.subscribeToProject(this.sourceProjectId);
 
     // Build a scripture range and timestamp to import. Scope to the chapters that were actually drafted for each

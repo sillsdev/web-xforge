@@ -12,8 +12,10 @@ export abstract class NotificationServiceBase {
   protected options: IHttpConnectionOptions = {
     accessTokenFactory: async () => (await this.authService.getAccessToken()) ?? ''
   };
-  private openConnections: number = 0;
-  private startPromise: Promise<void> | null = null;
+  /** The owners (usually components) that currently need the connection to be open. */
+  private readonly owners = new Set<object>();
+  /** Start and stop operations are run one at a time, in the order they were requested. */
+  private operationQueue: Promise<void> = Promise.resolve();
 
   constructor(
     private authService: AuthService,
@@ -24,17 +26,18 @@ export abstract class NotificationServiceBase {
     return this.onlineService.isOnline && this.onlineService.isBrowserOnline;
   }
 
-  async start(): Promise<void> {
-    this.openConnections++;
-    // If a start is already in progress, wait for it to resolve
-    if (this.startPromise != null) {
-      await this.startPromise;
-      return;
-    }
+  /**
+   * Starts the connection if it is not already started, and registers the owner as needing it.
+   * Calling this multiple times with the same owner is the same as calling it once.
+   * @param owner The caller that needs the connection. Pass the same object to stop().
+   */
+  start(owner: object): Promise<void> {
+    return this.enqueue(async () => {
+      this.owners.add(owner);
 
-    // Only start the connection if we are disconnected
-    if (this.connection.state === HubConnectionState.Disconnected) {
-      this.startPromise = (async (): Promise<void> => {
+      // Only start the connection if we are disconnected. If already connected or connecting, we do not need to
+      // restart the connection
+      if (this.connection.state === HubConnectionState.Disconnected) {
         try {
           await this.connection.start();
         } catch (err) {
@@ -46,36 +49,25 @@ export abstract class NotificationServiceBase {
           } else {
             throw err;
           }
-        } finally {
-          this.startPromise = null;
-        }
-      })();
-
-      await this.startPromise;
-    }
-
-    // If already connected or connecting, we do not need to restart the connection
-  }
-
-  async stop(): Promise<void> {
-    if (this.openConnections > 0 && this.openConnections-- === 1) {
-      // If start() has not completed, wait for it to complete before stopping
-      if (this.startPromise != null) {
-        try {
-          await this.startPromise;
-        } catch {
-          // Suppress errors from start() during stop() to ensure connection.stop() is called
         }
       }
+    });
+  }
+
+  /**
+   * Unregisters the owner, and stops the connection if no other owners still need it.
+   * @param owner The same object that was passed to start().
+   */
+  stop(owner: object): Promise<void> {
+    return this.enqueue(async () => {
+      if (!this.owners.delete(owner) || this.owners.size > 0) return;
       await this.connection.stop();
-    }
+    });
   }
 
   async subscribeToProject(projectId: string): Promise<void> {
-    // Wait until connection is fully started
-    if (this.startPromise != null) {
-      await this.startPromise;
-    }
+    // Wait until any pending start or stop has completed
+    await this.operationQueue;
 
     if (this.connection.state !== HubConnectionState.Connected) {
       // If not connected, skip the invocation
@@ -95,5 +87,12 @@ export abstract class NotificationServiceBase {
         throw err;
       }
     }
+  }
+
+  private enqueue(operation: () => Promise<void>): Promise<void> {
+    const result: Promise<void> = this.operationQueue.then(operation);
+    // A failed operation must not prevent later operations from running
+    this.operationQueue = result.catch(() => {});
+    return result;
   }
 }
