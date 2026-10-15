@@ -164,7 +164,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.activatedProjectService.projectId$
       .pipe(quietTakeUntilDestroyed(this.destroyRef), filterNullish(), take(1))
       .subscribe(async projectId => {
-        await projectNotificationService.start();
+        await projectNotificationService.start(this);
         // Subscribe to notifications for this project
         await projectNotificationService.subscribeToProject(projectId);
         // When build notifications are received, reload the build history
@@ -175,12 +175,12 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
     destroyRef.onDestroy(async () => {
       // Stop the Project SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
       projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
+      await projectNotificationService.stop(this);
 
       // Stop the Draft SignalR connection when the component is destroyed
-      await draftNotificationService.stop();
       this.draftNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
+      await draftNotificationService.stop(this);
     });
   }
 
@@ -413,7 +413,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     }
 
     // Subscribe to SignalR updates
-    await this.draftNotificationService.start();
+    await this.draftNotificationService.start(this);
     await this.draftNotificationService.subscribeToProject(this.textDocId.projectId);
 
     try {
