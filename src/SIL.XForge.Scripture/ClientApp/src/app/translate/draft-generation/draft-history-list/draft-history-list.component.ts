@@ -56,7 +56,7 @@ export class DraftHistoryListComponent {
         // Initially load the history
         this.loadHistory(projectId);
         // Start the connection to SignalR
-        await projectNotificationService.start();
+        await projectNotificationService.start(this);
         // Subscribe to notifications for this project
         await projectNotificationService.subscribeToProject(projectId);
         // When build notifications are received, reload the build history
@@ -68,7 +68,7 @@ export class DraftHistoryListComponent {
     destroyRef.onDestroy(async () => {
       // Stop the SignalR connection when the component is destroyed
       projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
-      await projectNotificationService.stop();
+      await projectNotificationService.stop(this);
     });
   }
 

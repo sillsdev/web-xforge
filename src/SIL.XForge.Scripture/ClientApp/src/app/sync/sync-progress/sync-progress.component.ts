@@ -80,8 +80,8 @@ export class SyncProgressComponent {
   ) {
     this.projectNotificationService.setNotifySyncProgressHandler(this.syncProgressHandler);
     this.destroyRef.onDestroy(async () => {
-      await this.projectNotificationService.stop();
       this.projectNotificationService.removeNotifySyncProgressHandler(this.syncProgressHandler);
+      await this.projectNotificationService.stop(this);
     });
   }
 
@@ -107,7 +107,7 @@ export class SyncProgressComponent {
     if (this._projectDoc?.data == null || !this.appOnline) {
       return;
     }
-    await this.projectNotificationService.start();
+    await this.projectNotificationService.start(this);
     if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
