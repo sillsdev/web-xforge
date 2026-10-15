@@ -79,8 +79,8 @@ function setUpMocks(specs: ProjectSpec[]): void {
   );
 
   // SyncProgressComponent dependencies (it's rendered for a project that is syncing in place).
-  when(mockedProjectNotificationService.start()).thenResolve();
-  when(mockedProjectNotificationService.stop()).thenResolve();
+  when(mockedProjectNotificationService.start(anything())).thenResolve();
+  when(mockedProjectNotificationService.stop(anything())).thenResolve();
   when(mockedProjectNotificationService.subscribeToProject(anything())).thenResolve();
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedOnlineStatusService.isOnline).thenReturn(true);
