@@ -13,3 +13,7 @@ form {
   flex-direction: column;
   padding-bottom: 0.25rem;
 }
+
+.permission-required-error {
+  font-size: var(--mat-form-field-subscript-text-size);
+}

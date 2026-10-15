@@ -33,6 +33,9 @@
         }}</mat-radio-button>
         <mat-radio-button [value]="publishPermission.Private">{{ t("permission_private_label") }}</mat-radio-button>
       </mat-radio-group>
+      @if (showPermissionRequiredError) {
+        <span class="error-text permission-required-error">{{ t("required") }}</span>
+      }
     </form>
     @if (!isOnline) {
       <app-notice id="offline-error" type="error" icon="cloud_off">
@@ -41,8 +44,12 @@
     }
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-button type="button" id="cancel-button" [mat-dialog-close]="undefined">{{ t("cancel") }}</button>
+    <button mat-button type="button" id="cancel-button" [mat-dialog-close]="undefined">
+      <mat-icon>close</mat-icon>
+      {{ t("cancel") }}
+    </button>
     <button mat-flat-button color="primary" id="submit-button" (click)="submit()" [disabled]="!isOnline">
+      <mat-icon>send</mat-icon>
       {{ t("submit") }}
     </button>
   </mat-dialog-actions>
