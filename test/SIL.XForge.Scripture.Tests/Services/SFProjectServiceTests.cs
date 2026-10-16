@@ -4241,7 +4241,7 @@ public class SFProjectServiceTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Great feature!",
         };
@@ -4257,7 +4257,7 @@ public class SFProjectServiceTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Great feature!",
         };
@@ -4273,7 +4273,7 @@ public class SFProjectServiceTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Project does not exist.",
         };
@@ -4291,7 +4291,7 @@ public class SFProjectServiceTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "User no on project.",
         };
@@ -4308,7 +4308,11 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(
+            User01,
+            Project01,
+            FeedbackSourcePage.GenerateDraftPage
+        );
 
         Assert.That(result, Is.False);
     }
@@ -4323,12 +4327,16 @@ public class SFProjectServiceTests
                 Id = "feedback01",
                 ProjectRef = Project01,
                 UserRef = User01,
-                Source = PageSource.GenerateDraftPage,
+                Source = FeedbackSourcePage.GenerateDraftPage,
             }
         );
 
         // SUT
-        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(
+            User01,
+            Project01,
+            FeedbackSourcePage.GenerateDraftPage
+        );
 
         Assert.That(result, Is.True);
     }
@@ -4347,7 +4355,11 @@ public class SFProjectServiceTests
         );
 
         // SUT
-        bool result = await env.Service.HasUserSubmittedFeedbackAsync(User01, Project01, PageSource.GenerateDraftPage);
+        bool result = await env.Service.HasUserSubmittedFeedbackAsync(
+            User01,
+            Project01,
+            FeedbackSourcePage.GenerateDraftPage
+        );
 
         Assert.That(result, Is.False);
     }
@@ -4359,7 +4371,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.HasUserSubmittedFeedbackAsync(User01, "invalid_project", PageSource.GenerateDraftPage)
+            env.Service.HasUserSubmittedFeedbackAsync(User01, "invalid_project", FeedbackSourcePage.GenerateDraftPage)
         );
     }
 
@@ -4370,7 +4382,7 @@ public class SFProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.HasUserSubmittedFeedbackAsync(User04, Project01, PageSource.GenerateDraftPage)
+            env.Service.HasUserSubmittedFeedbackAsync(User04, Project01, FeedbackSourcePage.GenerateDraftPage)
         );
     }
 

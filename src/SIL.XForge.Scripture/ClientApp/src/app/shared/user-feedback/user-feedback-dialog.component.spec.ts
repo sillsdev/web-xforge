@@ -13,7 +13,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import {
   FeedbackPermission,
   FeedbackType,
-  PageSource,
+  FeedbackSourcePage,
   UserFeedbackDialogComponent,
   UserFeedbackDialogResult
 } from './user-feedback-dialog.component';
@@ -109,7 +109,7 @@ describe('UserFeedbackDialogComponent', () => {
       sfProjectId: 'project01',
       feedbackParams: {
         type: FeedbackType.HowSfImpactedProject,
-        source: PageSource.GenerateDraftPage,
+        source: FeedbackSourcePage.GenerateDraftPage,
         permission: FeedbackPermission.Private,
         feedback: 'Great feature!'
       }
@@ -129,7 +129,7 @@ describe('UserFeedbackDialogComponent', () => {
       sfProjectId: '',
       feedbackParams: {
         type: FeedbackType.HowSfImpactedProject,
-        source: PageSource.GenerateDraftPage,
+        source: FeedbackSourcePage.GenerateDraftPage,
         permission: FeedbackPermission.Private,
         feedback: 'No project selected for feedback'
       }

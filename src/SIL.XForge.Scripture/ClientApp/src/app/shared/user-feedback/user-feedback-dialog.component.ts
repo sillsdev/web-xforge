@@ -31,7 +31,7 @@ import { NoticeComponent } from '../notice/notice.component';
 
 export interface UserFeedbackParams {
   type: FeedbackType;
-  source: PageSource;
+  source: FeedbackSourcePage;
   permission: FeedbackPermission;
   feedback: string;
 }
@@ -40,7 +40,7 @@ export enum FeedbackType {
   HowSfImpactedProject = 'how_sf_impacted_project'
 }
 
-export enum PageSource {
+export enum FeedbackSourcePage {
   None = 'none',
   GenerateDraftPage = 'generate_draft_page'
 }
@@ -125,7 +125,7 @@ export class UserFeedbackDialogComponent implements OnInit {
     if (!isPopulatedString(feedback?.trim())) return;
     const feedbackParams: UserFeedbackParams = {
       type: FeedbackType.HowSfImpactedProject,
-      source: PageSource.GenerateDraftPage,
+      source: FeedbackSourcePage.GenerateDraftPage,
       permission: this.feedbackForm.controls.permission.value,
       feedback
     };

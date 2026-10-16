@@ -41,7 +41,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
-import { PageSource } from '../../shared/user-feedback/user-feedback-dialog.component';
+import { FeedbackSourcePage } from '../../shared/user-feedback/user-feedback-dialog.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
@@ -330,7 +330,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     if (projectId != null) {
       void this.onlineStatusService.online.then(() =>
         this.projectService
-          .onlineHasUserSubmittedFeedback(projectId, PageSource.GenerateDraftPage)
+          .onlineHasUserSubmittedFeedback(projectId, FeedbackSourcePage.GenerateDraftPage)
           .then(hasFeedback => {
             this.hasUserSubmittedFeedback = hasFeedback;
           })

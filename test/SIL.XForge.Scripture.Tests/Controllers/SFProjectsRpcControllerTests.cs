@@ -1991,7 +1991,7 @@ public class SFProjectsRpcControllerTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Feedback from a user.",
         };
@@ -2009,7 +2009,7 @@ public class SFProjectsRpcControllerTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Feedback from a user.",
         };
@@ -2028,7 +2028,7 @@ public class SFProjectsRpcControllerTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Feedback from a user.",
         };
@@ -2048,7 +2048,7 @@ public class SFProjectsRpcControllerTests
         var feedbackParams = new UserFeedbackParams
         {
             Type = FeedbackType.HowSfImpactedProject,
-            Source = PageSource.GenerateDraftPage,
+            Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
             Feedback = "Feedback from a user.",
         };
@@ -2066,7 +2066,7 @@ public class SFProjectsRpcControllerTests
         env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
             .Returns(Task.FromResult(true));
 
-        var result = await env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage);
+        var result = await env.Controller.HasUserSubmittedFeedback(Project01, FeedbackSourcePage.GenerateDraftPage);
 
         Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
         Assert.AreEqual(true, (result as RpcMethodSuccessResult)!.ReturnObject);
@@ -2080,7 +2080,7 @@ public class SFProjectsRpcControllerTests
         env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
             .Throws(new ForbiddenException());
 
-        var result = await env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage);
+        var result = await env.Controller.HasUserSubmittedFeedback(Project01, FeedbackSourcePage.GenerateDraftPage);
 
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
@@ -2094,7 +2094,7 @@ public class SFProjectsRpcControllerTests
         env.SFProjectService.HasUserSubmittedFeedbackAsync(User01, Project01, Arg.Any<string>())
             .Throws(new DataNotFoundException(errorMessage));
 
-        var result = await env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage);
+        var result = await env.Controller.HasUserSubmittedFeedback(Project01, FeedbackSourcePage.GenerateDraftPage);
 
         Assert.IsInstanceOf<RpcMethodErrorResult>(result);
         Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
@@ -2109,7 +2109,7 @@ public class SFProjectsRpcControllerTests
             .Throws(new ArgumentNullException());
 
         Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Controller.HasUserSubmittedFeedback(Project01, PageSource.GenerateDraftPage)
+            env.Controller.HasUserSubmittedFeedback(Project01, FeedbackSourcePage.GenerateDraftPage)
         );
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
