@@ -17,7 +17,7 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
   static readonly COLLECTION = QUESTIONS_COLLECTION;
   static readonly INDEX_PATHS = [
     ...QUESTION_INDEX_PATHS,
-    // Index for CheckingQuestionsService.queryQuestions() and CheckingQuestionsService.queryAdjacentQuestions()
+    // Index for CheckingQuestionsService.queryQuestions() and CheckingQuestionsService.queryAdjacentQuestion()
     // As IndexedDB does not support boolean fields in indexes (see https://github.com/w3c/IndexedDB/issues/76)
     {
       [obj<Question>().pathStr(n => n.projectRef)]: 1,

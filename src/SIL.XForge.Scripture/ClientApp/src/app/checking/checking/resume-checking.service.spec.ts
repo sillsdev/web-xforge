@@ -23,6 +23,12 @@ import { CheckingQuestionsService } from './checking-questions.service';
 import { ResumeCheckingService } from './resume-checking.service';
 
 describe('ResumeCheckingService', () => {
+  const answeredQuestion = {
+    data: { verseRef: { bookNum: 2, chapterNum: 2 }, answers: [{ ownerRef: 'user01' }] as Answer[] }
+  } as QuestionDoc;
+  const unansweredQuestion = {
+    data: { verseRef: { bookNum: 2, chapterNum: 3 }, answers: [{ ownerRef: 'other' }] as Answer[] }
+  } as QuestionDoc;
   const mockRouter = mock(Router);
   const mockUserService = mock(UserService);
   const mockActivatedProjectService = mock(ActivatedProjectService);
@@ -82,15 +88,7 @@ describe('ResumeCheckingService', () => {
       } as SFProjectProfile
     } as SFProjectProfileDoc);
 
-    const questions = [
-      {
-        data: { verseRef: { bookNum: 2, chapterNum: 2 }, answers: [{ ownerRef: 'user01' }] as Answer[] }
-      } as QuestionDoc,
-      {
-        data: { verseRef: { bookNum: 2, chapterNum: 3 }, answers: [{ ownerRef: 'other' }] as Answer[] }
-      } as QuestionDoc
-    ];
-    setUpQuestions(questions);
+    setUpQuestions(answeredQuestion, unansweredQuestion);
 
     await service['updateProjectUserConfig']('project01');
   });
@@ -119,14 +117,6 @@ describe('ResumeCheckingService', () => {
       changes$: of([]) as Observable<OtJson0Op[]>,
       data: { selectedBookNum: 5, selectedChapterNum: 2 } as SFProjectUserConfig
     } as SFProjectUserConfigDoc);
-    setUpQuestions([
-      {
-        data: { verseRef: { bookNum: 2, chapterNum: 2 }, answers: [{ ownerRef: 'user01' }] as Answer[] }
-      } as QuestionDoc,
-      {
-        data: { verseRef: { bookNum: 2, chapterNum: 3 }, answers: [{ ownerRef: 'user02' }] as Answer[] }
-      } as QuestionDoc
-    ]);
 
     await service['updateProjectUserConfig']('project01');
 
@@ -156,14 +146,7 @@ describe('ResumeCheckingService', () => {
   // at time of writing, the only way this use case is possible is if the user has answered all questions and the book
   // containing their most recently active question was deleted
   it('should create link using first question if neither last location nor unanswered question', fakeAsync(async () => {
-    setUpQuestions([
-      {
-        data: { verseRef: { bookNum: 2, chapterNum: 2 }, answers: [{ ownerRef: 'user01' }] as Answer[] }
-      } as QuestionDoc,
-      {
-        data: { verseRef: { bookNum: 2, chapterNum: 3 }, answers: [{ ownerRef: 'user01' }] as Answer[] }
-      } as QuestionDoc
-    ]);
+    setUpQuestions(answeredQuestion, undefined);
 
     await service['updateProjectUserConfig']('project01');
 
@@ -179,7 +162,7 @@ describe('ResumeCheckingService', () => {
   }));
 
   it('should create link using first chapter if neither last location nor any question', fakeAsync(async () => {
-    setUpQuestions([]);
+    setUpQuestions(undefined, undefined);
 
     await service['updateProjectUserConfig']('project01');
 
@@ -225,14 +208,43 @@ describe('ResumeCheckingService', () => {
     expect(opsSets[2].value).toEqual(23);
   }));
 
-  function setUpQuestions(newLocal: QuestionDoc[]): void {
+  it('should not query every question in the project', fakeAsync(async () => {
+    const queryOptions: unknown[] = [];
+    when(mockQuestionsService.queryQuestions(anything(), anything(), anything())).thenCall((_projectId, options) => {
+      queryOptions.push(options);
+      return Promise.resolve(createQuery(undefined));
+    });
+
+    service.resumeLink$.subscribe();
+    tick(1); // Account for the delay(0)
+
+    expect(queryOptions.length).toBeGreaterThan(0);
+    for (const options of queryOptions) {
+      expect(options).toEqual({ activeOnly: true, sort: true, limit: 1 });
+    }
+    flush();
+  }));
+
+  function setUpQuestions(
+    firstQuestion: QuestionDoc | undefined,
+    firstUnansweredQuestion: QuestionDoc | undefined
+  ): void {
+    when(mockQuestionsService.queryQuestions(anything(), anything(), anything())).thenResolve(
+      createQuery(firstQuestion)
+    );
+    when(mockQuestionsService.queryFirstUnansweredQuestion(anything(), anything(), anything())).thenResolve(
+      createQuery(firstUnansweredQuestion)
+    );
+  }
+
+  function createQuery(result: QuestionDoc | undefined): RealtimeQuery<QuestionDoc> {
     const query: RealtimeQuery<QuestionDoc> = mock(RealtimeQuery);
     when(query.ready$).thenReturn(of(true));
     when(query.remoteChanges$).thenReturn(of(undefined));
     when(query.localChanges$).thenReturn(of(undefined));
     when(query.remoteDocChanges$).thenReturn(of(undefined));
-    when(query.docs).thenReturn(newLocal);
+    when(query.docs).thenReturn(result == null ? [] : [result]);
     when(query.dispose()).thenReturn();
-    when(mockQuestionsService.queryQuestions(anything(), anything(), anything())).thenResolve(instance(query));
+    return instance(query);
   }
 });

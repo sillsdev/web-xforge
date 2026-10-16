@@ -262,7 +262,7 @@ describe('CheckingComponent', () => {
 
         const getAdjacentQuestionSpy = spyOn(
           env.component['checkingQuestionsService'] as any,
-          'queryAdjacentQuestions'
+          'queryAdjacentQuestion'
         ).and.callThrough();
         const adjacentQuestion = {
           id: 'q1Id',
@@ -1153,10 +1153,7 @@ describe('CheckingComponent', () => {
 
         const questionRemaining = env.getQuestionDoc('q1Id');
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{}] as Answer[];
-          }
+          data: { answers: [{}] as Answer[] }
         } as QuestionDoc;
 
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
@@ -1173,16 +1170,10 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasNotAnswered;
 
         const questionRemaining = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ ownerRef: ADMIN_USER.id }] as Answer[]; // Answered by a different user
-          }
+          data: { answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] } // Answered by a different user
         } as QuestionDoc;
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ ownerRef: CHECKER_USER.id }] as Answer[]; // Answered by current user
-          }
+          data: { answers: [{ ownerRef: CHECKER_USER.id }] as Answer[] } // Answered by current user
         } as QuestionDoc;
 
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
@@ -1199,16 +1190,10 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasAnswered;
 
         const questionRemaining = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ ownerRef: CHECKER_USER.id }] as Answer[]; // Answered by current user
-          }
+          data: { answers: [{ ownerRef: CHECKER_USER.id }] as Answer[] } // Answered by current user
         } as QuestionDoc;
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ ownerRef: ADMIN_USER.id }] as Answer[]; // Answered by a different user
-          }
+          data: { answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] } // Answered by a different user
         } as QuestionDoc;
 
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
@@ -1225,16 +1210,10 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.HasAnswers;
 
         const questionRemaining = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ ownerRef: ADMIN_USER.id }] as Answer[];
-          }
+          data: { answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [] as Answer[];
-          }
+          data: { answers: [] as Answer[] }
         } as QuestionDoc;
 
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
@@ -1251,22 +1230,13 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.StatusNone;
 
         const questionRemainingNullStatus = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: undefined }] as Answer[];
-          }
+          data: { answers: [{ status: undefined }] as Answer[] }
         } as QuestionDoc;
         const questionRemainingNoneStatus = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: AnswerStatus.None }] as Answer[];
-          }
+          data: { answers: [{ status: AnswerStatus.None }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: AnswerStatus.Exportable }] as Answer[];
-          }
+          data: { answers: [{ status: AnswerStatus.Exportable }] as Answer[] }
         } as QuestionDoc;
 
         let filtered = env.component['filterQuestions']([questionRemainingNullStatus, questionExcluded]);
@@ -1287,16 +1257,10 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.StatusExport;
 
         const questionRemaining = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: AnswerStatus.Exportable }] as Answer[];
-          }
+          data: { answers: [{ status: AnswerStatus.Exportable }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: AnswerStatus.Resolved }] as Answer[];
-          }
+          data: { answers: [{ status: AnswerStatus.Resolved }] as Answer[] }
         } as QuestionDoc;
 
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
@@ -1313,16 +1277,10 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.StatusResolved;
 
         const questionRemaining = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: AnswerStatus.Resolved }] as Answer[];
-          }
+          data: { answers: [{ status: AnswerStatus.Resolved }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: {},
-          getAnswers: (_?: string) => {
-            return [{ status: AnswerStatus.None }] as Answer[];
-          }
+          data: { answers: [{ status: AnswerStatus.None }] as Answer[] }
         } as QuestionDoc;
 
         const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);

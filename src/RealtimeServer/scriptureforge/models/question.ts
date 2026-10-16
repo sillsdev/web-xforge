@@ -6,7 +6,7 @@ import { VerseRefData } from './verse-ref-data';
 export const QUESTIONS_COLLECTION = 'questions';
 export const QUESTION_INDEX_PATHS = [
   ...PROJECT_DATA_INDEX_PATHS,
-  // Index for CheckingQuestionsService.queryQuestions() and CheckingQuestionsService.queryAdjacentQuestions()
+  // Index for CheckingQuestionsService.queryQuestions() and CheckingQuestionsService.queryAdjacentQuestion()
   {
     [obj<Question>().pathStr(n => n.projectRef)]: 1,
     [obj<Question>().pathStr(n => n.isArchived)]: 1,

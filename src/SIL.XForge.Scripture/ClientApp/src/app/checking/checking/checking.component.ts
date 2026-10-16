@@ -42,6 +42,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { createFilterPredicate } from 'xforge-common/query-parameters';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -620,7 +621,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               chapterNum: this.chapter
             };
           } else {
-            this.defaultQuestionsQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
+            this.defaultQuestionsQuery = await this.checkingQuestionsService.queryAdjacentQuestion(
               this.projectDoc!.id,
               {
                 bookNum: routeBookNum ?? 1,
@@ -628,6 +629,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 verseNum: 0
               },
               'next',
+              this.activeQuestionFilter,
+              this.userService.currentUserId,
               this.destroyRef
             );
             this.defaultQuestionsQuerySub = this.defaultQuestionsQuery.ready$
@@ -818,10 +821,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           this.prevQuestion$ = of(prevInScope);
           this.changeDetector.markForCheck();
         } else {
-          const prevQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
+          const prevQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestion(
             this.projectDoc!.id,
             relativeTo,
             'prev',
+            this.activeQuestionFilter,
+            this.userService.currentUserId,
             this.destroyRef
           );
           this.prevQuestionOutOfScope = prevQuestionQuery;
@@ -832,7 +837,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               quietTakeUntilDestroyed(this.destroyRef)
             )
             .subscribe(async query => {
-              this.prevQuestion$ = of(this.filterQuestions(query.docs)[0]);
+              this.prevQuestion$ = of(query.docs[0]);
               this.changeDetector.markForCheck();
             });
         }
@@ -844,10 +849,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           this.nextQuestion$ = of(nextInScope);
           this.changeDetector.markForCheck();
         } else {
-          const nextQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestions(
+          const nextQuestionQuery = await this.checkingQuestionsService.queryAdjacentQuestion(
             this.projectDoc!.id,
             relativeTo,
             'next',
+            this.activeQuestionFilter,
+            this.userService.currentUserId,
             this.destroyRef
           );
           this.nextQuestionOutOfScope = nextQuestionQuery;
@@ -858,7 +865,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               quietTakeUntilDestroyed(this.destroyRef)
             )
             .subscribe(async query => {
-              this.nextQuestion$ = of(this.filterQuestions(query.docs)[0]);
+              this.nextQuestion$ = of(query.docs[0]);
               this.changeDetector.markForCheck();
             });
         }
@@ -1326,21 +1333,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   private filterQuestions(unfilteredQuestions: readonly QuestionDoc[]): QuestionDoc[] {
-    const questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
-      [QuestionFilter.None]: () => true,
-      [QuestionFilter.CurrentUserHasNotAnswered]: answers =>
-        !answers.some(a => a.ownerRef === this.userService.currentUserId),
-      [QuestionFilter.CurrentUserHasAnswered]: answers =>
-        answers.some(a => a.ownerRef === this.userService.currentUserId),
-      [QuestionFilter.HasAnswers]: answers => answers.length > 0,
-      [QuestionFilter.NoAnswers]: answers => answers.length === 0,
-      [QuestionFilter.StatusNone]: answers => answers.some(a => a.status === AnswerStatus.None || a.status == null),
-      [QuestionFilter.StatusExport]: answers => answers.some(a => a.status === AnswerStatus.Exportable),
-      [QuestionFilter.StatusResolved]: answers => answers.some(a => a.status === AnswerStatus.Resolved)
-    };
-    const filterFunction = questionFilterFunctions[this.activeQuestionFilter];
-
-    return unfilteredQuestions.filter(q => (q.data == null ? false : filterFunction(q.getAnswers())));
+    const matchesFilter = createFilterPredicate(
+      this.checkingQuestionsService.getQuestionFilterParams(this.activeQuestionFilter, this.userService.currentUserId)
+    );
+    return unfilteredQuestions.filter(q => q.data != null && matchesFilter(q));
   }
 
   private updateAudioMissingWarning(): void {
@@ -1698,8 +1694,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     // Suggest book/chapter from first question (within route book if provided)
     if (suggestedBookChapter == null) {
-      const firstQuestionVerseRef: VerseRefData | undefined = this.filterQuestions(this.defaultQuestionsQuery!.docs)[0]
-        ?.data?.verseRef;
+      const firstQuestionVerseRef: VerseRefData | undefined = this.defaultQuestionsQuery!.docs[0]?.data?.verseRef;
 
       if (firstQuestionVerseRef != null) {
         // If route book is provided, don't use question from a different book
