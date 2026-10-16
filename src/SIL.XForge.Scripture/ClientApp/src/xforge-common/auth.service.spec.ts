@@ -533,6 +533,31 @@ describe('AuthService', () => {
     expect(env.isLoggedIn).toBe(false);
     verify(mockedWebAuth.getTokenSilently(anything())).once();
     verify(mockedDialogService.message(anything(), anything())).once();
+    mockedConsole.verify();
+  }));
+
+  for (const description of ['invalid or expired authorization code', 'Failed to obtain access token']) {
+    it(`should show Registry login error when Auth0 reports "${description}"`, fakeAsync(() => {
+      const callback = (env: TestEnvironment): void => {
+        env.setRegistryExchangeFailureResponse(description);
+        mockedConsole.expectAndHide(new RegExp(description));
+      };
+      const env = new TestEnvironment({ isOnline: true, isNewlyLoggedIn: true, callback });
+      expect(env.isLoggedIn).toBe(false);
+      verify(mockedDialogService.message('error_messages.paratext_registry_problem', 'error_messages.login')).once();
+      mockedConsole.verify();
+    }));
+  }
+
+  it('should show more generic login error for an unknown invalid request problem', fakeAsync(() => {
+    const callback = (env: TestEnvironment): void => {
+      env.setRegistryExchangeFailureResponse('Some other problem');
+      mockedConsole.expectAndHide(/Some other problem/);
+    };
+    const env = new TestEnvironment({ isOnline: true, isNewlyLoggedIn: true, callback });
+    expect(env.isLoggedIn).toBe(false);
+    verify(mockedDialogService.message('error_messages.error_occurred_login', 'error_messages.try_again')).once();
+    mockedConsole.verify();
   }));
 
   it('should redirect to url after successful login', fakeAsync(() => {
@@ -959,6 +984,10 @@ class TestEnvironment {
     when(mockedWebAuth.getTokenSilently()).thenThrow(grantError);
     when(mockedWebAuth.getTokenSilently(anything())).thenThrow(grantError);
     when(mockedWebAuth.getIdTokenClaims()).thenThrow(grantError);
+  }
+
+  setRegistryExchangeFailureResponse(description: string): void {
+    when(mockedWebAuth.handleRedirectCallback()).thenThrow(new GenericError('invalid_request', description));
   }
 
   setLoginRequiredResponse(): void {
