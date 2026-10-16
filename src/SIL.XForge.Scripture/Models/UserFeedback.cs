@@ -6,7 +6,7 @@ namespace SIL.XForge.Scripture.Models;
 public class UserFeedbackParams
 {
     public string Type { get; init; } = FeedbackType.HowSfImpactedProject;
-    public string Source { get; init; } = PageSource.None;
+    public string Source { get; init; } = FeedbackSourcePage.None;
     public string Permission { get; init; } = FeedbackPermission.Private;
     public string Feedback { get; init; } = string.Empty;
 }
@@ -16,7 +16,7 @@ public static class FeedbackType
     public const string HowSfImpactedProject = "how_sf_impacted_project";
 }
 
-public static class PageSource
+public static class FeedbackSourcePage
 {
     public const string None = "none";
     public const string GenerateDraftPage = "generate_draft_page";

@@ -25,7 +25,7 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
 import { BookProgressWithChapterProgress } from '../shared/progress-service/progress.service';
-import { PageSource, UserFeedbackDialogResult } from '../shared/user-feedback/user-feedback-dialog.component';
+import { FeedbackSourcePage, UserFeedbackDialogResult } from '../shared/user-feedback/user-feedback-dialog.component';
 import { expandNumbers } from '../shared/utils';
 import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
@@ -455,7 +455,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Determines whether the current user has already submitted feedback for the specified project. */
-  async onlineHasUserSubmittedFeedback(projectId: string, source: PageSource): Promise<boolean> {
+  async onlineHasUserSubmittedFeedback(projectId: string, source: FeedbackSourcePage): Promise<boolean> {
     return await this.onlineInvoke<boolean>('hasUserSubmittedFeedback', { projectId, source });
   }
 }
