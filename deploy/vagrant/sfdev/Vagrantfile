@@ -74,17 +74,15 @@ Vagrant.configure("2") do |config|
     retry sudo apt-get update
     retry sudo apt-get install --assume-yes dotnet-sdk-10.0
 
-    # With Linux 6.17.0, Plasma 5.27.12, and X11 in VirtualBox 7.0, the mouse cursor is offset a few pixels down and to
-    # the right. Possibly the same bug as https://bugs.kde.org/show_bug.cgi?id=427060 (though the workarounds
-    # environment variables did not seem to solve it). Changing the session to use Wayland fixes the problem. Moving the
-    # kernel back from HWE to GA fixes the problem. Upgrading to Ubuntu 25.10 fixes the problem.
-
-    # Move the kernel back from HWE to GA to fix mouse cursor offset problem.
-    # (https://wiki.ubuntu.com/Kernel/LTSEnablementStack)
-    echo "== Downgrading kernel to GA =="
-    retry sudo apt-get --assume-yes install --install-recommends linux-generic
-    # Must reboot after removing modules.
-    sudo DEBIAN_FRONTEND=noninteractive apt-get --assume-yes purge linux-generic-hwe-\* linux-hwe-\* linux-modules\*-6.17.\*
+    # Fix MongoDB 8.0 on Linux Kernel 7.0 (see https://jira.mongodb.org/browse/SERVER-121912)
+    echo "== Configuring mongod =="
+    sudo mkdir -p /etc/systemd/system/mongod.service.d
+    sudo tee /etc/systemd/system/mongod.service.d/environment.conf >/dev/null <<'EOF'
+    [Service]
+    Environment="GLIBC_TUNABLES=glibc.pthread.rseq=1"
+EOF
+    sudo systemctl daemon-reload
+    sudo systemctl restart mongod
 
     # Remove canary
     rm -f ~/Desktop/WARNING-NOT-PROVISIONED.txt
