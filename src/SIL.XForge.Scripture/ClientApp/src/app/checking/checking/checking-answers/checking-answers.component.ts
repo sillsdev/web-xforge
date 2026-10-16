@@ -261,7 +261,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   get canSeeOtherUserResponses(): boolean {
-    return this.project == null ? false : this.project.checkingConfig.usersSeeEachOthersResponses;
+    return CheckingUtils.canSeeOtherUsersResponses(this.project, this.userService.currentUserId);
   }
 
   get currentUserTotalAnswers(): number {

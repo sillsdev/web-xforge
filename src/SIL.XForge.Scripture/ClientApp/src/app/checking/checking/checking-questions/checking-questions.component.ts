@@ -263,7 +263,11 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       return [];
     }
 
-    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer || this.canManageQuestions) {
+    if (
+      CheckingUtils.canSeeOtherUsersResponses(this.project, this.userService.currentUserId) ||
+      !this.canAddAnswer ||
+      this.canManageQuestions
+    ) {
       return questionDoc.getAnswers();
     } else {
       return questionDoc.getAnswers(this.userService.currentUserId);
