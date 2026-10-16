@@ -15,6 +15,7 @@ import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -52,6 +53,7 @@ describe('DraftGenerationComponent', () => {
   let mockSFProjectService: jasmine.SpyObj<SFProjectService>;
   let mockProjectNotificationService: jasmine.SpyObj<ProjectNotificationService>;
   let mockBrandingService: jasmine.SpyObj<BrandingService>;
+  let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -103,7 +105,8 @@ describe('DraftGenerationComponent', () => {
           { provide: TrainingDataService, useValue: mockTrainingDataService },
           { provide: ProgressService, useValue: undefined },
           { provide: ProjectNotificationService, useValue: mockProjectNotificationService },
-          { provide: BrandingService, useValue: mockBrandingService }
+          { provide: BrandingService, useValue: mockBrandingService },
+          { provide: FeatureFlagService, useValue: mockFeatureFlagService }
         ]
       });
 
@@ -156,6 +159,10 @@ describe('DraftGenerationComponent', () => {
       mockTrainingDataService.getTrainingData.and.returnValue(of([]));
 
       mockBrandingService = jasmine.createSpyObj<BrandingService>([], { siteName: 'Scripture Forge' });
+      mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>([], {
+        partialBookDrafting: createTestFeatureFlag(true),
+        userFeedbackNotice: createTestFeatureFlag(true)
+      });
     }
 
     static initProject(currentUserId: string, preTranslate: boolean = true): void {
@@ -1469,6 +1476,14 @@ describe('DraftGenerationComponent', () => {
       tick();
       env.setBuildHistory(['2025-01-01', '2025-06-01']);
       expect(env.component.showUserFeedbackNotice).toBe(true);
+    }));
+
+    it('should be false and not check for submitted feedback when the feature flag is off', fakeAsync(() => {
+      const env = new TestEnvironment(() => (mockFeatureFlagService.userFeedbackNotice.enabled = false));
+      tick();
+      env.setBuildHistory(['2025-01-01', '2025-06-01']);
+      expect(env.component.showUserFeedbackNotice).toBe(false);
+      expect(mockSFProjectService.onlineHasUserSubmittedFeedback).not.toHaveBeenCalled();
     }));
 
     it('should be false when the user has already submitted feedback, even after three months of use', fakeAsync(() => {

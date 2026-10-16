@@ -43,7 +43,8 @@ class ParseVersion {
     'Preview new draft history interface',
     'USFM Format',
     'Show in-app onboarding form instead of external link',
-    'Partial book drafting'
+    'Partial book drafting',
+    'Show user feedback notice on the generate draft page'
   ];
 
   constructor() {
