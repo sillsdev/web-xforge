@@ -68,6 +68,15 @@ export interface QueryResults<T> {
   unpagedCount: number;
 }
 
+/**
+ * Creates a function that tests whether a doc matches a query filter. It matches in the same way as queries that run
+ * against offline data, so a filter can be applied both in a query and to docs that are already loaded.
+ */
+export function createFilterPredicate(filter: QueryFilter): (doc: Pick<Snapshot, 'id' | 'data'>) => boolean {
+  const query = new Query(toMingoCriteria(filter));
+  return doc => query.test(doc);
+}
+
 export function performQuery<T>(parameters: QueryParameters, snapshots: T[]): QueryResults<T> {
   const query = new Query(toMingoCriteria(parameters));
   const cursor = query.find(snapshots);

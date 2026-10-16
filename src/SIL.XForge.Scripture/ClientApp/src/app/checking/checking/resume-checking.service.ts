@@ -16,6 +16,7 @@ import {
   tap
 } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { noopDestroyRef } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
@@ -150,8 +151,19 @@ export class ResumeCheckingService extends ResumeBaseService {
       return of(undefined);
     }
 
-    // This query is not associated with a component, so provide a no-op destroy ref
-    return from(this.questionService.queryQuestions(projectDoc.id, { activeOnly: true }, noopDestroyRef)).pipe(
+    // Query only the first unanswered question and the first question, rather than every question in the project.
+    // These queries are not associated with a component, so provide a no-op destroy ref.
+    return combineLatest([
+      this.getFirstQuestion(this.questionService.queryFirstUnansweredQuestion(projectDoc.id, userId, noopDestroyRef)),
+      this.getFirstQuestion(
+        this.questionService.queryQuestions(projectDoc.id, { activeOnly: true, sort: true, limit: 1 }, noopDestroyRef)
+      )
+    ]).pipe(map(([firstUnansweredQuestion, firstQuestion]) => firstUnansweredQuestion ?? firstQuestion));
+  }
+
+  /** Emits the first question in the query results whenever the results may have changed. */
+  private getFirstQuestion(queryPromise: Promise<RealtimeQuery<QuestionDoc>>): Observable<QuestionDoc | undefined> {
+    return from(queryPromise).pipe(
       switchMap(query =>
         merge(
           query.ready$.pipe(
@@ -163,11 +175,8 @@ export class ResumeCheckingService extends ResumeBaseService {
           query.localChanges$,
           query.remoteDocChanges$
         ).pipe(
-          map(() => {
-            const firstUnansweredQuestion = query?.docs.find(q => q.data?.answers.every(a => a.ownerRef !== userId));
-            return firstUnansweredQuestion ?? query.docs[0];
-          }),
-          finalize(() => query?.dispose())
+          map(() => query.docs[0]),
+          finalize(() => query.dispose())
         )
       )
     );
