@@ -41,6 +41,12 @@ describe('I18nService', () => {
     expect(service.localeCode).toEqual('zh-CN');
   });
 
+  it('should write the culture cookie with SameSite=Lax so it survives navigation from another site', () => {
+    const service = getI18nService();
+    service.setLocale('zh-CN');
+    verify(mockedCookieService.set('.AspNetCore.Culture', anything(), anything(), '/', undefined, true, 'Lax')).once();
+  });
+
   it('should wrap text with HTML tags', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn('translated key');
     const service = getI18nService();

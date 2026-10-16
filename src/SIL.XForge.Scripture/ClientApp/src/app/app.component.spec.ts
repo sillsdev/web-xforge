@@ -284,6 +284,20 @@ describe('AppComponent', () => {
     verify(mockedI18nService.setLocale('pt-BR')).once();
   }));
 
+  it('should not set user locale when the user has no stored locale', fakeAsync(() => {
+    // A user who has never chosen an interface language keeps the locale they selected before logging in
+    const env = new TestEnvironment();
+    when(mockedAuthService.isNewlyLoggedIn).thenResolve(true);
+    when(mockedI18nService.localeCode).thenReturn('es');
+    env.currentUserDoc.submitJson0Op(op => op.unset(u => u.interfaceLanguage!), false);
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    tick();
+    env.fixture.detectChanges();
+    verify(mockedI18nService.setLocale(anything())).never();
+  }));
+
   it('should not set user locale when not newly logged in and stored locale does not match the browsing session', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedAuthService.isNewlyLoggedIn).thenResolve(false);
