@@ -76,9 +76,12 @@ for (const [_group, specification] of Object.entries(notoFonts)) {
   if ((specification as any).families == null) continue;
 
   for (const [family, familySpecification] of Object.entries((specification as any).families)) {
-    const matchingFiles = (familySpecification as any).files.filter(file =>
-      /^fonts\/\w+\/full\/otf\/\w+-Regular.otf$/.test(file)
-    );
+    const files: string[] = (familySpecification as any).files;
+    // Prefer OTF because it is smaller to download. Families released with Noto's newer build tooling only have TTF.
+    let matchingFiles = files.filter(file => /^fonts\/\w+\/full\/otf\/\w+-Regular.otf$/.test(file));
+    if (matchingFiles.length === 0) {
+      matchingFiles = files.filter(file => /^fonts\/\w+\/full\/ttf\/\w+-Regular.ttf$/.test(file));
+    }
 
     if (matchingFiles.length === 0) {
       console.warn(`No matching files found for ${family}`);
