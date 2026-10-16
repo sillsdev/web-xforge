@@ -21,6 +21,7 @@ public class ProjectServiceTests
     private const string User01 = "user01";
     private const string User02 = "user02";
     private const string User03 = "user03";
+    private const string Data01 = "507f1f77bcf86cd799439011";
     private const string SiteId = "xf";
     private static readonly string[] Permissions = ["generic.permission", "another.permission"];
 
@@ -28,30 +29,37 @@ public class ProjectServiceTests
     public async Task SaveAudioAsync_NonMp3File_AudioConverted()
     {
         var env = new TestEnvironment();
-        const string dataId = "507f1f77bcf86cd799439011";
         const string path = "file.wav";
-        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        Uri fileUri = new Uri("http://example.com/");
+        env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(false));
+        env.StorageProvider.PutFileAsync(
+                Arg.Any<string>(),
+                AudioService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.mp3"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
-        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
-        Assert.That(uri.ToString().StartsWith($"/assets/audio/{Project01}/{User01}_{dataId}.mp3?t="), Is.True);
-        await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
+        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, Data01, path);
+        Assert.That(uri, Is.EqualTo(fileUri));
+        await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
     public async Task SaveAudioAsync_Mp3File_AudioSaved()
     {
         var env = new TestEnvironment();
-        const string dataId = "507f1f77bcf86cd799439011";
         const string path = "file.mp3";
-        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        Uri fileUri = new Uri("http://example.com/");
         env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(true));
+        env.StorageProvider.PutFileAsync(path, AudioService.DirectoryName, Project01, $"{User01}_{Data01}.mp3")
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
-        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
-        Assert.That(uri.ToString().StartsWith($"/assets/audio/project01/user01_{dataId}.mp3?t="), Is.True);
-        env.FileSystemService.Received().MoveFile(path, filePath);
-        await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
+        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, Data01, path);
+        Assert.That(uri, Is.EqualTo(fileUri));
+        await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Test]
@@ -72,7 +80,7 @@ public class ProjectServiceTests
 
         // SUT
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.SaveAudioAsync(User01, "/../abc.txt", "507f1f77bcf86cd799439011", "file.wav")
+            env.Service.SaveAudioAsync(User01, "/../abc.txt", Data01, "file.wav")
         );
     }
 
@@ -80,36 +88,33 @@ public class ProjectServiceTests
     public async Task DeleteAudioAsync_NonAdminUser_FileDeleted()
     {
         var env = new TestEnvironment();
-        const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Join("site", "audio", Project01, $"{User02}_{dataId}.mp3");
-        env.FileSystemService.FileExists(filePath).Returns(true);
 
-        await env.Service.DeleteAudioAsync(User02, Project01, User02, dataId);
-        env.FileSystemService.Received().DeleteFile(filePath);
+        await env.Service.DeleteAudioAsync(User02, Project01, User02, Data01);
+        await env
+            .StorageProvider.Received()
+            .DeleteFileAsync(AudioService.DirectoryName, Project01, $"{User02}_{Data01}.mp3");
     }
 
     [Test]
     public async Task DeleteAudioAsync_AdminUser_FileDeleted()
     {
         var env = new TestEnvironment();
-        const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Join("site", "audio", Project01, $"{User02}_{dataId}.mp3");
-        env.FileSystemService.FileExists(filePath).Returns(true);
 
-        await env.Service.DeleteAudioAsync(User01, Project01, User02, dataId);
-        env.FileSystemService.Received().DeleteFile(filePath);
+        await env.Service.DeleteAudioAsync(User01, Project01, User02, Data01);
+        await env
+            .StorageProvider.Received()
+            .DeleteFileAsync(AudioService.DirectoryName, Project01, $"{User02}_{Data01}.mp3");
     }
 
     [Test]
     public async Task DeleteAudioAsync_NotOwner_ForbiddenError()
     {
         var env = new TestEnvironment();
-        const string dataId = "507f1f77bcf86cd799439011";
-        string filePath = Path.Join("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        string filePath = Path.Join("site", AudioService.DirectoryName, Project01, $"{User01}_{Data01}.mp3");
         env.FileSystemService.FileExists(filePath).Returns(true);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
-            env.Service.DeleteAudioAsync(User02, Project01, User01, dataId)
+            env.Service.DeleteAudioAsync(User02, Project01, User01, Data01)
         );
     }
 
@@ -129,7 +134,7 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
 
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.DeleteAudioAsync(User02, "/../test/abc.txt", User01, "507f1f77bcf86cd799439011")
+            env.Service.DeleteAudioAsync(User02, "/../test/abc.txt", User01, Data01)
         );
     }
 
@@ -406,13 +411,15 @@ public class ProjectServiceTests
             ProjectSecrets = new MemoryRepository<TestProjectSecret>([new TestProjectSecret { Id = Project01 }]);
 
             FileSystemService = Substitute.For<IFileSystemService>();
+            StorageProvider = Substitute.For<IStorageProvider>();
 
             Service = new TestProjectService(
                 RealtimeService,
                 siteOptions,
                 AudioService,
                 ProjectSecrets,
-                FileSystemService
+                FileSystemService,
+                StorageProvider
             );
         }
 
@@ -420,6 +427,7 @@ public class ProjectServiceTests
         public MemoryRealtimeService RealtimeService { get; }
         public MemoryRepository<TestProjectSecret> ProjectSecrets { get; }
         public IFileSystemService FileSystemService { get; }
+        public IStorageProvider StorageProvider { get; }
         public IAudioService AudioService { get; }
 
         public TestProject GetProject(string id) => RealtimeService.GetRepository<TestProject>().Get(id);

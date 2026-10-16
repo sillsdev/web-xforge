@@ -5,6 +5,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Amazon.S3;
 using Hangfire;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HeaderParsing;
@@ -19,7 +20,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Microsoft.Net.Http.Headers;
@@ -160,6 +160,8 @@ public class Startup
 
         services.AddSFServices();
 
+        services.AddStorageProvider(Configuration);
+
         services.AddXFAuthentication(Configuration);
 
         services.AddSFDataAccess(Configuration);
@@ -249,19 +251,40 @@ public class Startup
                 OnPrepareResponse = ctx => ctx.Context.Response.Headers.Append("Cache-Control", "must-revalidate"),
             }
         );
+
+        // Set up file providers for static file hosting
+        StorageConfigOptions storageConfigOptions = app
+            .ApplicationServices.GetService<IOptions<StorageConfigOptions>>()
+            .Value;
+        IFileProvider audioFileProvider;
+        IFileProvider trainingDataFileProvider;
+        if (storageConfigOptions.StorageProvider == StorageConfigOptions.S3)
+        {
+            IAmazonS3 amazonS3 = app.ApplicationServices.GetRequiredService<IAmazonS3>();
+            audioFileProvider = new S3FileProvider(amazonS3, AudioService.DirectoryName);
+            trainingDataFileProvider = new S3FileProvider(amazonS3, TrainingDataService.DirectoryName);
+        }
+        else
+        {
+            audioFileProvider = new PhysicalFileProvider(
+                Path.Join(siteOptions.Value.SiteDir, AudioService.DirectoryName)
+            );
+            trainingDataFileProvider = new PhysicalFileProvider(
+                Path.Join(siteOptions.Value.SiteDir, TrainingDataService.DirectoryName)
+            );
+        }
+
         app.UseStaticFiles(
             new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(Path.Join(siteOptions.Value.SiteDir, "audio")),
-                RequestPath = "/assets/audio",
+                FileProvider = audioFileProvider,
+                RequestPath = $"/assets/{AudioService.DirectoryName}",
             }
         );
         app.UseStaticFiles(
             new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(
-                    Path.Join(siteOptions.Value.SiteDir, TrainingDataService.DirectoryName)
-                ),
+                FileProvider = trainingDataFileProvider,
                 RequestPath = $"/assets/{TrainingDataService.DirectoryName}",
             }
         );

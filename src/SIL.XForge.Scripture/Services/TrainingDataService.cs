@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,11 +6,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
-using Microsoft.Extensions.Options;
 using NPOI.HSSF.UserModel;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
@@ -22,16 +19,16 @@ namespace SIL.XForge.Scripture.Services;
 
 public class TrainingDataService(
     IFileSystemService fileSystemService,
-    IRealtimeService realtimeService,
     ISFProjectRights projectRights,
-    IOptions<SiteOptions> siteOptions
+    IRealtimeService realtimeService,
+    IStorageProvider storageProvider
 ) : ITrainingDataService
 {
     /// <summary>
     /// The training directory name. This is not the full path to the directory.
     /// </summary>
     public const string DirectoryName = "training-data";
-    public const int NumTrainingDataColumns = 2;
+    private const int NumTrainingDataColumns = 2;
 
     private static readonly CsvConfiguration _csvConfiguration = new CsvConfiguration(CultureInfo.InvariantCulture)
     {
@@ -165,13 +162,6 @@ public class TrainingDataService(
             throw new ForbiddenException();
         }
 
-        // Ensure that the training data directory exists
-        string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
-        if (!fileSystemService.DirectoryExists(trainingDataDir))
-        {
-            throw new DataNotFoundException("The training data directory does not exist");
-        }
-
         // Load each training data file
         foreach (string dataId in dataIds)
         {
@@ -191,15 +181,8 @@ public class TrainingDataService(
                 fileName = fileName.Split('?').First();
             }
 
-            string path = Path.Join(trainingDataDir, fileName);
-            if (!fileSystemService.FileExists(path))
-            {
-                // Skip if the file does not exist
-                continue;
-            }
-
-            // Load the CSV file
-            await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);
+            // Load the CSV file from the storage provider
+            await using Stream fileStream = await storageProvider.GetFileAsync(DirectoryName, projectId, fileName);
             using StreamReader streamReader = new StreamReader(fileStream);
             using CsvReader csvReader = new CsvReader(streamReader, _csvConfiguration);
 
@@ -227,11 +210,11 @@ public class TrainingDataService(
                 segRef++;
 
                 // Add the first column of this line to the source segments
-                string sourceSegmentText = csvReader.GetField<string>(0);
+                string sourceSegmentText = csvReader.GetField<string>(0) ?? string.Empty;
                 sourceSegments.Add(new SFTextSegment([segRef.ToString()], sourceSegmentText, false, false, false));
 
                 // Add the second column of this line to the target segments
-                string targetSegmentText = csvReader.GetField<string>(1);
+                string targetSegmentText = csvReader.GetField<string>(1) ?? string.Empty;
                 targetSegments.Add(new SFTextSegment([segRef.ToString()], targetSegmentText, false, false, false));
             }
 
@@ -272,24 +255,12 @@ public class TrainingDataService(
             throw new FormatException($"{nameof(dataId)} is not a valid id.");
         }
 
-        string outputPath = GetTrainingDataFilePath(userId, projectDoc.Id, dataId);
-
-        // Delete the existing file, if it exists
-        if (fileSystemService.FileExists(outputPath))
-        {
-            fileSystemService.DeleteFile(outputPath);
-        }
-
         // Validate the file, and convert to CSV if required
+        string outputPath = Path.Join(Path.GetTempPath(), Path.GetRandomFileName());
         await ConvertToCsvAsync(path, outputPath);
 
-        // Return the URL to the file
-        string outputFileName = Path.GetFileName(outputPath);
-        var uri = new Uri(
-            $"/assets/{DirectoryName}/{projectId}/{outputFileName}?t={DateTime.UtcNow.ToFileTime()}",
-            UriKind.Relative
-        );
-        return uri;
+        // Upload and return the URL to the file
+        return await storageProvider.PutFileAsync(outputPath, DirectoryName, projectId, $"{userId}_{dataId}.csv");
     }
 
     /// <summary>
@@ -325,7 +296,7 @@ public class TrainingDataService(
                         // Detect if a row has fewer than two columns of data
                         while (await csvReader.ReadAsync())
                         {
-                            if (csvReader.Parser.Record.All(r => string.IsNullOrEmpty(r)))
+                            if (csvReader.Parser.Record!.All(string.IsNullOrEmpty))
                             {
                                 // Skip empty rows
                                 continue;
@@ -333,7 +304,7 @@ public class TrainingDataService(
                             int[] columnsToCheck = [0, 1];
                             if (
                                 csvReader.ColumnCount < NumTrainingDataColumns
-                                || columnsToCheck.Any(i => string.IsNullOrEmpty(csvReader.Parser.Record[i]))
+                                || columnsToCheck.Any(i => string.IsNullOrEmpty(csvReader.Parser.Record?[i]))
                             )
                             {
                                 throw new FormatException("The CSV file contains a row with fewer than two columns");
@@ -366,33 +337,11 @@ public class TrainingDataService(
             default:
                 throw new FormatException();
         }
-    }
 
-    /// <summary>
-    /// Gets the path to the training data file
-    /// </summary>
-    /// <param name="userId">The user identifier.</param>
-    /// <param name="projectId">The SF project identifier.</param>
-    /// <param name="dataId">The Data identifier from the TrainingData document.</param>
-    /// <returns>The absolute path to the training data file.</returns>
-    private string GetTrainingDataFilePath(string userId, string projectId, string dataId)
-    {
-        // Sanitise input
-        userId = Path.GetInvalidFileNameChars()
-            .Aggregate(userId, (current, c) => current.Replace(c.ToString(), string.Empty));
-        projectId = Path.GetInvalidFileNameChars()
-            .Aggregate(projectId, (current, c) => current.Replace(c.ToString(), string.Empty));
-        dataId = Path.GetInvalidFileNameChars()
-            .Aggregate(dataId, (current, c) => current.Replace(c.ToString(), string.Empty));
-
-        // Ensure that the training data directory exists
-        string trainingDataDir = Path.Join(siteOptions.Value.SiteDir, DirectoryName, projectId);
-        if (!fileSystemService.DirectoryExists(trainingDataDir))
+        // Clean up the old file
+        if (fileSystemService.FileExists(path))
         {
-            fileSystemService.CreateDirectory(trainingDataDir);
+            fileSystemService.DeleteFile(path);
         }
-
-        // Return the full path
-        return Path.Join(trainingDataDir, $"{userId}_{dataId}.csv");
     }
 }

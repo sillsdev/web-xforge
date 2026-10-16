@@ -10,6 +10,17 @@ services:
       - mongo_config:/data/configdb
       - mongo_data:/data/db
 
+  files-xforge:
+    container_name: files-xforge
+    ports:
+      - "9090:9090"
+    environment:
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: audio,training-data
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+    volumes:
+      - file-data:/s3mockroot
+
   realtimeserver:
     container_name: realtimeserver
     build:
@@ -33,9 +44,13 @@ services:
         - AngularConfig=development
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - AWS_ACCESS_KEY_ID=accesskey
+      - AWS_SECRET_ACCESS_KEY=secretkey
       - DataAccess__ConnectionString=mongodb://db-xforge:27017
       - Realtime__UseExistingRealtimeServer=true
       - Realtime__RealtimeServerModulePath=/app/lib/cjs/common/index.js
+      - StorageConfig__StorageProvider=S3
+      - StorageConfig__S3ServiceUrl=http://files-xforge:9090
       - urls=http://*:5000 # Docker apps cannot bind to localhost, so we bind to all IP addresses
     ports:
       - "5000:5000" # HTTP Server

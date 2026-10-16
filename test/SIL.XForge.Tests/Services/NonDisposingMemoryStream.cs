@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace SIL.XForge.Scripture.Services;
+namespace SIL.XForge.Services;
 
 /// <summary>
 /// A memory stream that must be manually disposed.
