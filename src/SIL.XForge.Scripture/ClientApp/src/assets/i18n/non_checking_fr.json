@@ -1038,6 +1038,30 @@
     "translation_language_name_label": "Nom de la langue de traduction",
     "translation_language_name_placeholder": "par exemple Swahili, Tok Pisin"
   },
+  "user_feedback": {
+    "ask_for_help": "demander de l'aide",
+    "close": "Fermer",
+    "error_occurred": "Une erreur est survenue. Veuillez essayer de soumettre un commentaire plus tard.",
+    "how_has_drafting_helped_your_project": "Comment la rédaction {{ siteName }} a-t-elle aidé votre projet ?",
+    "or": "ou",
+    "send_feedback": "Envoyez vos commentaires",
+    "thank_you_for_your_feedback": "Merci ! Vos commentaires nous sont très précieux."
+  },
+  "user_feedback_dialog": {
+    "cancel": "Annuler",
+    "connect_to_the_internet": "Veuillez vous connecter à Internet pour envoyer vos commentaires.",
+    "feedback_label": "Vos commentaires",
+    "feedback_title": "Dites-nous comment {{ siteName }} a eu un impact sur votre projet",
+    "feedback_subtitle": "Comment {{ siteName }} a-t-il influencé le processus et le flux de travail de votre équipe ?",
+    "permission_question": "Pouvons-nous publier votre avis ?",
+    "permission_anonymous_label": "Oui, mais merci de ne pas mentionner mon nom ni celui du projet",
+    "permission_private_label": "Non, merci de garder cela privé",
+    "permission_public_label": "Oui, et n'oubliez pas de mentionner mon nom et le nom du projet",
+    "project_for_feedback": "À quel projet ce commentaire se rapporte-t-il ?",
+    "project_placeholder": "Projet",
+    "required": "Requis",
+    "submit": "Envoyer"
+  },
   "users": {
     "collaborators": "Collaborateurs",
     "users": "Utilisateurs"

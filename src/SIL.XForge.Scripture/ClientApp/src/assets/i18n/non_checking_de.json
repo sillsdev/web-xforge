@@ -1038,6 +1038,30 @@
     "translation_language_name_label": "Sprache der Übersetzung (Name)",
     "translation_language_name_placeholder": "z. B. Suaheli, Tok Pisin"
   },
+  "user_feedback": {
+    "ask_for_help": "frag nach Hilfe",
+    "close": "Schließen",
+    "error_occurred": "Es ist ein Fehler aufgetreten. Bitte versuche später erneut, Dein Feedback zu senden.",
+    "how_has_drafting_helped_your_project": "Wie hat das Generieren des Entwurfs unter {{ siteName }} Deinem Projekt geholfen?",
+    "or": "oder",
+    "send_feedback": "Rückmeldung senden",
+    "thank_you_for_your_feedback": "Vielen Dank! Wir wissen Deine Rückmeldung sehr zu schätzen."
+  },
+  "user_feedback_dialog": {
+    "cancel": "Abbrechen",
+    "connect_to_the_internet": "Bitte verbinde Dich mit dem Internet, um Deine Rückmeldung zu senden.",
+    "feedback_label": "Deine Rückmeldung",
+    "feedback_title": "Erzähle uns, wie sich {{ siteName }} auf Dein Projekt ausgewirkt hat",
+    "feedback_subtitle": "Wie hat {{ siteName }} den Prozess und den Arbeitsablauf Deines Teams beeinflusst?",
+    "permission_question": "Dürfen wir Deine Rückmeldung veröffentlichen?",
+    "permission_anonymous_label": "Ja, aber bitte erwähnt weder meinen Namen noch den Namen des Projekts",
+    "permission_private_label": "Nein, bitte behaltet das für Euch",
+    "permission_public_label": "Ja, und erwähnt bitte meinen Namen und den Namen des Projekts",
+    "project_for_feedback": "Um welches Projekt geht es bei dieser Rückmeldung?",
+    "project_placeholder": "Projekt",
+    "required": "Obligatorisch",
+    "submit": "Absenden"
+  },
   "users": {
     "collaborators": "Mitarbeiter",
     "users": "Benutzer"
