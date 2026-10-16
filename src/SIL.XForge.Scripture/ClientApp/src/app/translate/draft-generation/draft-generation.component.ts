@@ -198,7 +198,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get showUserFeedbackNotice(): boolean {
-    return this.hasUserSubmittedFeedback === false && this.hasUsedDraftGenerationThreeMonths;
+    return (
+      this.featureFlags.userFeedbackNotice.enabled &&
+      this.hasUserSubmittedFeedback === false &&
+      this.hasUsedDraftGenerationThreeMonths
+    );
   }
 
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
@@ -327,7 +331,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     });
 
     const projectId: string | undefined = this.activatedProject.projectId;
-    if (projectId != null) {
+    if (projectId != null && this.featureFlags.userFeedbackNotice.enabled) {
       void this.onlineStatusService.online.then(() =>
         this.projectService
           .onlineHasUserSubmittedFeedback(projectId, FeedbackSourcePage.GenerateDraftPage)
