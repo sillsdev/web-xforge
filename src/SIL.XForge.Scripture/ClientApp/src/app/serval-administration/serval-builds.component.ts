@@ -31,15 +31,16 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
-  filter,
   firstValueFrom,
   from,
   map,
   Observable,
   of,
+  ReplaySubject,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
+  take
 } from 'rxjs';
 import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -52,6 +53,7 @@ import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, isString, notNull } from '../../type-utils';
 import { InfoComponent } from '../shared/info/info.component';
+import { NoticeComponent } from '../shared/notice/notice.component';
 import { ChapterSet, trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
 import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
 import {
@@ -67,6 +69,7 @@ import { DateRangePickerComponent, NormalizedDateRange } from './date-range-pick
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { SearchRecordsComponent } from './search-records.component';
+import { ServalAdminParams } from './serval-administration.component';
 import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
@@ -190,6 +193,7 @@ export interface BuildInputItem {
     MatCardHeader,
     MatCardContent,
     MatCardTitleGroup,
+    NoticeComponent,
     CopyComponent,
     MatSlideToggle,
     TranslocoModule,
@@ -203,6 +207,8 @@ export interface BuildInputItem {
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
   /** Max problems to preview in problems card. */
   public readonly problemPreviewLimit: number = 8;
+  useUnspecifiedDateRange$: ReplaySubject<boolean> = new ReplaySubject<boolean>();
+  protected currentProjectFilter: string | null = null;
 
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
@@ -256,33 +262,60 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
+    combineLatest([
+      this.onlineStatusService.onlineStatus$,
+      this.dateRange$,
+      // only take the first value since we don't want the search filter to trigger a new query
+      this.useUnspecifiedDateRange$.pipe(take(1))
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([isOnline, range, noDateRange]) => {
+        if (range != null || noDateRange) {
+          this.loadingStarted();
+          void this.loadBuilds(range, isOnline);
+        }
+      });
+
     this.route.queryParams
       .pipe(
-        map(params => params['q']),
-        map((queryParam: unknown) => (isString(queryParam) ? queryParam : null)),
+        map(params => params as ServalAdminParams),
         distinctUntilChanged(),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe((searchText: string | null) => {
+      .subscribe(saParams => {
+        const searchText: string | null = isString(saParams.q) ? saParams.q : null;
         this.currentSearchQueryParam = searchText;
         const searchTextValue: string = searchText ?? '';
         if (this.searchControl.value !== searchTextValue) {
           this.searchControl.setValue(searchTextValue, { emitEvent: false });
         }
+        this.currentProjectFilter = isPopulatedString(saParams.projectId) ? saParams.projectId : null;
+        this.useUnspecifiedDateRange$.next(this.currentProjectFilter != null);
         this.applyFiltersAndStats();
-      });
-
-    combineLatest([this.onlineStatusService.onlineStatus$, this.dateRange$.pipe(filter(notNull))])
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([isOnline, range]) => {
-        this.loadingStarted();
-        void this.loadBuilds(range, isOnline);
       });
   }
 
   protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
-    if (range == null) return;
     this.dateRange$.next(range);
+  }
+
+  /** Display name of the project that builds are filtered to, if known from the loaded builds. */
+  protected get filteredProjectName(): string | undefined {
+    if (this.currentProjectFilter == null) return undefined;
+    const report: ServalBuildReportDto | undefined = this.allRows.find(
+      (row: ServalBuildRow) => row.report.project?.sfProjectId === this.currentProjectFilter
+    )?.report;
+    return report == null
+      ? undefined
+      : buildProjectDisplayName(report.project?.shortName, report.project?.name, this.currentProjectFilter);
+  }
+
+  protected clearProjectFilter(): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { projectId: null },
+      queryParamsHandling: 'merge'
+    });
   }
 
   protected clearSearch(): void {
@@ -353,12 +386,11 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   private createSpreadsheetData(): {
     spreadsheetRows: SpreadsheetRow[];
-    dateRange: NormalizedDateRange;
+    dateRange: NormalizedDateRange | undefined;
     meanDurationMs: number;
     maxDurationMs: number;
   } {
     const dateRange: NormalizedDateRange | undefined = this.dateRange$.value;
-    if (dateRange == null) throw new Error('Date range is not set');
     const spreadsheetRows: SpreadsheetRow[] = ServalBuildsComponent.createSpreadsheetRows(this.rows);
     const meanDurationMs: number = this.summaryStats?.meanDurationMs ?? 0;
     const maxDurationMs: number = this.summaryStats?.maxDurationMs ?? 0;
@@ -558,7 +590,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return identity$;
   }
 
-  private async loadBuilds(range: NormalizedDateRange, isOnline: boolean): Promise<void> {
+  private async loadBuilds(range: NormalizedDateRange | undefined, isOnline: boolean): Promise<void> {
     try {
       if (!isOnline) {
         this.allRows = [];
@@ -569,7 +601,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       }
 
       const reports: ServalBuildReportDto[] | undefined = await firstValueFrom(
-        this.draftGenerationService.getBuildsSince(range.start)
+        this.draftGenerationService.getBuildsSince(range?.start, this.currentProjectFilter ?? undefined)
       );
 
       const reportsInRange: ServalBuildReportDto[] = (reports ?? []).filter(
@@ -930,7 +962,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   /** If the Serval build request has a beginning date outside of the date range. */
-  private didReportBeginOutOfDateRange(report: ServalBuildReportDto, range: NormalizedDateRange): boolean {
+  private didReportBeginOutOfDateRange(report: ServalBuildReportDto, range: NormalizedDateRange | undefined): boolean {
+    if (range == null) return false;
     const beginDate: Date | undefined = report.timeline.requestTime;
     if (beginDate == null) return false;
     if (Number.isNaN(beginDate.getTime())) return false;

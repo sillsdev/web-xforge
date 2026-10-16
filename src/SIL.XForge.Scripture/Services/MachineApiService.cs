@@ -1088,10 +1088,16 @@ public partial class MachineApiService(
     /// Retrieves build reports for Serval builds created after the specified time, including
     /// events-only records for SF draft generation events that don't match any known Serval build.
     /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="isServalAdmin">If <c>true</c>, the current user is a Serval Administrator.</param>
+    /// <param name="beginning">(Optional) If specified, only builds created at or after this time are reported.</param>
+    /// <param name="sfProjectId">(Optional) If specified, only builds and events for this project are reported.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     public async Task<IReadOnlyList<ServalBuildReportDto>> GetBuildsSinceAsync(
         string curUserId,
-        DateTimeOffset beginning,
         bool isServalAdmin,
+        DateTimeOffset? beginning,
+        string? sfProjectId,
         CancellationToken cancellationToken
     )
     {
@@ -1103,10 +1109,17 @@ public partial class MachineApiService(
         IList<TranslationBuild> translationBuilds = [];
         try
         {
-            translationBuilds = await translationBuildsClient.GetAllBuildsCreatedAfterAsync(
-                beginning,
-                cancellationToken
-            );
+            if (sfProjectId is null)
+            {
+                translationBuilds = await translationBuildsClient.GetAllBuildsCreatedAfterAsync(
+                    beginning,
+                    cancellationToken
+                );
+            }
+            else
+            {
+                translationBuilds = await GetProjectBuildsCreatedAfterAsync(sfProjectId, beginning, cancellationToken);
+            }
         }
         catch (ServalApiException e)
         {
@@ -1121,7 +1134,7 @@ public partial class MachineApiService(
         // engine that we have a record of. The reason for this is to surface something we may have missed.
 
         // Fetch draft generation events for the time range
-        Dictionary<string, List<EventMetric>> eventsByProject = await FetchDraftEventsAsync(beginning);
+        Dictionary<string, List<EventMetric>> eventsByProject = await FetchDraftEventsAsync(beginning, sfProjectId);
 
         // Build a map from SF project IDs to SFProject snapshots, for resolving project display names.
         // This is seeded from the engine-to-project map and extended as needed by BuildReport.
@@ -1321,13 +1334,44 @@ public partial class MachineApiService(
     }
 
     /// <summary>
-    /// Fetches draft generation events across all projects in the specified time range.
+    /// Gets the Serval builds for a project's pre-translation engine that were created after the specified time.
+    /// Returns an empty list if the project has no pre-translation engine.
+    /// </summary>
+    private async Task<IList<TranslationBuild>> GetProjectBuildsCreatedAfterAsync(
+        string sfProjectId,
+        DateTimeOffset? beginning,
+        CancellationToken cancellationToken
+    )
+    {
+        string translationEngineId;
+        try
+        {
+            translationEngineId = await GetTranslationIdAsync(sfProjectId);
+        }
+        catch (DataNotFoundException)
+        {
+            return [];
+        }
+
+        IList<TranslationBuild> builds = await translationEnginesClient.GetAllBuildsAsync(
+            translationEngineId,
+            cancellationToken
+        );
+        return [.. builds.Where(b => beginning is null || (b.DateCreated is not null && b.DateCreated >= beginning))];
+    }
+
+    /// <summary>
+    /// Fetches draft generation events in the specified time range, for all projects
+    /// or for a single project (<paramref name="projectId" />).
     /// Returns a dictionary keyed by SF project ID.
     /// </summary>
-    private async Task<Dictionary<string, List<EventMetric>>> FetchDraftEventsAsync(DateTimeOffset since)
+    private async Task<Dictionary<string, List<EventMetric>>> FetchDraftEventsAsync(
+        DateTimeOffset? since,
+        string? projectId = null
+    )
     {
         QueryResults<EventMetric> events = await eventMetricService.GetEventMetricsAsync(
-            projectId: null,
+            projectId: projectId,
             scopes: [EventScope.Drafting],
             eventTypes:
             [
@@ -1336,7 +1380,7 @@ public partial class MachineApiService(
                 nameof(CancelPreTranslationBuildAsync),
                 nameof(BuildCompletedAsync),
             ],
-            fromDate: since.UtcDateTime
+            fromDate: since?.UtcDateTime ?? null
         );
 
         // Group by SF project ID

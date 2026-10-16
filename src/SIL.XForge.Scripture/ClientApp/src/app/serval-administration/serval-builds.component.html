@@ -1,7 +1,11 @@
 @if (isOnline) {
   <div class="filter-controls">
     <div class="filter-group">
-      <app-date-range-picker [showReset]="true" (dateRangeChange)="onDateRangeChange($event)"></app-date-range-picker>
+      <app-date-range-picker
+        [showReset]="true"
+        [startWithEmptyRange]="useUnspecifiedDateRange$ | async"
+        (dateRangeChange)="onDateRangeChange($event)"
+      ></app-date-range-picker>
       <div class="duration-area-toggle">
         <mat-slide-toggle [checked]="includeDeleted" (change)="onIncludeDeletedChange($event.checked)">
           Include deleted projects
@@ -48,6 +52,18 @@
       </button>
     </mat-menu>
   </div>
+  @if (currentProjectFilter) {
+    <app-notice icon="filter_alt" mode="fill-dark">
+      <div class="filter-notice-content">
+        <span>
+          Showing draft jobs for project <strong>{{ filteredProjectName || currentProjectFilter }}</strong>
+        </span>
+        <button mat-icon-button class="clear-filter-btn" (click)="clearProjectFilter()">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </app-notice>
+  }
 
   @if (summaryDisplayItems.length > 0) {
     <div class="summary-area">

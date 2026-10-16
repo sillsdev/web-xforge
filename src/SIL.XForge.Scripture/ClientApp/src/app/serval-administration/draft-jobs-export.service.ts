@@ -42,7 +42,7 @@ export class DraftJobsExportService extends BaseExportService {
    */
   exportCsv(
     rows: SpreadsheetRow[],
-    dateRangeForFilename: NormalizedDateRange,
+    dateRangeForFilename: NormalizedDateRange | undefined,
     meanDuration: number,
     maxDuration: number,
     filenamePrefix: string
@@ -64,7 +64,7 @@ export class DraftJobsExportService extends BaseExportService {
    */
   exportTsv(
     rows: SpreadsheetRow[],
-    dateRangeForFilename: NormalizedDateRange,
+    dateRangeForFilename: NormalizedDateRange | undefined,
     meanDuration: number,
     maxDuration: number,
     filenamePrefix: string
@@ -86,7 +86,7 @@ export class DraftJobsExportService extends BaseExportService {
    */
   exportRsv(
     rows: SpreadsheetRow[],
-    dateRangeForFilename: NormalizedDateRange,
+    dateRangeForFilename: NormalizedDateRange | undefined,
     meanDuration: number,
     maxDuration: number,
     filenamePrefix: string
@@ -184,7 +184,7 @@ export class DraftJobsExportService extends BaseExportService {
 
   private exportSeparatedValues(
     rows: SpreadsheetRow[],
-    dateRangeForFilename: NormalizedDateRange,
+    dateRangeForFilename: NormalizedDateRange | undefined,
     meanDuration: number,
     maxDuration: number,
     filenamePrefix: string,
