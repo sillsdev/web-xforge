@@ -59,6 +59,10 @@ import { DraftSourcesService } from './draft-sources.service';
 import { OnboardingRequestService, OpenOnboardingRequest } from './onboarding-request.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
+// Temporarily disabling the featre while we redesign how we determine whether the user has submitted feedback or
+// dismissed the notice. Storing it on the project user config will allow us to skip the API call.
+const feedbackNoticeFeatureIsLive = false;
+
 @Component({
   selector: 'app-draft-generation',
   templateUrl: './draft-generation.component.html',
@@ -198,7 +202,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   }
 
   get showUserFeedbackNotice(): boolean {
-    return this.hasUserSubmittedFeedback === false && this.hasUsedDraftGenerationThreeMonths;
+    return (
+      feedbackNoticeFeatureIsLive && this.hasUserSubmittedFeedback === false && this.hasUsedDraftGenerationThreeMonths
+    );
   }
 
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
