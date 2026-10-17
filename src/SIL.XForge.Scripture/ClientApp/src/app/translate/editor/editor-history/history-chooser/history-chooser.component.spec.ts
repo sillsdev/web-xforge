@@ -3,7 +3,8 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { Subject } from 'rxjs';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -103,13 +104,10 @@ describe('HistoryChooserComponent', () => {
     expect(env.historySelect).toBeDefined();
   }));
 
-  it('should only reload revisions when a draft is applied to the current project', fakeAsync(() => {
+  it('should only reload revisions when a draft is applied to the current chapter', fakeAsync(() => {
     const env = new TestEnvironment();
     env.triggerNgOnChanges();
     env.wait();
-    const [draftApplyHandler] = capture<(projectId: string, state: DraftApplyState) => void>(
-      mockedProjectNotificationService.setNotifyDraftApplyProgressHandler
-    ).last();
     const state: DraftApplyState = {
       bookNum: 40,
       chapterNum: 1,
@@ -118,11 +116,11 @@ describe('HistoryChooserComponent', () => {
     };
     verify(mockedParatextService.getRevisions(anything(), anything(), anything())).once();
 
-    draftApplyHandler('otherProject', state);
+    env.draftApplyProgress$.next({ ...state, chapterNum: 2 });
     env.wait();
     verify(mockedParatextService.getRevisions(anything(), anything(), anything())).once();
 
-    draftApplyHandler('project01', state);
+    env.draftApplyProgress$.next(state);
     env.wait();
     verify(mockedParatextService.getRevisions(anything(), anything(), anything())).twice();
   }));
@@ -286,9 +284,11 @@ describe('HistoryChooserComponent', () => {
     readonly fixture: ComponentFixture<HistoryChooserComponent>;
     readonly realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
     readonly testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+    readonly draftApplyProgress$ = new Subject<DraftApplyState>();
     isSnapshotValid = true;
 
     constructor(projectData: Partial<SFProjectProfile> = {}) {
+      when(mockedProjectNotificationService.draftApplyProgress$('project01')).thenReturn(this.draftApplyProgress$);
       this.fixture = TestBed.createComponent(HistoryChooserComponent);
       this.component = this.fixture.componentInstance;
       this.component.projectId = 'project01';

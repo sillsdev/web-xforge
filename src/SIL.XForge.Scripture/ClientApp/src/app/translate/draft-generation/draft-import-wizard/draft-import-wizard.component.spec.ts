@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -359,6 +359,8 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
+    when(mockDraftNotificationService.draftApplyProgress$(anything())).thenReturn(NEVER);
+    when(mockProjectNotificationService.syncProgress$(anything())).thenReturn(NEVER);
     this.fixture = TestBed.createComponent(DraftImportWizardComponent);
     this.component = this.fixture.componentInstance;
 

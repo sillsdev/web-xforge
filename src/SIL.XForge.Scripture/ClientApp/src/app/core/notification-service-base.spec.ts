@@ -1,16 +1,19 @@
+import { fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { HubConnection, HubConnectionState } from '@microsoft/signalr';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { instance, mock } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { NotificationServiceBase } from './notification-service-base';
+import { CONNECTION_IDLE_TIMEOUT_MS, NotificationServiceBase } from './notification-service-base';
 
 class FakeConnection {
   state: HubConnectionState = HubConnectionState.Disconnected;
   startCount = 0;
   stopCount = 0;
   readonly invoked: string[] = [];
-  private stopResolvers: (() => void)[] = [];
   holdStops = false;
+  private stopResolvers: (() => void)[] = [];
+  private readonly handlers = new Map<string, Set<(...args: any[]) => void>>();
 
   async start(): Promise<void> {
     this.startCount++;
@@ -34,97 +37,203 @@ class FakeConnection {
   async invoke(method: string, ...args: string[]): Promise<void> {
     this.invoked.push(`${method}:${args.join(',')}`);
   }
+
+  on(methodName: string, handler: (...args: any[]) => void): void {
+    if (!this.handlers.has(methodName)) this.handlers.set(methodName, new Set());
+    this.handlers.get(methodName)!.add(handler);
+  }
+
+  off(methodName: string, handler: (...args: any[]) => void): void {
+    this.handlers.get(methodName)?.delete(handler);
+  }
+
+  /** Simulates the server sending a notification. */
+  receive(methodName: string, ...args: any[]): void {
+    this.handlers.get(methodName)?.forEach(handler => handler(...args));
+  }
+
+  handlerCount(methodName: string): number {
+    return this.handlers.get(methodName)?.size ?? 0;
+  }
 }
 
 class TestNotificationService extends NotificationServiceBase {
   readonly fakeConnection = new FakeConnection();
 
-  constructor() {
-    super(instance(mock(AuthService)), instance(mock(OnlineStatusService)));
+  constructor(onlineService: OnlineStatusService) {
+    super(instance(mock(AuthService)), onlineService);
     this.connection = this.fakeConnection as unknown as HubConnection;
+  }
+
+  testNotifications$(projectId: string): Observable<string> {
+    return this.projectNotifications$('notifyTest', projectId);
   }
 }
 
 describe('NotificationServiceBase', () => {
+  let online$: BehaviorSubject<boolean>;
   let service: TestNotificationService;
+  let connection: FakeConnection;
 
   beforeEach(() => {
-    service = new TestNotificationService();
+    online$ = new BehaviorSubject<boolean>(true);
+    const onlineService = {
+      onlineStatus$: online$.asObservable(),
+      get isOnline(): boolean {
+        return online$.value;
+      },
+      get isBrowserOnline(): boolean {
+        return online$.value;
+      }
+    } as OnlineStatusService;
+    service = new TestNotificationService(onlineService);
+    connection = service.fakeConnection;
   });
 
-  it('starts the connection once for multiple owners', async () => {
-    await service.start({});
-    await service.start({});
-    expect(service.fakeConnection.startCount).toBe(1);
-  });
+  it('starts the connection once for multiple subscribers', fakeAsync(() => {
+    const subscription1 = service.testNotifications$('project01').subscribe();
+    const subscription2 = service.testNotifications$('project02').subscribe();
+    flushMicrotasks();
 
-  it('counts repeated starts from the same owner once', async () => {
-    const owner = {};
-    await service.start(owner);
-    await service.start(owner);
-    await service.start(owner);
-    await service.stop(owner);
-    expect(service.fakeConnection.stopCount).toBe(1);
-  });
+    expect(connection.startCount).toBe(1);
+    expect(connection.invoked).toEqual(['subscribeToProject:project01', 'subscribeToProject:project02']);
+    subscription1.unsubscribe();
+    subscription2.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
 
-  it('keeps the connection open until the last owner stops', async () => {
-    const owner1 = {};
-    const owner2 = {};
-    await service.start(owner1);
-    await service.start(owner2);
-    await service.stop(owner1);
-    expect(service.fakeConnection.stopCount).toBe(0);
-    await service.stop(owner2);
-    expect(service.fakeConnection.stopCount).toBe(1);
-  });
+  it('only emits notifications for the subscribed project', fakeAsync(() => {
+    const received: string[] = [];
+    const subscription = service.testNotifications$('project01').subscribe(state => received.push(state));
+    flushMicrotasks();
 
-  it('ignores stop from an owner that did not start', async () => {
-    const owner = {};
-    await service.start(owner);
-    await service.stop({});
-    expect(service.fakeConnection.stopCount).toBe(0);
-  });
+    connection.receive('notifyTest', 'project02', 'other project state');
+    connection.receive('notifyTest', 'project01', 'state');
+    expect(received).toEqual(['state']);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
 
-  it('restarts the connection when started while a stop is in progress', async () => {
-    const owner1 = {};
-    const owner2 = {};
-    await service.start(owner1);
-    service.fakeConnection.holdStops = true;
+  it('removes the handler when unsubscribed', fakeAsync(() => {
+    const subscription = service.testNotifications$('project01').subscribe();
+    flushMicrotasks();
+    expect(connection.handlerCount('notifyTest')).toBe(1);
 
-    const stopPromise = service.stop(owner1);
-    const startPromise = service.start(owner2);
-    // Let the stop begin, then confirm the start has not run alongside it
-    await new Promise<void>(resolve => setTimeout(resolve));
-    expect(service.fakeConnection.state).toBe(HubConnectionState.Disconnecting);
-    expect(service.fakeConnection.startCount).toBe(1);
-    service.fakeConnection.finishStops();
-    await Promise.all([stopPromise, startPromise]);
+    subscription.unsubscribe();
+    expect(connection.handlerCount('notifyTest')).toBe(0);
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
 
-    expect(service.fakeConnection.startCount).toBe(2);
-    expect(service.fakeConnection.state).toBe(HubConnectionState.Connected);
-  });
+  it('stops the connection after the last subscriber unsubscribes', fakeAsync(() => {
+    const subscription1 = service.testNotifications$('project01').subscribe();
+    const subscription2 = service.testNotifications$('project01').subscribe();
+    flushMicrotasks();
 
-  it('does not stop the connection if an owner starts before a queued stop runs', async () => {
-    const owner1 = {};
-    const owner2 = {};
-    await service.start(owner1);
+    subscription1.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+    expect(connection.stopCount).toBe(0);
 
-    const startPromise = service.start(owner2);
-    const stopPromise = service.stop(owner1);
-    await Promise.all([startPromise, stopPromise]);
+    subscription2.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS - 1);
+    expect(connection.stopCount).toBe(0);
+    tick(1);
+    expect(connection.stopCount).toBe(1);
+  }));
 
-    expect(service.fakeConnection.stopCount).toBe(0);
-    expect(service.fakeConnection.state).toBe(HubConnectionState.Connected);
-  });
+  it('keeps the connection open if another subscriber subscribes soon after the last one unsubscribes', fakeAsync(() => {
+    service.testNotifications$('project01').subscribe().unsubscribe();
+    flushMicrotasks();
+    const subscription: Subscription = service.testNotifications$('project02').subscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
 
-  it('subscribes to a project when connected', async () => {
-    await service.start({});
-    await service.subscribeToProject('project01');
-    expect(service.fakeConnection.invoked).toEqual(['subscribeToProject:project01']);
-  });
+    expect(connection.startCount).toBe(1);
+    expect(connection.stopCount).toBe(0);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
 
-  it('does not subscribe to a project when not connected', async () => {
-    await service.subscribeToProject('project01');
-    expect(service.fakeConnection.invoked).toEqual([]);
-  });
+  it('restarts the connection when subscribed while a stop is in progress', fakeAsync(() => {
+    service.testNotifications$('project01').subscribe().unsubscribe();
+    flushMicrotasks();
+    connection.holdStops = true;
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+    expect(connection.state).toBe(HubConnectionState.Disconnecting);
+
+    const subscription = service.testNotifications$('project01').subscribe();
+    flushMicrotasks();
+    expect(connection.startCount).toBe(1);
+
+    connection.finishStops();
+    flushMicrotasks();
+    expect(connection.startCount).toBe(2);
+    expect(connection.state).toBe(HubConnectionState.Connected);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
+
+  it('restarts a closed connection when another subscriber subscribes', fakeAsync(() => {
+    const subscription1 = service.testNotifications$('project01').subscribe();
+    flushMicrotasks();
+    // Automatic reconnection can give up, leaving the connection closed while the app is still online
+    connection.state = HubConnectionState.Disconnected;
+
+    const subscription2 = service.testNotifications$('project02').subscribe();
+    flushMicrotasks();
+    expect(connection.startCount).toBe(2);
+    expect(connection.invoked).toEqual(['subscribeToProject:project01', 'subscribeToProject:project02']);
+    subscription1.unsubscribe();
+    subscription2.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
+
+  it('restarts the connection and subscribes again when the app comes back online', fakeAsync(() => {
+    const subscription = service.testNotifications$('project01').subscribe();
+    flushMicrotasks();
+
+    online$.next(false);
+    connection.state = HubConnectionState.Disconnected;
+    online$.next(true);
+    flushMicrotasks();
+
+    expect(connection.startCount).toBe(2);
+    expect(connection.invoked).toEqual(['subscribeToProject:project01', 'subscribeToProject:project01']);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
+
+  it('waits until online to start the connection', fakeAsync(() => {
+    online$.next(false);
+    const subscription = service.testNotifications$('project01').subscribe();
+    flushMicrotasks();
+    expect(connection.startCount).toBe(0);
+
+    online$.next(true);
+    flushMicrotasks();
+    expect(connection.startCount).toBe(1);
+    expect(connection.invoked).toEqual(['subscribeToProject:project01']);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
+
+  it('resolves whenListening once subscribed to the project', fakeAsync(() => {
+    const subscription = service.testNotifications$('project01').subscribe();
+    let listening = false;
+    void service.whenListening('project01').then(() => (listening = true));
+    flushMicrotasks();
+
+    expect(listening).toBe(true);
+    expect(connection.state).toBe(HubConnectionState.Connected);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
+
+  it('resolves whenListening immediately when offline', fakeAsync(() => {
+    online$.next(false);
+    let listening = false;
+    void service.whenListening('project01').then(() => (listening = true));
+    flushMicrotasks();
+
+    expect(listening).toBe(true);
+    expect(connection.startCount).toBe(0);
+  }));
 });

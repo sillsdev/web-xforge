@@ -7,7 +7,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { of } from 'rxjs';
+import { NEVER, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -323,6 +323,7 @@ class TestEnvironment {
   private isLoading: boolean = false;
 
   constructor(args: SyncComponentTestConstructorArgs = {}) {
+    when(mockedProjectNotificationService.syncProgress$(anything())).thenReturn(NEVER);
     const isParatextAccountConnected: boolean = args.isParatextAccountConnected ?? true;
     const isInProgress: boolean = args.isInProgress ?? false;
     const isOnline: boolean = args.isOnline ?? true;
