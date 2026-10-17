@@ -23,11 +23,13 @@ import {
   asyncScheduler,
   BehaviorSubject,
   combineLatest,
+  filter,
   map,
   Observable,
   observeOn,
   startWith,
   Subject,
+  switchMap,
   take,
   tap
 } from 'rxjs';
@@ -48,10 +50,7 @@ import { ParatextService, Revision } from '../../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../../core/project-notification.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { TextDocService } from '../../../../core/text-doc.service';
-import {
-  DraftApplyState,
-  DraftApplyStatus
-} from '../../../draft-generation/draft-import-wizard/draft-import-wizard.component';
+import { DraftApplyStatus } from '../../../draft-generation/draft-import-wizard/draft-import-wizard.component';
 import { HistoryRevisionFormatPipe } from './history-revision-format.pipe';
 
 export interface RevisionSelectEvent {
@@ -103,20 +102,6 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
   selectedRevision: Revision | undefined;
   selectedSnapshot: TextSnapshot | undefined;
 
-  private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
-    // The SignalR connection is shared, so we may be notified about other projects
-    if (
-      projectId === this.projectId &&
-      draftApplyState.bookNum === this.bookNum &&
-      draftApplyState.chapterNum === this.chapter &&
-      draftApplyState.status === DraftApplyStatus.Successful
-    ) {
-      // Clear then reload the history revisions
-      this.historyRevisions = [];
-      void this.loadHistory();
-    }
-  };
-
   // 'asyncScheduler' prevents ExpressionChangedAfterItHasBeenCheckedError
   private loading$ = new BehaviorSubject<boolean>(false);
   isLoading$: Observable<boolean> = this.loading$.pipe(observeOn(asyncScheduler));
@@ -142,20 +127,24 @@ export class HistoryChooserComponent implements AfterViewInit, OnChanges {
     private readonly errorReportingService: ErrorReportingService,
     private readonly i18n: I18nService
   ) {
-    this.projectId$.pipe(quietTakeUntilDestroyed(destroyRef), filterNullish(), take(1)).subscribe(async projectId => {
-      // Start the connection to SignalR
-      await projectNotificationService.start(this);
-      // Subscribe to notifications for this project
-      await projectNotificationService.subscribeToProject(projectId);
-      // When build notifications are received, reload the build history
-      // NOTE: We do not need the build state, so just ignore it.
-      projectNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
-    });
-    destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
-      projectNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
-      await projectNotificationService.stop(this);
-    });
+    // When a draft is applied to this chapter, clear then reload the history revisions
+    this.projectId$
+      .pipe(
+        filterNullish(),
+        take(1),
+        switchMap(projectId => projectNotificationService.draftApplyProgress$(projectId)),
+        filter(
+          draftApplyState =>
+            draftApplyState.bookNum === this.bookNum &&
+            draftApplyState.chapterNum === this.chapter &&
+            draftApplyState.status === DraftApplyStatus.Successful
+        ),
+        quietTakeUntilDestroyed(destroyRef)
+      )
+      .subscribe(() => {
+        this.historyRevisions = [];
+        void this.loadHistory();
+      });
   }
 
   get canRestoreSnapshot(): boolean {

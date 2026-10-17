@@ -1,9 +1,30 @@
 import { AbortError, HubConnection, HubConnectionState, IHttpConnectionOptions } from '@microsoft/signalr';
+import {
+  distinctUntilChanged,
+  filter,
+  finalize,
+  firstValueFrom,
+  from,
+  Observable,
+  ReplaySubject,
+  share,
+  switchMap,
+  timer
+} from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 
 /**
+ * How long the connection stays open after the last subscriber unsubscribes. This avoids stopping and restarting the
+ * connection when one component is destroyed and another that also needs notifications is created straight after.
+ */
+export const CONNECTION_IDLE_TIMEOUT_MS = 1000;
+
+/**
  * The base class containing functionality for SignalR notification hubs.
+ *
+ * The connection is started when the first subscriber subscribes to a project's notifications, and stopped once there
+ * are no subscribers left.
  *
  * NOTE: You will need to build the connection in your constructor.
  */
@@ -12,10 +33,20 @@ export abstract class NotificationServiceBase {
   protected options: IHttpConnectionOptions = {
     accessTokenFactory: async () => (await this.authService.getAccessToken()) ?? ''
   };
-  /** The owners (usually components) that currently need the connection to be open. */
-  private readonly owners = new Set<object>();
-  /** Start and stop operations are run one at a time, in the order they were requested. */
-  private operationQueue: Promise<void> = Promise.resolve();
+  private startPromise: Promise<void> = Promise.resolve();
+  private stopPromise: Promise<void> = Promise.resolve();
+
+  /**
+   * Emits when subscribed if the app is online, and again whenever the app comes back online.
+   * Once there are no subscribers left, the connection is stopped.
+   */
+  private readonly online$: Observable<boolean> = this.onlineService.onlineStatus$.pipe(
+    distinctUntilChanged(),
+    filter(isOnline => isOnline),
+    finalize(() => this.stopConnection()),
+    // Replay so that subscribers who subscribe after the app came online are told that it is online
+    share({ connector: () => new ReplaySubject(1), resetOnRefCountZero: () => timer(CONNECTION_IDLE_TIMEOUT_MS) })
+  );
 
   constructor(
     private authService: AuthService,
@@ -27,48 +58,71 @@ export abstract class NotificationServiceBase {
   }
 
   /**
-   * Starts the connection if it is not already started, and registers the owner as needing it.
-   * Calling this multiple times with the same owner is the same as calling it once.
-   * @param owner The caller that needs the connection. Pass the same object to stop().
+   * Resolves once notifications for the project will be received. Call this before starting an operation that sends
+   * notifications, so that none are missed. Subscribe to the notifications first, so that the connection stays open.
    */
-  start(owner: object): Promise<void> {
-    return this.enqueue(async () => {
-      this.owners.add(owner);
+  async whenListening(projectId: string): Promise<void> {
+    // When offline, the connection will not start until the app is back online, so do not wait for it
+    if (!this.appOnline) return;
+    await firstValueFrom(this.subscribeToProject$(projectId));
+  }
 
-      // Only start the connection if we are disconnected. If already connected or connecting, we do not need to
-      // restart the connection
-      if (this.connection.state === HubConnectionState.Disconnected) {
-        try {
-          await this.connection.start();
-        } catch (err) {
-          // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
-          // These will be thrown if a user navigates away quickly after
-          // starting the sync or the app loses internet connection
-          if (err instanceof AbortError || !this.appOnline) {
-            return;
-          } else {
-            throw err;
-          }
-        }
-      }
+  /**
+   * Emits the state sent with each notification of the specified type for the project.
+   * The connection is kept open while there are subscribers.
+   */
+  protected projectNotifications$<T>(methodName: string, projectId: string): Observable<T> {
+    return new Observable<T>(subscriber => {
+      const handler = (notifiedProjectId: string, state: T): void => {
+        // The connection is shared, so it receives notifications for every project that any subscriber is listening to
+        if (notifiedProjectId === projectId) subscriber.next(state);
+      };
+      this.connection.on(methodName, handler);
+      const subscription = this.subscribeToProject$(projectId).subscribe({ error: err => subscriber.error(err) });
+      return () => {
+        this.connection.off(methodName, handler);
+        subscription.unsubscribe();
+      };
     });
   }
 
   /**
-   * Unregisters the owner, and stops the connection if no other owners still need it.
-   * @param owner The same object that was passed to start().
+   * Starts the connection if needed, and subscribes to the project's notifications. This is repeated whenever the app
+   * comes back online. Emits each time the project has been subscribed to.
    */
-  stop(owner: object): Promise<void> {
-    return this.enqueue(async () => {
-      if (!this.owners.delete(owner) || this.owners.size > 0) return;
-      await this.connection.stop();
-    });
+  private subscribeToProject$(projectId: string): Observable<void> {
+    return this.online$.pipe(
+      switchMap(() => from(this.startConnection().then(() => this.subscribeToProject(projectId))))
+    );
   }
 
-  async subscribeToProject(projectId: string): Promise<void> {
-    // Wait until any pending start or stop has completed
-    await this.operationQueue;
+  private async startConnection(): Promise<void> {
+    // The connection cannot be started again until it has finished stopping
+    await this.stopPromise;
+    // Only start the connection if we are disconnected. If already connected or connecting, we do not need to
+    // restart the connection
+    if (this.connection.state === HubConnectionState.Disconnected) {
+      this.startPromise = this.connection.start();
+    }
+    try {
+      await this.startPromise;
+    } catch (err) {
+      // Suppress AbortErrors, as they are not caused by server error, but the SignalR connection state
+      // These will be thrown if a user navigates away quickly after
+      // starting the sync or the app loses internet connection
+      if (err instanceof AbortError || !this.appOnline) {
+        return;
+      } else {
+        throw err;
+      }
+    }
+  }
 
+  private stopConnection(): void {
+    this.stopPromise = this.connection.stop();
+  }
+
+  private async subscribeToProject(projectId: string): Promise<void> {
     if (this.connection.state !== HubConnectionState.Connected) {
       // If not connected, skip the invocation
       return;
@@ -87,12 +141,5 @@ export abstract class NotificationServiceBase {
         throw err;
       }
     }
-  }
-
-  private enqueue(operation: () => Promise<void>): Promise<void> {
-    const result: Promise<void> = this.operationQueue.then(operation);
-    // A failed operation must not prevent later operations from running
-    this.operationQueue = result.catch(() => {});
-    return result;
   }
 }
