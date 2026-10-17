@@ -1,7 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HubConnectionBuilder } from '@microsoft/signalr';
+import { Observable } from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { ProgressState } from '../sync/sync-progress/sync-progress.component';
+import { DraftApplyState } from '../translate/draft-generation/draft-import-wizard/draft-import-wizard.component';
 import { NotificationServiceBase } from './notification-service-base';
 
 /**
@@ -19,27 +22,16 @@ export class ProjectNotificationService extends NotificationServiceBase {
       .build();
   }
 
-  removeNotifyBuildProgressHandler(handler: any): void {
-    this.connection.off('notifyBuildProgress', handler);
+  /** Emits when the state of a draft build for the project changes. The build state itself is not used. */
+  buildProgress$(projectId: string): Observable<unknown> {
+    return this.projectNotifications$('notifyBuildProgress', projectId);
   }
 
-  removeNotifyDraftApplyProgressHandler(handler: any): void {
-    this.connection.off('notifyDraftApplyProgress', handler);
+  draftApplyProgress$(projectId: string): Observable<DraftApplyState> {
+    return this.projectNotifications$('notifyDraftApplyProgress', projectId);
   }
 
-  removeNotifySyncProgressHandler(handler: any): void {
-    this.connection.off('notifySyncProgress', handler);
-  }
-
-  setNotifyBuildProgressHandler(handler: any): void {
-    this.connection.on('notifyBuildProgress', handler);
-  }
-
-  setNotifyDraftApplyProgressHandler(handler: any): void {
-    this.connection.on('notifyDraftApplyProgress', handler);
-  }
-
-  setNotifySyncProgressHandler(handler: any): void {
-    this.connection.on('notifySyncProgress', handler);
+  syncProgress$(projectId: string): Observable<ProgressState> {
+    return this.projectNotifications$('notifySyncProgress', projectId);
   }
 }

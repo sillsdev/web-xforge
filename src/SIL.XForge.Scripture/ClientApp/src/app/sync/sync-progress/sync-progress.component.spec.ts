@@ -3,7 +3,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, NEVER } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -212,6 +212,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'sourceProject02')
     );
     when(mockedProjectService.onlineGetProjectRole('sourceProject02')).thenResolve(this.userRoleSource[args.userId]);
+    when(mockedProjectNotificationService.syncProgress$(anything())).thenReturn(NEVER);
 
     this.fixture = TestBed.createComponent(HostComponent);
     this.host = this.fixture.componentInstance;

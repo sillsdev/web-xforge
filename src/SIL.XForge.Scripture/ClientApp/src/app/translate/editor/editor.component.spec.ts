@@ -51,7 +51,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { DeltaOperation, StringMap } from 'rich-text';
-import { BehaviorSubject, firstValueFrom, Observable, of, Subject, take } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, NEVER, Observable, of, Subject, take } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -4470,6 +4470,8 @@ class TestEnvironment {
   });
 
   constructor(preInit?: (env: TestEnvironment) => void) {
+    when(mockedProjectNotificationService.buildProgress$(anything())).thenReturn(NEVER);
+    when(mockedProjectNotificationService.draftApplyProgress$(anything())).thenReturn(NEVER);
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
 
     when(mockedActivatedRoute.params).thenReturn(this.params$);

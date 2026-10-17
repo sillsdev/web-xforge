@@ -2,8 +2,8 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
-import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { BehaviorSubject, of, Subject } from 'rxjs';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -188,24 +188,16 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual([newBuild, build]);
   }));
 
-  it('should only reload history for build notifications about the current project', fakeAsync(() => {
+  it('should reload history when a build notification is received', fakeAsync(() => {
     const build = {
       state: BuildStates.Completed,
       additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
     } as BuildDto;
     const env = new TestEnvironment({ buildHistory: [build] });
     tick();
-    const [buildProgressHandler] = capture<(projectId: string) => void>(
-      mockedProjectNotificationService.setNotifyBuildProgressHandler
-    ).last();
-    verify(mockedDraftGenerationService.getBuildHistory(anything())).once();
+    verify(mockedDraftGenerationService.getBuildHistory('project01')).once();
 
-    buildProgressHandler('otherProject');
-    verify(mockedDraftGenerationService.getBuildHistory('otherProject')).never();
-    verify(mockedDraftGenerationService.getBuildHistory(anything())).once();
-    expect(env.component.history).toEqual([build]);
-
-    buildProgressHandler('project01');
+    env.buildProgress$.next(undefined);
     verify(mockedDraftGenerationService.getBuildHistory('project01')).twice();
   }));
 
@@ -273,6 +265,7 @@ describe('DraftHistoryListComponent', () => {
     component: DraftHistoryListComponent;
     fixture: ComponentFixture<DraftHistoryListComponent>;
     onlineStatusService: TestOnlineStatusService;
+    readonly buildProgress$ = new Subject<unknown>();
 
     constructor(args: { buildHistory: BuildDto[] | undefined; isOnline?: boolean; projectId?: string }) {
       const { buildHistory, isOnline, projectId } = args;
@@ -282,6 +275,7 @@ describe('DraftHistoryListComponent', () => {
       when(mockedDraftGenerationService.getBuildHistory(effectiveProjectId)).thenReturn(
         new BehaviorSubject(buildHistory)
       );
+      when(mockedProjectNotificationService.buildProgress$(effectiveProjectId)).thenReturn(this.buildProgress$);
 
       this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
       if (isOnline === false) this.onlineStatusService.setIsOnline(false);
