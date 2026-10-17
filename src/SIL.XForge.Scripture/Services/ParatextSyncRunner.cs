@@ -58,6 +58,11 @@ namespace SIL.XForge.Scripture.Services;
 public class ParatextSyncRunner : IParatextSyncRunner
 {
     private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
+
+    /// <summary>
+    /// The number of biblical terms to process between each sync progress notification.
+    /// </summary>
+    private const int BiblicalTermProgressInterval = 100;
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
     private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
@@ -664,7 +669,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // Get the biblical terms from the database
         LogMetric("Getting Scripture Forge biblical terms");
-        await NotifySyncProgress(syncPhase, 25);
+        await NotifySyncProgress(syncPhase, 0.25);
         biblicalTermDocs.Clear();
         biblicalTermDocs.AddRange(await FetchBiblicalTermDocsAsync());
 
@@ -688,13 +693,16 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // Update the renderings
         LogMetric("Updating Paratext biblical terms");
-        await NotifySyncProgress(syncPhase, 50);
-        double i = 0.0;
+        await NotifySyncProgress(syncPhase, 0.5);
+        int i = 0;
         List<BiblicalTerm> biblicalTermsToUpdate = [];
         foreach (IDocument<BiblicalTerm> biblicalTermDoc in biblicalTermDocs)
         {
             i++;
-            await NotifySyncProgress(syncPhase, 50 + (i / biblicalTermDocs.Count / 3));
+            if (i % BiblicalTermProgressInterval == 0)
+            {
+                await NotifySyncProgress(syncPhase, 0.5 + ((double)i / biblicalTermDocs.Count * 0.25));
+            }
             BiblicalTerm? biblicalTerm = biblicalTermsChanges.BiblicalTerms.FirstOrDefault(b =>
                 b.TermId == biblicalTermDoc.Data.TermId
             );
@@ -713,7 +721,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
 
         LogMetric("Saving Paratext biblical terms");
-        await NotifySyncProgress(syncPhase, 75);
+        await NotifySyncProgress(syncPhase, 0.75);
         _syncMetrics.ParatextBiblicalTerms += _paratextService.UpdateBiblicalTerms(
             _userSecret,
             paratextId,
@@ -764,11 +772,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // Add and Update existing terms
         LogMetric("Updating biblical terms");
-        double i = 0.0;
+        int i = 0;
         foreach (BiblicalTerm biblicalTerm in biblicalTermsChanges.BiblicalTerms)
         {
             i++;
-            await NotifySyncProgress(syncPhase, i / biblicalTermsChanges.BiblicalTerms.Count);
+            if (i % BiblicalTermProgressInterval == 0)
+            {
+                await NotifySyncProgress(syncPhase, (double)i / biblicalTermsChanges.BiblicalTerms.Count);
+            }
             IDocument<BiblicalTerm>? biblicalTermDoc = biblicalTermDocs.FirstOrDefault(b =>
                 b.Data.TermId == biblicalTerm.TermId
             );
@@ -860,6 +871,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
 
         await Task.WhenAll(tasks);
+        await NotifySyncProgress(syncPhase, 1);
     }
 
     private IDocument<BiblicalTerm> GetBiblicalTermDoc(string dataId) =>
