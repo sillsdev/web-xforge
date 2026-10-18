@@ -53,3 +53,15 @@ quill-editor {
     visibility: hidden;
   }
 }
+
+// quill-cursors pushes carets behind the text on touch devices
+// (`@media (pointer: coarse) { .ql-cursor-caret-container { z-index: -1 } }`) so that the caret's
+// 18px-wide hit area doesn't swallow taps. The editor paints an opaque background behind every
+// paragraph, so a caret sent to that layer isn't just de-emphasized, it is invisible. Keep the
+// carets in front and make them ignore input instead, which is what that rule was protecting.
+@media (pointer: coarse) {
+  quill-editor ::ng-deep .ql-cursor .ql-cursor-caret-container {
+    z-index: auto;
+    pointer-events: none;
+  }
+}
