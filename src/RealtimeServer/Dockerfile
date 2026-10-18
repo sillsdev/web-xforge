@@ -1,11 +1,10 @@
-ARG ARCHITECTURE=amd64
 ARG DOTNET_VERSION=10.0
 ARG NODE_VERSION=22.13.0
 ARG PNPM_VERSION=12.11.2
 ARG UBUNTU_NAME=noble # 24.04
 
 # Build Jering node web server to RealtimeServer
-FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-${ARCHITECTURE} AS jering-build
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME} AS jering-build
 WORKDIR /src
 ARG NODE_VERSION
 RUN apt-get update && apt-get --assume-yes install nodejs npm
