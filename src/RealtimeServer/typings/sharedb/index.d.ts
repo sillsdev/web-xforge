@@ -40,7 +40,7 @@ declare class ShareDB {
   /**
    * Submits an op as the agent's client would, through the same middleware. The op is the raw op of the client's
    * message, which ShareDB checks only to be an object with an op, create or del. A middleware error reaches the
-   * callback as the middleware gave it, which for sharedb-access is a string.
+   * callback as the middleware gave it, which for sharedb-access is a string. On success it is null.
    */
   submit(
     agent: ShareDB.Agent,
@@ -48,7 +48,7 @@ declare class ShareDB {
     id: string,
     op: common.RawOp,
     options: SubmitRequest['options'],
-    callback: (err: Error | string | undefined, ops: common.RawOp[] | undefined, request: SubmitRequest) => void
+    callback: (err: Error | string | null, ops: common.RawOp[] | undefined, request: SubmitRequest) => void
   ): void;
   /**
    * Registers a projection that can be used from clients just like a normal collection.
