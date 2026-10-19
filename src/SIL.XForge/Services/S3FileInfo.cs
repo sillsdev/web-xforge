@@ -56,7 +56,15 @@ public class S3FileInfo(IAmazonS3 amazonS3, string bucketName, string key) : IFi
     public bool IsDirectory => GetFileObject().Key.EndsWith('/');
 
     /// <inheritdoc />
-    public Stream CreateReadStream() => GetFileObject().ResponseStream;
+    public Stream CreateReadStream()
+    {
+        // Copy to a memory stream to allow seeking,
+        // as the HashStream the AWS SDK uses does not support seeking.
+        MemoryStream memStream = new MemoryStream();
+        GetFileObject().ResponseStream.CopyTo(memStream);
+        memStream.Seek(0, SeekOrigin.Begin);
+        return memStream;
+    }
 
     private GetObjectResponse GetFileObject()
     {

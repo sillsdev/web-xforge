@@ -7,13 +7,16 @@ using Amazon.S3.Model;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using SIL.XForge.Configuration;
+using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Services;
 
 [TestFixture]
 public class S3StorageProviderTests
 {
-    private const string Bucket = AudioService.DirectoryName;
+    private const string BucketName = "bucket";
+    private const string DirectoryName = AudioService.DirectoryName;
     private const string Project01 = "project01";
     private const string FileName = "filename.txt";
     private static AmazonS3Exception Forbidden =>
@@ -32,9 +35,9 @@ public class S3StorageProviderTests
                     {
                         S3Objects =
                         [
-                            new S3Object { Key = $"{Project01}/file1.txt" },
-                            new S3Object { Key = $"{Project01}/file2.txt" },
-                            new S3Object { Key = $"{Project01}/subdirectory/" },
+                            new S3Object { Key = $"{DirectoryName}/{Project01}/file1.txt" },
+                            new S3Object { Key = $"{DirectoryName}/{Project01}/file2.txt" },
+                            new S3Object { Key = $"{DirectoryName}/{Project01}/subdirectory/" },
                         ],
                     }
                 )
@@ -43,16 +46,18 @@ public class S3StorageProviderTests
             .Returns(Task.FromResult(new DeleteObjectResponse()));
 
         // SUT
-        await env.Service.DeleteDirectoryAsync(Bucket, Project01);
+        await env.Service.DeleteDirectoryAsync(DirectoryName, Project01);
 
         await env
             .AmazonS3.Received(1)
             .ListObjectsV2Async(
-                Arg.Is<ListObjectsV2Request>(r => r.BucketName == Bucket && r.Prefix == $"{Project01}/")
+                Arg.Is<ListObjectsV2Request>(r =>
+                    r.BucketName == BucketName && r.Prefix == $"{DirectoryName}/{Project01}/"
+                )
             );
-        await env.AmazonS3.Received(1).DeleteObjectAsync(Bucket, $"{Project01}/file1.txt");
-        await env.AmazonS3.Received(1).DeleteObjectAsync(Bucket, $"{Project01}/file2.txt");
-        await env.AmazonS3.DidNotReceive().DeleteObjectAsync(Bucket, $"{Project01}/subdirectory/");
+        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/file1.txt");
+        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/file2.txt");
+        await env.AmazonS3.DidNotReceive().DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/subdirectory/");
     }
 
     [Test]
@@ -62,7 +67,7 @@ public class S3StorageProviderTests
         env.AmazonS3.ListObjectsV2Async(Arg.Any<ListObjectsV2Request>()).ThrowsAsync(NotFound);
 
         // SUT
-        await Assert.DoesNotThrowAsync(() => env.Service.DeleteDirectoryAsync(Bucket, Project01));
+        await Assert.DoesNotThrowAsync(() => env.Service.DeleteDirectoryAsync(DirectoryName, Project01));
 
         await env.AmazonS3.DidNotReceive().DeleteObjectAsync(Arg.Any<string>(), Arg.Any<string>());
     }
@@ -78,20 +83,20 @@ public class S3StorageProviderTests
                     {
                         S3Objects =
                         [
-                            new S3Object { Key = $"{Project01}/missing.txt" },
-                            new S3Object { Key = $"{Project01}/existing.txt" },
+                            new S3Object { Key = $"{DirectoryName}/{Project01}/missing.txt" },
+                            new S3Object { Key = $"{DirectoryName}/{Project01}/existing.txt" },
                         ],
                     }
                 )
             );
-        env.AmazonS3.DeleteObjectAsync(Bucket, $"{Project01}/missing.txt").ThrowsAsync(NotFound);
-        env.AmazonS3.DeleteObjectAsync(Bucket, $"{Project01}/existing.txt")
+        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/missing.txt").ThrowsAsync(NotFound);
+        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/existing.txt")
             .Returns(Task.FromResult(new DeleteObjectResponse()));
 
         // SUT
-        await env.Service.DeleteDirectoryAsync(Bucket, Project01);
+        await env.Service.DeleteDirectoryAsync(DirectoryName, Project01);
 
-        await env.AmazonS3.Received(1).DeleteObjectAsync(Bucket, $"{Project01}/existing.txt");
+        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/existing.txt");
     }
 
     [Test]
@@ -102,12 +107,12 @@ public class S3StorageProviderTests
             .Returns(Task.FromResult(new ListObjectsV2Response { S3Objects = [] }));
 
         // SUT
-        await env.Service.DeleteDirectoryAsync("bad/bucket", "bad/project");
+        await env.Service.DeleteDirectoryAsync("bad/directory", "bad/project");
 
         await env
             .AmazonS3.Received(1)
             .ListObjectsV2Async(
-                Arg.Is<ListObjectsV2Request>(r => r.BucketName == "badbucket" && r.Prefix == "badproject/")
+                Arg.Is<ListObjectsV2Request>(r => r.BucketName == BucketName && r.Prefix == "baddirectory/badproject/")
             );
     }
 
@@ -118,30 +123,32 @@ public class S3StorageProviderTests
         env.AmazonS3.ListObjectsV2Async(Arg.Any<ListObjectsV2Request>()).ThrowsAsync(Forbidden);
 
         // SUT
-        await Assert.ThrowsAsync<AmazonS3Exception>(() => env.Service.DeleteDirectoryAsync(Bucket, Project01));
+        await Assert.ThrowsAsync<AmazonS3Exception>(() => env.Service.DeleteDirectoryAsync(DirectoryName, Project01));
     }
 
     [Test]
     public async Task DeleteFileAsync_DeletesFile()
     {
         var env = new TestEnvironment();
-        env.AmazonS3.DeleteObjectAsync(Bucket, $"{Project01}/{FileName}")
+        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}")
             .Returns(Task.FromResult(new DeleteObjectResponse()));
 
         // SUT
-        await env.Service.DeleteFileAsync(Bucket, Project01, FileName);
+        await env.Service.DeleteFileAsync(DirectoryName, Project01, FileName);
 
-        await env.AmazonS3.Received(1).DeleteObjectAsync(Bucket, $"{Project01}/{FileName}");
+        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}");
     }
 
     [Test]
     public async Task DeleteFileAsync_DoesNotThrowWhenFileDoesNotExist()
     {
         var env = new TestEnvironment();
-        env.AmazonS3.DeleteObjectAsync(Bucket, $"{Project01}/{FileName}").ThrowsAsync(NotFound);
+        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}").ThrowsAsync(NotFound);
 
         // SUT
-        await Assert.DoesNotThrowAsync(async () => await env.Service.DeleteFileAsync(Bucket, Project01, FileName));
+        await Assert.DoesNotThrowAsync(async () =>
+            await env.Service.DeleteFileAsync(DirectoryName, Project01, FileName)
+        );
     }
 
     [Test]
@@ -152,19 +159,21 @@ public class S3StorageProviderTests
             .Returns(Task.FromResult(new DeleteObjectResponse()));
 
         // SUT
-        await env.Service.DeleteFileAsync("bad/bucket", "bad/project", "bad/file.txt");
+        await env.Service.DeleteFileAsync("bad/directory", "bad/project", "bad/file.txt");
 
-        await env.AmazonS3.Received(1).DeleteObjectAsync("badbucket", "badproject/badfile.txt");
+        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, "baddirectory/badproject/badfile.txt");
     }
 
     [Test]
     public async Task DeleteFileAsync_PropagatesUnexpectedErrors()
     {
         var env = new TestEnvironment();
-        env.AmazonS3.DeleteObjectAsync(Bucket, $"{Project01}/{FileName}").ThrowsAsync(Forbidden);
+        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}").ThrowsAsync(Forbidden);
 
         // SUT
-        await Assert.ThrowsAsync<AmazonS3Exception>(() => env.Service.DeleteFileAsync(Bucket, Project01, FileName));
+        await Assert.ThrowsAsync<AmazonS3Exception>(() =>
+            env.Service.DeleteFileAsync(DirectoryName, Project01, FileName)
+        );
     }
 
     [Test]
@@ -174,23 +183,26 @@ public class S3StorageProviderTests
         using var expectedStream = new MemoryStream([1, 2, 3]);
         using var response = new GetObjectResponse();
         response.ResponseStream = expectedStream;
-        env.AmazonS3.GetObjectAsync(Bucket, $"{Project01}/{FileName}").Returns(Task.FromResult(response));
+        env.AmazonS3.GetObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}")
+            .Returns(Task.FromResult(response));
 
         // SUT
-        Stream result = await env.Service.GetFileAsync(Bucket, Project01, FileName);
+        Stream result = await env.Service.GetFileAsync(DirectoryName, Project01, FileName);
 
         Assert.That(result, Is.SameAs(expectedStream));
-        await env.AmazonS3.Received(1).GetObjectAsync(Bucket, $"{Project01}/{FileName}");
+        await env.AmazonS3.Received(1).GetObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}");
     }
 
     [Test]
     public async Task GetFileAsync_ThrowsWhenFileDoesNotExist()
     {
         var env = new TestEnvironment();
-        env.AmazonS3.GetObjectAsync(Bucket, $"{Project01}/{FileName}").ThrowsAsync(NotFound);
+        env.AmazonS3.GetObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}").ThrowsAsync(NotFound);
 
         // SUT
-        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetFileAsync(Bucket, Project01, FileName));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetFileAsync(DirectoryName, Project01, FileName)
+        );
     }
 
     [Test]
@@ -203,19 +215,19 @@ public class S3StorageProviderTests
         env.AmazonS3.GetObjectAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(Task.FromResult(response));
 
         // SUT
-        await env.Service.GetFileAsync("bad/bucket", "bad/project", "bad/file.txt");
+        await env.Service.GetFileAsync("bad/directory", "bad/project", "bad/file.txt");
 
-        await env.AmazonS3.Received(1).GetObjectAsync("badbucket", "badproject/badfile.txt");
+        await env.AmazonS3.Received(1).GetObjectAsync(BucketName, "baddirectory/badproject/badfile.txt");
     }
 
     [Test]
     public async Task GetFileAsync_PropagatesUnexpectedErrors()
     {
         var env = new TestEnvironment();
-        env.AmazonS3.GetObjectAsync(Bucket, $"{Project01}/{FileName}").ThrowsAsync(Forbidden);
+        env.AmazonS3.GetObjectAsync(BucketName, $"{DirectoryName}/{Project01}/{FileName}").ThrowsAsync(Forbidden);
 
         // SUT
-        await Assert.ThrowsAsync<AmazonS3Exception>(() => env.Service.GetFileAsync(Bucket, Project01, FileName));
+        await Assert.ThrowsAsync<AmazonS3Exception>(() => env.Service.GetFileAsync(DirectoryName, Project01, FileName));
     }
 
     [Test]
@@ -230,20 +242,20 @@ public class S3StorageProviderTests
         env.AmazonS3.PutObjectAsync(Arg.Any<PutObjectRequest>()).Returns(Task.FromResult(new PutObjectResponse()));
 
         // SUT
-        Uri result = await env.Service.PutFileAsync("source.txt", Bucket, Project01, FileName);
+        Uri result = await env.Service.PutFileAsync("source.txt", DirectoryName, Project01, FileName);
 
         await env
             .AmazonS3.Received(1)
             .PutObjectAsync(
                 Arg.Is<PutObjectRequest>(r =>
-                    r.BucketName == Bucket
-                    && r.Key == $"{Project01}/{FileName}"
+                    r.BucketName == BucketName
+                    && r.Key == $"{DirectoryName}/{Project01}/{FileName}"
                     && ReferenceEquals(r.InputStream, expectedStream)
                 )
             );
 
         Assert.That(result.IsAbsoluteUri, Is.False);
-        Assert.That(result.OriginalString, Does.StartWith($"/assets/{Bucket}/{Project01}/{FileName}?t="));
+        Assert.That(result.OriginalString, Does.StartWith($"/assets/{DirectoryName}/{Project01}/{FileName}?t="));
         expectedStream.ForceDispose();
     }
 
@@ -257,19 +269,19 @@ public class S3StorageProviderTests
         env.AmazonS3.PutObjectAsync(Arg.Any<PutObjectRequest>()).Returns(Task.FromResult(new PutObjectResponse()));
 
         // SUT
-        Uri result = await env.Service.PutFileAsync("source.txt", "bad/bucket", "bad/project", "bad/file.txt");
+        Uri result = await env.Service.PutFileAsync("source.txt", "bad/directory", "bad/project", "bad/file.txt");
 
         await env
             .AmazonS3.Received(1)
             .PutObjectAsync(
                 Arg.Is<PutObjectRequest>(r =>
-                    r.BucketName == "badbucket"
-                    && r.Key == "badproject/badfile.txt"
+                    r.BucketName == BucketName
+                    && r.Key == "baddirectory/badproject/badfile.txt"
                     && ReferenceEquals(r.InputStream, expectedStream)
                 )
             );
 
-        Assert.That(result.OriginalString, Does.StartWith("/assets/badbucket/badproject/badfile.txt?t="));
+        Assert.That(result.OriginalString, Does.StartWith("/assets/baddirectory/badproject/badfile.txt?t="));
         expectedStream.ForceDispose();
     }
 
@@ -284,7 +296,7 @@ public class S3StorageProviderTests
 
         // SUT
         await Assert.ThrowsAsync<AmazonS3Exception>(() =>
-            env.Service.PutFileAsync("source.txt", Bucket, Project01, FileName)
+            env.Service.PutFileAsync("source.txt", DirectoryName, Project01, FileName)
         );
         expectedStream.ForceDispose();
     }
@@ -295,7 +307,8 @@ public class S3StorageProviderTests
         {
             AmazonS3 = Substitute.For<IAmazonS3>();
             FileSystemService = Substitute.For<IFileSystemService>();
-            Service = new S3StorageProvider(AmazonS3, FileSystemService);
+            var options = Options.Create(new StorageConfigOptions { S3Bucket = BucketName });
+            Service = new S3StorageProvider(AmazonS3, FileSystemService, options);
         }
 
         public IAmazonS3 AmazonS3 { get; }

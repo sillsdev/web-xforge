@@ -18,7 +18,15 @@ public record StorageConfigOptions
     public string StorageProvider { get; set; } = "FileSystem";
 
     /// <summary>
-    /// Gets of sets the Amazon region to use for S3.
+    /// Gets or sets the bucket to use for S3.
+    /// </summary>
+    /// <remarks>
+    /// This must be configured to use S3.
+    /// </remarks>
+    public string? S3Bucket { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Amazon region to use for S3.
     /// </summary>
     /// <remarks>
     /// Only use if <seealso cref="S3ServiceUrl" /> is not configured.
@@ -33,4 +41,14 @@ public record StorageConfigOptions
     /// and if <seealso cref="S3Region" /> is not configured.
     /// </remarks>
     public string? S3ServiceUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether chunk encoding should be used.
+    /// </summary>
+    /// <value><c>true</c> if chunk encoding is to be used (default); otherwise, <c>false</c>.</value>
+    /// <remarks>
+    /// This should only be set to <c>false</c> if you are using a non-AWS S3 provider (such as Oracle),
+    /// and you receive the error: <c>AWS chunked encoding not supported.</c>
+    /// </remarks>
+    public bool S3UseChunkEncoding { get; set; } = true;
 }
