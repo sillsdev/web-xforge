@@ -8,7 +8,7 @@ import { Operation, ProjectRights } from '../models/project-rights';
 import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 import { ObjPathTemplate } from '../utils/obj-path';
-import { JsonDocService } from './json-doc-service';
+import { isComponentList, JsonDocService } from './json-doc-service';
 
 /**
  * This interface represents the configuration for a project domain. A project domain defines the object path to an
@@ -391,7 +391,9 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       if (domain != null) {
         await this.onBeforeDelete(connectSession.userId, context.id, domain.projectDomain, context.snapshot!.data);
       }
-    } else if (Array.isArray(context.op.op) && context.op.op.some(op => (op as ShareDB.ListDeleteOp).ld != null)) {
+      // A malformed op is left for JSON0 to refuse when it applies it, rather than examined here, where reading it
+      // would throw before it is refused
+    } else if (isComponentList(context.op.op) && context.op.op.some(op => (op as ShareDB.ListDeleteOp).ld != null)) {
       // The deleted entities are kept for "onDelete", as JSON0 does not check that an op's "ld" is the entity it deletes
       const deletedEntities = new Map<ShareDB.Op, OwnedData>();
       for (const { op, doc } of this.opsWithDocs(context.snapshot!.data, context.op.op)) {
