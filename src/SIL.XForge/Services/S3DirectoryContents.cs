@@ -11,11 +11,10 @@ namespace SIL.XForge.Services;
 /// <summary>
 /// Contents of a S3 directory. Files are the keys prefixed by given 'path'.
 /// </summary>
-public class S3DirectoryContents(IAmazonS3 amazonS3, string bucketName, string subpath) : IDirectoryContents
+public class S3DirectoryContents(IAmazonS3 amazonS3, string bucketName, string directoryName, string subpath)
+    : IDirectoryContents
 {
-    private readonly string _key = subpath.TrimEnd('/') + '/';
-
-    private bool IsRoot => _key == "/";
+    private readonly string _key = $"{directoryName}/{subpath}".TrimEnd('/') + '/';
 
     /// <inheritdoc />
     public bool Exists
@@ -24,9 +23,6 @@ public class S3DirectoryContents(IAmazonS3 amazonS3, string bucketName, string s
         {
             try
             {
-                // Root folder always exists
-                if (IsRoot)
-                    return true;
                 amazonS3.GetObjectMetadataAsync(bucketName, _key).GetAwaiter().GetResult();
                 return true;
             }
@@ -44,7 +40,7 @@ public class S3DirectoryContents(IAmazonS3 amazonS3, string bucketName, string s
         {
             BucketName = bucketName,
             Delimiter = "/",
-            Prefix = IsRoot ? string.Empty : _key,
+            Prefix = _key,
         };
         var response = amazonS3.ListObjectsV2Async(request).GetAwaiter().GetResult();
 

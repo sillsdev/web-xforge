@@ -5,6 +5,8 @@ using System.Net;
 using System.Threading.Tasks;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Microsoft.Extensions.Options;
+using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Services;
 
@@ -13,7 +15,11 @@ namespace SIL.XForge.Services;
 /// </summary>
 /// <param name="amazonS3">The Amazon S3 client.</param>
 /// <param name="fileSystemService">The file system service.</param>
-public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystemService) : IStorageProvider
+public class S3StorageProvider(
+    IAmazonS3 amazonS3,
+    IFileSystemService fileSystemService,
+    IOptions<StorageConfigOptions> storageConfigOptions
+) : IStorageProvider
 {
     public static readonly char[] InvalidFilePathChars =
     [
@@ -37,15 +43,24 @@ public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystem
 
     private static readonly char[] InvalidFileNameChars = [.. InvalidFilePathChars, .. Path.GetInvalidFileNameChars()];
 
-    public async Task DeleteDirectoryAsync(string bucket, string projectId)
+    public async Task DeleteDirectoryAsync(string directoryName, string projectId)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
+
+        // Ensure that the bucket name is configured
+        string? bucketName = storageConfigOptions.Value.S3Bucket;
+        if (string.IsNullOrWhiteSpace(bucketName))
+            throw new DataNotFoundException("The S3 bucket is not configured.");
 
         try
         {
-            var request = new ListObjectsV2Request { BucketName = bucket, Prefix = $"{projectId}/" };
+            var request = new ListObjectsV2Request
+            {
+                BucketName = bucketName,
+                Prefix = $"{directoryName}/{projectId}/",
+            };
 
             ListObjectsV2Response response = await amazonS3.ListObjectsV2Async(request);
 
@@ -53,7 +68,7 @@ public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystem
             {
                 try
                 {
-                    await amazonS3.DeleteObjectAsync(bucket, obj.Key);
+                    await amazonS3.DeleteObjectAsync(bucketName, obj.Key);
                 }
                 catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -67,17 +82,22 @@ public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystem
         }
     }
 
-    public async Task DeleteFileAsync(string bucket, string projectId, string fileName)
+    public async Task DeleteFileAsync(string directoryName, string projectId, string fileName)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
         fileName = SanitizeFileName(fileName);
-        string key = $"{projectId}/{fileName}";
+        string key = $"{directoryName}/{projectId}/{fileName}";
+
+        // Ensure that the bucket name is configured
+        string? bucketName = storageConfigOptions.Value.S3Bucket;
+        if (string.IsNullOrWhiteSpace(bucketName))
+            throw new DataNotFoundException("The S3 bucket is not configured.");
 
         try
         {
-            await amazonS3.DeleteObjectAsync(bucket, key);
+            await amazonS3.DeleteObjectAsync(bucketName, key);
         }
         catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
@@ -85,45 +105,59 @@ public class S3StorageProvider(IAmazonS3 amazonS3, IFileSystemService fileSystem
         }
     }
 
-    public async Task<Stream> GetFileAsync(string bucket, string projectId, string fileName)
+    public async Task<Stream> GetFileAsync(string directoryName, string projectId, string fileName)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
         fileName = SanitizeFileName(fileName);
-        string key = $"{projectId}/{fileName}";
+        string key = $"{directoryName}/{projectId}/{fileName}";
+
+        // Ensure that the bucket name is configured
+        string? bucketName = storageConfigOptions.Value.S3Bucket;
+        if (string.IsNullOrWhiteSpace(bucketName))
+            throw new DataNotFoundException("The S3 bucket is not configured.");
 
         try
         {
-            GetObjectResponse response = await amazonS3.GetObjectAsync(bucket, key);
+            GetObjectResponse response = await amazonS3.GetObjectAsync(bucketName, key);
             return response.ResponseStream;
         }
         catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
         {
-            throw new DataNotFoundException($"{fileName} does not exist for {projectId} in {bucket}");
+            throw new DataNotFoundException($"{fileName} does not exist for {projectId} in {directoryName}");
         }
     }
 
-    public async Task<Uri> PutFileAsync(string path, string bucket, string projectId, string fileName)
+    public async Task<Uri> PutFileAsync(string path, string directoryName, string projectId, string fileName)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
         fileName = SanitizeFileName(fileName);
+
+        // Ensure that the bucket name is configured
+        string? bucketName = storageConfigOptions.Value.S3Bucket;
+        if (string.IsNullOrWhiteSpace(bucketName))
+            throw new DataNotFoundException("The S3 bucket is not configured.");
 
         await using var fileStream = fileSystemService.OpenFile(path, FileMode.Open);
         var request = new PutObjectRequest
         {
-            BucketName = bucket,
-            Key = $"{projectId}/{fileName}",
+            BucketName = bucketName,
+            Key = $"{directoryName}/{projectId}/{fileName}",
             InputStream = fileStream,
+            UseChunkEncoding = storageConfigOptions.Value.S3UseChunkEncoding,
         };
 
         await amazonS3.PutObjectAsync(request);
 
         // Remove the old file from disk, as it is now on S3
         fileSystemService.DeleteFile(path);
-        return new Uri($"/assets/{bucket}/{projectId}/{fileName}?t={DateTime.UtcNow.ToFileTime()}", UriKind.Relative);
+        return new Uri(
+            $"/assets/{directoryName}/{projectId}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
+            UriKind.Relative
+        );
     }
 
     private static string SanitizeFileName(string fileName) =>
