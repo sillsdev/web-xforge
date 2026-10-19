@@ -11,7 +11,7 @@ namespace SIL.XForge.Services;
 /// <remarks>
 /// This is based on the implementation at <c>https://github.com/evorine/S3FileProvider</c>.
 /// </remarks>
-public class S3FileProvider(IAmazonS3 amazonS3, string bucketName) : IFileProvider
+public class S3FileProvider(IAmazonS3 amazonS3, string bucketName, string directoryName) : IFileProvider
 {
     /// <inheritdoc />
     public IDirectoryContents GetDirectoryContents(string subpath)
@@ -21,7 +21,7 @@ public class S3FileProvider(IAmazonS3 amazonS3, string bucketName) : IFileProvid
             return NotFoundDirectoryContents.Singleton;
 
         // Relative paths starting with leading slashes are okay
-        return new S3DirectoryContents(amazonS3, bucketName, subpath.TrimStart('/'));
+        return new S3DirectoryContents(amazonS3, bucketName, directoryName, subpath.TrimStart('/'));
     }
 
     /// <inheritdoc />
@@ -37,7 +37,8 @@ public class S3FileProvider(IAmazonS3 amazonS3, string bucketName) : IFileProvid
         if (string.IsNullOrWhiteSpace(subpath))
             return new NotFoundFileInfo(subpath);
 
-        return new S3FileInfo(amazonS3, bucketName, subpath);
+        string key = $"{directoryName}/{subpath}";
+        return new S3FileInfo(amazonS3, bucketName, key);
     }
 
     /// <summary>

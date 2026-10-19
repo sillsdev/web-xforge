@@ -15,14 +15,14 @@ namespace SIL.XForge.Services;
 public class FileSystemStorageProvider(IFileSystemService fileSystemService, IOptions<SiteOptions> siteOptions)
     : IStorageProvider
 {
-    public Task DeleteDirectoryAsync(string bucket, string projectId)
+    public Task DeleteDirectoryAsync(string directoryName, string projectId)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
 
         // Delete the directory if it exists
-        string directoryPath = Path.Join(siteOptions.Value.SiteDir, bucket, projectId);
+        string directoryPath = Path.Join(siteOptions.Value.SiteDir, directoryName, projectId);
         if (fileSystemService.DirectoryExists(directoryPath))
         {
             fileSystemService.DeleteDirectory(directoryPath);
@@ -31,15 +31,15 @@ public class FileSystemStorageProvider(IFileSystemService fileSystemService, IOp
         return Task.CompletedTask;
     }
 
-    public Task DeleteFileAsync(string bucket, string projectId, string fileName)
+    public Task DeleteFileAsync(string directoryName, string projectId, string fileName)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
         fileName = SanitizeFileName(fileName);
 
         // Delete the file if it exists
-        string filePath = Path.Join(siteOptions.Value.SiteDir, bucket, projectId, fileName);
+        string filePath = Path.Join(siteOptions.Value.SiteDir, directoryName, projectId, fileName);
         if (fileSystemService.FileExists(filePath))
         {
             fileSystemService.DeleteFile(filePath);
@@ -48,38 +48,38 @@ public class FileSystemStorageProvider(IFileSystemService fileSystemService, IOp
         return Task.CompletedTask;
     }
 
-    public Task<Stream> GetFileAsync(string bucket, string projectId, string fileName)
+    public Task<Stream> GetFileAsync(string directoryName, string projectId, string fileName)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
         fileName = SanitizeFileName(fileName);
 
         // If the file does not exist, throw an error
-        string path = Path.Join(siteOptions.Value.SiteDir, bucket, projectId, fileName);
+        string path = Path.Join(siteOptions.Value.SiteDir, directoryName, projectId, fileName);
         if (!fileSystemService.FileExists(path))
         {
-            throw new DataNotFoundException($"{fileName} does not exist for {projectId} in {bucket}");
+            throw new DataNotFoundException($"{fileName} does not exist for {projectId} in {directoryName}");
         }
 
         return Task.FromResult(fileSystemService.OpenFile(path, FileMode.Open));
     }
 
-    public Task<Uri> PutFileAsync(string path, string bucket, string projectId, string fileName)
+    public Task<Uri> PutFileAsync(string path, string directoryName, string projectId, string fileName)
     {
         // Sanitize input
-        bucket = SanitizeFileName(bucket);
+        directoryName = SanitizeFileName(directoryName);
         projectId = SanitizeFileName(projectId);
         fileName = SanitizeFileName(fileName);
 
         // Create the file and directory paths
-        string directoryPath = Path.Join(siteOptions.Value.SiteDir, bucket, projectId);
+        string directoryPath = Path.Join(siteOptions.Value.SiteDir, directoryName, projectId);
         string filePath = Path.Join(directoryPath, fileName);
 
         // If the file does not exist, throw an error
         if (!fileSystemService.FileExists(path))
         {
-            throw new DataNotFoundException($"{fileName} does not exist for {projectId} in {bucket}");
+            throw new DataNotFoundException($"{fileName} does not exist for {projectId} in {directoryName}");
         }
 
         // Create the destination directory if it does not already exist
@@ -108,7 +108,10 @@ public class FileSystemStorageProvider(IFileSystemService fileSystemService, IOp
         }
 
         return Task.FromResult(
-            new Uri($"/assets/{bucket}/{projectId}/{fileName}?t={DateTime.UtcNow.ToFileTime()}", UriKind.Relative)
+            new Uri(
+                $"/assets/{directoryName}/{projectId}/{fileName}?t={DateTime.UtcNow.ToFileTime()}",
+                UriKind.Relative
+            )
         );
     }
 
