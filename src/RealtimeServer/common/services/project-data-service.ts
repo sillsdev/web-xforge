@@ -205,6 +205,10 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
           checkEditableProps = false;
         } else if (!this.hasRight(project, domain, Operation.Edit, session.userId, entity)) {
           // any other op on the entity, such as replacing it with "oi" or a property domain's value
+          //
+          // Though note that a domain whose template ends in a property, such as an answer's status, has the value of
+          // that property for `entity` rather than being an OwnedData with an ownerRef. In such a case, hasRight sees
+          // no ownerRef and so will not grant a right to edit one's own data.
           return false;
         }
       }
