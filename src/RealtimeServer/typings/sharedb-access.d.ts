@@ -17,13 +17,20 @@ declare module 'sharedb-access' {
         collection: string,
         handler: (docId: string, doc: any, session: any) => Promise<boolean> | boolean
       ): void;
-      /**
-       * The ops are the op as the client sent it. ShareDB does not check that it is a list of components, and a rich-text
-       * op is a Delta rather than a list.
-       */
       allowUpdate(
         collection: string,
-        handler: (docId: string, oldDoc: any, newDoc: any, ops: unknown, session: any) => Promise<boolean> | boolean
+        handler: (
+          docId: string,
+          oldDoc: any,
+          newDoc: any,
+          /**
+           * The op as ShareDB is about to commit it, which is the client's op transformed against any ops that the
+           * client did not have. ShareDB does not check that it is a list of components, and a rich-text op is a Delta
+           * rather than a list.
+           */
+          ops: unknown,
+          session: any
+        ) => Promise<boolean> | boolean
       ): void;
       /** An update that any of these handlers returns true for is denied, even if an allowUpdate handler allows it. */
       denyUpdate(
