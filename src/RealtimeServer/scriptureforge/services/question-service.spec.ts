@@ -222,6 +222,27 @@ describe('QuestionService', () => {
     ).rejects.toThrow('Permission denied');
   });
 
+  it('allows user to like an answer and to remove their like', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
+    await submitOp(conn, QUESTIONS_COLLECTION, docId, {
+      p: ['answers', 0, 'likes', 0],
+      li: { ownerRef: CHECKER_ID }
+    });
+    const liked: Question = (await fetchDoc(env.server.connect(), QUESTIONS_COLLECTION, docId)).data;
+    expect(liked.answers[0].likes.map(like => like.ownerRef)).toEqual([CHECKER_ID]);
+
+    await submitOp(conn, QUESTIONS_COLLECTION, docId, {
+      p: ['answers', 0, 'likes', 0],
+      ld: { ownerRef: CHECKER_ID }
+    });
+    const unliked: Question = (await fetchDoc(env.server.connect(), QUESTIONS_COLLECTION, docId)).data;
+    expect(unliked.answers[0].likes).toEqual([]);
+  });
+
   it('fails a component with no path with the error from JSON0 rather than one of its own', async () => {
     const env = new TestEnvironment();
     await env.createData();
