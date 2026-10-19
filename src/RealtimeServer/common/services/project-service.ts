@@ -86,7 +86,7 @@ export abstract class ProjectService<T extends Project = Project> extends JsonDo
       return true;
     }
 
-    // Only project admins may change editable properties. SF project docs have none, so this applies to any that are added.
+    // Only project admins may change editable properties.
     const projectRole = oldDoc.userRoles != null ? oldDoc.userRoles[session.userId] : '';
     if (projectRole !== this.projectAdminRole) {
       return false;
