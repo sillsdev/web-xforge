@@ -34,79 +34,83 @@ import { SFProjectService } from './sf-project-service';
 import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';
 import { SFProjectUserConfigService } from './sf-project-user-config-service';
 
-// Answers that a client inserts must have hex ids to pass validation, which the other users' ids in the test data are
-// not, as the test data is created by the server, which skips validation
-const HEX_ID_CHECKER = 'c0ffee';
+// Ids in the form that validation requires of new data
+const PROJECT_ADMIN_ID = 'a1';
+const CHECKER_ID = 'c1';
+const OTHER_CHECKER_ID = 'c2';
+const QUESTION_ID = 'd1';
+const ANSWER_ID = 'd2';
+const COMMENT_ID = 'd3';
 
 describe('QuestionService', () => {
   it('removes read refs when answer deleted', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'projectAdmin');
-    await submitJson0Op<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), ops =>
+    const conn = clientConnect(env.server, PROJECT_ADMIN_ID);
+    await submitJson0Op<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), ops =>
       ops.remove(q => q.answers, 0)
     );
     await flushPromises();
 
     const adminProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'projectAdmin')
+      getSFProjectUserConfigDocId('project01', PROJECT_ADMIN_ID)
     ].data as SFProjectUserConfig;
-    expect(adminProjectUserConfig.answerRefsRead).not.toContain('answer01');
-    expect(adminProjectUserConfig.commentRefsRead).not.toContain('comment01');
+    expect(adminProjectUserConfig.answerRefsRead).not.toContain(ANSWER_ID);
+    expect(adminProjectUserConfig.commentRefsRead).not.toContain(COMMENT_ID);
     const checkerProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'checker')
+      getSFProjectUserConfigDocId('project01', CHECKER_ID)
     ].data as SFProjectUserConfig;
-    expect(checkerProjectUserConfig.answerRefsRead).not.toContain('answer01');
-    expect(checkerProjectUserConfig.commentRefsRead).not.toContain('comment01');
+    expect(checkerProjectUserConfig.answerRefsRead).not.toContain(ANSWER_ID);
+    expect(checkerProjectUserConfig.commentRefsRead).not.toContain(COMMENT_ID);
   });
 
   it('removes read refs of the deleted answer rather than of the answer the op claims to delete', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'checker');
-    await submitOp(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), {
+    const conn = clientConnect(env.server, CHECKER_ID);
+    await submitOp(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), {
       p: ['answers', 0],
-      ld: { dataId: 'answer02', ownerRef: 'checker', comments: [] }
+      ld: { dataId: 'answer02', ownerRef: CHECKER_ID, comments: [] }
     });
     await flushPromises();
 
     const adminProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'projectAdmin')
+      getSFProjectUserConfigDocId('project01', PROJECT_ADMIN_ID)
     ].data as SFProjectUserConfig;
-    expect(adminProjectUserConfig.answerRefsRead).not.toContain('answer01');
-    expect(adminProjectUserConfig.commentRefsRead).not.toContain('comment01');
+    expect(adminProjectUserConfig.answerRefsRead).not.toContain(ANSWER_ID);
+    expect(adminProjectUserConfig.commentRefsRead).not.toContain(COMMENT_ID);
   });
 
   it('removes read refs when comment deleted', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'projectAdmin');
-    await submitJson0Op<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), ops =>
+    const conn = clientConnect(env.server, PROJECT_ADMIN_ID);
+    await submitJson0Op<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), ops =>
       ops.remove(q => q.answers[0].comments, 0)
     );
     await flushPromises();
 
     const adminProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'projectAdmin')
+      getSFProjectUserConfigDocId('project01', PROJECT_ADMIN_ID)
     ].data as SFProjectUserConfig;
-    expect(adminProjectUserConfig.answerRefsRead).toContain('answer01');
-    expect(adminProjectUserConfig.commentRefsRead).not.toContain('comment01');
+    expect(adminProjectUserConfig.answerRefsRead).toContain(ANSWER_ID);
+    expect(adminProjectUserConfig.commentRefsRead).not.toContain(COMMENT_ID);
     const checkerProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'checker')
+      getSFProjectUserConfigDocId('project01', CHECKER_ID)
     ].data as SFProjectUserConfig;
-    expect(checkerProjectUserConfig.answerRefsRead).toContain('answer01');
-    expect(checkerProjectUserConfig.commentRefsRead).not.toContain('comment01');
+    expect(checkerProjectUserConfig.answerRefsRead).toContain(ANSWER_ID);
+    expect(checkerProjectUserConfig.commentRefsRead).not.toContain(COMMENT_ID);
   });
 
   it('does not allow user without edit right to replace question', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'checker');
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     const question: Question = (await fetchDoc(conn, QUESTIONS_COLLECTION, docId)).data;
     await expect(
       submitOp(conn, QUESTIONS_COLLECTION, docId, { p: [], od: question, oi: { ...question, text: 'Changed?' } })
@@ -117,26 +121,25 @@ describe('QuestionService', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'checker');
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     const question: Question = (await fetchDoc(conn, QUESTIONS_COLLECTION, docId)).data;
     const answer = question.answers[0];
     await expect(
       submitOp(conn, QUESTIONS_COLLECTION, docId, {
         p: ['answers', 0],
         ld: answer,
-        // The test data's ids would fail validation in new data, so the replacement has valid ones
-        li: { ...answer, dataId: 'aaaa', ownerRef: 'bbbb', comments: [] }
+        li: { ...answer, ownerRef: PROJECT_ADMIN_ID }
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow('Permission denied');
   });
 
   it('does not allow user without edit right to set answer status', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'checker');
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     await expect(
       submitOp(conn, QUESTIONS_COLLECTION, docId, { p: ['answers', 0, 'status'], oi: AnswerStatus.Resolved })
     ).rejects.toThrow();
@@ -146,8 +149,8 @@ describe('QuestionService', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'projectAdmin');
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, PROJECT_ADMIN_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     await expect(
       submitOp(conn, QUESTIONS_COLLECTION, docId, { p: ['answers', 0, 'status'], oi: AnswerStatus.Resolved })
     ).resolves.not.toThrow();
@@ -157,10 +160,10 @@ describe('QuestionService', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'checker');
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     await expect(
-      submitOp(conn, QUESTIONS_COLLECTION, docId, { p: ['answers', 0, 'comments', 0], ld: { ownerRef: 'checker' } })
+      submitOp(conn, QUESTIONS_COLLECTION, docId, { p: ['answers', 0, 'comments', 0], ld: { ownerRef: CHECKER_ID } })
     ).rejects.toThrow();
   });
 
@@ -168,11 +171,11 @@ describe('QuestionService', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'projectAdmin');
+    const conn = clientConnect(env.server, PROJECT_ADMIN_ID);
     await expect(
-      submitOp(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), {
+      submitOp(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), {
         p: ['answers', 5],
-        ld: { dataId: 'answer01' }
+        ld: { dataId: ANSWER_ID }
       })
     ).rejects.toThrow('Permission denied');
   });
@@ -180,13 +183,12 @@ describe('QuestionService', () => {
   it('does not allow user to edit answer of another user that an insert in the same op moved', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    await env.addHexIdChecker();
 
-    const conn = clientConnect(env.server, HEX_ID_CHECKER);
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, OTHER_CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     await expect(
       submitOp(conn, QUESTIONS_COLLECTION, docId, [
-        { p: ['answers', 0], li: env.createAnswer(HEX_ID_CHECKER) },
+        { p: ['answers', 0], li: env.createAnswer(OTHER_CHECKER_ID) },
         { p: ['answers', 1, 'text'], od: 'Answer.', oi: 'Changed.' }
       ])
     ).rejects.toThrow();
@@ -195,12 +197,11 @@ describe('QuestionService', () => {
   it('allows user to edit answer that an earlier op inserted', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    await env.addHexIdChecker();
 
-    const conn = clientConnect(env.server, HEX_ID_CHECKER);
-    const docId: string = getQuestionDocId('project01', 'question01');
+    const conn = clientConnect(env.server, OTHER_CHECKER_ID);
+    const docId: string = getQuestionDocId('project01', QUESTION_ID);
     await submitOp(conn, QUESTIONS_COLLECTION, docId, [
-      { p: ['answers', 0], li: env.createAnswer(HEX_ID_CHECKER) },
+      { p: ['answers', 0], li: env.createAnswer(OTHER_CHECKER_ID) },
       { p: ['answers', 0, 'text'], od: 'New answer.', oi: 'Changed.' }
     ]);
     const question: Question = (await fetchDoc(env.server.connect(), QUESTIONS_COLLECTION, docId)).data;
@@ -213,22 +214,21 @@ describe('QuestionService', () => {
 
     // Unlike text audio, the question service examines ops before they are applied, which must not throw on this op
     // before it is denied
-    const conn = clientConnect(env.server, 'checker');
+    const conn = clientConnect(env.server, CHECKER_ID);
+    // An op must be a list of components, not a single component
+    const singleComponent = { p: ['answers', 0], ld: {} };
     await expect(
-      submitOpData(env.server, conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), {
-        p: ['answers', 0],
-        ld: {}
-      })
+      submitOpData(env.server, conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), singleComponent)
     ).rejects.toThrow('Permission denied');
   });
 
   it('lets community checkers query questions', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn = clientConnect(env.server, 'checker');
+    const conn = clientConnect(env.server, CHECKER_ID);
 
     const results = await fetchQuery(conn, QUESTIONS_COLLECTION, { projectRef: 'project01', isArchived: false });
-    expect(results.map(d => d.id)).toEqual([getQuestionDocId('project01', 'question01')]);
+    expect(results.map(d => d.id)).toEqual([getQuestionDocId('project01', QUESTION_ID)]);
   });
 });
 
@@ -261,12 +261,6 @@ class TestEnvironment {
     allowAll(this.server, SF_PROJECT_USER_CONFIGS_COLLECTION);
   }
 
-  async addHexIdChecker(): Promise<void> {
-    await submitJson0Op<SFProject>(this.server.connect(), SF_PROJECTS_COLLECTION, 'project01', op =>
-      op.set<string>(p => p.userRoles[HEX_ID_CHECKER], SFProjectRole.CommunityChecker)
-    );
-  }
-
   createAnswer(ownerRef: string): Answer {
     return {
       dataId: 'abcd',
@@ -282,33 +276,33 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'projectAdmin', createTestUser({}, 1));
+    await createDoc<User>(conn, USERS_COLLECTION, PROJECT_ADMIN_ID, createTestUser({}, 1));
 
     await createDoc<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'projectAdmin'),
+      getSFProjectUserConfigDocId('project01', PROJECT_ADMIN_ID),
       createTestProjectUserConfig({
         projectRef: 'project01',
-        ownerRef: 'projectAdmin',
-        questionRefsRead: ['question01'],
-        answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
+        ownerRef: PROJECT_ADMIN_ID,
+        questionRefsRead: [QUESTION_ID],
+        answerRefsRead: [ANSWER_ID],
+        commentRefsRead: [COMMENT_ID]
       })
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, 'checker', createTestUser({}, 2));
+    await createDoc<User>(conn, USERS_COLLECTION, CHECKER_ID, createTestUser({}, 2));
 
     await createDoc<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'checker'),
+      getSFProjectUserConfigDocId('project01', CHECKER_ID),
       createTestProjectUserConfig({
         projectRef: 'project01',
-        ownerRef: 'checker',
-        questionRefsRead: ['question01'],
-        answerRefsRead: ['answer01'],
-        commentRefsRead: ['comment01']
+        ownerRef: CHECKER_ID,
+        questionRefsRead: [QUESTION_ID],
+        answerRefsRead: [ANSWER_ID],
+        commentRefsRead: [COMMENT_ID]
       })
     );
 
@@ -318,17 +312,18 @@ class TestEnvironment {
       'project01',
       createTestProject({
         userRoles: {
-          projectAdmin: SFProjectRole.ParatextAdministrator,
-          checker: SFProjectRole.CommunityChecker
+          [PROJECT_ADMIN_ID]: SFProjectRole.ParatextAdministrator,
+          [CHECKER_ID]: SFProjectRole.CommunityChecker,
+          [OTHER_CHECKER_ID]: SFProjectRole.CommunityChecker
         },
-        paratextUsers: [{ sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' }]
+        paratextUsers: [{ sfUserId: PROJECT_ADMIN_ID, username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' }]
       })
     );
 
-    await createDoc<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), {
-      dataId: 'question01',
+    await createDoc<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), {
+      dataId: QUESTION_ID,
       projectRef: 'project01',
-      ownerRef: 'projectAdmin',
+      ownerRef: PROJECT_ADMIN_ID,
       verseRef: {
         bookNum: 40,
         chapterNum: 1,
@@ -340,8 +335,8 @@ class TestEnvironment {
       dateCreated: '',
       answers: [
         {
-          dataId: 'answer01',
-          ownerRef: 'checker',
+          dataId: ANSWER_ID,
+          ownerRef: CHECKER_ID,
           text: 'Answer.',
           dateModified: '',
           dateCreated: '',
@@ -349,8 +344,8 @@ class TestEnvironment {
           likes: [],
           comments: [
             {
-              dataId: 'comment01',
-              ownerRef: 'projectAdmin',
+              dataId: COMMENT_ID,
+              ownerRef: PROJECT_ADMIN_ID,
               text: 'Comment.',
               dateModified: '',
               dateCreated: '',
