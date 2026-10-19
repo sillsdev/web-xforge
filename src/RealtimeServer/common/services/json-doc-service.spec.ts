@@ -34,6 +34,10 @@ describe('JsonDocService', () => {
     // JSON0 converts these to indexes into the array
     expect(service.changesOnlyEditable({ p: ['answers', '3', 'text'], od: 'Old', oi: 'New' })).toBe(false);
     expect(service.changesOnlyEditable({ p: ['answers', 'abc', 'text'], od: 'Old', oi: 'New' })).toBe(false);
+    expect(service.changesOnlyEditable({ p: ['answers', '', 'text'], od: 'Old', oi: 'New' })).toBe(false);
+    expect(
+      service.changesOnlyEditable({ p: ['answers', null, 'text'], od: 'Old', oi: 'New' } as unknown as ShareDB.Op)
+    ).toBe(false);
   });
 
   it('rejects ops when any of them changes a property that is not editable', () => {
