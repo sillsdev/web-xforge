@@ -28,7 +28,13 @@ declare module 'sharedb-access' {
       /** An update that any of these handlers returns true for is denied, even if an allowUpdate handler allows it. */
       denyUpdate(
         collection: string,
-        handler: (docId: string, oldDoc: any, newDoc: any, ops: unknown, session: any) => Promise<boolean> | boolean
+        handler: (
+          docId: string,
+          oldDoc: unknown,
+          newDoc: unknown,
+          ops: unknown,
+          session: unknown
+        ) => Promise<boolean> | boolean
       ): void;
     }
   }
