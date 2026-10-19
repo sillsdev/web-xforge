@@ -27,7 +27,7 @@ describe('TrainingDataService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('does not allow administrator to edit training data, which clients only create', async () => {
+  it('does not allow administrator to edit training data, which clients only create, not edit', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
