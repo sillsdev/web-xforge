@@ -117,6 +117,7 @@ public class S3FileProviderTests
         public TestEnvironment()
         {
             const string bucketName = "bucket";
+            const string directoryName = "directory";
             IAmazonS3 amazonS3 = Substitute.For<IAmazonS3>();
 
             amazonS3
@@ -124,7 +125,12 @@ public class S3FileProviderTests
                 .Returns(call =>
                 {
                     string key = call.ArgAt<string>(1);
-                    if (key is "folder-1/" or "folder-1/folder-1-b/")
+                    if (
+                        key
+                        is $"{directoryName}/"
+                            or $"{directoryName}/folder-1/"
+                            or $"{directoryName}/folder-1/folder-1-b/"
+                    )
                     {
                         return Task.FromResult(new GetObjectMetadataResponse());
                     }
@@ -141,19 +147,23 @@ public class S3FileProviderTests
                     return Task.FromResult(
                         request.Prefix switch
                         {
-                            "" => new ListObjectsV2Response
+                            $"{directoryName}/" => new ListObjectsV2Response
                             {
-                                S3Objects = [new S3Object { Key = "dummy.pdf" }],
-                                CommonPrefixes = ["folder-1/"],
+                                S3Objects = [new S3Object { Key = $"{directoryName}/dummy.pdf" }],
+                                CommonPrefixes = [$"{directoryName}/folder-1/"],
                             },
-                            "folder-1/" => new ListObjectsV2Response
+                            $"{directoryName}/folder-1/" => new ListObjectsV2Response
                             {
                                 S3Objects =
                                 [
-                                    new S3Object { Key = "folder-1/aws.png" },
-                                    new S3Object { Key = "folder-1/dummy.pdf" },
+                                    new S3Object { Key = $"{directoryName}/folder-1/aws.png" },
+                                    new S3Object { Key = $"{directoryName}/folder-1/dummy.pdf" },
                                 ],
-                                CommonPrefixes = ["folder-1/folder-1-a/", "folder-1/folder-1-b/"],
+                                CommonPrefixes =
+                                [
+                                    $"{directoryName}/folder-1/folder-1-a/",
+                                    $"{directoryName}/folder-1/folder-1-b/",
+                                ],
                             },
                             _ => new ListObjectsV2Response { S3Objects = [], CommonPrefixes = [] },
                         }
@@ -168,17 +178,17 @@ public class S3FileProviderTests
 
                     var response = new GetObjectResponse
                     {
-                        BucketName = bucketName,
+                        BucketName = directoryName,
                         Key = key,
                         LastModified = LastModified,
                         ResponseStream =
-                            key == "folder-1/folder-1-a/ContentTest.txt"
+                            key == $"{directoryName}/folder-1/folder-1-a/ContentTest.txt"
                                 ? new MemoryStream(Encoding.UTF8.GetBytes("Test Data"))
                                 : new MemoryStream(),
                         ContentLength = key switch
                         {
-                            "dummy.pdf" => 88929,
-                            "folder-1/folder-1-a/ContentTest.txt" => 7,
+                            $"{directoryName}/dummy.pdf" => 88929,
+                            $"{directoryName}/folder-1/folder-1-a/ContentTest.txt" => 7,
                             _ => 0,
                         },
                     };
@@ -186,7 +196,7 @@ public class S3FileProviderTests
 
                     return Task.FromResult(response);
                 });
-            Service = new S3FileProvider(amazonS3, bucketName);
+            Service = new S3FileProvider(amazonS3, bucketName, directoryName);
         }
 
         public S3FileProvider Service { get; }

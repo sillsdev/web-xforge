@@ -12,7 +12,7 @@ namespace SIL.XForge.Services;
 [TestFixture]
 public class FileSystemStorageProviderTests
 {
-    private const string Bucket = AudioService.DirectoryName;
+    private const string DirectoryName = AudioService.DirectoryName;
     private const string Project01 = "project01";
     private const string FileName = "filename.txt";
 
@@ -20,11 +20,11 @@ public class FileSystemStorageProviderTests
     public async Task DeleteDirectoryAsync_DeletesExistingDirectory()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01);
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01);
         env.FileSystemService.DirectoryExists(path).Returns(true);
 
         // SUT
-        await env.Service.DeleteDirectoryAsync(Bucket, Project01);
+        await env.Service.DeleteDirectoryAsync(DirectoryName, Project01);
 
         env.FileSystemService.Received(1).DeleteDirectory(path);
     }
@@ -33,11 +33,11 @@ public class FileSystemStorageProviderTests
     public async Task DeleteDirectoryAsync_DoesNotDeleteMissingDirectory()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01);
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01);
         env.FileSystemService.DirectoryExists(path).Returns(false);
 
         // SUT
-        await env.Service.DeleteDirectoryAsync(Bucket, Project01);
+        await env.Service.DeleteDirectoryAsync(DirectoryName, Project01);
 
         env.FileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
     }
@@ -46,11 +46,11 @@ public class FileSystemStorageProviderTests
     public async Task DeleteDirectoryAsync_SanitizesPathComponents()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, "badbucket", "badproject");
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, "baddirectory", "badproject");
         env.FileSystemService.DirectoryExists(path).Returns(true);
 
         // SUT
-        await env.Service.DeleteDirectoryAsync("bad/bucket", "bad/project");
+        await env.Service.DeleteDirectoryAsync("bad/directory", "bad/project");
 
         env.FileSystemService.Received(1).DeleteDirectory(path);
     }
@@ -59,11 +59,11 @@ public class FileSystemStorageProviderTests
     public async Task DeleteFileAsync_DeletesExistingFile()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01, FileName);
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01, FileName);
         env.FileSystemService.FileExists(path).Returns(true);
 
         // SUT
-        await env.Service.DeleteFileAsync(Bucket, Project01, FileName);
+        await env.Service.DeleteFileAsync(DirectoryName, Project01, FileName);
 
         env.FileSystemService.Received(1).DeleteFile(path);
     }
@@ -72,11 +72,11 @@ public class FileSystemStorageProviderTests
     public async Task DeleteFileAsync_DoesNotDeleteMissingFile()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01, FileName);
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01, FileName);
         env.FileSystemService.FileExists(path).Returns(false);
 
         // SUT
-        await env.Service.DeleteFileAsync(Bucket, Project01, FileName);
+        await env.Service.DeleteFileAsync(DirectoryName, Project01, FileName);
 
         env.FileSystemService.DidNotReceive().DeleteFile(Arg.Any<string>());
     }
@@ -85,11 +85,11 @@ public class FileSystemStorageProviderTests
     public async Task DeleteFileAsync_SanitizesPathComponents()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, "badbucket", "badproject", "badfile.txt");
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, "baddirectory", "badproject", "badfile.txt");
         env.FileSystemService.FileExists(path).Returns(true);
 
         // SUT
-        await env.Service.DeleteFileAsync("bad/bucket", "bad/project", "bad/file.txt");
+        await env.Service.DeleteFileAsync("bad/directory", "bad/project", "bad/file.txt");
 
         env.FileSystemService.Received(1).DeleteFile(path);
     }
@@ -98,14 +98,14 @@ public class FileSystemStorageProviderTests
     public async Task GetFileAsync_ReturnsOpenedFile()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01, FileName);
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01, FileName);
         using var expectedStream = new MemoryStream();
 
         env.FileSystemService.FileExists(path).Returns(true);
         env.FileSystemService.OpenFile(path, FileMode.Open).Returns(expectedStream);
 
         // SUT
-        Stream result = await env.Service.GetFileAsync(Bucket, Project01, FileName);
+        Stream result = await env.Service.GetFileAsync(DirectoryName, Project01, FileName);
 
         Assert.That(result, Is.SameAs(expectedStream));
         env.FileSystemService.Received(1).OpenFile(path, FileMode.Open);
@@ -115,11 +115,13 @@ public class FileSystemStorageProviderTests
     public async Task GetFileAsync_ThrowsWhenFileDoesNotExist()
     {
         var env = new TestEnvironment();
-        string path = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01, FileName);
+        string path = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01, FileName);
         env.FileSystemService.FileExists(path).Returns(false);
 
         // SUT
-        await Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GetFileAsync(Bucket, Project01, FileName));
+        await Assert.ThrowsAsync<DataNotFoundException>(() =>
+            env.Service.GetFileAsync(DirectoryName, Project01, FileName)
+        );
 
         env.FileSystemService.DidNotReceive().OpenFile(Arg.Any<string>(), Arg.Any<FileMode>());
     }
@@ -129,7 +131,7 @@ public class FileSystemStorageProviderTests
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("source.txt");
-        string directoryPath = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01);
+        string directoryPath = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01);
         string destinationPath = Path.Join(directoryPath, FileName);
 
         bool destinationExists = false;
@@ -140,12 +142,12 @@ public class FileSystemStorageProviderTests
         env.FileSystemService.When(x => x.MoveFile(sourcePath, destinationPath)).Do(_ => destinationExists = true);
 
         // SUT
-        Uri result = await env.Service.PutFileAsync(sourcePath, Bucket, Project01, FileName);
+        Uri result = await env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName);
 
         env.FileSystemService.Received(1).CreateDirectory(directoryPath);
         env.FileSystemService.Received(1).MoveFile(sourcePath, destinationPath);
         Assert.That(result.IsAbsoluteUri, Is.False);
-        Assert.That(result.OriginalString, Does.StartWith($"/assets/{Bucket}/{Project01}/{FileName}?t="));
+        Assert.That(result.OriginalString, Does.StartWith($"/assets/{DirectoryName}/{Project01}/{FileName}?t="));
     }
 
     [Test]
@@ -153,7 +155,7 @@ public class FileSystemStorageProviderTests
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("source.txt");
-        string directoryPath = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01);
+        string directoryPath = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01);
         string destinationPath = Path.Join(directoryPath, FileName);
 
         bool destinationExists = false;
@@ -164,7 +166,7 @@ public class FileSystemStorageProviderTests
         env.FileSystemService.When(x => x.MoveFile(sourcePath, destinationPath)).Do(_ => destinationExists = true);
 
         // SUT
-        await env.Service.PutFileAsync(sourcePath, Bucket, Project01, FileName);
+        await env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName);
 
         env.FileSystemService.DidNotReceive().CreateDirectory(directoryPath);
         env.FileSystemService.Received(1).MoveFile(sourcePath, destinationPath);
@@ -175,7 +177,7 @@ public class FileSystemStorageProviderTests
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("source.txt");
-        string directoryPath = Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01);
+        string directoryPath = Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01);
         string destinationPath = Path.Join(directoryPath, FileName);
 
         bool destinationExists = true;
@@ -187,7 +189,7 @@ public class FileSystemStorageProviderTests
         env.FileSystemService.When(x => x.MoveFile(sourcePath, destinationPath)).Do(_ => destinationExists = true);
 
         // SUT
-        await env.Service.PutFileAsync(sourcePath, Bucket, Project01, FileName);
+        await env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName);
 
         env.FileSystemService.Received(1).DeleteFile(destinationPath);
         env.FileSystemService.Received(1).MoveFile(sourcePath, destinationPath);
@@ -197,14 +199,14 @@ public class FileSystemStorageProviderTests
     public async Task PutFileAsync_DoesNotMoveFileWhenSourceIsDestination()
     {
         var env = new TestEnvironment();
-        string path = Path.GetFullPath(Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01, FileName));
+        string path = Path.GetFullPath(Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01, FileName));
 
         env.FileSystemService.FileExists(Arg.Any<string>()).Returns(true);
-        env.FileSystemService.DirectoryExists(Path.Join(env.SiteOptions.Value.SiteDir, Bucket, Project01))
+        env.FileSystemService.DirectoryExists(Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01))
             .Returns(true);
 
         // SUT
-        Uri result = await env.Service.PutFileAsync(path, Bucket, Project01, FileName);
+        Uri result = await env.Service.PutFileAsync(path, DirectoryName, Project01, FileName);
 
         env.FileSystemService.DidNotReceive().MoveFile(Arg.Any<string>(), Arg.Any<string>());
         env.FileSystemService.DidNotReceive().DeleteFile(Arg.Any<string>());
@@ -220,7 +222,7 @@ public class FileSystemStorageProviderTests
 
         // SUT
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.PutFileAsync(sourcePath, Bucket, Project01, FileName)
+            env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName)
         );
     }
 
