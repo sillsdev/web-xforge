@@ -260,9 +260,15 @@ public class Startup
         IFileProvider trainingDataFileProvider;
         if (storageConfigOptions.StorageProvider == StorageConfigOptions.S3)
         {
+            // Ensure that the bucket name is configured
+            string? bucketName = storageConfigOptions.S3Bucket;
+            if (string.IsNullOrWhiteSpace(bucketName))
+                throw new DataNotFoundException("The S3 bucket is not configured.");
+
+            // Configure the providers
             IAmazonS3 amazonS3 = app.ApplicationServices.GetRequiredService<IAmazonS3>();
-            audioFileProvider = new S3FileProvider(amazonS3, AudioService.DirectoryName);
-            trainingDataFileProvider = new S3FileProvider(amazonS3, TrainingDataService.DirectoryName);
+            audioFileProvider = new S3FileProvider(amazonS3, bucketName, AudioService.DirectoryName);
+            trainingDataFileProvider = new S3FileProvider(amazonS3, bucketName, TrainingDataService.DirectoryName);
         }
         else
         {
