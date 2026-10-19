@@ -342,8 +342,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         if (i === 0) {
           doc = structuredClone(oldDoc);
         }
-        // The op is cloned, as applying it puts its values into the doc, where later ops would change them
-        doc = ShareDB.types.map['json0'].apply(doc, [structuredClone(op)]);
+        doc = ShareDB.types.map['json0'].apply(doc, [op]);
       }
     }
   }
