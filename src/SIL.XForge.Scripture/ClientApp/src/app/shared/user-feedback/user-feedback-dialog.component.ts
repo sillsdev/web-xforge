@@ -1,9 +1,10 @@
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
-import { Component, DestroyRef, OnInit } from '@angular/core';
+import { Component, DestroyRef, Inject, OnInit, Optional } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import {
+  MAT_DIALOG_DATA,
   MatDialogActions,
   MatDialogClose,
   MatDialogContent,
@@ -58,6 +59,11 @@ export interface UserFeedbackDialogResult {
   feedbackParams: UserFeedbackParams;
 }
 
+export interface UserFeedbackDialogData {
+  /** Whether the user can choose which project the feedback is about. Defaults to false. */
+  requireProjectReference?: boolean;
+}
+
 @Component({
   selector: 'app-user-feedback-dialog',
   templateUrl: './user-feedback-dialog.component.html',
@@ -95,7 +101,7 @@ export class UserFeedbackDialogComponent implements OnInit {
       nonNullable: true,
       validators: [Validators.required, XFValidators.someNonWhitespace]
     }),
-    // Left empty if the feedback is not about a particular project
+    // Required only if requireProjectReference is true.
     paratextId: new FormControl(''),
     permission: new FormControl<FeedbackPermission | null>(null, Validators.required)
   });
@@ -106,8 +112,17 @@ export class UserFeedbackDialogComponent implements OnInit {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly brandingService: BrandingService,
     private readonly activatedProjectService: ActivatedProjectService,
-    private readonly destroyRef: DestroyRef
-  ) {}
+    private readonly destroyRef: DestroyRef,
+    @Optional() @Inject(MAT_DIALOG_DATA) private readonly data: UserFeedbackDialogData | null
+  ) {
+    if (this.requireProjectReference) {
+      this.feedbackForm.controls.paratextId.addValidators(Validators.required);
+    }
+  }
+
+  get requireProjectReference(): boolean {
+    return this.data?.requireProjectReference === true;
+  }
 
   get siteName(): string {
     return this.brandingService.siteName;
@@ -127,6 +142,7 @@ export class UserFeedbackDialogComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
+    if (!this.requireProjectReference) return;
     await this.loadProjects();
   }
 
@@ -146,9 +162,11 @@ export class UserFeedbackDialogComponent implements OnInit {
       feedback
     };
 
-    const sfProjectId = !isPopulatedString(this.selectedParatextId)
-      ? ''
-      : this.userProjectsService.projectDocs?.find(p => p.data?.paratextId === this.selectedParatextId)?.id;
+    // Feedback is not about a project unless the user could choose one
+    const sfProjectId =
+      !this.requireProjectReference || !isPopulatedString(this.selectedParatextId)
+        ? ''
+        : this.userProjectsService.projectDocs?.find(p => p.data?.paratextId === this.selectedParatextId)?.id;
     if (sfProjectId == null) return;
 
     this.dialogRef.close({ sfProjectId, feedbackParams });
@@ -172,7 +190,11 @@ export class UserFeedbackDialogComponent implements OnInit {
       .subscribe(() => {
         // Set the selected project only after the list of projects is available
         const selectedProjectDoc: SFProjectProfileDoc | undefined = this.activatedProjectService.projectDoc;
-        if (selectedProjectDoc?.data != null && !isPopulatedString(this.selectedParatextId)) {
+        if (
+          this.requireProjectReference &&
+          selectedProjectDoc?.data != null &&
+          !isPopulatedString(this.selectedParatextId)
+        ) {
           this.feedbackForm.controls.paratextId.setValue(selectedProjectDoc.data.paratextId);
         }
       });

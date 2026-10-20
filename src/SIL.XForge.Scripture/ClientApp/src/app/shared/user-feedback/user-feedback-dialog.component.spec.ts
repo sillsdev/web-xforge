@@ -51,7 +51,11 @@ describe('UserFeedbackDialogComponent', () => {
       id: 'project01',
       data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
     } as SFProjectProfileDoc;
-    const env = new TestEnvironment({ activeProjectParatextId: 'paratext01', projectDocs: [projectDoc] });
+    const env = new TestEnvironment({
+      activeProjectParatextId: 'paratext01',
+      projectDocs: [projectDoc],
+      requireProjectReference: true
+    });
     expect(env.isProjectSelectVisible).toBe(true);
     expect(env.component.feedbackForm.controls.paratextId.value).toBe('paratext01');
   }));
@@ -65,7 +69,7 @@ describe('UserFeedbackDialogComponent', () => {
       id: 'resource01',
       data: { paratextId: 'resource16char01', name: 'Resource 01', shortName: 'RES1' }
     } as SFProjectProfileDoc;
-    const env = new TestEnvironment({ projectDocs: [projectDoc, resourceDoc] });
+    const env = new TestEnvironment({ projectDocs: [projectDoc, resourceDoc], requireProjectReference: true });
     expect(env.component.projects).toEqual([projectDoc.data!]);
   }));
 
@@ -74,7 +78,7 @@ describe('UserFeedbackDialogComponent', () => {
       id: 'project01',
       data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
     } as SFProjectProfileDoc;
-    const env = new TestEnvironment({ projectDocs: [projectDoc], isOnline: false });
+    const env = new TestEnvironment({ projectDocs: [projectDoc], isOnline: false, requireProjectReference: true });
     expect(env.component.projects).toBeUndefined();
 
     env.isOnline = true;
@@ -82,14 +86,41 @@ describe('UserFeedbackDialogComponent', () => {
   }));
 
   it('shows the project select when the user is not connected to any projects', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ requireProjectReference: true });
     expect(env.isProjectSelectVisible).toBe(true);
     expect(env.component.projects).toEqual([]);
   }));
 
   it('shows no selected project if there is no currently active project', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ requireProjectReference: true });
     expect(env.component.feedbackForm.controls.paratextId.value).toBe('');
+  }));
+
+  it('shows the project select when the dialog data says to show it', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ projectDocs: [projectDoc], isOnline: true, requireProjectReference: true });
+    expect(env.isProjectSelectVisible).toBe(true);
+  }));
+
+  it('hides the project select when the dialog data says not to show it', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ projectDocs: [projectDoc], isOnline: true, requireProjectReference: false });
+    expect(env.isProjectSelectVisible).toBe(false);
+  }));
+
+  it('hides the project select when no dialog data is provided', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ projectDocs: [projectDoc], isOnline: true });
+    expect(env.isProjectSelectVisible).toBe(false);
   }));
 
   it('submits the feedback', fakeAsync(() => {
@@ -97,7 +128,11 @@ describe('UserFeedbackDialogComponent', () => {
       id: 'project01',
       data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
     } as SFProjectProfileDoc;
-    const env = new TestEnvironment({ activeProjectParatextId: 'paratext01', projectDocs: [projectDoc] });
+    const env = new TestEnvironment({
+      activeProjectParatextId: 'paratext01',
+      projectDocs: [projectDoc],
+      requireProjectReference: true
+    });
 
     let result: UserFeedbackDialogResult | undefined;
     env.dialogRef.afterClosed().subscribe(r => (result = r));
@@ -117,8 +152,26 @@ describe('UserFeedbackDialogComponent', () => {
     });
   }));
 
-  it('submits the feedback with empty project field', fakeAsync(() => {
-    const env = new TestEnvironment(undefined);
+  it('does not reference the active project when project field is hidden', fakeAsync(() => {
+    const projectDoc = {
+      id: 'project01',
+      data: { paratextId: 'paratext01', name: 'Project 01', shortName: 'PR1' }
+    } as SFProjectProfileDoc;
+    const env = new TestEnvironment({ activeProjectParatextId: 'paratext01', projectDocs: [projectDoc] });
+    expect(env.component.feedbackForm.controls.paratextId.value).toBe('');
+
+    let result: UserFeedbackDialogResult | undefined;
+    env.dialogRef.afterClosed().subscribe(r => (result = r));
+
+    env.setFeedbackText('Feedback not about a project');
+    env.selectPermission(FeedbackPermission.Private);
+    env.clickSubmit();
+
+    expect(result?.sfProjectId).toBe('');
+  }));
+
+  it('submits the feedback with empty project field when field is not required', fakeAsync(() => {
+    const env = new TestEnvironment();
 
     let result: UserFeedbackDialogResult | undefined;
     env.dialogRef.afterClosed().subscribe(r => (result = r));
@@ -136,6 +189,19 @@ describe('UserFeedbackDialogComponent', () => {
         feedback: 'No project selected for feedback'
       }
     });
+  }));
+
+  it('does not submit the feedback with empty project field when field is required', fakeAsync(() => {
+    const env = new TestEnvironment({ requireProjectReference: true });
+
+    let result: UserFeedbackDialogResult | undefined;
+    env.dialogRef.afterClosed().subscribe(r => (result = r));
+
+    env.setFeedbackText('No project selected for feedback');
+    env.selectPermission(FeedbackPermission.Private);
+    env.clickSubmit();
+
+    expect(result).toBeUndefined();
   }));
 
   it('does not submit the feedback when the feedback field is empty', fakeAsync(() => {
@@ -232,6 +298,8 @@ interface TestEnvironmentArgs {
   activeProjectParatextId?: string;
   projectDocs?: SFProjectProfileDoc[];
   isOnline?: boolean;
+  /** Passed to the dialog as data. When undefined, no dialog data is provided. */
+  requireProjectReference?: boolean;
 }
 
 class TestEnvironment {
@@ -256,7 +324,8 @@ class TestEnvironment {
     when(mockedActivatedProjectService.projectDoc).thenReturn(projectDoc);
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(UserFeedbackDialogComponent, {
-      viewContainerRef: this.fixture.componentInstance.childViewContainer
+      viewContainerRef: this.fixture.componentInstance.childViewContainer,
+      data: args.requireProjectReference == null ? undefined : { requireProjectReference: args.requireProjectReference }
     });
     this.component = this.dialogRef.componentInstance;
     tick();
