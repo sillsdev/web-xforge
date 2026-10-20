@@ -96,13 +96,12 @@ describe('TextAudioService', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    // JSON0 applies this op as no change, but ShareDB would still commit it if it were allowed
     const conn = clientConnect(env.server, 'observer');
+    // An op must be a list of components, not a single component. JSON0 applies this one as no change, but ShareDB
+    // would still commit it if it were allowed.
+    const singleComponent = { p: ['ownerRef'], oi: 'aaaa' };
     await expect(
-      submitOpData(env.server, conn, TEXT_AUDIO_COLLECTION, getTextDocId('project01', 40, 1), {
-        p: ['ownerRef'],
-        oi: 'aaaa'
-      })
+      submitOpData(env.server, conn, TEXT_AUDIO_COLLECTION, getTextDocId('project01', 40, 1), singleComponent)
     ).rejects.toThrow('Permission denied');
   });
 });
