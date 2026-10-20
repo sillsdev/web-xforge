@@ -612,9 +612,9 @@ public partial class DeltaUsxMapper(
             {
                 if (IsElement(curNode, "chapter"))
                 {
+                    ChapterDelta chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
                     if (isFirstChapterFound)
                     {
-                        ChapterDelta chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
                         if (chapterDelta.Number == curChapter)
                         {
                             if (chapterDelta.IsValid)
@@ -624,30 +624,34 @@ public partial class DeltaUsxMapper(
                         var numberStr = (string)((XElement)curNode).Attribute("number");
                         if (int.TryParse(numberStr, out int number))
                             curChapter = number;
-
-                        if (curChapterDeltaIndex >= chapterDeltaArray.Length)
-                            return newUsxDoc;
-                        chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
-                        while (chapterDelta.Number < curChapter)
-                        {
-                            // Add new chapters in our deltas to the usx doc, in order, before the
-                            // current chapter
-                            if (chapterDelta.IsValid)
-                                curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
-                            curChapterDeltaIndex++;
-                            chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
-                        }
                     }
                     else
                     {
                         isFirstChapterFound = true;
                         var numberStr = (string)((XElement)curNode).Attribute("number");
-                        if (!int.TryParse(numberStr, out int number))
+                        if (int.TryParse(numberStr, out int number))
+                        {
+                            // The first chapter may not always be 1
+                            curChapter = number;
+                        }
+                        else
                         {
                             // we cannot handle if the first chapter is invalid because we have no way to determine
                             // how to update the content before this chapter
                             throw new InvalidDataException("The first chapter number was invalid");
                         }
+                    }
+
+                    if (curChapterDeltaIndex >= chapterDeltaArray.Length)
+                        return newUsxDoc;
+                    chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
+                    while (chapterDelta.Number < curChapter)
+                    {
+                        // Add new chapters in our deltas to the usx doc, in order, before the current chapter
+                        if (chapterDelta.IsValid)
+                            curNode.AddBeforeSelf(ProcessDelta(chapterDelta.Delta));
+                        curChapterDeltaIndex++;
+                        chapterDelta = chapterDeltaArray[curChapterDeltaIndex];
                     }
                 }
 
