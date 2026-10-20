@@ -57,6 +57,11 @@ export class SFInboundAuthorizer implements InboundAuthorizer {
   private readonly context: SFAccessContext;
   /** The presence id bindings this connection holds (see PresenceIdBindings). */
   private readonly presenceIdOwner: PresenceBindingOwner;
+  /**
+   * Set once the connection has closed. A presence authorization that was still waiting for a read when it closed
+   * must not bind an id afterwards, as nothing would release that binding.
+   */
+  private closed: boolean = false;
 
   constructor(
     session: GatewaySession,
@@ -68,6 +73,7 @@ export class SFInboundAuthorizer implements InboundAuthorizer {
   }
 
   connectionClosed(): void {
+    this.closed = true;
     this.services.presenceIds.release(this.presenceIdOwner);
   }
 
@@ -382,9 +388,12 @@ export class SFInboundAuthorizer implements InboundAuthorizer {
   /**
    * Binds the presence id to the connection's src, held by this connection (see PresenceIdBindings), or takes over a
    * binding of the same src from an earlier connection. One connection may hold only so many ids, so that it cannot
-   * fill the table.
+   * fill the table. Nothing is bound once the connection has closed.
    */
   private bindPresenceId(presenceId: string, src: string): PolicyDecision {
+    if (this.closed) {
+      return denied('the connection has closed');
+    }
     const bindings: PresenceIdBindings = this.services.presenceIds;
     if (!this.presenceIdOwner.ids.has(presenceId) && this.presenceIdOwner.ids.size >= MAX_PRESENCE_IDS_PER_CONNECTION) {
       return denied('the connection has used too many presence ids');

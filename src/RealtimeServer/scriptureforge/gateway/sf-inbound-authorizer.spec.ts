@@ -578,6 +578,32 @@ describe('SFInboundAuthorizer', () => {
       );
     });
 
+    it('binds no presence id for a connection that closed while its presence was being checked', async () => {
+      const env = new TestEnvironment();
+      env.world.data.put(USERS_COLLECTION, USERS.translator, { displayName: 'T', avatarUrl: '', authId: '' });
+      const authorizer: SFInboundAuthorizer = env.authorizer('translator');
+      const docPresence: InboundMessage = {
+        kind: 'doc-presence',
+        collection: TEXTS_COLLECTION,
+        docId: TEXT_1,
+        channel: env.channel('doc', TEXT_1),
+        presenceId: OTHER_PRESENCE_ID,
+        range: { index: 0, length: 0 },
+        presenceVersion: 1,
+        version: 1
+      };
+      const viewer: Promise<InboundDecision> = env.authorizeWith(authorizer, env.channelPresence('T'), 'srcA');
+      const cursor: Promise<InboundDecision> = env.authorizeWith(authorizer, docPresence, 'srcA');
+
+      // SUT
+      authorizer.connectionClosed();
+
+      expect((await viewer).kind).toEqual('refused');
+      expect((await cursor).kind).toEqual('refused');
+      expect(env.presenceIds.isBoundTo(PRESENCE_ID, 'srcA')).toBe(false);
+      expect(env.presenceIds.isBoundTo(OTHER_PRESENCE_ID, 'srcA')).toBe(false);
+    });
+
     it('refuses presence for a text the user may not read', async () => {
       const env = new TestEnvironment();
 
