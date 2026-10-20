@@ -35,7 +35,9 @@ Client to ShareDB:
 ShareDB to client:
 
 1. `transport.ts` serializes each message ShareDB writes once, in order. A connection whose queue of messages waiting
-   to be authorized would pass 20,000 messages or 64 MB is closed (1013); ResourceMonitor reports the queue.
+   to be authorized would pass 20,000 messages or 64 MB is closed (1013); ResourceMonitor reports the queue. No message
+   leaves the queue while the websocket holds more than 16 MB not yet sent, until it is down to 4 MB, so a client that
+   stops reading fills the queue rather than the websocket's buffer.
 2. `outbound-decoders.ts` decodes that JSON into one of the messages in `outbound-messages.ts`.
 3. `gateway-connection.ts` replaces ShareDB's `init` id with the connection's src, matches replies to the requests it
    forwarded (which also tells an op ack from an op push), drops messages for subscriptions it has ended, authorizes a
@@ -99,10 +101,10 @@ since; a rebuild that would replay more than 10,000 ops is refused.
   since its reply has no snapshot for the egress authorizer to decide on. An op needs `mayEdit`, a create needs
   `create`. Presence is only for texts the user may read. A presence id is bound to the first connection (src) that
   uses it on any channel, held while that connection is open, and kept for its src for ten minutes after it closes, so
-  that a reconnecting client keeps it. A viewer's name and avatar are rebuilt from their user doc (an empty name when
-  the user has none, never the client's). A connection may always clear (send null) presence under an id bound to it,
-  as it does when it leaves a text after losing access. A refused presence message is dropped without a reply, because
-  the client throws on one.
+  that a reconnecting client keeps it; a presence message still being checked when its connection closes binds nothing.
+  A viewer's name and avatar are rebuilt from their user doc (an empty name when the user has none, never the
+  client's). A connection may always clear (send null) presence under an id bound to it, as it does when it leaves a
+  text after losing access. A refused presence message is dropped without a reply, because the client throws on one.
 - `SFWriteHook`: each op as ShareDB is about to apply it. Json0 edits are checked component by component against the
   collection's allowlist (`common/gateway/json0-edit-rules.ts`: paths, actions, value shapes, and who may), in time
   about proportional to the op; an empty edit needs the edit policy's checks of the doc too, such as reading it. Text
@@ -124,7 +126,9 @@ since; a rebuild that would replay more than 10,000 ops is refused.
   depends on is decided again on the fields as it leaves them, kept with the decision, without a database read, and
   if the doc is no longer readable it is sent only when it changes nothing else. A query diff with an unreadable insert is withheld and the whole query ended. `extra` is
   sent only for registry entries that say it is safe. Presence is decided by the text its channel names, and doc
-  presence must name the same doc as its channel. A database error withholds without ending the subscription.
+  presence must name the same doc as its channel. A database error withholds without ending a doc subscription (the
+  client fetches what it missed when the next op skips a version), but ends a query, as the client cannot tell that it
+  missed a query diff.
 
 **Egress.** A withheld message is dropped and logged; the subscriptions the egress authorizer names are ended on the
 server and remembered, so that messages already in flight for them are dropped too. A connection remembers at most
@@ -151,3 +155,14 @@ errors are written to the `realtime_gateway_events` collection (TTL 90 days) and
 can write 50 entries, the connections of one user together 1 a second (50 at once), and all connections 20 a second
 (200 at once), so a flood cannot fill the database and one user cannot use up the rest's share. Dropped events are
 counted on the next stored one. Logging never throws.
+
+## Known limits and decisions
+
+- **Op history.** A user who may read a doc now may read its whole op history, such as a new project member reading
+  the project's. So a past value the doc no longer shows, such as the earlier display name in a user profile, can be
+  read by anyone who may read the doc now. The gateway does not address this for now.
+- **Srcs from before the gateway.** Ops are still accepted with a ShareDB src from before the gateway (32 hex
+  characters, unsigned), so that edits a client made offline before the deploy are not lost. Each is bound to the first
+  user whose op carries it, in memory only, so the binding is lost on a restart or when the table drops it. A
+  collaborator who learns such a src could therefore make those offline edits fail by using it first. This is to be
+  removed once no clients from before the gateway remain.
