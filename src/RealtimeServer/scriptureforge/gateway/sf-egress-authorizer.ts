@@ -46,7 +46,8 @@ import { SFGatewayServices } from './sf-inbound-authorizer';
  * - `nf` is decided on the past snapshot it reveals and on the doc as stored now.
  * - Presence is decided by the doc its channel names, and a doc presence must name the same doc as its channel.
  *
- * Whatever cannot be decided, including when the database cannot be read, is withheld.
+ * Whatever cannot be decided, including when the database cannot be read, is withheld. When it belongs to a query, the
+ * query is ended too.
  */
 export class SFEgressAuthorizer implements EgressAuthorizer {
   private readonly context: SFAccessContext;
@@ -64,9 +65,14 @@ export class SFEgressAuthorizer implements EgressAuthorizer {
     try {
       return await this.decide(message, context);
     } catch {
-      // Usually the database could not be read. The subscription is left alone, so that once it can be read again the
-      // next message is decided as usual; the client fetches what it missed when an op skips a version.
-      return withhold('the message could not be checked', []);
+      // Usually the database could not be read. A doc subscription is left alone, so that once it can be read again the
+      // next message is decided as usual; the client fetches what it missed when an op skips a version. A query is
+      // ended, because the client applies query diffs by index without noticing one is missing, so its results would
+      // be out of step with every later diff.
+      const queries: SubscriptionRef[] = subscriptionsOf(message).filter(
+        (subscription: SubscriptionRef) => subscription.kind === 'query'
+      );
+      return withhold('the message could not be checked', queries);
     }
   }
 

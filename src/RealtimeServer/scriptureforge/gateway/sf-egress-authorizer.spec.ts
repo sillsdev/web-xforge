@@ -249,6 +249,35 @@ describe('SFEgressAuthorizer', () => {
       ).toEqual('withhold');
     });
 
+    it('ends the query when a message about it cannot be checked', async () => {
+      const env = new TestEnvironment();
+      const query: MatchedQuery = env.query(NOTE_THREAD_COLLECTION, true);
+      env.world.data.fail();
+
+      const reply: EgressDecision = await env.authorize(
+        'commenter',
+        env.queryReply([env.result(NOTE_THREAD_COLLECTION, SF_THREAD)]),
+        { query: query }
+      );
+      const diff: EgressDecision = await env.authorize(
+        'commenter',
+        {
+          kind: 'query-diff',
+          queryId: QUERY_ID,
+          diff: [{ kind: 'insert', index: 0, values: [env.result(NOTE_THREAD_COLLECTION, SF_THREAD)] }]
+        },
+        { query: query }
+      );
+
+      const endsQuery: EgressDecision = {
+        kind: 'withhold',
+        reason: 'the message could not be checked',
+        end: [{ kind: 'query', queryId: QUERY_ID }]
+      };
+      expect(reply).toEqual(endsQuery);
+      expect(diff).toEqual(endsQuery);
+    });
+
     it('withholds what belongs to a query it does not know', async () => {
       const env = new TestEnvironment();
 
