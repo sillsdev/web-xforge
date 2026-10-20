@@ -299,8 +299,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   async ngOnInit(): Promise<void> {
-    await this.authService.loggedIn;
+    // Set title before awaiting login so that logged out pages (e.g. join page) doesn't have "Loading..." title
     this.document.title = this.brandingService.siteName;
+    await this.authService.loggedIn;
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser();
     const userData: User | undefined = cloneDeep(this.currentUserDoc.data);
