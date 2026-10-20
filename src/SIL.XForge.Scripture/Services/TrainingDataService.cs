@@ -7,10 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using CsvHelper;
 using CsvHelper.Configuration;
+using ExcelDataReader;
 using Microsoft.Extensions.Options;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
@@ -44,38 +42,21 @@ public class TrainingDataService(
     /// <summary>
     /// Converts an Excel file to a two column CSV file.
     /// </summary>
-    /// <param name="workbook">The Excel workbook from NPOI.</param>
+    /// <param name="excelStream">The stream containing the Excel file. The stream will be left open.</param>
     /// <param name="outputStream">The stream to write the CSV file to. The stream will be left open.</param>
     /// <returns>An asynchronous task.</returns>
     /// <exception cref="FormatException">The Excel file does not contain two columns of data</exception>
-    public async Task ConvertExcelToCsvAsync(IWorkbook workbook, Stream outputStream)
+    public async Task ConvertExcelToCsvAsync(Stream excelStream, Stream outputStream)
     {
-        // Verify there is a worksheet
-        if (workbook.NumberOfSheets == 0)
+        List<(string, string)> data = [];
+        using IExcelDataReader reader = ExcelReaderFactory.CreateReader(excelStream);
+        while (reader.Read())
         {
-            throw new FormatException("The Excel file contains a row with fewer than two columns");
-        }
-
-        // Load the Excel file
-        var data = new List<(string, string)>();
-        int initialColumn = 0;
-        ISheet sheet = workbook.GetSheetAt(0);
-        for (int rowNum = sheet.FirstRowNum; rowNum <= sheet.LastRowNum; rowNum++)
-        {
-            IRow row = sheet.GetRow(rowNum);
-            if (row is null || row.FirstCellNum == -1)
-            {
-                // Skip if there are not two columns of data in this row that are side-by-side
-                continue;
-            }
-
             // Explicitly retrieve the data from the first two columns. If a third columns exists
             // in the spreadsheet we do not want that column to be interpreted as data which could
             // happen if the first column of a row is empty.
-            string firstColumnData =
-                row.GetCell(initialColumn, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
-            string secondColumnData =
-                row.GetCell(initialColumn + 1, MissingCellPolicy.CREATE_NULL_AS_BLANK).ToString() ?? string.Empty;
+            string firstColumnData = reader.GetValue(0)?.ToString()?.Trim() ?? string.Empty;
+            string secondColumnData = reader.GetValue(1)?.ToString()?.Trim() ?? string.Empty;
             if (string.IsNullOrEmpty(firstColumnData) || string.IsNullOrEmpty(secondColumnData))
             {
                 if (string.IsNullOrEmpty(firstColumnData) && string.IsNullOrEmpty(secondColumnData))
@@ -346,21 +327,12 @@ public class TrainingDataService(
                 }
                 break;
             case ".XLS":
-                {
-                    // Load the Excel 97-2003 spreadsheet
-                    await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);
-                    using IWorkbook workbook = new HSSFWorkbook(fileStream);
-                    await using Stream outputStream = fileSystemService.CreateFile(outputPath);
-                    await ConvertExcelToCsvAsync(workbook, outputStream);
-                }
-                break;
             case ".XLSX":
                 {
-                    // Load the Excel 2007+ spreadsheet
+                    // Load the Excel spreadsheet
                     await using Stream fileStream = fileSystemService.OpenFile(path, FileMode.Open);
-                    using IWorkbook workbook = new XSSFWorkbook(fileStream);
                     await using Stream outputStream = fileSystemService.CreateFile(outputPath);
-                    await ConvertExcelToCsvAsync(workbook, outputStream);
+                    await ConvertExcelToCsvAsync(fileStream, outputStream);
                 }
                 break;
             default:

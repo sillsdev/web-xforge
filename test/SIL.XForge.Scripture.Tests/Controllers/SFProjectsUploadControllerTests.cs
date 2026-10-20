@@ -5,11 +5,9 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
-using ICSharpCode.SharpZipLib.Zip;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NPOI.HSSF.UserModel;
-using NPOI.XSSF.UserModel;
+using MiniExcelLibs;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -65,14 +63,16 @@ public class SFProjectsUploadControllerTests
     public async Task ConvertToCsvAsync_UnexpectedException()
     {
         await using var env = new TestEnvironment();
+        env.TrainingDataService.ConvertExcelToCsvAsync(Arg.Any<Stream>(), Arg.Any<Stream>())
+            .ThrowsAsync(new ArgumentException());
 
-        // Set up the file upload of an invalid file that will throw an error
+        // Set up the file upload
         const string fileName = "test.xlsx";
         await using MemoryStream fileStream = new MemoryStream();
         using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
 
         // SUT
-        await Assert.ThrowsAsync<ZipException>(env.Controller.ConvertToCsvAsync);
+        await Assert.ThrowsAsync<ArgumentException>(env.Controller.ConvertToCsvAsync);
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
@@ -92,35 +92,15 @@ public class SFProjectsUploadControllerTests
     }
 
     [Test]
-    public async Task ConvertExcelToCsvAsync_UploadXlsFile()
-    {
-        await using var env = new TestEnvironment();
-
-        // Set up the file upload
-        const string fileName = "test.xls";
-        await using MemoryStream fileStream = new MemoryStream();
-        using HSSFWorkbook workbook = new HSSFWorkbook();
-        workbook.Write(fileStream, leaveOpen: true);
-        fileStream.Seek(0, SeekOrigin.Begin);
-        using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
-
-        // SUT
-        IActionResult actual = await env.Controller.ConvertToCsvAsync();
-        Assert.IsNotNull(actual);
-        Assert.IsInstanceOf<FileResult>(actual);
-        Assert.AreEqual("text/csv", (actual as FileResult)?.ContentType);
-    }
-
-    [Test]
-    public async Task ConvertExcelToCsvAsync_UploadXlsxFile()
+    public async Task ConvertExcelToCsvAsync_UploadFile()
     {
         await using var env = new TestEnvironment();
 
         // Set up the file upload
         const string fileName = "test.xlsx";
         await using MemoryStream fileStream = new MemoryStream();
-        using XSSFWorkbook workbook = new XSSFWorkbook();
-        workbook.Write(fileStream, leaveOpen: true);
+        var testData = new[] { new { ColumnA = "Test", ColumnB = "Data" } };
+        await fileStream.SaveAsAsync(testData);
         fileStream.Seek(0, SeekOrigin.Begin);
         using HttpRequestMessage _ = await env.CreateFileUploadRequestAsync(null, null, fileName, fileStream);
 

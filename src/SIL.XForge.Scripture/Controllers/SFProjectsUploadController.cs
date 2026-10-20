@@ -9,9 +9,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -64,10 +61,10 @@ public class SFProjectsUploadController : ControllerBase
         try
         {
             // Upload, convert and return the CSV file
-            await using MemoryStream fileStream = new MemoryStream();
-            using IWorkbook workbook = await GetWorkbookFromFileUploadStreamAsync(fileStream);
+            await using MemoryStream excelStream = new MemoryStream();
+            await PopulateStreamFromFileUploadAsync(excelStream);
             MemoryStream outputStream = new MemoryStream();
-            await _trainingDataService.ConvertExcelToCsvAsync(workbook, outputStream);
+            await _trainingDataService.ConvertExcelToCsvAsync(excelStream, outputStream);
 
             // Reset the stream position before returning
             outputStream.Seek(0, SeekOrigin.Begin);
@@ -214,15 +211,15 @@ public class SFProjectsUploadController : ControllerBase
     }
 
     /// <summary>
-    /// Get the Excel workbook via streaming to avoid request and form limits in ASP.NET Core.
+    /// Get the file uploaded from a stream to avoid request and form limits in ASP.NET Core.
     /// </summary>
-    /// <param name="fileStream">The stream to be used for the file.</param>
-    /// <returns>An Excel workbook, if present.</returns>
+    /// <param name="excelStream">The stream to be used for the Excel file.</param>
+    /// <returns>An asynchronous task.</returns>
     /// <remarks>
     /// Never use a cancellation token with this method - it will result in stream errors.
     /// </remarks>
     /// <exception cref="FormatException">The request is an invalid format.</exception>
-    private async Task<IWorkbook> GetWorkbookFromFileUploadStreamAsync(Stream fileStream)
+    private async Task PopulateStreamFromFileUploadAsync(Stream excelStream)
     {
         // The Content-Type must be a form-data request, and a boundary should be found in it
         if (
@@ -257,27 +254,13 @@ public class SFProjectsUploadController : ControllerBase
                 && !string.IsNullOrEmpty(contentDisposition.FileName.Value)
             )
             {
-                // NOTE: In the following code, we do not pass section.Body to the workbook constructor,
-                // as synchronous operations are disallowed on that stream.
-
                 // Only allow XLS or XLSX files, as the other types may contain macros.
                 string extension = Path.GetExtension(contentDisposition.FileName.Value).ToUpperInvariant();
-                switch (extension)
+                if (extension is ".XLS" or ".XLSX")
                 {
-                    case ".XLS":
-                    {
-                        // Return the Excel 97-2003 spreadsheet
-                        await section.Body.CopyToAsync(fileStream);
-                        fileStream.Seek(0, SeekOrigin.Begin);
-                        return new HSSFWorkbook(fileStream);
-                    }
-                    case ".XLSX":
-                    {
-                        // Return the Excel 2007+ spreadsheet
-                        await section.Body.CopyToAsync(fileStream);
-                        fileStream.Seek(0, SeekOrigin.Begin);
-                        return new XSSFWorkbook(fileStream);
-                    }
+                    await section.Body.CopyToAsync(excelStream);
+                    excelStream.Seek(0, SeekOrigin.Begin);
+                    return;
                 }
             }
 

@@ -21,6 +21,12 @@
           "System.IdentityModel.Tokens.Jwt": "[8.19.2, 9.0.0)"
         }
       },
+      "ExcelDataReader": {
+        "type": "Direct",
+        "requested": "[3.9.0, )",
+        "resolved": "3.9.0",
+        "contentHash": "3lEkUzG67UWPYj/xlX5Hua3MeQQktnK0B7WGzDjLpdJpBtct7szX0E4WB3Kl6C/8bNnbkyT2eO0FSPV+9CCemw=="
+      },
       "Microsoft.AspNetCore.HeaderParsing": {
         "type": "Direct",
         "requested": "[10.11.0, )",
@@ -66,24 +72,6 @@
         "requested": "[1.23.0, )",
         "resolved": "1.23.0",
         "contentHash": "2wDnb4umupJZ/1ikgWozFVpggH1mlHQFc0odXVv2ZagL3RYwXgW9zmC15fiqIBzmaC0vLZUnLGwDY+p8ZR7Syw=="
-      },
-      "NPOI": {
-        "type": "Direct",
-        "requested": "[2.7.6, 2.7.6]",
-        "resolved": "2.7.6",
-        "contentHash": "itLDt6M2VFcWjTGpzeRNy7Axmp2cVjHpTtf4zVLm6XQvuINlkHFBabBd4s8iCRAupx/NBSzqPxqe7+5fJOY8NQ==",
-        "dependencies": {
-          "BouncyCastle.Cryptography": "2.6.2",
-          "Enums.NET": "5.0.0",
-          "ExtendedNumerics.BigDecimal": "2025.1001.2.129",
-          "MathNet.Numerics.Signed": "5.0.0",
-          "Microsoft.IO.RecyclableMemoryStream": "3.0.1",
-          "NSax": "1.0.2",
-          "SharpZipLib": "1.4.2",
-          "SixLabors.Fonts": "1.0.1",
-          "SixLabors.ImageSharp": "2.1.11",
-          "ZString": "2.6.0"
-        }
       },
       "ParatextData": {
         "type": "Direct",
@@ -237,16 +225,6 @@
           "Microsoft.Extensions.DependencyModel": "8.0.1"
         }
       },
-      "Enums.NET": {
-        "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "NfGq1iLJZ15XZPgBhjk4Ns1XZ+beaGk6cog6B4LxcROdGoSMdgCJqYXF70P6VTd3dz/vFRY4h1u1lAMqW/DC2w=="
-      },
-      "ExtendedNumerics.BigDecimal": {
-        "type": "Transitive",
-        "resolved": "2025.1001.2.129",
-        "contentHash": "+woGT1lsBtwkntOpx2EZbdbySv0aWPefE0vrfvclxVdbi4oa2bbtphFPWgMiQe+kRCPICbfFJwp6w1DuR7Ge2Q=="
-      },
       "Hangfire.AspNetCore": {
         "type": "Transitive",
         "resolved": "1.8.25",
@@ -324,11 +302,6 @@
         "type": "Transitive",
         "resolved": "1.4.0",
         "contentHash": "qCRMzlmmkBOy2mo1vH58+6YoxRLuT79izKoGUyveRLqploap0Pg7/y1smZZa1i9OCy0ATfB8v5yOEuSUb9DPXw=="
-      },
-      "MathNet.Numerics.Signed": {
-        "type": "Transitive",
-        "resolved": "5.0.0",
-        "contentHash": "PSrHBVMf41SjbhlnpOMnoir8YgkyEJ6/nwxvjYpH+vJCexNcx2ms6zRww5yLVqLet1xLJgZ39swtKRTLhWdnAw=="
       },
       "Microsoft.AspNetCore.Authentication.JwtBearer": {
         "type": "Transitive",
@@ -514,11 +487,6 @@
           "Microsoft.IdentityModel.Logging": "8.19.2"
         }
       },
-      "Microsoft.IO.RecyclableMemoryStream": {
-        "type": "Transitive",
-        "resolved": "3.0.1",
-        "contentHash": "s/s20YTVY9r9TPfTrN5g8zPF1YhwxyqO6PxUkrYTGI2B+OGPe9AdajWZrLhFqXIvqIW23fnUE4+ztrUWNU1+9g=="
-      },
       "Microsoft.OpenApi": {
         "type": "Transitive",
         "resolved": "2.7.5",
@@ -687,11 +655,6 @@
         "type": "Transitive",
         "resolved": "2.2.1",
         "contentHash": "6sZ5uynQeAE9dPWBQGKebNmxbY4xsvcc5VplB5WkYEESUS7oy4AwnFp0FhqxTSKm/PaFrFqLrYr696CYN8cugg=="
-      },
-      "NSax": {
-        "type": "Transitive",
-        "resolved": "1.0.2",
-        "contentHash": "7txlId2RJTQBL3YdSGO7x70+r3HUOCw725lu0OoBgThRl/e3RhAZ2QKYxW2y9dPRtqbFZYHVa8siIeB8+L//Cg=="
       },
       "ParatextCorePluginInterfaces": {
         "type": "Transitive",
@@ -906,16 +869,6 @@
           "System.IO.FileSystem.AccessControl": "5.0.0",
           "icu.net": "3.0.1"
         }
-      },
-      "SixLabors.Fonts": {
-        "type": "Transitive",
-        "resolved": "1.0.1",
-        "contentHash": "ljezRHWc7N0azdQViib7Aa5v+DagRVkKI2/93kEbtjVczLs+yTkSq6gtGmvOcx4IqyNbO3GjLt7SAQTpLkySNw=="
-      },
-      "SixLabors.ImageSharp": {
-        "type": "Transitive",
-        "resolved": "2.1.11",
-        "contentHash": "tUvsejgzUmEbES114yLseRxmFiYlQbH5RyaYXUQsEL7ksDo1/kW+ZL1EfD6iSUfxj7LHU8p110oFvSrRfsaWSQ=="
       },
       "Snappier": {
         "type": "Transitive",
@@ -1205,11 +1158,6 @@
         "type": "Transitive",
         "resolved": "0.7.3",
         "contentHash": "U9Ix4l4cl58Kzz1rJzj5hoVTjmbx1qGMwzAcbv1j/d3NzrFaESIurQyg+ow4mivCgkE3S413y+U9k4WdnEIkRA=="
-      },
-      "ZString": {
-        "type": "Transitive",
-        "resolved": "2.6.0",
-        "contentHash": "XE8a+11nZg0LRaf+RGABEWaHIf8yGd5w8v/Ra1iWxMBmAVzwuKbW7G21mS0U7w7sh1lYcgckInWGgnz4qyET8A=="
       },
       "sil.converters.usj": {
         "type": "Project",
