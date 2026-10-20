@@ -1,5 +1,5 @@
 import { AsyncPipe } from '@angular/common';
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { firstValueFrom } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -8,7 +8,11 @@ import { environment } from '../../../environments/environment';
 import { BrandingService } from '../../core/branding.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../notice/notice.component';
-import { UserFeedbackDialogComponent, UserFeedbackDialogResult } from './user-feedback-dialog.component';
+import {
+  UserFeedbackDialogComponent,
+  UserFeedbackDialogData,
+  UserFeedbackDialogResult
+} from './user-feedback-dialog.component';
 
 /** A notice asking the user for feedback, which opens the feedback dialog and submits what the user enters. */
 @Component({
@@ -18,6 +22,7 @@ import { UserFeedbackDialogComponent, UserFeedbackDialogResult } from './user-fe
 })
 export class UserFeedbackComponent {
   @Output() submitted = new EventEmitter<void>();
+  @Input() requireReferenceProject = false;
 
   readonly feedbackPrompt = this.i18n.interpolate('user_feedback.has_drafting_helped_project_send_feedback', {
     siteName: this.brandingService.siteName
@@ -36,7 +41,10 @@ export class UserFeedbackComponent {
 
   async onSendFeedback(): Promise<void> {
     const dialogRef: MatDialogRef<UserFeedbackDialogComponent, UserFeedbackDialogResult | undefined> =
-      this.dialogService.openMatDialog(UserFeedbackDialogComponent, { disableClose: true });
+      this.dialogService.openMatDialog<UserFeedbackDialogComponent, UserFeedbackDialogData>(
+        UserFeedbackDialogComponent,
+        { disableClose: true, data: { requireProjectReference: this.requireReferenceProject } }
+      );
     const feedback: UserFeedbackDialogResult | undefined = await firstValueFrom(dialogRef.afterClosed());
     if (feedback != null) {
       try {
