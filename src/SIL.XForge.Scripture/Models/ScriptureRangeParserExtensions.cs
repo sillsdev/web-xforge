@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using SIL.Machine.Scripture;
 
 namespace SIL.XForge.Scripture.Models;
 

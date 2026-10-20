@@ -35,6 +35,7 @@ using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.Converters.Usj;
+using SIL.Machine.Scripture;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.WritingSystems;
