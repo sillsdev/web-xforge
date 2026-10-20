@@ -22,6 +22,7 @@ import {
   MAX_FRAME_BYTES,
   MAX_OUTBOUND_QUEUE_BYTES,
   MAX_OUTBOUND_QUEUE_MESSAGES,
+  OUTBOUND_HIGH_WATER_BYTES,
   parseInboundFrame,
   TransportHandlers,
   truncateCloseReason
@@ -497,6 +498,55 @@ describe('GatewayTransport queue limits', () => {
     expect(closed.code).toEqual(CLOSE_CODE_TRY_AGAIN_LATER);
     expect(env.handlers.handleOverflow).toHaveBeenCalledTimes(1);
   });
+
+  it('stops sending while the client is not reading, and sends everything in order once it reads again', async () => {
+    const env = await connect();
+    env.client.pause();
+    const messageText: string = 'x'.repeat(1024 * 1024);
+    // In case sending never stops: more than the socket and the operating system's buffers hold together, and less
+    // than the outbound queue may hold.
+    const maxCount: number = MAX_OUTBOUND_QUEUE_BYTES / messageText.length - 2;
+    let count: number = 0;
+    while (env.transport.stream.queuedOutbound.messages < 2 && count < maxCount) {
+      env.transport.stream.write({ n: count, text: messageText });
+      count++;
+      await env.delay(1);
+    }
+
+    expect(env.transport.stream.queuedOutbound.messages, 'messages wait in the queue').toBeGreaterThanOrEqual(2);
+    expect(env.serverSocket.bufferedAmount).toBeLessThanOrEqual(OUTBOUND_HIGH_WATER_BYTES + messageText.length * 2);
+
+    // SUT
+    env.client.resume();
+
+    await env.waitFor(() => env.clientMessages.length === count, 20_000);
+    expect(env.clientMessages.map((json: string) => JSON.parse(json).n)).toEqual(Array.from(Array(count).keys()));
+    expect(env.transport.isClosed).toBe(false);
+  }, 30_000);
+
+  it('closes with 1013 when a client stops reading and the outbound queue passes its limit', async () => {
+    let bufferedAtOverflow: number = -1;
+    const env = await connect({
+      handleOverflow: () => (bufferedAtOverflow = env.serverSocket.bufferedAmount)
+    });
+    env.client.pause();
+    const messageText: string = 'x'.repeat(1024 * 1024);
+    // Enough to fill the queue and the socket's buffer, with room for what the operating system buffers.
+    const maxCount: number = (MAX_OUTBOUND_QUEUE_BYTES + OUTBOUND_HIGH_WATER_BYTES) / messageText.length + 64;
+
+    // SUT
+    for (let count = 0; count < maxCount && !env.transport.isClosed; count++) {
+      env.transport.stream.write({ n: count, text: messageText });
+      await env.delay(1);
+    }
+
+    expect(env.transport.isClosed).toBe(true);
+    expect(env.handlers.handleOverflow).toHaveBeenCalledTimes(1);
+    expect(bufferedAtOverflow).toBeLessThanOrEqual(OUTBOUND_HIGH_WATER_BYTES + messageText.length * 2);
+    // The close frame waits behind what the socket already holds, so the client sees it once it reads again.
+    env.client.resume();
+    expect((await env.clientClosed).code).toEqual(CLOSE_CODE_TRY_AGAIN_LATER);
+  }, 30_000);
 });
 
 /** Builds deeply nested JSON text for the parse tests. */

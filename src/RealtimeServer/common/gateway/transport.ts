@@ -38,6 +38,16 @@ export const MAX_INBOUND_QUEUE_BYTES = 64 * 1024 * 1024;
 export const MAX_OUTBOUND_QUEUE_MESSAGES = 20_000;
 export const MAX_OUTBOUND_QUEUE_BYTES = 64 * 1024 * 1024;
 
+/**
+ * While the websocket holds more than this many bytes that it has not yet handed to the network, no more messages are
+ * taken off the outbound queue. ws buffers whatever it is given, without limit, so without this a client that stops
+ * reading would grow ws's buffer instead of the queue, and never reach the queue's limits. Sending starts again once
+ * the websocket holds at most OUTBOUND_LOW_WATER_BYTES. So what waits for a client is at most the queue's limit, plus
+ * this, plus the one message being sent when the mark was passed.
+ */
+export const OUTBOUND_HIGH_WATER_BYTES = 16 * 1024 * 1024;
+export const OUTBOUND_LOW_WATER_BYTES = 4 * 1024 * 1024;
+
 /** Websocket close codes the transport uses (RFC 6455 section 7.4.1). */
 export const CLOSE_CODE_NORMAL = 1000;
 export const CLOSE_CODE_PROTOCOL_ERROR = 1002;
@@ -230,6 +240,10 @@ export class GatewayTransport {
   private inboundRunning: boolean = false;
   private outboundRunning: boolean = false;
   private inboundPaused: boolean = false;
+  /** Sends whose callback ws has not called yet, which it does once it has handed the text to the network. */
+  private sendsInFlight: number = 0;
+  /** Set while the outbound queue waits for the websocket's buffer to drain; calling it lets sending continue. */
+  private resumeOutbound: (() => void) | undefined;
   private closed: boolean = false;
   private socketCloseHandled: boolean = false;
 
@@ -401,11 +415,18 @@ export class GatewayTransport {
     this.processOutbound().catch((error: unknown) => this.fail(error));
   }
 
-  /** Sends queued outbound messages one at a time, until the queue is empty or the transport closes. */
+  /**
+   * Sends queued outbound messages one at a time, until the queue is empty or the transport closes. While the websocket
+   * holds more than OUTBOUND_HIGH_WATER_BYTES, it waits for it to drain first.
+   */
   private async processOutbound(): Promise<void> {
     this.outboundRunning = true;
     try {
       while (!this.closed) {
+        if (this.socketIsBackedUp()) {
+          await this.waitForSocketToDrain();
+          continue;
+        }
         const item: OutboundItem | undefined = this.outboundQueue.shift();
         if (item == null) {
           break;
@@ -430,8 +451,35 @@ export class GatewayTransport {
     if (this.socket.readyState !== ws.OPEN) {
       return;
     }
+    this.sendsInFlight++;
     // A failed send means the socket is going away. Its 'close' event does the cleanup, so the error is ignored.
-    this.socket.send(text, () => {});
+    this.socket.send(text, () => this.guard(() => this.onSendWritten()));
+  }
+
+  /**
+   * Whether the websocket holds too much unsent data to give it more. Only data from sends still in flight counts:
+   * without one, no send callback would come to end the wait.
+   */
+  private socketIsBackedUp(): boolean {
+    return this.sendsInFlight > 0 && this.socket.bufferedAmount > OUTBOUND_HIGH_WATER_BYTES;
+  }
+
+  private waitForSocketToDrain(): Promise<void> {
+    return new Promise<void>((resolve: () => void) => (this.resumeOutbound = resolve));
+  }
+
+  private onSendWritten(): void {
+    this.sendsInFlight--;
+    if (this.sendsInFlight === 0 || this.socket.bufferedAmount <= OUTBOUND_LOW_WATER_BYTES) {
+      this.continueOutbound();
+    }
+  }
+
+  /** Lets the outbound queue continue if it is waiting for the websocket to drain. */
+  private continueOutbound(): void {
+    const resume: (() => void) | undefined = this.resumeOutbound;
+    this.resumeOutbound = undefined;
+    resume?.();
   }
 
   private onStreamError(error: Error): void {
@@ -510,6 +558,8 @@ export class GatewayTransport {
     this.inboundBytes = 0;
     this.outboundQueue.length = 0;
     this.outboundBytes = 0;
+    // Lets a wait for the websocket to drain end, so that the outbound loop sees the transport is closed.
+    this.continueOutbound();
   }
 
   private terminateSocket(): void {
