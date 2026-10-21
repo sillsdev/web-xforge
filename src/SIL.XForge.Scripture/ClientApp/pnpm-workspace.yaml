@@ -12,6 +12,7 @@ minimumReleaseAgeExclude:
   - image-size@2.0.3
   - http-cache-semantics@4.3.0
   - handlebars@4.7.10
+  - "@angular/common@20.3.34"
 overrides:
   "@babel/core@<=7.29.0": ^7.29.6
   ajv@>=7.0.0-alpha.0 <8.18.0: ^8.18.0
