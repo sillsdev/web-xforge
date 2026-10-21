@@ -1,13 +1,13 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subject } from 'rxjs';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { ComparisonOperator, QueryParameters, Sort } from 'xforge-common/query-parameters';
+import { ComparisonOperator, PropertyFilter, QueryParameters, Sort } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 
@@ -51,7 +51,7 @@ export class CheckingQuestionsService {
    */
   queryQuestions(
     projectId: string,
-    options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {},
+    options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean; limit?: number } = {},
     destroyRef: DestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
@@ -74,20 +74,28 @@ export class CheckingQuestionsService {
       queryParams.$sort = this.getQuestionSortParams('ascending');
     }
 
+    if (options.limit != null) {
+      queryParams.$limit = options.limit;
+    }
+
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
   }
 
   /**
-   * Query the questions that precede or follow the supplied question.
+   * Query the question that precedes or follows the supplied question, skipping questions that the filter hides.
    * @param projectId The ID of the project to query
    * @param relativeTo The question or verse to use as a reference point
    * @param prevOrNext Whether to query the question before or after the reference point
+   * @param questionFilter The filter the adjacent question must match
+   * @param userId The ID of the current user, used by the filters that depend on whether the user has answered
    * @param destroyRef The reference to destroy the query when the component gets destroyed.
    */
-  queryAdjacentQuestions(
+  queryAdjacentQuestion(
     projectId: string,
     relativeTo: Question | VerseRefData,
     prevOrNext: 'prev' | 'next',
+    questionFilter: QuestionFilter,
+    userId: string,
     destroyRef: DestroyRef
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const verseRef: VerseRefData = this.isVerseRefData(relativeTo) ? relativeTo : relativeTo.verseRef;
@@ -97,6 +105,7 @@ export class CheckingQuestionsService {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId,
       [obj<Question>().pathStr(q => q.isArchived)]: false,
+      ...this.getQuestionFilterParams(questionFilter, userId),
 
       $and: [
         // Exclude the current question if supplied
@@ -141,7 +150,10 @@ export class CheckingQuestionsService {
         }
       ],
 
-      $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending')
+      $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending'),
+      // Only the nearest question is needed. Without a limit, this would load every question before or after the
+      // reference point, which in a large project can be most of its questions.
+      $limit: 1
     };
 
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams, destroyRef);
@@ -207,6 +219,36 @@ export class CheckingQuestionsService {
         this.afterQuestionCreated$.next(questionDoc);
         return questionDoc;
       });
+  }
+
+  /**
+   * Gets the query criteria for the questions that a filter shows. Deleted answers are ignored. These criteria are used
+   * both in queries and to filter questions that are already loaded.
+   */
+  getQuestionFilterParams(questionFilter: QuestionFilter, userId: string): PropertyFilter {
+    const answersPath: string = obj<Question>().pathStr(q => q.answers);
+    const notDeleted: PropertyFilter = { [obj<Answer>().pathStr(a => a.deleted)]: { $ne: true } };
+    const ownedByUser: PropertyFilter = { ...notDeleted, [obj<Answer>().pathStr(a => a.ownerRef)]: userId };
+    const statusPath: string = obj<Answer>().pathStr(a => a.status);
+    switch (questionFilter) {
+      case QuestionFilter.None:
+        return {};
+      case QuestionFilter.CurrentUserHasAnswered:
+        return { [answersPath]: { $elemMatch: ownedByUser } };
+      case QuestionFilter.CurrentUserHasNotAnswered:
+        return { [answersPath]: { $not: { $elemMatch: ownedByUser } } };
+      case QuestionFilter.HasAnswers:
+        return { [answersPath]: { $elemMatch: notDeleted } };
+      case QuestionFilter.NoAnswers:
+        return { [answersPath]: { $not: { $elemMatch: notDeleted } } };
+      case QuestionFilter.StatusNone:
+        // A null status also matches answers that have no status
+        return { [answersPath]: { $elemMatch: { ...notDeleted, [statusPath]: { $in: [AnswerStatus.None, null] } } } };
+      case QuestionFilter.StatusExport:
+        return { [answersPath]: { $elemMatch: { ...notDeleted, [statusPath]: AnswerStatus.Exportable } } };
+      case QuestionFilter.StatusResolved:
+        return { [answersPath]: { $elemMatch: { ...notDeleted, [statusPath]: AnswerStatus.Resolved } } };
+    }
   }
 
   private isVerseRefData(item: Question | VerseRefData): item is VerseRefData {
