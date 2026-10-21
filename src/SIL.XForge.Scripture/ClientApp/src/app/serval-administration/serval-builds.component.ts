@@ -52,6 +52,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
 import { isPopulatedString, isString, notNull } from '../../type-utils';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { ChapterSet, trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
@@ -70,6 +71,7 @@ import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.serv
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { SearchRecordsComponent } from './search-records.component';
 import { ServalAdminParams } from './serval-administration.component';
+import { ServalAdministrationService } from './serval-administration.service';
 import { ServalBuildProblemsDialog, ServalBuildProblemsDialogSection } from './serval-build-problems-dialog.component';
 import {
   BookAndChapters,
@@ -208,7 +210,9 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   /** Max problems to preview in problems card. */
   public readonly problemPreviewLimit: number = 8;
   useUnspecifiedDateRange$: ReplaySubject<boolean> = new ReplaySubject<boolean>();
-  protected currentProjectFilter: string | null = null;
+  protected currentProjectFilter?: string;
+  /** Display name of the project that builds are filtered to, loaded from the project doc. */
+  protected filteredProjectName?: string;
 
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
@@ -247,7 +251,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     private readonly userService: UserService,
     private readonly destroyRef: DestroyRef,
     private readonly route: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly servalAdministrationService: ServalAdministrationService
   ) {
     super(noticeService, 'ServalBuildsComponent');
 
@@ -289,7 +294,14 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         if (this.searchControl.value !== searchTextValue) {
           this.searchControl.setValue(searchTextValue, { emitEvent: false });
         }
-        this.currentProjectFilter = isPopulatedString(saParams.projectId) ? saParams.projectId : null;
+        const projectFilter: string | undefined = isPopulatedString(saParams.projectId)
+          ? saParams.projectId
+          : undefined;
+        if (projectFilter !== this.currentProjectFilter) {
+          this.filteredProjectName = undefined;
+          this.currentProjectFilter = projectFilter;
+          if (projectFilter != null) void this.loadFilteredProjectName(projectFilter);
+        }
         this.useUnspecifiedDateRange$.next(this.currentProjectFilter != null);
         this.applyFiltersAndStats();
       });
@@ -297,17 +309,6 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
     this.dateRange$.next(range);
-  }
-
-  /** Display name of the project that builds are filtered to, if known from the loaded builds. */
-  protected get filteredProjectName(): string | undefined {
-    if (this.currentProjectFilter == null) return undefined;
-    const report: ServalBuildReportDto | undefined = this.allRows.find(
-      (row: ServalBuildRow) => row.report.project?.sfProjectId === this.currentProjectFilter
-    )?.report;
-    return report == null
-      ? undefined
-      : buildProjectDisplayName(report.project?.shortName, report.project?.name, this.currentProjectFilter);
   }
 
   protected clearProjectFilter(): void {
@@ -611,6 +612,17 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       this.applyFiltersAndStats();
     } finally {
       this.loadingFinished();
+    }
+  }
+
+  /** Sets the display name of the project that builds are filtered to, from the project doc. */
+  private async loadFilteredProjectName(projectId: string): Promise<void> {
+    try {
+      const projectDoc: SFProjectProfileDoc = await this.servalAdministrationService.get(projectId);
+      this.filteredProjectName = buildProjectDisplayName(projectDoc.data?.shortName, projectDoc.data?.name, projectId);
+    } catch (error) {
+      // We can filter for a now-deleted project, so an error here is not unexpected and fully supported
+      console.error('Error fetching project name:', error);
     }
   }
 
