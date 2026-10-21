@@ -421,7 +421,7 @@ public class MachineProjectService(
     }
 
     /// <summary>
-    /// Sets <see cref="SFProjectUserConfig.LatestDraftResult"/> to the result of the build for each administrator
+    /// Sets <see cref="SFProjectUserConfig.UnreadDraftResult"/> to the result of the build for each administrator
     /// and translator on the project, so the frontend can notify them that a draft build has finished.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
@@ -463,10 +463,19 @@ public class MachineProjectService(
                 IDocument<SFProjectUserConfig> userConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
                     SFProjectUserConfig.GetDocId(sfProjectId, userId)
                 );
-                if (userConfigDoc.IsLoaded)
+                if (!userConfigDoc.IsLoaded)
                 {
-                    await userConfigDoc.SubmitJson0OpAsync(op => op.Set(puc => puc.LatestDraftResult, draftResult));
+                    return;
                 }
+                bool previousResultHasPriority =
+                    draftResult == DraftResult.Cancelled && userConfigDoc.Data.UnreadDraftResult is not null;
+
+                if (previousResultHasPriority)
+                {
+                    return;
+                }
+
+                await userConfigDoc.SubmitJson0OpAsync(op => op.Set(puc => puc.UnreadDraftResult, draftResult));
             }
 
             await Task.WhenAll(userIds.Select(setDraftResultAsync));
