@@ -558,6 +558,25 @@ public class MachineProjectServiceTests
         Assert.IsNull(env.GetLatestDraftResult(User03));
     }
 
+    [Test]
+    public async Task SetDraftResultForProjectUsersAsync_CancelledDoesNotOverwriteExistingResult()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.SetupProjectUserRolesAsync();
+        await env.ProjectUserConfigs.UpdateAsync(
+            SFProjectUserConfig.GetDocId(Project01, User01),
+            u => u.Set(puc => puc.UnreadDraftResult, DraftResult.Completed)
+        );
+
+        // SUT
+        await env.Service.SetDraftResultForProjectUsersAsync(Project01, JobState.Canceled);
+
+        // The existing result is preserved, and users without a result are still set
+        Assert.AreEqual(DraftResult.Completed, env.GetLatestDraftResult(User01));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User02));
+    }
+
     [TestCase(JobState.Pending)]
     [TestCase(JobState.Active)]
     public async Task SetDraftResultForProjectUsersAsync_DoesNotSetResultForUnfinishedBuilds(JobState buildState)
@@ -3930,7 +3949,7 @@ public class MachineProjectServiceTests
         /// <param name="userId">The user identifier.</param>
         /// <returns>The latest draft result, if set.</returns>
         public string? GetLatestDraftResult(string userId) =>
-            ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, userId)).LatestDraftResult;
+            ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, userId)).UnreadDraftResult;
 
         /// <summary>
         /// Sets up the additional training data
