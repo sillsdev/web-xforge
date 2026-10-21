@@ -1653,6 +1653,26 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetBuildsSinceAsync_ReturnsEmptyArrayWhenProjectBuildsNotFound()
+    {
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+        env.SetEmptyDraftGenerationMetricAssociations();
+
+        // SUT
+        IReadOnlyList<ServalBuildReportDto> reports = await env.Service.GetBuildsSinceAsync(
+            User01,
+            isServalAdmin: true,
+            beginning: null,
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsEmpty(reports);
+    }
+
+    [Test]
     public async Task GetBuildsSinceAsync_ReturnsAllProjectBuildsWhenNoDateSpecified()
     {
         var env = new TestEnvironment();

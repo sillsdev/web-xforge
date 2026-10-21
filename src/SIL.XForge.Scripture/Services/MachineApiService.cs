@@ -1340,7 +1340,7 @@ public partial class MachineApiService(
 
     /// <summary>
     /// Gets the Serval builds for a project's pre-translation engine that were created after the specified time.
-    /// Returns an empty list if the project has no pre-translation engine.
+    /// Returns an empty list if the project has no pre-translation engine, or Serval does not have the engine.
     /// </summary>
     private async Task<IList<TranslationBuild>> GetProjectBuildsCreatedAfterAsync(
         string sfProjectId,
@@ -1358,10 +1358,17 @@ public partial class MachineApiService(
             return [];
         }
 
-        IList<TranslationBuild> builds = await translationEnginesClient.GetAllBuildsAsync(
-            translationEngineId,
-            cancellationToken
-        );
+        IList<TranslationBuild> builds;
+        try
+        {
+            builds = await translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken);
+        }
+        catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+        {
+            // Serval does not have the engine, so there are no builds
+            return [];
+        }
+
         return [.. builds.Where(b => beginning is null || (b.DateCreated is not null && b.DateCreated >= beginning))];
     }
 
@@ -1385,7 +1392,7 @@ public partial class MachineApiService(
                 nameof(CancelPreTranslationBuildAsync),
                 nameof(BuildCompletedAsync),
             ],
-            fromDate: since?.UtcDateTime ?? null
+            fromDate: since?.UtcDateTime
         );
 
         // Group by SF project ID
