@@ -1,7 +1,7 @@
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// The possible values for <see cref="SFProjectUserConfig.LatestDraftResult"/>.
+/// The possible values for <see cref="SFProjectUserConfig.UnreadDraftResult"/>.
 /// </summary>
 public static class DraftResult
 {

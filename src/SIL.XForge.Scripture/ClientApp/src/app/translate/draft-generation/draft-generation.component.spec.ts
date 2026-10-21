@@ -174,15 +174,6 @@ describe('DraftGenerationComponent', () => {
       });
     }
 
-    static initProjectUserConfig(latestDraftResult: DraftResult | undefined): void {
-      mockProjectUserConfigDoc = jasmine.createSpyObj<SFProjectUserConfigDoc>(['submitJson0Op'], {
-        data: createTestProjectUserConfig({ projectRef: projectId, ownerRef: 'user01', latestDraftResult })
-      });
-      mockActivatedProjectUserConfigService = jasmine.createSpyObj<ActivatedProjectUserConfigService>([], {
-        projectUserConfigDoc$: of(mockProjectUserConfigDoc)
-      });
-    }
-
     static initProjectUserConfig(unreadDraftResult: DraftResult | undefined): void {
       mockProjectUserConfigDoc = jasmine.createSpyObj<SFProjectUserConfigDoc>(['submitJson0Op'], {
         data: createTestProjectUserConfig({ projectRef: projectId, ownerRef: 'user01', unreadDraftResult })

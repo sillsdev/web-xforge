@@ -39,5 +39,5 @@ public class SFProjectUserConfig : ProjectData
     public string? SelectedBiblicalTermsFilter { get; set; }
     public string? SelectedDraftTargetParatextId { get; set; }
     public bool? ShowEditorTabsInSinglePane { get; set; }
-    public string? LatestDraftResult { get; set; }
+    public string? UnreadDraftResult { get; set; }
 }
