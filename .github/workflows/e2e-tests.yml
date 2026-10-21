@@ -441,6 +441,8 @@ jobs:
         run: |
           set -xueo pipefail
           lsb_release -a
+          # Upstream kernel version, for the mongod workaround in deploy/dev-server.playbook.yml
+          cat /proc/version_signature || true
           which dotnet
           dotnet --version
           dotnet --list-sdks

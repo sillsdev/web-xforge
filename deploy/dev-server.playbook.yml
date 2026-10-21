@@ -39,12 +39,36 @@
           - nodejs
           - npm
 
+    - name: Create mongod service drop-in directory
+      # Works around mongod crashing on Linux kernels 6.19 to 7.0.13, together with the next task. On these kernels, the
+      # tcmalloc built into MongoDB 8.0 crashes mongod at startup (https://jira.mongodb.org/browse/SERVER-121912).
+      # Setting glibc.pthread.rseq=1 stops tcmalloc from using rseq, at some performance cost. Kernel 7.0.14 restored
+      # the behavior tcmalloc relies on.
+      # REMOVE THIS TASK AND THE NEXT ONE once the GitHub ubuntu-24.04 runner used by e2e-tests.yml runs upstream kernel
+      # 7.0.14 or later. Check the last field of /proc/version_signature in that workflow's "Pre-build report" step:
+      # Ubuntu's own version string (uname -r) stays at 7.0.0 when it includes 7.0.14's fixes. Also remove that check
+      # from "Pre-build report".
+      ansible.builtin.file:
+        path: /etc/systemd/system/mongod.service.d
+        state: directory
+        mode: "0755"
+
+    - name: Disable tcmalloc's use of rseq in mongod
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/mongod.service.d/environment.conf
+        mode: "0644"
+        content: |
+          [Service]
+          Environment="GLIBC_TUNABLES=glibc.pthread.rseq=1"
+
     - name: Restart and enable mongod service
       # Note that the mongodb-org packages install a service named "mongod", not "mongodb"
-      ansible.builtin.service:
+      ansible.builtin.systemd_service:
         name: mongod
         state: restarted
         enabled: true
+        # Pick up changes to the mongod.service.d drop-in.
+        daemon_reload: true
 
     - name: Wait for mongod to start
       # We don't want to try to connect using mongosh until the service is running.
