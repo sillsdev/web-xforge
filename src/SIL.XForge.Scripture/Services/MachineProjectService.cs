@@ -1192,8 +1192,7 @@ public class MachineProjectService(
                 translationEngineId,
                 cancellationToken
             );
-            bool updateTranslationEngineLanguages = false;
-            bool recreateTranslationEngine = false;
+            bool updateTranslationEngine = false;
 
             // See if the target language has changed
             string projectTargetLanguage = GetTargetLanguage(project, useEcho);
@@ -1202,7 +1201,7 @@ public class MachineProjectService(
                 string message =
                     $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
                 logger.LogInformation(message);
-                updateTranslationEngineLanguages = true;
+                updateTranslationEngine = true;
             }
 
             // See if the source language has changed
@@ -1212,7 +1211,7 @@ public class MachineProjectService(
                 string message =
                     $"Source language has changed from {translationEngine.SourceLanguage} to {projectSourceLanguage}.";
                 logger.LogInformation(message);
-                updateTranslationEngineLanguages = true;
+                updateTranslationEngine = true;
             }
 
             // See if the translation engine type has changed
@@ -1222,24 +1221,19 @@ public class MachineProjectService(
                 string message =
                     $"Translation engine has changed from {translationEngine.Type} to {translationEngineType}.";
                 logger.LogInformation(message);
-                recreateTranslationEngine = true;
+                updateTranslationEngine = true;
             }
 
-            if (recreateTranslationEngine)
+            // Update the translation engine to match the new languages or translation engine type
+            if (updateTranslationEngine)
             {
-                // Recreate the translation engine to use the new engine type
-                await RemoveProjectAsync(project.Id, cancellationToken);
-                await CreateServalProjectAsync(project, useEcho, cancellationToken);
-            }
-            else if (updateTranslationEngineLanguages)
-            {
-                // Update the translation engine to match the new languages
                 await translationEnginesClient.UpdateAsync(
                     translationEngineId,
                     new TranslationEngineUpdateConfig
                     {
                         SourceLanguage = projectSourceLanguage,
                         TargetLanguage = projectTargetLanguage,
+                        Type = translationEngineType,
                     },
                     cancellationToken
                 );
