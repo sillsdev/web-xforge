@@ -1970,7 +1970,7 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_RecreatePreTranslationEngineIfEngineChanges()
+    public async Task RecreateOrUpdateTranslationEngineIfRequiredAsync_UpdateIfTheEngineChanges()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -2005,8 +2005,9 @@ public class MachineProjectServiceTests
             useEcho: true,
             CancellationToken.None
         );
-        await env.Service.Received(1).RemoveProjectAsync(Project01, CancellationToken.None);
-        await env.Service.Received(1).CreateServalProjectAsync(project, useEcho: true, CancellationToken.None);
+        await env
+            .TranslationEnginesClient.Received(1)
+            .UpdateAsync(TranslationEngine01, Arg.Any<TranslationEngineUpdateConfig>(), CancellationToken.None);
     }
 
     [Test]
