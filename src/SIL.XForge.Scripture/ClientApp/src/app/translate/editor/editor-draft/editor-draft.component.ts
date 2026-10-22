@@ -370,23 +370,21 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
             ?.draftApplied ?? false;
       });
 
+    // The build history covers the whole project, so it loads once per project and whenever the app comes back online.
+    // Any drafted chapter can need it, not just those in the latest build, because older draft revisions show the low
+    // confidence warning from the build that produced them.
     combineLatest([
-      this.onlineStatusService.onlineStatus$,
-      this.activatedProjectService.projectDoc$,
-      this.draftText.editorCreated,
-      this.inputChanged$
+      this.onlineStatusService.onlineStatus$.pipe(distinctUntilChanged()),
+      this.activatedProjectService.projectDoc$.pipe(filterNullish())
     ])
       .pipe(
         quietTakeUntilDestroyed(this.destroyRef),
-        filter(([_, projectDoc]) => projectDoc !== undefined),
         tap(([_, projectDoc]) => {
-          this.targetProject = projectDoc!.data;
+          this.targetProject = projectDoc.data;
         }),
-        filter(([isOnline, _]) => {
-          return isOnline && this.doesLatestCompletedHaveDraft;
-        })
+        filter(([isOnline, projectDoc]) => isOnline && this.projectService.hasDraft(projectDoc.data))
       )
-      .subscribe(([_, projectDoc]) => this.refreshBuildHistory(projectDoc!.id));
+      .subscribe(([_, projectDoc]) => this.refreshBuildHistory(projectDoc.id));
   }
 
   navigateToFormatting(): void {

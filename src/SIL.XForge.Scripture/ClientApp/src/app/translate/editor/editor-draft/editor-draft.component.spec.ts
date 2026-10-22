@@ -112,6 +112,7 @@ describe('EditorDraftComponent', () => {
     when(mockDraftGenerationService.pollBuildProgress(anything())).thenReturn(buildProgress$.asObservable());
     when(mockDraftHandlingService.getBookDraft(anything(), anything())).thenResolve(bookDraftByChapters);
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
+    when(mockSFProjectService.hasDraft(anything())).thenReturn(true);
     when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
@@ -481,6 +482,67 @@ describe('EditorDraftComponent', () => {
     fixture.detectChanges();
     tick(EDITOR_READY_TIMEOUT);
     expect(component.hasLowConfidence).toBeFalse();
+    flush();
+  }));
+
+  it('should show the low confidence warning when the chapter is not in the latest build', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    // Genesis was drafted by an earlier build, but the latest build drafted a different book
+    when(mockSFProjectService.hasDraft(anything(), anything(), anything(), true)).thenReturn(false);
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of([draftHistory[1]])
+    );
+    when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+      of([
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[1].timestamp },
+          executionData: {
+            diagnostics: [
+              { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'GEN' } } as Partial<ServalBuildDiagnostic>
+            ]
+          }
+        } as BuildDto,
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[0].timestamp },
+          executionData: { diagnostics: [] as ServalBuildDiagnostic[] }
+        } as BuildDto
+      ])
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    expect(component.doesLatestCompletedHaveDraft).toBeFalse();
+    expect(component.hasLowConfidence).toBeTrue();
+    flush();
+  }));
+
+  it('should not reload the build history when the chapter changes', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    verify(mockDraftGenerationService.getBuildHistory(anything())).once();
+
+    // SUT
+    component.chapter = 2;
+    component.ngOnChanges();
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+
+    verify(mockDraftGenerationService.getBuildHistory(anything())).once();
     flush();
   }));
 
