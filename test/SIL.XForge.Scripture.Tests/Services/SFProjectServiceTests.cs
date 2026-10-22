@@ -4247,7 +4247,16 @@ public class SFProjectServiceTests
         };
 
         // SUT
-        await Assert.DoesNotThrowAsync(() => env.Service.AddUserFeedbackAsync(User01, Project01, feedbackParams));
+        await env.Service.AddUserFeedbackAsync(User01, Project01, feedbackParams);
+
+        UserFeedback userFeedback = env.UserFeedback.Query().Single();
+        Assert.That(userFeedback.ProjectRef, Is.EqualTo(Project01));
+        Assert.That(userFeedback.UserRef, Is.EqualTo(User01));
+        Assert.That(userFeedback.Type, Is.EqualTo(FeedbackType.HowSfImpactedProject));
+        Assert.That(userFeedback.Source, Is.EqualTo(FeedbackSourcePage.GenerateDraftPage));
+        Assert.That(userFeedback.FeedbackPermission, Is.EqualTo(FeedbackPermission.PublishPublic));
+        Assert.That(userFeedback.Feedback, Is.EqualTo("Great feature!"));
+        Assert.That(userFeedback.DateSubmitted, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
     }
 
     [Test]
@@ -4293,7 +4302,7 @@ public class SFProjectServiceTests
             Type = FeedbackType.HowSfImpactedProject,
             Source = FeedbackSourcePage.GenerateDraftPage,
             Permission = FeedbackPermission.PublishPublic,
-            Feedback = "User no on project.",
+            Feedback = "User not on project.",
         };
 
         // SUT
@@ -4351,6 +4360,7 @@ public class SFProjectServiceTests
                 Id = "feedback01",
                 ProjectRef = Project01,
                 UserRef = User02,
+                Source = FeedbackSourcePage.GenerateDraftPage,
             }
         );
 

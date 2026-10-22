@@ -1,8 +1,11 @@
-<ng-container *transloco="let t; read: 'user_feedback'">
-  <app-notice type="primary" mode="basic" icon="feedback">
-    {{ t("how_has_drafting_helped_your_project", { siteName }) }}
-    <a href="javascript:;" (click)="onSendFeedback()">{{ t("send_feedback") }}</a>
-    {{ t("or") }}
-    <a target="_blank" [href]="issueMailTo">{{ t("ask_for_help") }}</a>
-  </app-notice>
-</ng-container>
+<app-notice type="primary" mode="basic" icon="chat_bubble_outline">
+  @for (i of feedbackPrompt | async; track $index) {
+    <!-- prettier-ignore -->
+    @if (i.id == null) {{{ i.text }}}
+    @else if (i.id === 1) {
+      <a href="javascript:;" (click)="onSendFeedback()">{{ i.text }}</a>
+    } @else if (i.id === 3) {
+      <a href="mailto:{{ issueEmail }}" target="_blank" rel="noopener noreferrer">{{ i.text }}</a>
+    }
+  }
+</app-notice>

@@ -1,3 +1,11 @@
+mat-dialog-content > :first-child {
+  padding-top: 0.5em;
+}
+
+mat-dialog-content > :last-child {
+  padding-bottom: 0.5em;
+}
+
 .feedback-description {
   font-size: 1rem;
   margin: 0.5rem 0 0.8rem;
@@ -11,5 +19,8 @@ form {
 .permission-options {
   display: flex;
   flex-direction: column;
-  padding-bottom: 0.25rem;
+}
+
+.permission-required-error {
+  font-size: var(--mat-form-field-subscript-text-size);
 }

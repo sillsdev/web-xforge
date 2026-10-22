@@ -2,7 +2,7 @@ import { OverlayContainer } from '@angular/cdk/overlay';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom, of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -12,8 +12,8 @@ import { BrandingService } from '../../core/branding.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import {
   FeedbackPermission,
-  FeedbackType,
   FeedbackSourcePage,
+  FeedbackType,
   UserFeedbackDialogComponent,
   UserFeedbackDialogResult
 } from './user-feedback-dialog.component';
@@ -103,6 +103,7 @@ describe('UserFeedbackDialogComponent', () => {
     env.dialogRef.afterClosed().subscribe(r => (result = r));
 
     env.setFeedbackText('Great feature!');
+    env.selectPermission(FeedbackPermission.PublishAnonymous);
     env.clickSubmit();
 
     expect(result).toEqual({
@@ -110,7 +111,7 @@ describe('UserFeedbackDialogComponent', () => {
       feedbackParams: {
         type: FeedbackType.HowSfImpactedProject,
         source: FeedbackSourcePage.GenerateDraftPage,
-        permission: FeedbackPermission.Private,
+        permission: FeedbackPermission.PublishAnonymous,
         feedback: 'Great feature!'
       }
     });
@@ -123,6 +124,7 @@ describe('UserFeedbackDialogComponent', () => {
     env.dialogRef.afterClosed().subscribe(r => (result = r));
 
     env.setFeedbackText('No project selected for feedback');
+    env.selectPermission(FeedbackPermission.Private);
     env.clickSubmit();
 
     expect(result).toEqual({
@@ -148,6 +150,7 @@ describe('UserFeedbackDialogComponent', () => {
 
     env.clickSubmit();
     expect(env.component.feedbackForm.valid).toBe(false);
+    expect(env.isFeedbackRequiredErrorVisible).toBe(true);
 
     expect(result).toBeUndefined();
   }));
@@ -167,6 +170,24 @@ describe('UserFeedbackDialogComponent', () => {
     expect(env.component.feedbackForm.valid).toBe(false);
 
     expect(result).toBeUndefined();
+  }));
+
+  it('does not submit the feedback until the user says whether it may be published', fakeAsync(() => {
+    const env = new TestEnvironment();
+    expect(env.component.feedbackForm.controls.permission.value).toBeNull();
+
+    let result: UserFeedbackDialogResult | undefined;
+    env.dialogRef.afterClosed().subscribe(r => (result = r));
+
+    env.setFeedbackText('Great feature!');
+    env.clickSubmit();
+    expect(result).toBeUndefined();
+    expect(env.isPermissionRequiredErrorVisible).toBe(true);
+
+    env.selectPermission(FeedbackPermission.PublishPublic);
+    expect(env.isPermissionRequiredErrorVisible).toBe(false);
+    env.clickSubmit();
+    expect(result?.feedbackParams.permission).toBe(FeedbackPermission.PublishPublic);
   }));
 
   it('does not submit the feedback when the user cancels', fakeAsync(() => {
@@ -225,7 +246,9 @@ class TestEnvironment {
     when(mockedUserProjectsService.projectDocs).thenReturn(args.projectDocs ?? []);
     when(mockedUserProjectsService.projectDocs$).thenReturn(of(args.projectDocs ?? []));
     when(mockedOnlineStatusService.isOnline).thenCall(() => this.onlineStatus$.value);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.onlineStatus$);
+    when(mockedOnlineStatusService.online).thenCall(() =>
+      firstValueFrom(this.onlineStatus$.pipe(filter(online => online))).then(() => {})
+    );
     const projectDoc: SFProjectProfileDoc | undefined =
       args.activeProjectParatextId == null
         ? undefined
@@ -251,6 +274,14 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('app-project-select') != null;
   }
 
+  get isFeedbackRequiredErrorVisible(): boolean {
+    return this.feedbackTextarea.closest('mat-form-field')?.querySelector('mat-error') != null;
+  }
+
+  get isPermissionRequiredErrorVisible(): boolean {
+    return this.overlayContainerElement.querySelector('.permission-required-error') != null;
+  }
+
   private get overlayContainerElement(): HTMLElement {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
@@ -270,6 +301,14 @@ class TestEnvironment {
   setFeedbackText(value: string): void {
     this.feedbackTextarea.value = value;
     this.feedbackTextarea.dispatchEvent(new Event('input'));
+    this.fixture.detectChanges();
+  }
+
+  selectPermission(permission: FeedbackPermission): void {
+    const radioInput = this.overlayContainerElement.querySelector(
+      `.permission-options input[value="${permission}"]`
+    ) as HTMLInputElement;
+    radioInput.click();
     this.fixture.detectChanges();
   }
 
