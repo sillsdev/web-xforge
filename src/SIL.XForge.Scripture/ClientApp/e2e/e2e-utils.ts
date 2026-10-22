@@ -11,6 +11,11 @@ import {
 } from './e2e-globals.ts';
 import secrets from './secrets.json' with { type: 'json' };
 
+/** Where Auth0 asks the user to allow the application access to the account. Shown on localhost only. */
+const AUTH0_CONSENT_URL = 'https://sil-appbuilder.auth0.com/decision';
+/** Where Auth0 offers its log in options. */
+const AUTH0_LOGIN_URL = 'https://sil-appbuilder.auth0.com/login';
+
 export async function launchBrowser(engine: BrowserType, options: LaunchOptions): Promise<Browser> {
   try {
     return await engine.launch({ timeout: BROWSER_LAUNCH_TIMEOUT_MS, ...options });
@@ -404,54 +409,88 @@ export function isRootUrl(url: string): boolean {
 }
 
 export async function logInAsPTUser(page: Page, user: { email: string; password: string }): Promise<void> {
+  const allowedAttempts: number = 6;
+  for (let attempt = 1; attempt <= allowedAttempts; attempt++) {
+    if (await attemptLogInAsPTUser(page, user)) {
+      console.log(`Logged in as ${user.email} after ${attempt} attempts`);
+      return;
+    }
+    if (attempt < allowedAttempts) {
+      // Registry problems are more likely to occur during problem periods rather than randomly during the day. Wait a
+      // bit in hope of improvement.
+      const waitSeconds: number = attempt * 15;
+      console.log(`SF reported a Paratext Registry problem. Waiting ${waitSeconds}s before logging in again.`);
+      await page.waitForTimeout(waitSeconds * 1_000);
+    }
+  }
+  throw new Error(`Failed to log in as ${user.email} after ${allowedAttempts} attempts`);
+}
+
+/**
+ * Makes one attempt to log in.
+ *
+ * @returns whether the user is logged in. False means that SF reported a problem with the Paratext Registry,
+ * which another attempt may get past. Every other way of not being logged in throws.
+ */
+async function attemptLogInAsPTUser(page: Page, user: { email: string; password: string }): Promise<boolean> {
   await page.goto(preset.rootUrl);
+  // If we are already logged in as a user, log out. We will have been forwarded from root into the SF app.
   if (!isRootUrl(page.url())) await logOut(page);
 
   await switchToLocaleOnHomePage(page, 'en');
   await page.getByRole('link', { name: 'Log In' }).click();
 
-  let attempt: number;
-  let loginSuccessful = false;
-  for (attempt = 1; !loginSuccessful && attempt <= 5; attempt++) {
-    await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
+  // Auth0 login page
+  await page.waitForURL(url => url.href.startsWith(AUTH0_LOGIN_URL));
+  await page.locator('a').filter({ hasText: 'Log in with Paratext' }).click();
+  await logInToPTRegistry(page, user);
 
-    await logInToPTRegistry(page, user);
-
-    // The first login requires authorizing Scripture Forge to access the Paratext account
-    if ((await page.title()).startsWith('Authorise Application')) {
-      await page.getByRole('button', { name: 'Accept' }).click();
-    }
-
-    // On localhost only, Auth0 requires accepting access to the account
-    // Wait until back in the app, or on the authorization page
-    const auth0AuthorizeUrl = 'https://sil-appbuilder.auth0.com/decision';
-    await page.waitForURL(url =>
-      [auth0AuthorizeUrl, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
-    );
-
-    if (page.url().startsWith(auth0AuthorizeUrl)) {
-      await page.locator('#allow').click();
-    }
-
-    try {
-      await page.waitForURL(url => /^\/projects/.test(url.pathname));
-      loginSuccessful = true;
-    } catch (e) {
-      if (e instanceof Error && e.message.includes('Timeout')) {
-        // FIXME(application-bug) Sometimes a login failure occurs. Retry.
-        expect(await page.getByRole('heading', { name: 'An error occurred during login' })).toBeVisible();
-        await page.getByRole('button', { name: 'Try Again' }).click();
-        await page.waitForURL(url => /^\/projects/.test(url.pathname));
-        continue;
-      } else {
-        throw e;
-      }
-    }
+  // The Registry asks for authorization to access the Paratext account.
+  const acceptButton: Locator = page.getByRole('button', { name: 'Accept' });
+  let authorizationAsked: boolean = true;
+  try {
+    await acceptButton.waitFor({ state: 'visible' });
+  } catch (cause) {
+    authorizationAsked = false;
+    console.log(`The Paratext Registry did not ask for authorization. ${cause}`);
   }
-  const attempts = attempt - 1;
-  if (!loginSuccessful) throw new Error(`Failed to log in after ${attempts} attempts`);
+  if (authorizationAsked) await acceptButton.click();
 
-  console.log(`Logged in as ${user.email} after ${attempts} attempts`);
+  // Wait for either the consent page or the SF app.
+  await page.waitForURL(url =>
+    [AUTH0_CONSENT_URL, preset.rootUrl].some(startingUrl => url.href.startsWith(startingUrl))
+  );
+
+  // On localhost only, Auth0 requires accepting access to the account
+  if (page.url().startsWith(AUTH0_CONSENT_URL)) {
+    await page.locator('#allow').click();
+  }
+
+  // A successful login lands on the projects page. A login that Auth0 could not complete lands back on the callback
+  // URL, carrying an error, where SF reports the problem in a dialog.
+  await page.waitForURL(
+    url => /^\/projects/.test(url.pathname) || (url.pathname === '/callback/auth0' && url.searchParams.has('error'))
+  );
+  // Are we in the SF app, successfully logged in?
+  if (/^\/projects/.test(new URL(page.url()).pathname)) return true;
+
+  const dialog: Locator = page.locator('mat-dialog-container');
+  const registryProblem: Locator = dialog.getByRole('heading', {
+    name: 'There was a problem with the Paratext Registry'
+  });
+  try {
+    await registryProblem.waitFor({ state: 'visible' });
+  } catch (cause) {
+    // There is some problem other than the above Registry problem.
+    throw new Error(`SF did not log in, and is not reporting a Paratext Registry problem. At ${page.url()}`, {
+      cause: cause
+    });
+  }
+
+  // Click Log in on the Registry problem dialog. We will end up back at the Auth0 login page.
+  await dialog.getByRole('button', { name: 'Log in' }).click();
+  await registryProblem.waitFor({ state: 'hidden' });
+  return false;
 }
 
 /**
