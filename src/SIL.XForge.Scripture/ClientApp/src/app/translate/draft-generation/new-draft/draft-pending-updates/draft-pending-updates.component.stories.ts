@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from '@storybook/angular';
 import userEvent from '@testing-library/user-event';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { Subject } from 'rxjs';
+import { NEVER, Subject } from 'rxjs';
 import { expect, waitFor, within } from 'storybook/test';
 import { anything, instance, mock, reset, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -79,9 +79,7 @@ function setUpMocks(specs: ProjectSpec[]): void {
   );
 
   // SyncProgressComponent dependencies (it's rendered for a project that is syncing in place).
-  when(mockedProjectNotificationService.start()).thenResolve();
-  when(mockedProjectNotificationService.stop()).thenResolve();
-  when(mockedProjectNotificationService.subscribeToProject(anything())).thenResolve();
+  when(mockedProjectNotificationService.syncProgress$(anything())).thenReturn(NEVER);
   when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
   when(mockedOnlineStatusService.isOnline).thenReturn(true);
   when(mockedOnlineStatusService.isBrowserOnline).thenReturn(true);

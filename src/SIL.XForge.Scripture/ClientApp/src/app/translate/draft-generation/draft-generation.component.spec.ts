@@ -10,7 +10,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { EMPTY, of, Subject, throwError } from 'rxjs';
+import { EMPTY, NEVER, of, Subject, throwError } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -223,13 +223,8 @@ describe('DraftGenerationComponent', () => {
       mockSFProjectService.hasDraft.withArgs(matchThisProject).and.returnValue(preTranslate);
       mockSFProjectService.hasDraft.withArgs(matchThisProject, jasmine.anything()).and.returnValue(preTranslate);
       mockSFProjectService.onlineHasUserSubmittedFeedback.and.returnValue(Promise.resolve(false));
-      mockProjectNotificationService = jasmine.createSpyObj<ProjectNotificationService>([
-        'setNotifyBuildProgressHandler',
-        'start',
-        'stop',
-        'removeNotifyBuildProgressHandler',
-        'subscribeToProject'
-      ]);
+      mockProjectNotificationService = jasmine.createSpyObj<ProjectNotificationService>(['buildProgress$']);
+      mockProjectNotificationService.buildProgress$.and.returnValue(NEVER);
     }
 
     get configureDraftButton(): HTMLElement | null {
