@@ -188,7 +188,7 @@
                 </div>
               </app-notice>
             }
-            @if (showUserFeedbackNotice) {
+            @if (!showUserFeedbackNotice) {
               <app-user-feedback
                 [requireReferenceProject]="true"
                 (submitted)="hasUserSubmittedFeedback = true"
