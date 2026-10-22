@@ -15,14 +15,17 @@
       @if (canGenerateDraft$ | async) {
         <a
           mat-list-item
+          id="generate-draft-nav-item"
           [appRouterLink]="draftGenerationLink"
           [class.active]="draftGenerationActive"
           [class.draft-completed]="unreadDraftResult() === draftResult.Completed"
           [class.draft-failed]="unreadDraftResult() === draftResult.Faulted"
         >
           <mat-icon class="mirror-rtl" id="draft-generation-icon">auto_awesome</mat-icon>
-          {{ t("generate_draft") }}<span><!-- notification anchor --></span>
-          @if (draftInProgress) {
+          {{ t("generate_draft") }}
+          @if (unreadDraftResult() === draftResult.Completed) {
+            <span class="completed-indicator">●</span>
+          } @else if (draftInProgress) {
             <mat-spinner class="status-icon" [diameter]="20" [strokeWidth]="3"></mat-spinner>
           } @else if (lastDraftFailed) {
             <mat-icon class="status-icon" color="warn">error</mat-icon>
