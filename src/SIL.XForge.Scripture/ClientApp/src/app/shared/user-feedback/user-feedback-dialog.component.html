@@ -15,13 +15,16 @@
         ></textarea>
         <mat-error>{{ t("required") }}</mat-error>
       </mat-form-field>
-      <p class="feedback-description">{{ t("project_for_feedback") }}</p>
-      <app-project-select
-        formControlName="paratextId"
-        [placeholder]="t('project_placeholder')"
-        [projects]="projects"
-        [value]="selectedParatextId"
-      ></app-project-select>
+      @if (requireProjectReference) {
+        <p class="feedback-description">{{ t("project_for_feedback") }}</p>
+        <app-project-select
+          formControlName="paratextId"
+          [placeholder]="t('project_placeholder')"
+          [projects]="projects"
+          [value]="selectedParatextId"
+          [required]="true"
+        ></app-project-select>
+      }
       <p class="feedback-description">{{ t("permission_question") }}</p>
       <mat-radio-group class="permission-options" formControlName="permission">
         <mat-radio-button [value]="publishPermission.PublishPublic">{{
