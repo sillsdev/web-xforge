@@ -1559,15 +1559,15 @@ describe('DraftGenerationComponent', () => {
     }));
   });
 
-  describe('latestDraftResult', () => {
-    it('should reset the latestDraftResult on the project user config when the page is initialized', fakeAsync(() => {
+  describe('unreadDraftResult', () => {
+    it('should reset the unreadDraftResult on the project user config when the page is initialized', fakeAsync(() => {
       new TestEnvironment();
       tick();
 
       expect(mockProjectUserConfigDoc.submitJson0Op).toHaveBeenCalledTimes(1);
     }));
 
-    it('should wait until online before resetting the latestDraftResult', fakeAsync(() => {
+    it('should wait until online before resetting the unreadDraftResult', fakeAsync(() => {
       const projectUserConfigDoc$ = new Subject<SFProjectUserConfigDoc>();
       const env = new TestEnvironment(() => {
         mockActivatedProjectUserConfigService = jasmine.createSpyObj<ActivatedProjectUserConfigService>([], {
@@ -1584,7 +1584,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockProjectUserConfigDoc.submitJson0Op).toHaveBeenCalledTimes(1);
     }));
 
-    it('should not reset the latestDraftResult if it is already undefined', fakeAsync(() => {
+    it('should not reset the unreadDraftResult if it is already undefined', fakeAsync(() => {
       new TestEnvironment(() => TestEnvironment.initProjectUserConfig(undefined));
       tick();
 

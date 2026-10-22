@@ -446,8 +446,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User01));
-        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User02));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetUnreadDraftResult(User01));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetUnreadDraftResult(User02));
     }
 
     [Test]
@@ -475,8 +475,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User01));
-        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User02));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetUnreadDraftResult(User01));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetUnreadDraftResult(User02));
     }
 
     [Test]
@@ -504,8 +504,8 @@ public class MachineProjectServiceTests
             CancellationToken.None
         );
 
-        Assert.AreEqual(DraftResult.Faulted, env.GetLatestDraftResult(User01));
-        Assert.AreEqual(DraftResult.Faulted, env.GetLatestDraftResult(User02));
+        Assert.AreEqual(DraftResult.Faulted, env.GetUnreadDraftResult(User01));
+        Assert.AreEqual(DraftResult.Faulted, env.GetUnreadDraftResult(User02));
     }
 
     [Test]
@@ -534,8 +534,8 @@ public class MachineProjectServiceTests
         );
 
         // The draft result will be set when Serval notifies us that the build has finished
-        Assert.IsNull(env.GetLatestDraftResult(User01));
-        Assert.IsNull(env.GetLatestDraftResult(User02));
+        Assert.IsNull(env.GetUnreadDraftResult(User01));
+        Assert.IsNull(env.GetUnreadDraftResult(User02));
     }
 
     [TestCase(JobState.Completed, DraftResult.Completed)]
@@ -553,9 +553,9 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.SetDraftResultForProjectUsersAsync(Project01, buildState);
 
-        Assert.AreEqual(expected, env.GetLatestDraftResult(User01));
-        Assert.AreEqual(expected, env.GetLatestDraftResult(User02));
-        Assert.IsNull(env.GetLatestDraftResult(User03));
+        Assert.AreEqual(expected, env.GetUnreadDraftResult(User01));
+        Assert.AreEqual(expected, env.GetUnreadDraftResult(User02));
+        Assert.IsNull(env.GetUnreadDraftResult(User03));
     }
 
     [Test]
@@ -573,8 +573,8 @@ public class MachineProjectServiceTests
         await env.Service.SetDraftResultForProjectUsersAsync(Project01, JobState.Canceled);
 
         // The existing result is preserved, and users without a result are still set
-        Assert.AreEqual(DraftResult.Completed, env.GetLatestDraftResult(User01));
-        Assert.AreEqual(DraftResult.Cancelled, env.GetLatestDraftResult(User02));
+        Assert.AreEqual(DraftResult.Completed, env.GetUnreadDraftResult(User01));
+        Assert.AreEqual(DraftResult.Cancelled, env.GetUnreadDraftResult(User02));
     }
 
     [TestCase(JobState.Pending)]
@@ -588,8 +588,8 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.SetDraftResultForProjectUsersAsync(Project01, buildState);
 
-        Assert.IsNull(env.GetLatestDraftResult(User01));
-        Assert.IsNull(env.GetLatestDraftResult(User02));
+        Assert.IsNull(env.GetUnreadDraftResult(User01));
+        Assert.IsNull(env.GetUnreadDraftResult(User02));
     }
 
     [Test]
@@ -3948,7 +3948,7 @@ public class MachineProjectServiceTests
         /// </summary>
         /// <param name="userId">The user identifier.</param>
         /// <returns>The latest draft result, if set.</returns>
-        public string? GetLatestDraftResult(string userId) =>
+        public string? GetUnreadDraftResult(string userId) =>
             ProjectUserConfigs.Get(SFProjectUserConfig.GetDocId(Project01, userId)).UnreadDraftResult;
 
         /// <summary>

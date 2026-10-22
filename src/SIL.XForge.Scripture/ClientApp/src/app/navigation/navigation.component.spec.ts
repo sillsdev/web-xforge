@@ -106,13 +106,9 @@ describe('NavigationComponent', () => {
       return this.fixture.debugElement.query(By.css('#serval-admin-nav-item'));
     }
 
-    get draftGenerationIcon(): DebugElement | null {
-      return this.fixture.debugElement.query(By.css('#draft-generation-icon'));
-    }
-
     get draftGenerationResultUnread(): boolean {
-      const item: HTMLElement | null | undefined = this.draftGenerationIcon?.nativeElement.closest('a');
-      return item?.classList.contains('draft-completed') === true;
+      const item: DebugElement | null = this.fixture.debugElement.query(By.css('#generate-draft-nav-item'));
+      return item?.nativeElement.classList.contains('draft-completed') === true;
     }
 
     emitProjectChange(projectDoc: SFProjectProfileDoc | undefined): void {

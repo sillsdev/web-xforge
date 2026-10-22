@@ -1,4 +1,4 @@
-/** The result of the most recent draft build. This is set by the backend when a draft build finishes. */
+/** Indicates a result of a draft build to report to the user. */
 export enum DraftResult {
   Completed = 'COMPLETED',
   Faulted = 'FAULTED',
