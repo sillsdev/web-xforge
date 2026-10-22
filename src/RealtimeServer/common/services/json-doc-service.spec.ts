@@ -1,6 +1,6 @@
 import ShareDB from 'sharedb';
 import { ANY_INDEX, ANY_KEY, ObjPathTemplate } from '../utils/obj-path';
-import { JsonDocService } from './json-doc-service';
+import { isComponentList, JsonDocService } from './json-doc-service';
 
 describe('JsonDocService', () => {
   it('allows ops on editable properties', () => {
@@ -45,6 +45,42 @@ describe('JsonDocService', () => {
     const allowedOp: ShareDB.Op = { p: ['name'], od: 'Old', oi: 'New' };
     expect(service.changesOnlyEditable([allowedOp, { p: ['answers', 3, 'text'], oi: 'New' }])).toBe(true);
     expect(service.changesOnlyEditable([allowedOp, { p: [], od: {}, oi: {} }])).toBe(false);
+  });
+});
+
+describe('isComponentList', () => {
+  it('recognizes components by a path and an instruction in each', () => {
+    expect(isComponentList([{ p: ['name'], oi: 'New' }])).toBe(true);
+    expect(
+      isComponentList([
+        { p: [], na: 1 },
+        { p: ['answers', 0], ld: {} }
+      ])
+    ).toBe(true);
+    // An op that changes nothing is still a list of components
+    expect(isComponentList([])).toBe(true);
+  });
+
+  it('does not recognize op data that is not a list', () => {
+    // A rich-text delta
+    expect(isComponentList({ ops: [{ insert: 'New' }] })).toBe(false);
+    // A single component, rather than a list of them
+    expect(isComponentList({ p: ['name'], oi: 'New' })).toBe(false);
+  });
+
+  it('does not recognize a component with no path or no instruction', () => {
+    expect(isComponentList([{ oi: 'New' }])).toBe(false);
+    expect(isComponentList([{ p: ['name'] }])).toBe(false);
+    // `p` should be an array.
+    expect(isComponentList([{ p: 'name', oi: 'New' }])).toBe(false);
+    // Not a component at all, so there is no path to read from it
+    expect(isComponentList([null])).toBe(false);
+  });
+
+  it('recognizes a component that names a subtype, whether or not it carries the subtype op', () => {
+    expect(isComponentList([{ p: ['text'], t: 'text0', o: [{ insert: 'New' }] }])).toBe(true);
+    // JSON0 needs both "t" and "o", and refuses a component with only "t" when it applies the op
+    expect(isComponentList([{ p: ['text'], t: 'text0' }])).toBe(true);
   });
 });
 
