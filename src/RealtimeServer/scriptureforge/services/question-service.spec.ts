@@ -222,22 +222,23 @@ describe('QuestionService', () => {
     ).rejects.toThrow('Permission denied');
   });
 
-  it('allows user to like an answer and to remove their like', async () => {
+  it('allows user to like the answer of another user and to remove their like', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, CHECKER_ID);
+    // The answer belongs to CHECKER_ID, as a user does not like their own answer
+    const conn = clientConnect(env.server, OTHER_CHECKER_ID);
     const docId: string = getQuestionDocId('project01', QUESTION_ID);
     await submitOp(conn, QUESTIONS_COLLECTION, docId, {
       p: ['answers', 0, 'likes', 0],
-      li: { ownerRef: CHECKER_ID }
+      li: { ownerRef: OTHER_CHECKER_ID }
     });
     const liked: Question = (await fetchDoc(env.server.connect(), QUESTIONS_COLLECTION, docId)).data;
-    expect(liked.answers[0].likes.map(like => like.ownerRef)).toEqual([CHECKER_ID]);
+    expect(liked.answers[0].likes.map(like => like.ownerRef)).toEqual([OTHER_CHECKER_ID]);
 
     await submitOp(conn, QUESTIONS_COLLECTION, docId, {
       p: ['answers', 0, 'likes', 0],
-      ld: { ownerRef: CHECKER_ID }
+      ld: { ownerRef: OTHER_CHECKER_ID }
     });
     const unliked: Question = (await fetchDoc(env.server.connect(), QUESTIONS_COLLECTION, docId)).data;
     expect(unliked.answers[0].likes).toEqual([]);
