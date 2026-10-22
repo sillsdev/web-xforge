@@ -17,6 +17,7 @@ using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.Machine.Corpora;
 using SIL.Machine.QualityEstimation;
+using SIL.Machine.Scripture;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.Configuration;

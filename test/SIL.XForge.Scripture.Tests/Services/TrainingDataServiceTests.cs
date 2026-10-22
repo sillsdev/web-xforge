@@ -5,9 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
-using NPOI.HSSF.UserModel;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
+using MiniExcelLibs;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
@@ -26,8 +24,7 @@ public class TrainingDataServiceTests
     private const string Data01 = "107f1f77bcf86cd799439011";
     private const string Data02 = "207f1f77bcf86cd799439012";
     private const string FileCsv = "test.csv";
-    private const string FileExcel2003 = "test.xls";
-    private const string FileExcel2007 = "test.xlsx";
+    private const string FileExcel = "test.xlsx";
     private const string FileTsv = "test.tsv";
     private const string FileTxt = "test.txt";
     private const string Project01 = "project01";
@@ -195,39 +192,19 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public async Task SaveTrainingDataAsync_CorruptSpreadsheet()
+    public async Task SaveTrainingDataAsync_EmptyOrCorruptSpreadsheet()
     {
         var env = new TestEnvironment();
 
         // Create the input file
         await using var fileStream = new MemoryStream();
-        using var workbook = new HSSFWorkbook();
-        workbook.Write(fileStream, leaveOpen: true);
+        await fileStream.SaveAsAsync(Array.Empty<object>(), printHeader: false);
         fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+        env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // SUT
         await Assert.ThrowsAsync<FormatException>(() =>
-            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
-        );
-    }
-
-    [Test]
-    public async Task SaveTrainingDataAsync_EmptySpreadsheet()
-    {
-        var env = new TestEnvironment();
-
-        // Create the input file
-        await using var fileStream = new MemoryStream();
-        using var workbook = new HSSFWorkbook();
-        workbook.CreateSheet("Sheet1");
-        workbook.Write(fileStream, leaveOpen: true);
-        fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
-
-        // SUT
-        await Assert.ThrowsAsync<FormatException>(() =>
-            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel)
         );
     }
 
@@ -398,20 +375,16 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public async Task SaveTrainingDataAsync_SupportsXlsFiles()
+    public async Task SaveTrainingDataAsync_SupportsExcelFiles()
     {
         var env = new TestEnvironment();
 
         // Create the input file
         await using var fileStream = new MemoryStream();
-        using var workbook = new HSSFWorkbook();
-        ISheet sheet = workbook.CreateSheet("Sheet1");
-        IRow row = sheet.CreateRow(0);
-        row.CreateCell(0).SetCellValue("Test"); // A1
-        row.CreateCell(1).SetCellValue("Data"); // A2
-        workbook.Write(fileStream, leaveOpen: true);
+        var data = new[] { new { ColumnA = "Test", ColumnB = "Data" } };
+        await fileStream.SaveAsAsync(data, printHeader: false);
         fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+        env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
         string path = Path.Join(
@@ -424,49 +397,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
-
-        using var reader = new StreamReader(outputStream);
-        string text = await reader.ReadToEndAsync();
-        text = text.TrimEnd(); // Remove trailing new lines
-        Assert.AreEqual("Test,Data", text);
-        outputStream.ForceDispose();
-    }
-
-    [Test]
-    public async Task SaveTrainingDataAsync_SupportsXlsxFiles()
-    {
-        var env = new TestEnvironment();
-
-        // Create the input file
-        await using var fileStream = new MemoryStream();
-        using var workbook = new XSSFWorkbook();
-        ISheet sheet = workbook.CreateSheet("Output");
-        IRow row = sheet.CreateRow(1);
-        row.CreateCell(0).SetCellValue("Test"); // B1
-        row.CreateCell(1).SetCellValue("Data"); // B2
-        workbook.Write(fileStream, leaveOpen: true);
-        fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2007, FileMode.Open).Returns(fileStream);
-
-        // Create the output file
-        string path = Path.Join(
-            env.SiteOptions.Value.SiteDir,
-            TrainingDataService.DirectoryName,
-            Project01,
-            $"{User01}_{Data01}.csv"
-        );
-        await using var outputStream = new NonDisposingMemoryStream();
-        env.FileSystemService.CreateFile(path).Returns(outputStream);
-
-        // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2007);
+        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel);
         Assert.That(
             actual
                 .ToString()
@@ -488,17 +419,14 @@ public class TrainingDataServiceTests
 
         // Create the input file
         await using var fileStream = new MemoryStream();
-        using var workbook = new HSSFWorkbook();
-        ISheet sheet = workbook.CreateSheet("Sheet1");
-        IRow row1 = sheet.CreateRow(0);
-        row1.CreateCell(0).SetCellValue("Test"); // A1
-        row1.CreateCell(1).SetCellValue("Data"); // A2
-        IRow row2 = sheet.CreateRow(1);
-        row2.CreateCell(0).SetCellValue("Missing"); // B1
-        row2.CreateCell(1).SetCellValue(""); // B2
-        workbook.Write(fileStream, leaveOpen: true);
+        var data = new[]
+        {
+            new { ColumnA = "Test", ColumnB = "Data" },
+            new { ColumnA = "Missing", ColumnB = string.Empty },
+        };
+        await fileStream.SaveAsAsync(data, printHeader: false);
         fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+        env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
         string path = Path.Join(
@@ -512,7 +440,7 @@ public class TrainingDataServiceTests
 
         // SUT
         await Assert.ThrowsAsync<FormatException>(() =>
-            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel)
         );
         outputStream.ForceDispose();
     }
@@ -524,17 +452,24 @@ public class TrainingDataServiceTests
 
         // Create the input file
         await using var fileStream = new MemoryStream();
-        using var workbook = new HSSFWorkbook();
-        ISheet sheet = workbook.CreateSheet("Sheet1");
-        IRow row1 = sheet.CreateRow(0);
-        row1.CreateCell(0).SetCellValue("Test"); // A1
-        row1.CreateCell(1).SetCellValue("Data"); // A2
-        IRow row2 = sheet.CreateRow(1);
-        row2.CreateCell(1).SetCellValue("Second"); // B2
-        row2.CreateCell(2).SetCellValue("Third"); // B3
-        workbook.Write(fileStream, leaveOpen: true);
+        var data = new[]
+        {
+            new
+            {
+                A = "Test",
+                B = "Data",
+                C = string.Empty,
+            },
+            new
+            {
+                A = string.Empty,
+                B = "Second",
+                C = "Third",
+            },
+        };
+        await fileStream.SaveAsAsync(data, printHeader: false);
         fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+        env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
         string path = Path.Join(
@@ -548,7 +483,7 @@ public class TrainingDataServiceTests
 
         // SUT
         await Assert.ThrowsAsync<FormatException>(() =>
-            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003)
+            env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel)
         );
         outputStream.ForceDispose();
     }
@@ -560,20 +495,16 @@ public class TrainingDataServiceTests
 
         // Create the input file
         await using var fileStream = new MemoryStream();
-        using var workbook = new HSSFWorkbook();
-        ISheet sheet = workbook.CreateSheet("Sheet1");
-        IRow row1 = sheet.CreateRow(0);
-        row1.CreateCell(0).SetCellValue("Test"); // A1
-        row1.CreateCell(1).SetCellValue("Data"); // A2
-        IRow row3 = sheet.CreateRow(2);
-        row3.CreateCell(0).SetCellValue(""); // C1
-        row3.CreateCell(1).SetCellValue(""); // C2
-        IRow row4 = sheet.CreateRow(3);
-        row4.CreateCell(0).SetCellValue("Skip"); // D1
-        row4.CreateCell(1).SetCellValue("Row"); // D2
-        workbook.Write(fileStream, leaveOpen: true);
+        var data = new[]
+        {
+            new { ColumnA = "Test", ColumnB = "Data" },
+            new { ColumnA = string.Empty, ColumnB = string.Empty },
+            new { ColumnA = string.Empty, ColumnB = string.Empty },
+            new { ColumnA = "Skip", ColumnB = "Row" },
+        };
+        await fileStream.SaveAsAsync(data, printHeader: false);
         fileStream.Seek(0, SeekOrigin.Begin);
-        env.FileSystemService.OpenFile(FileExcel2003, FileMode.Open).Returns(fileStream);
+        env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
         string path = Path.Join(
@@ -586,7 +517,7 @@ public class TrainingDataServiceTests
         env.FileSystemService.CreateFile(path).Returns(outputStream);
 
         // SUT
-        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel2003);
+        Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel);
         Assert.That(
             actual
                 .ToString()

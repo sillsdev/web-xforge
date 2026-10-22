@@ -4,9 +4,9 @@ using Duende.AccessTokenManagement;
 using Duende.IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
+using MiniExcelLibs;
 using Serval.Client;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 // The first argument must be the translation engine id
 if (args.Length == 0 || string.IsNullOrWhiteSpace(args[0]))
@@ -33,37 +33,9 @@ Console.WriteLine($"Reporting on {environment}. This will take some time.");
 ServiceProvider services = SetupServices(environment);
 ITranslationEnginesClient translationEnginesClient = services.GetService<ITranslationEnginesClient>()!;
 
-// Set up the Spreadsheet
-string spreadsheetPath = Path.Join(Path.GetTempPath(), $"{environment}.xlsx");
-using XSSFWorkbook workbook = new XSSFWorkbook();
-await using FileStream fs = new FileStream(spreadsheetPath, FileMode.Create, FileAccess.Write);
-int summarySheetRow = 0;
-ISheet summarySheet = workbook.CreateSheet("Summary");
-int dataSheetRow = 0;
-ISheet dataSheet = workbook.CreateSheet("Data");
-
-// Set up the date format
-// See https://archive.org/details/microsoftexcel970000unse/page/426 for format codes
-ICellStyle dateCellStyle = workbook.CreateCellStyle();
-dateCellStyle.DataFormat = 0x0e; // Short Date
-
-// Create the header rows
-IRow row = summarySheet.CreateRow(summarySheetRow++);
-row.CreateCell(0).SetCellValue("Date");
-row.CreateCell(1).SetCellValue("Completed");
-row.CreateCell(2).SetCellValue("Faulted");
-row.CreateCell(3).SetCellValue("Canceled");
-
-row = dataSheet.CreateRow(dataSheetRow++);
-row.CreateCell(0).SetCellValue("ProjectId");
-row.CreateCell(1).SetCellValue("TranslationEngineId");
-row.CreateCell(2).SetCellValue("BuildId");
-row.CreateCell(3).SetCellValue("Date");
-row.CreateCell(4).SetCellValue("State");
-row.CreateCell(5).SetCellValue("Message");
-
-// Create the summary data structure
-var summary = new Dictionary<DateTime, JobStates>();
+// Create row data structures
+List<DataRow> dataRows = [];
+Dictionary<DateTime, JobStates> summary = [];
 Console.Write("Loading...");
 
 // Iterate over every translation engine
@@ -89,15 +61,18 @@ foreach (TranslationEngine translationEngine in translationEngines)
         if (build.DateFinished is not null)
         {
             DateTime dateTime = build.DateFinished.Value.UtcDateTime;
-            row = dataSheet.CreateRow(dataSheetRow++);
-            row.CreateCell(0).SetCellValue(translationEngine.Name);
-            row.CreateCell(1).SetCellValue(translationEngine.Id);
-            row.CreateCell(2).SetCellValue(build.Id);
-            ICell dateCell = row.CreateCell(3);
-            dateCell.SetCellValue(dateTime);
-            dateCell.CellStyle = dateCellStyle;
-            row.CreateCell(4).SetCellValue(build.State.ToString());
-            row.CreateCell(5).SetCellValue(build.Message);
+            dataRows.Add(
+                new DataRow
+                {
+                    ProjectId = translationEngine.Name ?? string.Empty,
+                    TranslationEngineId = translationEngine.Id,
+                    BuildId = build.Id,
+                    Date = dateTime.ToString("yyyy-MM-dd"),
+                    State = build.State.ToString(),
+                    Message = build.Message,
+                }
+            );
+
             if (!summary.TryGetValue(dateTime.Date, out JobStates? jobStates))
             {
                 jobStates = new JobStates();
@@ -120,31 +95,28 @@ foreach (TranslationEngine translationEngine in translationEngines)
     }
 }
 
-// Finish the data worksheet and console output
-dataSheet.AutoSizeColumn(0);
-dataSheet.AutoSizeColumn(1);
-dataSheet.AutoSizeColumn(2);
-dataSheet.AutoSizeColumn(3);
-dataSheet.AutoSizeColumn(4);
 Console.WriteLine();
 
-// Write the summary
-foreach (DateTime dateTime in summary.Keys.OrderBy(d => d))
-{
-    row = summarySheet.CreateRow(summarySheetRow++);
-    ICell dateCell = row.CreateCell(0);
-    dateCell.SetCellValue(dateTime);
-    dateCell.CellStyle = dateCellStyle;
-    row.CreateCell(1).SetCellValue(summary[dateTime].Completed);
-    row.CreateCell(2).SetCellValue(summary[dateTime].Faulted);
-    row.CreateCell(3).SetCellValue(summary[dateTime].Canceled);
-}
+// Map summary dictionary to a list of row objects
+List<SummaryRow> summaryRows =
+[
+    .. summary
+        .Keys.OrderBy(d => d)
+        .Select(dateTime => new SummaryRow
+        {
+            Date = dateTime.ToString("yyyy-MM-dd"),
+            Completed = summary[dateTime].Completed,
+            Faulted = summary[dateTime].Faulted,
+            Canceled = summary[dateTime].Canceled,
+        }),
+];
 
-// Finish the summary worksheet
-summarySheet.AutoSizeColumn(0);
+// Construct multi-sheet dictionary
+var sheets = new Dictionary<string, object> { { "Summary", summaryRows }, { "Data", dataRows } };
 
 // Write the workbook
-workbook.Write(fs);
+string spreadsheetPath = Path.Join(Path.GetTempPath(), $"{environment}.xlsx");
+MiniExcel.SaveAs(spreadsheetPath, sheets);
 
 // If we are on Windows, open the file in Explorer
 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -199,6 +171,24 @@ static ServiceProvider SetupServices(string environment)
         return new TranslationEnginesClient(httpClient);
     });
     return services.BuildServiceProvider();
+}
+
+internal class SummaryRow
+{
+    public string Date { get; set; } = string.Empty;
+    public int Completed { get; set; }
+    public int Faulted { get; set; }
+    public int Canceled { get; set; }
+}
+
+internal class DataRow
+{
+    public string ProjectId { get; set; } = string.Empty;
+    public string TranslationEngineId { get; set; } = string.Empty;
+    public string BuildId { get; set; } = string.Empty;
+    public string Date { get; set; } = string.Empty;
+    public string State { get; set; } = string.Empty;
+    public string? Message { get; set; }
 }
 
 internal class ServalOptions
