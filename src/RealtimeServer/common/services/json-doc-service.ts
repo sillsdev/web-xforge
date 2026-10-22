@@ -26,7 +26,15 @@ export abstract class JsonDocService<T> extends DocService<T> {
     return opList.every(op => this.getMatchingPathTemplate(this.editableProps, op.p) !== -1);
   }
 
-  protected getMatchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path, _entity?: OwnedData): number {
+  protected getMatchingPathTemplate(
+    pathTemplates: ObjPathTemplate[],
+    path: ShareDB.Path | undefined,
+    _entity?: OwnedData
+  ): number {
+    // Op data that is not a list of components has no path, and no template matches a path that is not there
+    if (path == null) {
+      return -1;
+    }
     for (let i = 0; i < pathTemplates.length; i++) {
       if (pathTemplates[i].matches(path)) {
         return i;
