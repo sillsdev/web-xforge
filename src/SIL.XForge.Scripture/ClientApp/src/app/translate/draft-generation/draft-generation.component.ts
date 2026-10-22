@@ -17,7 +17,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
 import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
-import { UserFeedbackComponent } from 'src/app/shared/user-feedback/user-feedback.component';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -42,6 +42,7 @@ import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
 import { FeedbackSourcePage } from '../../shared/user-feedback/user-feedback-dialog.component';
+import { UserFeedbackComponent } from '../../shared/user-feedback/user-feedback.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
@@ -157,6 +158,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly authService: AuthService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly draftSourcesService: DraftSourcesService,
+    private readonly activatedProjectUserConfigService: ActivatedProjectUserConfigService,
     private readonly nllbService: NllbLanguageService,
     protected readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService,
@@ -242,6 +244,19 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   ngOnInit(): void {
     this.loadingStarted();
+
+    // Clear the latest draft result notification, as the user is now viewing the draft generation page
+    combineLatest([
+      this.activatedProjectUserConfigService.projectUserConfigDoc$,
+      this.onlineStatusService.onlineStatus$
+    ])
+      .pipe(
+        filter(([projectUserConfigDoc, isOnline]) => isOnline && projectUserConfigDoc?.data?.unreadDraftResult != null),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(([projectUserConfigDoc]) => {
+        void projectUserConfigDoc!.submitJson0Op(op => op.unset(puc => puc.unreadDraftResult));
+      });
 
     // Display dialog for supported languages when route fragment is 'supported-languages'
     this.route.fragment

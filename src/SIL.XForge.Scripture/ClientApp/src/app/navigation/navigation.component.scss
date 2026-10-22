@@ -77,6 +77,23 @@ mat-nav-list .mdc-list-item {
   line-height: 1.4rem;
 }
 
+#tools-menu-list {
+  .draft-completed {
+    font-weight: 600;
+
+    .completed-indicator {
+      color: var(--sf-navigation-icon-badge-color);
+      // the content of this node is text and the RTL style is handled automatically
+      margin-inline-start: auto;
+      margin-inline-end: 24px;
+    }
+  }
+
+  .draft-failed {
+    font-weight: 600;
+  }
+}
+
 .navigation-header {
   --mat-list-list-item-hover-state-layer-opacity: 0;
   cursor: initial;
