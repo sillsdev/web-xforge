@@ -107,7 +107,7 @@ describe('UserService', () => {
     ).resolves.not.toThrow();
   });
 
-  it('does not allow user to edit properties that are not editable', async () => {
+  it('does not allow user to edit properties that are not user-editable', async () => {
     const env = new TestEnvironment();
     await env.createData();
 
