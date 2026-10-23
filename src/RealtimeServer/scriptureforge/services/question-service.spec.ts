@@ -5,12 +5,13 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
+import { UserService } from '../../common/services/user-service';
 import {
   allowAll,
   clientConnect,
   createDoc,
-  fetchQuery,
   fetchDoc,
+  fetchQuery,
   flushPromises,
   submitJson0Op,
   submitOp,
@@ -28,7 +29,6 @@ import {
 } from '../models/sf-project-user-config';
 import { createTestProjectUserConfig } from '../models/sf-project-user-config-test-data';
 import { QuestionService } from './question-service';
-import { UserService } from '../../common/services/user-service';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';
 import { SF_PROJECT_USER_CONFIG_MIGRATIONS } from './sf-project-user-config-migrations';
@@ -220,6 +220,46 @@ describe('QuestionService', () => {
     await expect(
       submitOpData(env.server, conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), singleComponent)
     ).rejects.toThrow('Permission denied');
+  });
+
+  it('fails a component with no path with the error from JSON0 rather than one of its own', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    // This service examines a client's ops before JSON0 checks them, so it is the first thing to read a path that is
+    // not there. It leaves such an op alone, so that the submit goes on to fail where every malformed op fails,
+    // which is JSON0 refusing to apply it.
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const componentWithoutPath = [{ ld: {} }];
+    await expect(
+      submitOpData(
+        env.server,
+        conn,
+        QUESTIONS_COLLECTION,
+        getQuestionDocId('project01', QUESTION_ID),
+        componentWithoutPath
+      )
+    ).rejects.toMatchObject({ code: 'ERR_OT_OP_NOT_APPLIED', message: 'Missing path' });
+  });
+
+  it('fails a component with no instruction with the error from JSON0 rather than one of its own', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    // A component that says nothing to change is one that JSON0 will refuse. This service would meet it first, as it
+    // applies each component to the doc that it checks the following components against, so it must leave such an op alone.
+    // The op needs a second component, because a component is only thusly applied when another one follows it.
+    const conn = clientConnect(env.server, CHECKER_ID);
+    const componentWithoutInstruction = [{ p: ['text'] }, { p: ['answers', 0], ld: {} }];
+    await expect(
+      submitOpData(
+        env.server,
+        conn,
+        QUESTIONS_COLLECTION,
+        getQuestionDocId('project01', QUESTION_ID),
+        componentWithoutInstruction
+      )
+    ).rejects.toMatchObject({ code: 'ERR_OT_OP_NOT_APPLIED', message: 'invalid / missing instruction in op' });
   });
 
   it('lets community checkers query questions', async () => {
