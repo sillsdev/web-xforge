@@ -459,7 +459,7 @@
     "leave_and_discard": "Laisser & annuler les modifications",
     "next": "Suivant",
     "offline_message": "Vous êtes déconnecté. Veuillez vous connecter à Internet pour enregistrer et synchroniser vos ébauches sources.",
-    "overview_reference": "Référence",
+    "overview_reference": "Reference",
     "overview_source": "Source",
     "overview_translated_project": "Projet traduit",
     "previous": "Précédent",
@@ -670,7 +670,7 @@
     "question": "Question",
     "reference_from": "Début de référence",
     "reference_to": "Référence à",
-    "reference": "Référence",
+    "reference": "Reference",
     "row": "Ligne",
     "select_all": "Tout sélectionner",
     "select_questions": "Choisir les questions à importer",
@@ -1039,12 +1039,9 @@
     "translation_language_name_placeholder": "par exemple Swahili, Tok Pisin"
   },
   "user_feedback": {
-    "ask_for_help": "demander de l'aide",
     "close": "Fermer",
     "error_occurred": "Une erreur est survenue. Veuillez essayer de soumettre un commentaire plus tard.",
-    "how_has_drafting_helped_your_project": "Comment la rédaction {{ siteName }} a-t-elle aidé votre projet ?",
-    "or": "ou",
-    "send_feedback": "Envoyez vos commentaires",
+    "has_drafting_helped_project_send_feedback": "Has {{ siteName }} drafting helped your project? { 1 }Send feedback{ 2 } or { 3 }ask for help{ 4 }.",
     "thank_you_for_your_feedback": "Merci ! Vos commentaires nous sont très précieux."
   },
   "user_feedback_dialog": {
@@ -1052,12 +1049,11 @@
     "connect_to_the_internet": "Veuillez vous connecter à Internet pour envoyer vos commentaires.",
     "feedback_label": "Vos commentaires",
     "feedback_title": "Dites-nous comment {{ siteName }} a eu un impact sur votre projet",
-    "feedback_subtitle": "Comment {{ siteName }} a-t-il influencé le processus et le flux de travail de votre équipe ?",
     "permission_question": "Pouvons-nous publier votre avis ?",
-    "permission_anonymous_label": "Oui, mais merci de ne pas mentionner mon nom ni celui du projet",
+    "permission_anonymous_label": "Yes, but please don't use my name or the project language",
     "permission_private_label": "Non, merci de garder cela privé",
-    "permission_public_label": "Oui, et n'oubliez pas de mentionner mon nom et le nom du projet",
-    "project_for_feedback": "À quel projet ce commentaire se rapporte-t-il ?",
+    "permission_public_label": "Yes, and you can mention my name and the project language",
+    "project_for_feedback": "Which project is your feedback about?",
     "project_placeholder": "Projet",
     "required": "Requis",
     "submit": "Envoyer"

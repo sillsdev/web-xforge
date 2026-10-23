@@ -667,10 +667,10 @@
     "no_questions_match_filter": "No questions match the filter.",
     "no_import_offline": "Importing from {{ method }} is not available offline.",
     "question_for_verse": "Pertanyaan untuk ayat {{ number }}",
-    "question": "Pertanyaan",
+    "question": "Question",
     "reference_from": "Ayat dari",
     "reference_to": "Sampai Ayat",
-    "reference": "Referensi",
+    "reference": "Reference",
     "row": "Baris",
     "select_all": "Pilih Semua",
     "select_questions": "Pilih pertanyaan yang akan diimpor",
@@ -779,7 +779,7 @@
     "must_be_inside_verse_range": "Harus berada di dalam rentang ayat",
     "must_be_same_book_and_chapter": "Harus kitab dan pasal yang sama",
     "new_question": "Pertanyaan Baru",
-    "question": "Pertanyaan",
+    "question": "Question",
     "required_with_asterisk": "*Harus diisi",
     "save": "Simpan",
     "scripture_reference": "Ayat Alkitab"
@@ -1039,12 +1039,9 @@
     "translation_language_name_placeholder": "e.g. Swahili, Tok Pisin"
   },
   "user_feedback": {
-    "ask_for_help": "ask for help",
     "close": "Tutup",
     "error_occurred": "An error occurred. Please try submitting feedback later.",
-    "how_has_drafting_helped_your_project": "How has {{ siteName }} drafting helped your project?",
-    "or": "atau",
-    "send_feedback": "Send Feedback",
+    "has_drafting_helped_project_send_feedback": "Has {{ siteName }} drafting helped your project? { 1 }Send feedback{ 2 } or { 3 }ask for help{ 4 }.",
     "thank_you_for_your_feedback": "Thank you! We greatly value your feedback."
   },
   "user_feedback_dialog": {
@@ -1052,12 +1049,11 @@
     "connect_to_the_internet": "Please connect to the internet to send your feedback.",
     "feedback_label": "Your feedback",
     "feedback_title": "Tell us how {{ siteName }} has impacted your project",
-    "feedback_subtitle": "How has {{ siteName }} influenced your team's process and workflow?",
     "permission_question": "May we publish your feedback?",
-    "permission_anonymous_label": "Yes, but please don't use my name or project name",
+    "permission_anonymous_label": "Yes, but please don't use my name or the project language",
     "permission_private_label": "No, please keep this private",
-    "permission_public_label": "Yes, and mention my name and project name",
-    "project_for_feedback": "What project is this feedback about?",
+    "permission_public_label": "Yes, and you can mention my name and the project language",
+    "project_for_feedback": "Which project is your feedback about?",
     "project_placeholder": "Proyek",
     "required": "Harus diisi",
     "submit": "Kirim"
