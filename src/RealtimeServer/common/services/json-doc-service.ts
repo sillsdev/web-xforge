@@ -1,6 +1,5 @@
 import ShareDB from 'sharedb';
 import { ObjProxyArg } from 'ts-object-path';
-import { OwnedData } from '../models/owned-data';
 import { RealtimeServer } from '../realtime-server';
 import { obj, ObjPathTemplate } from '../utils/obj-path';
 import { DocService } from './doc-service';
@@ -26,11 +25,7 @@ export abstract class JsonDocService<T> extends DocService<T> {
     return opList.every(op => this.getMatchingPathTemplate(this.editableProps, op.p) !== -1);
   }
 
-  protected getMatchingPathTemplate(
-    pathTemplates: ObjPathTemplate[],
-    path: ShareDB.Path | undefined,
-    _entity?: OwnedData
-  ): number {
+  protected getMatchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path | undefined): number {
     // Op data that is not a list of components has no path, and no template matches a path that is not there
     if (path == null) {
       return -1;

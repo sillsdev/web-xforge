@@ -355,8 +355,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     const domainConfigs: ProjectDomainConfig[] = this.getApplicableDomains(entity);
     const index: number = this.getMatchingPathTemplate(
       domainConfigs.map(dc => dc.pathTemplate),
-      path,
-      entity
+      path
     );
     if (index !== -1) {
       return domainConfigs[index];
