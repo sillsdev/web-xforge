@@ -1,6 +1,8 @@
 import { VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -46,6 +48,10 @@ export function bookChapterMatchesVerseRef(bookChapter: BookChapter, verseRef: V
 }
 
 export class CheckingUtils {
+  static isParatextUser(project: SFProjectProfile | undefined, userId: string): boolean {
+    return project != null && isParatextRole(project.userRoles[userId]);
+  }
+
   static hasUserAnswered(question: Question | undefined, userId: string): boolean {
     if (question == null) {
       return false;
