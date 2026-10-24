@@ -1,7 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, DestroyRef, Input } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
 import {
   MatExpansionPanel,
   MatExpansionPanelDescription,
@@ -26,6 +25,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Subject, takeUntil } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -337,7 +337,7 @@ export class DraftHistoryEntryComponent {
     protected readonly draftOptionsService: DraftOptionsService,
     private readonly permissionsService: PermissionsService,
     private readonly destroyRef: DestroyRef,
-    private readonly dialog: MatDialog
+    private readonly dialogService: DialogService
   ) {}
 
   formatDate(date?: string): string {
@@ -367,7 +367,7 @@ export class DraftHistoryEntryComponent {
   openImportWizard(): void {
     if (this._entry == null) return;
 
-    this.dialog.open(DraftImportWizardComponent, {
+    this.dialogService.openMatDialog(DraftImportWizardComponent, {
       data: this._entry,
       width: '800px',
       maxWidth: '90vw',
