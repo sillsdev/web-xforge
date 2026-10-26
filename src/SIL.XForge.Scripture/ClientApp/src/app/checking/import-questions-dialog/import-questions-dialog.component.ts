@@ -87,6 +87,8 @@ interface DialogListItem {
   sfVersionOfQuestion?: QuestionDoc;
 }
 
+type QuestionSource = 'transcelerator' | 'csv_file' | 'paratext';
+
 type DialogErrorState =
   | 'update_transcelerator'
   | 'file_import_errors'
@@ -150,7 +152,7 @@ type DialogStatus =
   ]
 })
 export class ImportQuestionsDialogComponent implements OnDestroy {
-  questionSource: null | 'transcelerator' | 'csv_file' | 'paratext' = null;
+  questionSource: QuestionSource | null = null;
 
   questionList: DialogListItem[] = [];
   filteredList: DialogListItem[] = [];
@@ -336,7 +338,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     }
   }
 
-  async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean): Promise<void> {
+  async setUpQuestionList(questions: SourceQuestion[], source: QuestionSource): Promise<void> {
     const questionQuery = await this.promiseForQuestionDocQuery;
 
     questions.sort((a, b) => a.verseRef.BBBCCCVVV - b.verseRef.BBBCCCVVV);
@@ -346,13 +348,21 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       // version in SF should be updated if the text is different from the version being imported. Transcelerator does
       // not allow changing the reference for a question, as of 2021-03-09
       // Questions imported from a file should be skipped only if they are exactly the same as what is currently in SF.
-      const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(
-        doc =>
-          (doc.data != null &&
-            (useQuestionIds ? doc.data.transceleratorQuestionId === question.id : doc.data.text === question.text) &&
-            toVerseRef(doc.data.verseRef).equals(question.verseRef)) ||
-          (useQuestionIds ? doc.data?.paratextNoteId === question.id : doc.data?.text === question.text)
-      );
+      // Questions imported from Paratext notes are matched by note ID alone, regardless of verse reference.
+      const sfVersionOfQuestion: QuestionDoc | undefined = questionQuery.docs.find(doc => {
+        if (doc.data == null) {
+          return false;
+        }
+        const sameVerse: boolean = toVerseRef(doc.data.verseRef).equals(question.verseRef);
+        switch (source) {
+          case 'transcelerator':
+            return question.id != null && doc.data.transceleratorQuestionId === question.id && sameVerse;
+          case 'paratext':
+            return question.id != null && doc.data.paratextNoteId === question.id;
+          case 'csv_file':
+            return doc.data.text === question.text && sameVerse;
+        }
+      });
 
       this.questionList.push({
         question,
@@ -504,7 +514,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
           id: q.id
         };
       });
-      await this.setUpQuestionList(sourceQuestions, true);
+      await this.setUpQuestionList(sourceQuestions, 'transcelerator');
     }
     this.questionSource = 'transcelerator';
     this.loading = false;
@@ -575,7 +585,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
     this.errorState = undefined;
 
     const questions = this.convertParatextCommentsToQuestions(this.paratextNotes, tagId);
-    await this.setUpQuestionList(questions, true);
+    await this.setUpQuestionList(questions, 'paratext');
 
     this.loading = false;
   }
@@ -746,7 +756,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
       this.invalidRows = invalidRows;
     }
 
-    await this.setUpQuestionList(questions, false);
+    await this.setUpQuestionList(questions, 'csv_file');
     this.questionSource = 'csv_file';
     this.loading = false;
   }

@@ -394,6 +394,28 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.backButton);
   }));
 
+  it('imports a CSV question as new when the same text exists at a different reference', fakeAsync(() => {
+    const question = { data: { text: 'Same question', verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 } } };
+    const env = new TestEnvironment({ existingQuestions: [question as QuestionDoc] });
+
+    env.selectFileWithContents([
+      ['Reference', 'Questions'],
+      ['MAT 1:2', 'Same question']
+    ]);
+
+    expect(env.tableRows.length).toBe(1);
+    expect(env.component.filteredList[0].sfVersionOfQuestion).toBeUndefined();
+    env.selectQuestion(env.tableRows[0]);
+    verify(mockedDialogService.openMatDialog(anything(), anything())).never();
+    expect(env.footerText).toBe('');
+
+    env.click(env.importSelectedQuestionsButton);
+    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    const createdQuestion = capture(mockedQuestionsService.createQuestion).last()[1];
+    expect(createdQuestion.text).toBe('Same question');
+    expect(createdQuestion.verseRef).toEqual(jasmine.objectContaining({ bookNum: 40, chapterNum: 1, verseNum: 2 }));
+  }));
+
   it('does not import from a CSV file with unknown columns', fakeAsync(() => {
     const env = new TestEnvironment();
 
@@ -657,6 +679,7 @@ describe('ImportQuestionsDialogComponent', () => {
         }
       ];
       const preexistingQuestion = TestEnvironment.createQuestionDocWithSource(
+        'paratext',
         'note-1',
         new VerseRef('MAT 1:1'),
         'text'
@@ -696,6 +719,36 @@ describe('ImportQuestionsDialogComponent', () => {
       expect(note3.question.id).toBe('note-3');
       expect(note3.question.text).toBe('Question 3');
       expect(note3.sfVersionOfQuestion).toBeUndefined();
+    }));
+
+    it('does not match a Paratext note to a Transcelerator question with the same ID', fakeAsync(() => {
+      const tagQuestions: ParatextNoteTag = { id: 7, name: 'Questions' };
+      const notes: ParatextNote[] = [
+        {
+          id: '2',
+          verseRef: 'MAT 1:1',
+          comments: [{ verseRef: 'MAT 1:1', content: '<p>Note question</p>', tag: tagQuestions }]
+        }
+      ];
+      const transceleratorQuestion = TestEnvironment.createQuestionDocWithSource(
+        'transcelerator',
+        '2',
+        new VerseRef('MAT 1:1'),
+        'Transcelerator question'
+      );
+      const env = new TestEnvironment({ existingQuestions: [transceleratorQuestion], paratextNotes: notes });
+      env.setParatextNotes(env.component, notes);
+      env.setParatextTagOptions(env.component, env.collectParatextTagOptions(env.component, notes));
+      env.component.selectedParatextTagId = tagQuestions.id;
+      env.component.questionSource = 'paratext';
+      env.component.showParatextTagSelector = true;
+
+      void env.component.confirmParatextTagSelection();
+      tick();
+      env.fixture.detectChanges();
+
+      expect(env.component.filteredList.length).toBe(1);
+      expect(env.component.filteredList[0].sfVersionOfQuestion).toBeUndefined();
     }));
 
     it('shows an error when no Paratext project can be found', fakeAsync(() => {
@@ -1021,10 +1074,16 @@ class TestEnvironment {
     return (component as unknown as { paratextTagOptions: ParatextNoteTag[] }).paratextTagOptions;
   }
 
-  static createQuestionDocWithSource(sourceId: string, verse: VerseRef, text: string): QuestionDoc {
+  static createQuestionDocWithSource(
+    source: 'transcelerator' | 'paratext',
+    sourceId: string,
+    verse: VerseRef,
+    text: string
+  ): QuestionDoc {
     return {
       data: {
-        transceleratorQuestionId: sourceId,
+        transceleratorQuestionId: source === 'transcelerator' ? sourceId : undefined,
+        paratextNoteId: source === 'paratext' ? sourceId : undefined,
         verseRef: fromVerseRef(verse),
         text,
         answers: [] as Answer[]
