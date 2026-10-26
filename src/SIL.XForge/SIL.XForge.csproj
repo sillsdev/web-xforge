@@ -19,13 +19,13 @@
     <PackageReference Include="Hangfire.Mongo" Version="1.17.0" />
     <PackageReference Include="Duende.IdentityModel" Version="8.1.0" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="[6.3.1]" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.14" />
     <PackageReference Include="MongoDB.Driver" Version="3.12.0" />
     <PackageReference Include="MailKit" Version="4.18.1" />
     <PackageReference Include="AbrarJahin.DiffMatchPatch" Version="0.1.0" />
     <PackageReference Include="SIL.Core" Version="18.0.0" />
     <!-- Fix a vulnerable dependency of MailKit 4.18.1 -->
-    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 </Project>

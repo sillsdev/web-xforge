@@ -19,9 +19,9 @@
 
   <ItemGroup>
     <PackageReference Include="Duende.AccessTokenManagement" Version="4.3.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageReference Include="Serval.Client" Version="1.21.0" />
   </ItemGroup>
 
