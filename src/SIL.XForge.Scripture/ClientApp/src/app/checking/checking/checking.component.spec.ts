@@ -1153,10 +1153,10 @@ describe('CheckingComponent', () => {
 
         const questionRemaining = env.getQuestionDoc('q1Id');
         const questionExcluded = {
-          data: { answers: [{}] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{}] as Answer[] }
         } as QuestionDoc;
 
-        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        const filtered = env.component.filterQuestions([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
         flush();
@@ -1170,13 +1170,15 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasNotAnswered;
 
         const questionRemaining = {
-          data: { answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] } // Answered by a different user
+          // Answered by a different user
+          data: { projectRef: 'project01', isArchived: false, answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: { answers: [{ ownerRef: CHECKER_USER.id }] as Answer[] } // Answered by current user
+          // Answered by current user
+          data: { projectRef: 'project01', isArchived: false, answers: [{ ownerRef: CHECKER_USER.id }] as Answer[] }
         } as QuestionDoc;
 
-        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        const filtered = env.component.filterQuestions([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
         flush();
@@ -1190,13 +1192,15 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.CurrentUserHasAnswered;
 
         const questionRemaining = {
-          data: { answers: [{ ownerRef: CHECKER_USER.id }] as Answer[] } // Answered by current user
+          // Answered by current user
+          data: { projectRef: 'project01', isArchived: false, answers: [{ ownerRef: CHECKER_USER.id }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: { answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] } // Answered by a different user
+          // Answered by a different user
+          data: { projectRef: 'project01', isArchived: false, answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] }
         } as QuestionDoc;
 
-        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        const filtered = env.component.filterQuestions([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
         flush();
@@ -1210,13 +1214,13 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.HasAnswers;
 
         const questionRemaining = {
-          data: { answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{ ownerRef: ADMIN_USER.id }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: { answers: [] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [] as Answer[] }
         } as QuestionDoc;
 
-        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        const filtered = env.component.filterQuestions([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
         flush();
@@ -1230,20 +1234,24 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.StatusNone;
 
         const questionRemainingNullStatus = {
-          data: { answers: [{ status: undefined }] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{ status: undefined }] as Answer[] }
         } as QuestionDoc;
         const questionRemainingNoneStatus = {
-          data: { answers: [{ status: AnswerStatus.None }] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{ status: AnswerStatus.None }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: { answers: [{ status: AnswerStatus.Exportable }] as Answer[] }
+          data: {
+            projectRef: 'project01',
+            isArchived: false,
+            answers: [{ status: AnswerStatus.Exportable }] as Answer[]
+          }
         } as QuestionDoc;
 
-        let filtered = env.component['filterQuestions']([questionRemainingNullStatus, questionExcluded]);
+        let filtered = env.component.filterQuestions([questionRemainingNullStatus, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemainingNullStatus);
 
-        filtered = env.component['filterQuestions']([questionRemainingNoneStatus, questionExcluded]);
+        filtered = env.component.filterQuestions([questionRemainingNoneStatus, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemainingNoneStatus);
         flush();
@@ -1257,13 +1265,17 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.StatusExport;
 
         const questionRemaining = {
-          data: { answers: [{ status: AnswerStatus.Exportable }] as Answer[] }
+          data: {
+            projectRef: 'project01',
+            isArchived: false,
+            answers: [{ status: AnswerStatus.Exportable }] as Answer[]
+          }
         } as QuestionDoc;
         const questionExcluded = {
-          data: { answers: [{ status: AnswerStatus.Resolved }] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{ status: AnswerStatus.Resolved }] as Answer[] }
         } as QuestionDoc;
 
-        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        const filtered = env.component.filterQuestions([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
         flush();
@@ -1277,13 +1289,13 @@ describe('CheckingComponent', () => {
         env.component.activeQuestionFilter = QuestionFilter.StatusResolved;
 
         const questionRemaining = {
-          data: { answers: [{ status: AnswerStatus.Resolved }] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{ status: AnswerStatus.Resolved }] as Answer[] }
         } as QuestionDoc;
         const questionExcluded = {
-          data: { answers: [{ status: AnswerStatus.None }] as Answer[] }
+          data: { projectRef: 'project01', isArchived: false, answers: [{ status: AnswerStatus.None }] as Answer[] }
         } as QuestionDoc;
 
-        const filtered = env.component['filterQuestions']([questionRemaining, questionExcluded]);
+        const filtered = env.component.filterQuestions([questionRemaining, questionExcluded]);
         expect(filtered.length).toBe(1);
         expect(filtered[0]).toBe(questionRemaining);
         flush();

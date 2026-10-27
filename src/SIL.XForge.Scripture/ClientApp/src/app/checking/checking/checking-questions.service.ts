@@ -103,9 +103,7 @@ export class CheckingQuestionsService {
     const comparisonOperator: ComparisonOperator = prevOrNext === 'prev' ? '$lt' : '$gt';
 
     const queryParams: QueryParameters = {
-      [obj<Question>().pathStr(q => q.projectRef)]: projectId,
-      [obj<Question>().pathStr(q => q.isArchived)]: false,
-      ...this.getQuestionFilterParams(questionFilter, userId),
+      ...this.getQuestionFilterParams(questionFilter, userId, projectId),
 
       $and: [
         // Exclude the current question if supplied
@@ -225,30 +223,39 @@ export class CheckingQuestionsService {
    * Gets the query criteria for the questions that a filter shows. Deleted answers are ignored. These criteria are used
    * both in queries and to filter questions that are already loaded.
    */
-  getQuestionFilterParams(questionFilter: QuestionFilter, userId: string): PropertyFilter {
-    const answersPath: string = obj<Question>().pathStr(q => q.answers);
+  getQuestionFilterParams(questionFilter: QuestionFilter, userId: string, projectId: string): PropertyFilter {
     const notDeleted: PropertyFilter = { [obj<Answer>().pathStr(a => a.deleted)]: { $ne: true } };
     const ownedByUser: PropertyFilter = { ...notDeleted, [obj<Answer>().pathStr(a => a.ownerRef)]: userId };
     const statusPath: string = obj<Answer>().pathStr(a => a.status);
-    switch (questionFilter) {
-      case QuestionFilter.None:
-        return {};
-      case QuestionFilter.CurrentUserHasAnswered:
-        return { [answersPath]: { $elemMatch: ownedByUser } };
-      case QuestionFilter.CurrentUserHasNotAnswered:
-        return { [answersPath]: { $not: { $elemMatch: ownedByUser } } };
-      case QuestionFilter.HasAnswers:
-        return { [answersPath]: { $elemMatch: notDeleted } };
-      case QuestionFilter.NoAnswers:
-        return { [answersPath]: { $not: { $elemMatch: notDeleted } } };
-      case QuestionFilter.StatusNone:
-        // A null status also matches answers that have no status
-        return { [answersPath]: { $elemMatch: { ...notDeleted, [statusPath]: { $in: [AnswerStatus.None, null] } } } };
-      case QuestionFilter.StatusExport:
-        return { [answersPath]: { $elemMatch: { ...notDeleted, [statusPath]: AnswerStatus.Exportable } } };
-      case QuestionFilter.StatusResolved:
-        return { [answersPath]: { $elemMatch: { ...notDeleted, [statusPath]: AnswerStatus.Resolved } } };
-    }
+    const answerFilterParams: PropertyFilter | undefined = (() => {
+      switch (questionFilter) {
+        case QuestionFilter.None:
+          return undefined;
+        case QuestionFilter.CurrentUserHasAnswered:
+          return { $elemMatch: ownedByUser };
+        case QuestionFilter.CurrentUserHasNotAnswered:
+          return { $not: { $elemMatch: ownedByUser } };
+        case QuestionFilter.HasAnswers:
+          return { $elemMatch: notDeleted };
+        case QuestionFilter.NoAnswers:
+          return { $not: { $elemMatch: notDeleted } };
+        case QuestionFilter.StatusNone:
+          // A null status also matches answers that have no status
+          return { $elemMatch: { ...notDeleted, [statusPath]: { $in: [AnswerStatus.None, null] } } };
+        case QuestionFilter.StatusExport:
+          return { $elemMatch: { ...notDeleted, [statusPath]: AnswerStatus.Exportable } };
+        case QuestionFilter.StatusResolved:
+          return { $elemMatch: { ...notDeleted, [statusPath]: AnswerStatus.Resolved } };
+      }
+    })();
+
+    const questionFilterParams: PropertyFilter = {
+      [obj<Question>().pathStr(q => q.projectRef)]: projectId,
+      [obj<Question>().pathStr(q => q.isArchived)]: false
+    };
+    return answerFilterParams != null
+      ? { ...questionFilterParams, [obj<Question>().pathStr(q => q.answers)]: answerFilterParams }
+      : questionFilterParams;
   }
 
   private isVerseRefData(item: Question | VerseRefData): item is VerseRefData {

@@ -1310,17 +1310,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       return;
     }
 
-    let matchingQuestions: QuestionDoc[];
-
-    // If there is no filter applied, clone the questions to trigger change detection in the questions component
-    if (this.activeQuestionFilter === QuestionFilter.None) {
-      matchingQuestions = this.questionDocs.slice();
-    } else {
-      matchingQuestions = this.filterQuestions(this.questionDocs);
-    }
-
-    this.visibleQuestions = matchingQuestions;
-
+    this.visibleQuestions = this.filterQuestions(this.questionDocs);
     if (this.totalQuestions() === this.totalVisibleQuestions()) {
       this.totalVisibleQuestionsString = this.totalQuestions().toString();
     } else {
@@ -1332,9 +1322,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.changeDetector.markForCheck();
   }
 
-  private filterQuestions(unfilteredQuestions: readonly QuestionDoc[]): QuestionDoc[] {
+  public filterQuestions(unfilteredQuestions: readonly QuestionDoc[]): QuestionDoc[] {
     const matchesFilter = createFilterPredicate(
-      this.checkingQuestionsService.getQuestionFilterParams(this.activeQuestionFilter, this.userService.currentUserId)
+      this.checkingQuestionsService.getQuestionFilterParams(
+        this.activeQuestionFilter,
+        this.userService.currentUserId,
+        this.projectDoc!.id
+      )
     );
     return unfilteredQuestions.filter(q => q.data != null && matchesFilter(q));
   }
