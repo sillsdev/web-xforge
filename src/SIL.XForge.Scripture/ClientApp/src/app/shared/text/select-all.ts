@@ -3,7 +3,6 @@ import Quill, { Range } from 'quill';
 import { StringMap } from 'rich-text';
 import { fromEvent } from 'rxjs';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { TextComponent } from './text.component';
 
 /**
  * "Select All" module for Quill, which converts browser menu
@@ -11,8 +10,6 @@ import { TextComponent } from './text.component';
  */
 export class SelectAll {
   constructor(quill: Quill, options: StringMap) {
-    // Get the text component
-    const textComponent: TextComponent = options.textComponent;
     const destroyRef: DestroyRef = options.destroyRef;
 
     // Tracks the last Quill selection to avoid repetition/looping
@@ -45,31 +42,5 @@ export class SelectAll {
           lastRange = quillRange;
         }
       });
-
-    // Do not allow selection to move beyond the segment
-    let updatingSelection = false;
-    quill.on('selection-change', (range, _oldRange, _source) => {
-      // Prevent infinite loops
-      if (updatingSelection) return;
-
-      // No range or segment = lost focus
-      if (!range) return; // lost focus
-      if (textComponent.segment == null) return;
-
-      // If there is no text selected, we do not need to modify the selection
-      const text: string = quill.getText(range.index, range.length);
-      if (text.length === 0) return;
-
-      // If the selection is valid with in the segment, we do not need to modify it
-      if (textComponent.isValidSelectionForCurrentSegment(range)) return;
-
-      // Do not allow selecting before or further than the current segment
-      const newRange: Range | null = textComponent.conformToValidSelectionForCurrentSegment(range);
-      if (newRange == null) return;
-
-      updatingSelection = true;
-      quill.setSelection(newRange.index, newRange.length, 'silent');
-      updatingSelection = false;
-    });
   }
 }

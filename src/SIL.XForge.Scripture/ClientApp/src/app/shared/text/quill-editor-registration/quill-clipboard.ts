@@ -12,6 +12,16 @@ export class DisableHtmlClipboard extends QuillClipboard {
     this._textComponent = options.textComponent;
   }
 
+  onCaptureCopy(e: ClipboardEvent, isCut: boolean = false): void {
+    // Quill deletes the selection itself on a cut from the context menu or Edit menu, bypassing the keyboard
+    // bindings, so downgrade a cut to a copy when the selection may not be edited (e.g. spans segments)
+    const range: Range | null = this.quill.selection.getRange()[0];
+    if (isCut && range != null && !this._textComponent.isValidSelectionForCurrentSegment(range)) {
+      isCut = false;
+    }
+    super.onCaptureCopy(e, isCut);
+  }
+
   onCapturePaste(e: ClipboardEvent): void {
     if (e.defaultPrevented || !this.quill.isEnabled() || e.clipboardData == null) {
       return;

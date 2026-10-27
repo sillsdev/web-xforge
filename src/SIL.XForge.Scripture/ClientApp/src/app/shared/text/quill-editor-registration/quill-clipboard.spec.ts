@@ -1,4 +1,5 @@
 import Quill, { Delta, Range } from 'quill';
+import QuillClipboard from 'quill/modules/clipboard';
 import { anything, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { TextComponent } from '../text.component';
 import { DisableHtmlClipboard } from './quill-clipboard';
@@ -23,6 +24,44 @@ describe('DisableHtmlClipboard', () => {
 
     mockRange = { index: 5, length: 0 };
     mockFormat = { segment: 'verse_1_1', bold: true };
+  });
+
+  describe('onCaptureCopy', () => {
+    let superCopySpy: jasmine.Spy;
+    let selectedRange: Range;
+
+    beforeEach(() => {
+      superCopySpy = spyOn(QuillClipboard.prototype, 'onCaptureCopy');
+      selectedRange = { index: 5, length: 12 };
+      when(quillMock.selection).thenReturn({ getRange: () => [selectedRange, null] } as any);
+    });
+
+    it('should cut when valid selection', () => {
+      when(textComponentMock.isValidSelectionForCurrentSegment(selectedRange)).thenReturn(true);
+      const event = new ClipboardEvent('cut');
+
+      clipboard.onCaptureCopy(event, true);
+
+      expect(superCopySpy).toHaveBeenCalledWith(event, true);
+    });
+
+    it('should copy instead of cut when invalid selection', () => {
+      when(textComponentMock.isValidSelectionForCurrentSegment(selectedRange)).thenReturn(false);
+      const event = new ClipboardEvent('cut');
+
+      clipboard.onCaptureCopy(event, true);
+
+      expect(superCopySpy).toHaveBeenCalledWith(event, false);
+    });
+
+    it('should copy when invalid selection', () => {
+      when(textComponentMock.isValidSelectionForCurrentSegment(selectedRange)).thenReturn(false);
+      const event = new ClipboardEvent('copy');
+
+      clipboard.onCaptureCopy(event, false);
+
+      expect(superCopySpy).toHaveBeenCalledWith(event, false);
+    });
   });
 
   describe('onCapturePaste', () => {

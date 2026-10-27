@@ -614,7 +614,7 @@ describe('TextComponent', () => {
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
 
-  it('"select all" adjusts selection to current segment', fakeAsync(() => {
+  it('"select all" keeps the whole chapter selected and keeps the current segment', fakeAsync(() => {
     const env = new TestEnvironment();
     const testSegmentRefs = ['verse_1_1', 'verse_1_3'];
 
@@ -629,14 +629,57 @@ describe('TextComponent', () => {
       env.component.editor?.setSelection(range.index, 0, 'user');
       expect(env.component.segmentRef).toEqual(ref);
 
-      // Select all text
-      env.component.editor?.setSelection(0, env.component.editor?.getLength());
+      // Select all text (Quill never selects the trailing newline)
+      const length: number = env.component.editor!.getLength() - 1;
+      env.component.editor?.setSelection(0, length);
       tick();
 
       const result = env.component.editor?.getSelection();
-      expect(result!.index).toEqual(range.index);
-      expect(result!.length).toEqual(range.length);
+      expect(result!.index).toEqual(0);
+      expect(result!.length).toEqual(length);
+      expect(env.component.segmentRef).toEqual(ref);
     }
+  }));
+
+  it('allows selecting text across verses', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+    const verse1: QuillRange = env.component.getSegmentRange('verse_1_1')!;
+    const verse3: QuillRange = env.component.getSegmentRange('verse_1_3')!;
+    env.component.editor!.setSelection(verse1.index, 0, 'user');
+    tick();
+    expect(env.component.segmentRef).toEqual('verse_1_1');
+
+    const acrossVerses: QuillRange = { index: verse1.index, length: verse3.index + verse3.length - verse1.index };
+    env.component.editor!.setSelection(acrossVerses, 'user');
+    tick();
+
+    const result: QuillRange = env.component.editor!.getSelection()!;
+    expect(result.index).toEqual(acrossVerses.index);
+    expect(result.length).toEqual(acrossVerses.length);
+    expect(env.component.segmentRef).toEqual('verse_1_1');
+    expect(env.component.isValidSelectionForCurrentSegment(acrossVerses)).toBeFalse();
+  }));
+
+  it('allows selecting text across verses in a read-only editor', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.hostComponent.isReadOnly = true;
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 40, 1);
+    env.waitForEditor();
+    expect(env.component.editor!.isEnabled()).toBeFalse();
+    const verse1: QuillRange = env.component.getSegmentRange('verse_1_1')!;
+    const verse3: QuillRange = env.component.getSegmentRange('verse_1_3')!;
+
+    const acrossVerses: QuillRange = { index: verse1.index, length: verse3.index + verse3.length - verse1.index };
+    env.component.editor!.setSelection(acrossVerses, 'user');
+    tick();
+
+    const result: QuillRange = env.component.editor!.getSelection()!;
+    expect(result.index).toEqual(acrossVerses.index);
+    expect(result.length).toEqual(acrossVerses.length);
   }));
 
   it('does not scroll to the previous selection when the browser selection changes', fakeAsync(() => {
@@ -1128,7 +1171,7 @@ describe('TextComponent', () => {
     });
   }));
 
-  it('does not allow selecting a range that includes a footnote', fakeAsync(() => {
+  it('limits the editable range to the text before a footnote', fakeAsync(() => {
     const chapterNum = 2;
     const textDocOps: RichText.DeltaOperation[] = chapterTextOpsWithFootnote(chapterNum);
     const segmentRef: string = textDocOps.find(op => op.attributes?.segment)?.attributes?.segment as string;
@@ -1221,6 +1264,36 @@ describe('TextComponent', () => {
     flush();
 
     expect(cancelled).withContext('event should have been cancelled when invalid selection').toBeTrue();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('does not cancel compositionstart when valid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
+    env.component.editor!.setSelection(segmentRange.index, 0, 'user');
+    tick();
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      true
+    );
+    const event: CompositionEvent = new CompositionEvent('compositionstart', { cancelable: true });
+
+    env.component.editor!.container.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeFalse();
+    expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
+  }));
+
+  it('cancels compositionstart when invalid selection', fakeAsync(() => {
+    const { env, segmentRange }: { env: TestEnvironment; segmentRange: QuillRange } = basicSimpleText();
+    env.component.editor!.setSelection(segmentRange.index, 0, 'user');
+    tick();
+    const isValidSpy: jasmine.Spy<any> = spyOn<any>(env.component, 'isValidSelectionForCurrentSegment').and.returnValue(
+      false
+    );
+    const event: CompositionEvent = new CompositionEvent('compositionstart', { cancelable: true });
+
+    env.component.editor!.container.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBeTrue();
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
 

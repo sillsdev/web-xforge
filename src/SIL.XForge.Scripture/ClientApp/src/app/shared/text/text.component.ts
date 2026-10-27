@@ -287,7 +287,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     },
     clipboard: { textComponent: this },
     dragAndDrop: {},
-    selectAll: { textComponent: this, destroyRef: this.destroyRef }
+    selectAll: { destroyRef: this.destroyRef }
   };
   private _id?: TextDocId;
   private _isRightToLeft: boolean = false;
@@ -701,6 +701,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     this.viewModel.editor = editor;
     void this.bindQuill(); // not awaited
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
+    editor.container.addEventListener('compositionstart', (ev: Event) => this.onCompositionStart(ev));
     this.editorCreated.next();
   }
 
@@ -1905,13 +1906,17 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     return editPositions;
   }
 
-  /** Modify the current selection, if needed, to make the selection valid for editing the current segment. */
+  /**
+   * Move the caret, if needed, so it is valid for editing the current segment (e.g. inside a blank segment rather
+   * than before it, or after a note embed rather than before it). A range selection is left alone: selecting text
+   * across segments or over embeds is allowed, and the edit handlers separately refuse to modify such a selection.
+   */
   private adjustSelection(): void {
     if (this._editor == null) {
       return;
     }
     const sel: Range | null = this._editor.getSelection();
-    if (sel == null) {
+    if (sel == null || sel.length > 0) {
       return;
     }
 
@@ -1921,8 +1926,8 @@ export class TextComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  /** Given a selection, return a possibly modified selection that is a valid for editing the current segment.
-   * For example, a selection over a segment boundary is sometimes not valid. */
+  /** Given a selection, return a possibly modified selection that is valid for editing the current segment.
+   * For example, a selection over a segment boundary is trimmed to the part inside the current segment. */
   conformToValidSelectionForCurrentSegment(sel: Range, allowEmbedSelection: boolean = true): Range | null {
     if (this._editor == null || this._segment == null) {
       return null;
@@ -1932,7 +1937,7 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       // always select at the end of blank so the cursor is inside the segment and not between the segment and verse
       newSel = { index: this._segment.range.index + this._segment.range.length, length: 0 };
     } else if (!this.multiSegmentSelection) {
-      // selections outside of the text chooser dialog are not permitted to extend across segments
+      // edits outside of the text chooser dialog are not permitted to extend across segments
 
       const oldStart: number = sel.index;
       const oldEnd: number = sel.index + sel.length;
@@ -1982,6 +1987,20 @@ export class TextComponent implements AfterViewInit, OnDestroy {
       return;
     }
     if (!this.isValidSelectionForCurrentSegment(sel)) {
+      ev.preventDefault();
+    }
+  }
+
+  /**
+   * Handler for compositionstart event on quill DOM element. An IME replaces the selection with the composed text
+   * without a cancelable beforeinput event, so refuse to start composing over a selection that may not be edited.
+   */
+  private onCompositionStart(ev: Event): void {
+    if (this._editor == null || this.readOnlyEnabled) {
+      return;
+    }
+    const sel: Range | null = this._editor.getSelection();
+    if (sel != null && !this.isValidSelectionForCurrentSegment(sel)) {
       ev.preventDefault();
     }
   }
