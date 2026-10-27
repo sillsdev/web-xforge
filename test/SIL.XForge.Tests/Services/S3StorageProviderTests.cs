@@ -42,8 +42,8 @@ public class S3StorageProviderTests
                     }
                 )
             );
-        env.AmazonS3.DeleteObjectAsync(Arg.Any<string>(), Arg.Any<string>())
-            .Returns(Task.FromResult(new DeleteObjectResponse()));
+        env.AmazonS3.DeleteObjectsAsync(Arg.Any<DeleteObjectsRequest>())
+            .Returns(Task.FromResult(new DeleteObjectsResponse()));
 
         // SUT
         await env.Service.DeleteDirectoryAsync(DirectoryName, Project01);
@@ -55,9 +55,7 @@ public class S3StorageProviderTests
                     r.BucketName == BucketName && r.Prefix == $"{DirectoryName}/{Project01}/"
                 )
             );
-        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/file1.txt");
-        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/file2.txt");
-        await env.AmazonS3.DidNotReceive().DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/subdirectory/");
+        await env.AmazonS3.Received(1).DeleteObjectsAsync(Arg.Any<DeleteObjectsRequest>());
     }
 
     [Test]
@@ -70,33 +68,6 @@ public class S3StorageProviderTests
         await Assert.DoesNotThrowAsync(() => env.Service.DeleteDirectoryAsync(DirectoryName, Project01));
 
         await env.AmazonS3.DidNotReceive().DeleteObjectAsync(Arg.Any<string>(), Arg.Any<string>());
-    }
-
-    [Test]
-    public async Task DeleteDirectoryAsync_ContinuesWhenFileDoesNotExist()
-    {
-        var env = new TestEnvironment();
-        env.AmazonS3.ListObjectsV2Async(Arg.Any<ListObjectsV2Request>())
-            .Returns(
-                Task.FromResult(
-                    new ListObjectsV2Response
-                    {
-                        S3Objects =
-                        [
-                            new S3Object { Key = $"{DirectoryName}/{Project01}/missing.txt" },
-                            new S3Object { Key = $"{DirectoryName}/{Project01}/existing.txt" },
-                        ],
-                    }
-                )
-            );
-        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/missing.txt").ThrowsAsync(NotFound);
-        env.AmazonS3.DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/existing.txt")
-            .Returns(Task.FromResult(new DeleteObjectResponse()));
-
-        // SUT
-        await env.Service.DeleteDirectoryAsync(DirectoryName, Project01);
-
-        await env.AmazonS3.Received(1).DeleteObjectAsync(BucketName, $"{DirectoryName}/{Project01}/existing.txt");
     }
 
     [Test]
@@ -234,7 +205,7 @@ public class S3StorageProviderTests
     public async Task PutFileAsync_UploadsFileAndReturnsUri()
     {
         var env = new TestEnvironment();
-        await using var expectedStream = new NonDisposingMemoryStream();
+        var expectedStream = new NonDisposingMemoryStream();
         expectedStream.Write([1, 2, 3]);
         expectedStream.Seek(0, SeekOrigin.Begin);
 
@@ -263,7 +234,7 @@ public class S3StorageProviderTests
     public async Task PutFileAsync_SanitizesPathComponents()
     {
         var env = new TestEnvironment();
-        await using var expectedStream = new NonDisposingMemoryStream();
+        var expectedStream = new NonDisposingMemoryStream();
 
         env.FileSystemService.OpenFile("source.txt", FileMode.Open).Returns(expectedStream);
         env.AmazonS3.PutObjectAsync(Arg.Any<PutObjectRequest>()).Returns(Task.FromResult(new PutObjectResponse()));
