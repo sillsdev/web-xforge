@@ -83,7 +83,7 @@ mat-nav-list .mdc-list-item {
 
     .completed-indicator {
       color: var(--sf-navigation-icon-badge-color);
-      // the content of this node is text and the RTL style is handled automatically
+      // these styles correctly handle UI in LTR and RTL locales since this is a text node
       margin-inline-start: auto;
       margin-inline-end: 24px;
     }
