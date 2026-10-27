@@ -13,7 +13,7 @@ public interface IAudioService
     Task ConvertToMp3Async(string inputPath, string outputPath);
 
     /// <summary>
-    /// Determines if a file is an MP# file by reading the header.
+    /// Determines if a file is an MP3 file by reading the header.
     /// </summary>
     /// <param name="path">The path to the MP3 file.</param>
     /// <returns><c>true</c> if the file is an MP3 file; otherwise, <c>false</c>.</returns>

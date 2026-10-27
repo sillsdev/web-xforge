@@ -42,19 +42,27 @@ public class S3DirectoryContents(IAmazonS3 amazonS3, string bucketName, string d
             Delimiter = "/",
             Prefix = _key,
         };
-        var response = amazonS3.ListObjectsV2Async(request).GetAwaiter().GetResult();
 
-        IEnumerable<S3FileInfo> files = response
-            .S3Objects.Where(x => x.Key != _key)
-            .Select(x => new S3FileInfo(amazonS3, bucketName, x.Key));
+        ListObjectsV2Response response;
+        do
+        {
+            response = amazonS3.ListObjectsV2Async(request).GetAwaiter().GetResult();
 
-        IEnumerable<S3FileInfo> directories = response.CommonPrefixes.Select(x => new S3FileInfo(
-            amazonS3,
-            bucketName,
-            x
-        ));
+            // Yield directories
+            foreach (string prefix in response.CommonPrefixes)
+            {
+                yield return new S3FileInfo(amazonS3, bucketName, prefix);
+            }
 
-        return directories.Concat(files).GetEnumerator();
+            // Yield files
+            foreach (S3Object obj in response.S3Objects.Where(obj => obj.Key != _key))
+            {
+                yield return new S3FileInfo(amazonS3, bucketName, obj.Key);
+            }
+
+            // Set the continuation token for the next page
+            request.ContinuationToken = response.NextContinuationToken;
+        } while (response.IsTruncated == true);
     }
 
     /// <inheritdoc />
