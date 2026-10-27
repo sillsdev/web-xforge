@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -62,19 +63,28 @@ public class S3StorageProvider(
                 Prefix = $"{directoryName}/{projectId}/",
             };
 
-            ListObjectsV2Response response = await amazonS3.ListObjectsV2Async(request);
-
-            foreach (S3Object obj in (response.S3Objects ?? []).Where(obj => !obj.Key.EndsWith('/')))
+            ListObjectsV2Response response;
+            do
             {
-                try
+                response = await amazonS3.ListObjectsV2Async(request);
+
+                // Filter out directory markers/folders so we only delete files
+                List<KeyVersion> keysToDelete =
+                [
+                    .. (response.S3Objects ?? [])
+                        .Where(obj => !obj.Key.EndsWith('/'))
+                        .Select(obj => new KeyVersion { Key = obj.Key }),
+                ];
+
+                if (keysToDelete.Count > 0)
                 {
-                    await amazonS3.DeleteObjectAsync(bucketName, obj.Key);
+                    var deleteRequest = new DeleteObjectsRequest { BucketName = bucketName, Objects = keysToDelete };
+                    await amazonS3.DeleteObjectsAsync(deleteRequest);
                 }
-                catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
-                {
-                    // File does not exist
-                }
-            }
+
+                // Set the continuation token for the next page
+                request.ContinuationToken = response.NextContinuationToken;
+            } while (response.IsTruncated == true);
         }
         catch (AmazonS3Exception e) when (e.StatusCode == HttpStatusCode.NotFound)
         {

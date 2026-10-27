@@ -30,8 +30,13 @@ public class S3FileInfo(IAmazonS3 amazonS3, string bucketName, string key) : IFi
                 catch (AmazonS3Exception e)
                 {
                     if (e.StatusCode == HttpStatusCode.NotFound)
+                    {
                         _exists = false;
-                    throw;
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
 
