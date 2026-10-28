@@ -1,5 +1,6 @@
 ARG DOTNET_VERSION=10.0
 ARG NODE_VERSION=22.23.4
+ARG NPM_VERSION=11.11.0
 ARG PNPM_VERSION=12.11.2
 ARG UBUNTU_NAME=noble # 24.04
 
@@ -7,9 +8,11 @@ ARG UBUNTU_NAME=noble # 24.04
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME} AS jering-build
 WORKDIR /src
 ARG NODE_VERSION
+ARG NPM_VERSION
 RUN apt-get update && apt-get --assume-yes install nodejs npm
 RUN npm install --global n
 RUN n $NODE_VERSION
+RUN npm install --global npm@$NPM_VERSION
 RUN git clone --branch 7.0.0 https://github.com/JeringTech/Javascript.NodeJS
 WORKDIR /src/Javascript.NodeJS
 # Configure Yarn cache and mutex directly via .yarnrc file
@@ -20,7 +23,10 @@ RUN perl -pi -e "s/'localhost', //" src/NodeJS/Javascript/Servers/OutOfProcess/H
 RUN perl -pi -e "s/exitWhenParentExits\(parseInt\(args\.parentPid\), true, 1000\);//" src/NodeJS/Javascript/Servers/OutOfProcess/Http/Shared.ts
 RUN dotnet build -p:BuildInParallel=false -m:1
 
+# Configure the base for building and running
 FROM node:${NODE_VERSION} AS base
+ARG NPM_VERSION
+RUN npm install --global npm@$NPM_VERSION
 
 # Build RealtimeServer node application
 FROM base AS build
