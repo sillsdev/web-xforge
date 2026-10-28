@@ -202,7 +202,7 @@ public class S3StorageProviderTests
     }
 
     [Test]
-    public async Task PutFileAsync_UploadsFileAndReturnsUri()
+    public async Task MoveFileAsync_UploadsFileAndReturnsUri()
     {
         var env = new TestEnvironment();
         var expectedStream = new NonDisposingMemoryStream();
@@ -213,7 +213,7 @@ public class S3StorageProviderTests
         env.AmazonS3.PutObjectAsync(Arg.Any<PutObjectRequest>()).Returns(Task.FromResult(new PutObjectResponse()));
 
         // SUT
-        Uri result = await env.Service.PutFileAsync("source.txt", DirectoryName, Project01, FileName);
+        Uri result = await env.Service.MoveFileAsync("source.txt", DirectoryName, Project01, FileName);
 
         await env
             .AmazonS3.Received(1)
@@ -231,7 +231,7 @@ public class S3StorageProviderTests
     }
 
     [Test]
-    public async Task PutFileAsync_SanitizesPathComponents()
+    public async Task MoveFileAsync_SanitizesPathComponents()
     {
         var env = new TestEnvironment();
         var expectedStream = new NonDisposingMemoryStream();
@@ -240,7 +240,7 @@ public class S3StorageProviderTests
         env.AmazonS3.PutObjectAsync(Arg.Any<PutObjectRequest>()).Returns(Task.FromResult(new PutObjectResponse()));
 
         // SUT
-        Uri result = await env.Service.PutFileAsync("source.txt", "bad/directory", "bad/project", "bad/file.txt");
+        Uri result = await env.Service.MoveFileAsync("source.txt", "bad/directory", "bad/project", "bad/file.txt");
 
         await env
             .AmazonS3.Received(1)
@@ -257,7 +257,7 @@ public class S3StorageProviderTests
     }
 
     [Test]
-    public async Task PutFileAsync_PropagatesUploadErrors()
+    public async Task MoveFileAsync_PropagatesUploadErrors()
     {
         var env = new TestEnvironment();
         await using var expectedStream = new NonDisposingMemoryStream();
@@ -267,7 +267,7 @@ public class S3StorageProviderTests
 
         // SUT
         await Assert.ThrowsAsync<AmazonS3Exception>(() =>
-            env.Service.PutFileAsync("source.txt", DirectoryName, Project01, FileName)
+            env.Service.MoveFileAsync("source.txt", DirectoryName, Project01, FileName)
         );
         expectedStream.ForceDispose();
     }

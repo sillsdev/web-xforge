@@ -36,12 +36,12 @@ public interface IStorageProvider
     Task<Stream> GetFileAsync(string directoryName, string projectId, string fileName);
 
     /// <summary>
-    /// Puts a file into the storage provider.
+    /// Moves a file into the storage provider.
     /// </summary>
     /// <param name="path">The path to the file to put in the directory. This file should be a temporary file path, and will be deleted.</param>
     /// <param name="directoryName">The name of the top level directory to store the file in. This usually refers to the service storing the file.</param>
     /// <param name="projectId">The identifier of the project that owns the file.</param>
     /// <param name="fileName">The file name with no path information.</param>
     /// <returns>The user accessible URL to the file.</returns>
-    Task<Uri> PutFileAsync(string path, string directoryName, string projectId, string fileName);
+    Task<Uri> MoveFileAsync(string path, string directoryName, string projectId, string fileName);
 }

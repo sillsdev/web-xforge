@@ -127,7 +127,7 @@ public class FileSystemStorageProviderTests
     }
 
     [Test]
-    public async Task PutFileAsync_CreatesDirectoryAndMovesFile()
+    public async Task MoveFileAsync_CreatesDirectoryAndMovesFile()
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("source.txt");
@@ -142,7 +142,7 @@ public class FileSystemStorageProviderTests
         env.FileSystemService.When(x => x.MoveFile(sourcePath, destinationPath)).Do(_ => destinationExists = true);
 
         // SUT
-        Uri result = await env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName);
+        Uri result = await env.Service.MoveFileAsync(sourcePath, DirectoryName, Project01, FileName);
 
         env.FileSystemService.Received(1).CreateDirectory(directoryPath);
         env.FileSystemService.Received(1).MoveFile(sourcePath, destinationPath);
@@ -151,7 +151,7 @@ public class FileSystemStorageProviderTests
     }
 
     [Test]
-    public async Task PutFileAsync_DoesNotCreateExistingDirectory()
+    public async Task MoveFileAsync_DoesNotCreateExistingDirectory()
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("source.txt");
@@ -166,14 +166,14 @@ public class FileSystemStorageProviderTests
         env.FileSystemService.When(x => x.MoveFile(sourcePath, destinationPath)).Do(_ => destinationExists = true);
 
         // SUT
-        await env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName);
+        await env.Service.MoveFileAsync(sourcePath, DirectoryName, Project01, FileName);
 
         env.FileSystemService.DidNotReceive().CreateDirectory(directoryPath);
         env.FileSystemService.Received(1).MoveFile(sourcePath, destinationPath);
     }
 
     [Test]
-    public async Task PutFileAsync_DeletesExistingDestinationBeforeMoving()
+    public async Task MoveFileAsync_DeletesExistingDestinationBeforeMoving()
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("source.txt");
@@ -189,14 +189,14 @@ public class FileSystemStorageProviderTests
         env.FileSystemService.When(x => x.MoveFile(sourcePath, destinationPath)).Do(_ => destinationExists = true);
 
         // SUT
-        await env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName);
+        await env.Service.MoveFileAsync(sourcePath, DirectoryName, Project01, FileName);
 
         env.FileSystemService.Received(1).DeleteFile(destinationPath);
         env.FileSystemService.Received(1).MoveFile(sourcePath, destinationPath);
     }
 
     [Test]
-    public async Task PutFileAsync_DoesNotMoveFileWhenSourceIsDestination()
+    public async Task MoveFileAsync_DoesNotMoveFileWhenSourceIsDestination()
     {
         var env = new TestEnvironment();
         string path = Path.GetFullPath(Path.Join(env.SiteOptions.Value.SiteDir, DirectoryName, Project01, FileName));
@@ -206,7 +206,7 @@ public class FileSystemStorageProviderTests
             .Returns(true);
 
         // SUT
-        Uri result = await env.Service.PutFileAsync(path, DirectoryName, Project01, FileName);
+        Uri result = await env.Service.MoveFileAsync(path, DirectoryName, Project01, FileName);
 
         env.FileSystemService.DidNotReceive().MoveFile(Arg.Any<string>(), Arg.Any<string>());
         env.FileSystemService.DidNotReceive().DeleteFile(Arg.Any<string>());
@@ -214,7 +214,7 @@ public class FileSystemStorageProviderTests
     }
 
     [Test]
-    public async Task PutFileAsync_ThrowsWhenSourceFileDoesNotExist()
+    public async Task MoveFileAsync_ThrowsWhenSourceFileDoesNotExist()
     {
         var env = new TestEnvironment();
         string sourcePath = Path.GetFullPath("missing.txt");
@@ -222,7 +222,7 @@ public class FileSystemStorageProviderTests
 
         // SUT
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.PutFileAsync(sourcePath, DirectoryName, Project01, FileName)
+            env.Service.MoveFileAsync(sourcePath, DirectoryName, Project01, FileName)
         );
     }
 

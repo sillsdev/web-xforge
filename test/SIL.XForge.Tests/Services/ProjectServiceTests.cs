@@ -32,7 +32,7 @@ public class ProjectServiceTests
         const string path = "file.wav";
         Uri fileUri = new Uri("http://example.com/");
         env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(false));
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 AudioService.DirectoryName,
                 Project01,
@@ -53,7 +53,7 @@ public class ProjectServiceTests
         const string path = "file.mp3";
         Uri fileUri = new Uri("http://example.com/");
         env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(true));
-        env.StorageProvider.PutFileAsync(path, AudioService.DirectoryName, Project01, $"{User01}_{Data01}.mp3")
+        env.StorageProvider.MoveFileAsync(path, AudioService.DirectoryName, Project01, $"{User01}_{Data01}.mp3")
             .Returns(Task.FromResult(fileUri));
 
         // SUT
