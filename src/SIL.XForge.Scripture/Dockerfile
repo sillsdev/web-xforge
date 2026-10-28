@@ -1,11 +1,15 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
 ARG DOTNET_VERSION=10.0
+ARG NODE_VERSION=22.23.4
+ARG NPM_VERSION=11.11.0
 ARG PNPM_VERSION=12.11.2
 ARG UBUNTU_NAME=noble # 24.04
 
-FROM mcr.microsoft.com/dotnet/aspnet:$DOTNET_VERSION-$UBUNTU_NAME AS base
+FROM mcr.microsoft.com/dotnet/aspnet:${DOTNET_VERSION}-${UBUNTU_NAME} AS base
 WORKDIR /app
+ARG NODE_VERSION
+ARG NPM_VERSION
 ARG PNPM_VERSION
 # Setup Volumes
 VOLUME /var/lib/scriptureforge
@@ -23,6 +27,9 @@ RUN apt-get install -y \
     libc-dev \
     mercurial \
     nodejs \
+    && npm install --global n \
+    && n $NODE_VERSION \
+    && npm install --global npm@${NPM_VERSION} \
     && npm install --global pnpm@${PNPM_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 # Setup Scripture Forge Paths
@@ -42,9 +49,11 @@ RUN mkdir -p /var/lib/scriptureforge/sync \
 # http port to dotnet
 EXPOSE 5000
 
-FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION-$UBUNTU_NAME AS build
+FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME} AS build
 ARG configuration=Release
 WORKDIR /src
+ARG NODE_VERSION
+ARG NPM_VERSION
 ARG PNPM_VERSION
 # Add Ubuntu Mirrors
 RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#g' /etc/apt/sources.list
@@ -55,6 +64,9 @@ RUN update-ca-certificates \
 RUN apt-get update && apt-get install -y \
     build-essential \
     nodejs \
+    && npm install --global n \
+    && n $NODE_VERSION \
+    && npm install --global npm@${NPM_VERSION} \
     && npm install --global pnpm@${PNPM_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 # Build the Realtime Server files
