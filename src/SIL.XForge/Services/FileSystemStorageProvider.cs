@@ -65,7 +65,7 @@ public class FileSystemStorageProvider(IFileSystemService fileSystemService, IOp
         return Task.FromResult(fileSystemService.OpenFile(path, FileMode.Open));
     }
 
-    public Task<Uri> PutFileAsync(string path, string directoryName, string projectId, string fileName)
+    public Task<Uri> MoveFileAsync(string path, string directoryName, string projectId, string fileName)
     {
         // Sanitize input
         directoryName = SanitizeFileName(directoryName);

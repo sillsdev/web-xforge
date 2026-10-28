@@ -241,7 +241,7 @@ public class TrainingDataService(
         await ConvertToCsvAsync(path, outputPath);
 
         // Upload and return the URL to the file
-        return await storageProvider.PutFileAsync(outputPath, DirectoryName, projectId, $"{userId}_{dataId}.csv");
+        return await storageProvider.MoveFileAsync(outputPath, DirectoryName, projectId, $"{userId}_{dataId}.csv");
     }
 
     /// <summary>

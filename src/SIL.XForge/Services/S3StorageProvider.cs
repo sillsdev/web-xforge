@@ -139,7 +139,7 @@ public class S3StorageProvider(
         }
     }
 
-    public async Task<Uri> PutFileAsync(string path, string directoryName, string projectId, string fileName)
+    public async Task<Uri> MoveFileAsync(string path, string directoryName, string projectId, string fileName)
     {
         // Sanitize input
         directoryName = SanitizeFileName(directoryName);
