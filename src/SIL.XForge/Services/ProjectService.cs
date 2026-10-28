@@ -217,7 +217,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
             }
         }
 
-        return await StorageProvider.PutFileAsync(
+        return await StorageProvider.MoveFileAsync(
             outputPath,
             AudioService.DirectoryName,
             projectId,

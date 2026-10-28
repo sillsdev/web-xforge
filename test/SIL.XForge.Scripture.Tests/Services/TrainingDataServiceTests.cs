@@ -300,7 +300,7 @@ public class TrainingDataServiceTests
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data\n\"\","));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
@@ -324,7 +324,7 @@ public class TrainingDataServiceTests
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
@@ -352,7 +352,7 @@ public class TrainingDataServiceTests
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test\tData"));
         env.FileSystemService.OpenFile(FileTsv, FileMode.Open).Returns(fileStream);
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
@@ -376,7 +376,7 @@ public class TrainingDataServiceTests
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test;Data"));
         env.FileSystemService.OpenFile(FileTxt, FileMode.Open).Returns(fileStream);
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
@@ -409,7 +409,7 @@ public class TrainingDataServiceTests
 
         // Handle the storage of the CSV file
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
@@ -516,7 +516,7 @@ public class TrainingDataServiceTests
 
         // Handle the storage of the CSV file
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
@@ -546,7 +546,7 @@ public class TrainingDataServiceTests
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data,More\nSecond,Row,\"\""));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
         Uri fileUri = new Uri("http://example.com/");
-        env.StorageProvider.PutFileAsync(
+        env.StorageProvider.MoveFileAsync(
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
