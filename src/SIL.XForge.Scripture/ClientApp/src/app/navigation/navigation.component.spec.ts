@@ -3,8 +3,12 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/draft-result';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
+import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -27,6 +31,7 @@ describe('NavigationComponent', () => {
   const mockedUsersAuthGuard = mock(UsersAuthGuard);
   const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
   const mockedActivatedProjectService = mock(ActivatedProjectService);
+  const mockedActivatedProjectUserConfigService = mock(ActivatedProjectUserConfigService);
   const mockedAuthService = mock(AuthService);
   const mockedProjectService = mock(SFProjectService);
   const mockedUserService = mock(UserService);
@@ -46,6 +51,7 @@ describe('NavigationComponent', () => {
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: NmtDraftAuthGuard, useMock: mockedNmtDraftAuthGuard },
       { provide: ActivatedProjectService, useMock: mockedActivatedProjectService },
+      { provide: ActivatedProjectUserConfigService, useMock: mockedActivatedProjectUserConfigService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
@@ -68,6 +74,7 @@ describe('NavigationComponent', () => {
     readonly canSeeUsers$ = new BehaviorSubject<boolean>(false);
     readonly canSync$ = new BehaviorSubject<boolean>(false);
     readonly canGenerateDraft$ = new BehaviorSubject<boolean>(false);
+    readonly projectUserConfig$ = new BehaviorSubject<SFProjectUserConfig | undefined>(undefined);
 
     constructor() {
       when(mockedActivatedProjectService.changes$).thenReturn(this.changes$);
@@ -76,13 +83,14 @@ describe('NavigationComponent', () => {
       when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
       when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
       when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canGenerateDraft$);
+      when(mockedActivatedProjectUserConfigService.projectUserConfig$).thenReturn(this.projectUserConfig$);
       when(mockedUserService.currentUserId).thenReturn('user01');
       when(mockedAuthService.currentUserRoles).thenReturn([]);
       when(mockedRouter.url).thenReturn('/projects/project01');
       when(mockedRouter.createUrlTree(anything(), anything())).thenReturn([] as any);
       when(mockedRouter.serializeUrl(anything())).thenReturn('');
-      when(mockedResumeCheckingService.resumeLink$).thenReturn(of([]));
-      when(mockedResumeTranslateService.resumeLink$).thenReturn(of([]));
+      when(mockedResumeCheckingService.resumeLink$).thenReturn(of(['/projects', 'project01', 'checking']));
+      when(mockedResumeTranslateService.resumeLink$).thenReturn(of(['/projects', 'project01', 'translate']));
       when(mockedFeatureFlagService.stillness).thenReturn(createTestFeatureFlag(false));
 
       this.fixture = TestBed.createComponent(NavigationComponent);
@@ -96,6 +104,11 @@ describe('NavigationComponent', () => {
 
     get servalAdminNavItem(): DebugElement | null {
       return this.fixture.debugElement.query(By.css('#serval-admin-nav-item'));
+    }
+
+    get draftGenerationResultUnread(): boolean {
+      const item: DebugElement | null = this.fixture.debugElement.query(By.css('#generate-draft-nav-item'));
+      return item?.nativeElement.classList.contains('draft-completed') === true;
     }
 
     emitProjectChange(projectDoc: SFProjectProfileDoc | undefined): void {
@@ -188,6 +201,46 @@ describe('NavigationComponent', () => {
 
     expect(env.adminPagesList).not.toBeNull();
     expect(env.servalAdminNavItem).toBeNull();
+    flush();
+  }));
+
+  it('bolds the draft generation nav item when a completed draft result is available', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.canGenerateDraft$.next(true);
+    env.emitProjectChange({
+      id: 'project01',
+      data: {
+        userRoles: { user01: SFProjectRole.ParatextTranslator },
+        checkingConfig: { checkingEnabled: false },
+        translateConfig: { draftConfig: {} }
+      }
+    } as unknown as SFProjectProfileDoc);
+
+    expect(env.draftGenerationResultUnread).toBe(false);
+
+    env.projectUserConfig$.next({ unreadDraftResult: DraftResult.Completed } as SFProjectUserConfig);
+    env.fixture.detectChanges();
+
+    expect(env.draftGenerationResultUnread).toBe(true);
+    flush();
+  }));
+
+  it('does not bold the draft generation nav item when no draft result is available', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.canGenerateDraft$.next(true);
+    env.emitProjectChange({
+      id: 'project01',
+      data: {
+        userRoles: { user01: SFProjectRole.ParatextTranslator },
+        checkingConfig: { checkingEnabled: false },
+        translateConfig: { draftConfig: {} }
+      }
+    } as unknown as SFProjectProfileDoc);
+
+    env.projectUserConfig$.next({} as SFProjectUserConfig);
+    env.fixture.detectChanges();
+
+    expect(env.draftGenerationResultUnread).toBe(false);
     flush();
   }));
 
