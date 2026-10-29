@@ -6722,6 +6722,54 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task UpdateParatextPermissionsForNewBooksAsync_AddedChaptersOnlyGrantsWriteToAddedChapters()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // Set up Paratext project, where the user is an administrator who cannot edit the book
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+        env.ProjectScrText.Permissions.SetPermission(null, 40, PermissionSet.Manual, false);
+
+        // Set up Scripture Forge project, where the book exists and the user can only read it
+        SFProject project = env.NewSFProject(env.Project01);
+        project.ParatextUsers =
+        [
+            new ParatextUserProfile { SFUserId = env.User01, Username = env.ParatextProjectUser01.Username },
+        ];
+        project.Texts =
+        [
+            new TextInfo
+            {
+                BookNum = 40,
+                Chapters = [new Chapter { Number = 1 }, new Chapter { Number = 2 }],
+                Permissions = { { env.User01, TextInfoPermission.Read } },
+            },
+        ];
+        env.AddProjectRepository(project);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(project.Id);
+        await projectDoc.FetchAsync();
+
+        // SUT
+        await env.Service.UpdateParatextPermissionsForNewBooksAsync(
+            userSecret,
+            paratextId,
+            projectDoc,
+            booksToUpdate: [40],
+            currentUserOnly: true,
+            writeToParatext: false,
+            addedChapters: new Dictionary<int, int[]> { { 40, [2] } }
+        );
+
+        // Only the added chapter is writable. The book and the existing chapter are not.
+        Assert.AreEqual(TextInfoPermission.Read, projectDoc.Data.Texts[0].Permissions[env.User01]);
+        Assert.IsFalse(projectDoc.Data.Texts[0].Chapters[0].Permissions.ContainsKey(env.User01));
+        Assert.AreEqual(TextInfoPermission.Write, projectDoc.Data.Texts[0].Chapters[1].Permissions[env.User01]);
+    }
+
+    [Test]
     public async Task UpdateParatextPermissionsForNewBooksAsync_UpdatesParatext()
     {
         // Set up test environment
