@@ -141,14 +141,26 @@ export class DraftGenerationService {
 
   /**
    * Gets Serval builds created since the specified timestamp.
+   * @param since (Optional) Only builds created at or after this time are returned.
+   * @param projectId (Optional) If specified, only builds relating to this SF project are returned.
    */
-  getBuildsSince(since: Date): Observable<ServalBuildReportDto[] | undefined> {
+  getBuildsSince(since?: Date, projectId?: string): Observable<ServalBuildReportDto[] | undefined> {
     if (!this.onlineStatusService.isOnline) {
       return of(undefined);
     }
 
-    const sinceIso: string = since.toISOString();
-    return this.httpClient.get<ServalBuildReportDto[]>(`translation/builds/since:${sinceIso}`).pipe(
+    const params = new URLSearchParams();
+    if (since != null) {
+      params.append('dateTime', since.toISOString());
+    }
+    if (projectId != null) {
+      params.append('projectId', projectId);
+    }
+    let url: string = 'translation/builds/since';
+    if (params.size > 0) {
+      url += `?${params.toString()}`;
+    }
+    return this.httpClient.get<ServalBuildReportDto[]>(url).pipe(
       map(res => this.interpretTypesMany(res.data)),
       catchError(err => {
         if (err.status === 404) {
