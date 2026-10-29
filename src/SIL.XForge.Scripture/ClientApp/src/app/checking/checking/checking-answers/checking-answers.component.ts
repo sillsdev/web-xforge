@@ -38,7 +38,6 @@ import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
-import { SFProjectService } from '../../../core/sf-project.service';
 import {
   AudioRecorderDialogComponent,
   AudioRecorderDialogData,
@@ -143,8 +142,6 @@ export class CheckingAnswersComponent implements OnInit {
   private fileSources: Map<string, string | undefined> = new Map<string, string | undefined>();
   /** If the user has recently added or edited their answer since opening up the question. */
   private justEditedAnswer: boolean = false;
-  private isProjectAdmin: boolean = false;
-  private projectProfileDocChangesSubscription?: Subscription;
   isScreenSmall: boolean = false;
 
   constructor(
@@ -155,7 +152,6 @@ export class CheckingAnswersComponent implements OnInit {
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
     private readonly onlineStatusService: OnlineStatusService,
-    private readonly projectService: SFProjectService,
     private readonly changeDetector: ChangeDetectorRef,
     private destroyRef: DestroyRef
   ) {}
@@ -168,17 +164,7 @@ export class CheckingAnswersComponent implements OnInit {
   }
 
   @Input() set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
-    this.projectProfileDocChangesSubscription?.unsubscribe();
     this._projectProfileDoc = projectProfileDoc;
-    if (projectProfileDoc == null) {
-      return;
-    }
-    this.projectProfileDocChangesSubscription = projectProfileDoc.changes$
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.setProjectAdmin();
-      });
-    this.setProjectAdmin();
   }
 
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
@@ -204,10 +190,10 @@ export class CheckingAnswersComponent implements OnInit {
       .subscribe(ops => {
         this.changeDetector.markForCheck();
         this.updateQuestionDocAudioUrls();
-        // If the user hasn't added an answer yet and is able to, then
-        // don't hold back any incoming answers from appearing right away
-        // as soon as the user adds their answer.
-        if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.canManageQuestions) {
+        // Answers from other users normally wait behind a "show more" button until the user clicks it. A user who
+        // can't see any answers until they add their own isn't looking at the answers yet, so mark incoming answers
+        // as shown now. That way all answers appear as soon as the user adds theirs, with no "show more" button.
+        if (!this.alwaysSeesAllAnswers && this.currentUserTotalAnswers === 0) {
           this.showRemoteAnswers();
           return;
         }
@@ -299,39 +285,23 @@ export class CheckingAnswersComponent implements OnInit {
     );
   }
 
-  get canAddAndEditQuestions(): boolean {
-    if (this.project == null) {
-      return false;
-    }
-    const userId: string = this.userService.currentUserId;
-    const canCreateQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
-      this.project,
-      userId,
-      SFProjectDomain.Questions,
-      Operation.Create
-    );
-    const canEditQuestions: boolean = SF_PROJECT_RIGHTS.hasRight(
-      this.project,
-      userId,
-      SFProjectDomain.Questions,
-      Operation.Edit
-    );
-    return canCreateQuestions && canEditQuestions;
-  }
-
-  get canManageQuestions(): boolean {
-    return this.isProjectAdmin || this.canAddAndEditQuestions;
+  /**
+   * Whether the user sees every answer to a question, even before adding their own answer and regardless of the
+   * project's setting for whether checkers see each other's answers. This is true for all Paratext users.
+   */
+  private get alwaysSeesAllAnswers(): boolean {
+    return this.project != null && CheckingUtils.isParatextUser(this.project, this.userService.currentUserId);
   }
 
   get shouldSeeAnswersList(): boolean {
-    return this.canSeeOtherUserResponses || !this.canAddAnswer || this.canManageQuestions;
+    return this.alwaysSeesAllAnswers || this.canSeeOtherUserResponses;
   }
 
   get shouldShowAnswers(): boolean {
     return (
       !this.answerFormVisible &&
       this.totalAnswers > 0 &&
-      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.canManageQuestions)
+      (this.alwaysSeesAllAnswers || this.currentUserTotalAnswers > 0)
     );
   }
 
@@ -664,16 +634,6 @@ export class CheckingAnswersComponent implements OnInit {
         this.changeDetector.markForCheck();
         this.updateQuestionDocAudioUrls();
       }
-    });
-  }
-
-  private setProjectAdmin(): void {
-    if (this.projectId == null) {
-      return;
-    }
-    void this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
-      this.isProjectAdmin = isProjectAdmin;
-      this.changeDetector.markForCheck();
     });
   }
 

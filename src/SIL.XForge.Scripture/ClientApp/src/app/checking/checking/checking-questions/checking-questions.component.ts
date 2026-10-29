@@ -250,12 +250,12 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
     this.activateQuestion(this._firstUnansweredQuestion.docs[0], { isQuestionListChange: false }, true);
   }
 
-  private get canAddAnswer(): boolean {
-    const userId = this.userService.currentUserId;
-    return (
-      this.project != null &&
-      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
-    );
+  /**
+   * Whether the user sees every answer to a question, even before adding their own answer and regardless of the
+   * project's setting for whether checkers see each other's answers. This is true for all Paratext users.
+   */
+  private get alwaysSeesAllAnswers(): boolean {
+    return this.project != null && CheckingUtils.isParatextUser(this.project, this.userService.currentUserId);
   }
 
   getAnswers(questionDoc: QuestionDoc): Answer[] {
@@ -263,7 +263,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
       return [];
     }
 
-    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer || this.canManageQuestions) {
+    if (this.alwaysSeesAllAnswers || this.project.checkingConfig.usersSeeEachOthersResponses) {
       return questionDoc.getAnswers();
     } else {
       return questionDoc.getAnswers(this.userService.currentUserId);
@@ -346,7 +346,7 @@ export class CheckingQuestionsComponent implements OnInit, OnChanges {
         if (questionDoc != null && questionDoc.data != null && !this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
         }
-        if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer || this.canManageQuestions) {
+        if (this.alwaysSeesAllAnswers || this.hasUserAnswered(questionDoc)) {
           for (const answer of this.getAnswers(questionDoc)) {
             if (!this.hasUserReadAnswer(answer)) {
               op.add(puc => puc.answerRefsRead, answer.dataId);
