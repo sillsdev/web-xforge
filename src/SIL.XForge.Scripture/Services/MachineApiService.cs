@@ -501,8 +501,11 @@ public partial class MachineApiService(
                         });
                     }
 
-                    // Record that the book was updated
-                    updatedBooks.Add(bookNum);
+                    // Record that an existing book was updated
+                    if (!createdBooks.Contains(bookNum) && !updatedBooks.Contains(bookNum))
+                    {
+                        updatedBooks.Add(bookNum);
+                    }
                 }
             }
 
@@ -542,7 +545,11 @@ public partial class MachineApiService(
                         targetProjectDoc,
                         booksToUpdate: [.. updatedBooks],
                         currentUserOnly: true,
-                        writeToParatext: false
+                        writeToParatext: false,
+                        addedChapters: updatedBooks.ToDictionary(
+                            bookNum => bookNum,
+                            bookNum => createdChapters.TryGetValue(bookNum, out List<int>? added) ? added.ToArray() : []
+                        )
                     );
                 }
 
@@ -559,6 +566,9 @@ public partial class MachineApiService(
                     );
                 }
             }
+
+            // Determine the books that the user can write to at least one chapter of
+            HashSet<int> writableBooks = GetWritableBooks(targetProjectDoc.Data, curUserId, chapterDeltas);
 
             // Create the text data documents, using the permissions matrix calculated above for permissions
             foreach ((ChapterDelta chapterDelta, int bookNum) in chapterDeltas)
@@ -591,9 +601,11 @@ public partial class MachineApiService(
                         .Data.Texts[textIndex]
                         .Permissions.TryGetValue(curUserId, out string? bookPermission)
                     && bookPermission == TextInfoPermission.Write;
-                if (!canWriteBook)
+                // Only fail the whole book if the user cannot write to any of its chapters. An administrator may only
+                // have write permission on some chapters, and not on the first chapter or the book as a whole.
+                if (!writableBooks.Contains(bookNum))
                 {
-                    // Remove the book from the project if we created it, and proceed to add the next chapter
+                    // Remove the book from the project if we created it, and proceed to the next chapter
                     if (createdBooks.Contains(bookNum))
                     {
                         await targetProjectDoc.SubmitJson0OpAsync(op => op.Remove(pd => pd.Texts, textIndex));
@@ -1241,6 +1253,48 @@ public partial class MachineApiService(
 
         return null;
     }
+
+    /// <summary>
+    /// Gets books that a user has write permission on at least one chapter of the book.
+    /// </summary>
+    /// <param name="project">The target project.</param>
+    /// <param name="userId">The user applying the draft.</param>
+    /// <param name="chapterDeltas">The draft chapters being applied, with their book numbers.</param>
+    /// <returns>The book numbers the user can write to at least one chapter of.</returns>
+    private static HashSet<int> GetWritableBooks(
+        SFProject project,
+        string userId,
+        List<(ChapterDelta chapterDelta, int bookNum)> chapterDeltas
+    ) =>
+        [
+            .. chapterDeltas
+                .Select(cd => cd.bookNum)
+                .Distinct()
+                .Where(bookNum =>
+                {
+                    TextInfo? text = project.Texts.FirstOrDefault(t => t.BookNum == bookNum);
+                    if (text is null)
+                    {
+                        return false;
+                    }
+
+                    if (
+                        text.Permissions.TryGetValue(userId, out string? bookPermission)
+                        && bookPermission == TextInfoPermission.Write
+                    )
+                    {
+                        return true;
+                    }
+
+                    return chapterDeltas
+                        .Where(cd => cd.bookNum == bookNum)
+                        .Any(cd =>
+                            text.Chapters.FirstOrDefault(c => c.Number == cd.chapterDelta.Number) is { } chapter
+                            && chapter.Permissions.TryGetValue(userId, out string? chapterPermission)
+                            && chapterPermission == TextInfoPermission.Write
+                        );
+                }),
+        ];
 
     private static BuildConfidences? MapBuildConfidences(DraftMetrics? draftMetrics)
     {

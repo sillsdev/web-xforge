@@ -1791,6 +1791,11 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="writeToParatext">
     /// If <c>true</c>, update the Paratext project on disk; otherwise if <c>false</c>, update the project document.
     /// </param>
+    /// <param name="addedChapters">
+    /// The chapters that were added to books that already existed in the project, keyed by book number.
+    /// A book that is present as a key is treated as an existing book: an administrator who cannot edit the book in
+    /// Paratext is only given write permission on the chapters listed (if any), and not on the book as a whole.
+    /// </param>
     /// <returns></returns>
     public async Task<SyncMetricInfo> UpdateParatextPermissionsForNewBooksAsync(
         UserSecret userSecret,
@@ -1798,7 +1803,8 @@ public class ParatextService : DisposableBase, IParatextService
         IDocument<SFProject> projectDoc,
         int[] booksToUpdate,
         bool currentUserOnly,
-        bool writeToParatext
+        bool writeToParatext,
+        IReadOnlyDictionary<int, int[]>? addedChapters = null
     )
     {
         var syncMetricInfo = new SyncMetricInfo();
@@ -1814,9 +1820,9 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         // Get all books that are not on disk
-        for (int i = 0; i < projectDoc.Data.Texts.Count; i++)
+        for (int textIndex = 0; textIndex < projectDoc.Data.Texts.Count; textIndex++)
         {
-            TextInfo text = projectDoc.Data.Texts[i];
+            TextInfo text = projectDoc.Data.Texts[textIndex];
             int bookNum = text.BookNum;
             if (booksToUpdate.Length == 0 && scrText.BookPresent(bookNum))
             {
@@ -1864,7 +1870,29 @@ public class ParatextService : DisposableBase, IParatextService
                     // or they are the current user and an administrator,
                     // update the Scripture Forge permissions to allow writing.
                     bool currentUserIsAdministrator = userIsAdministrator && user.SFUserId == userSecret.Id;
-                    if (!hasPermissionInMongo && (currentUserIsAdministrator || hasPermissionInParatext))
+                    int[]? addedChaptersInBook = null;
+                    bool isExistingBook =
+                        addedChapters is not null && addedChapters.TryGetValue(bookNum, out addedChaptersInBook);
+                    if (!hasPermissionInMongo && isExistingBook && !hasPermissionInParatext)
+                    {
+                        // The book already existed, and the user cannot edit it in Paratext. Do not grant write access
+                        // to the whole book. Only grant it on the chapters that were added.
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            for (int chapterIndex = 0; chapterIndex < text.Chapters.Count; chapterIndex++)
+                            {
+                                if (addedChaptersInBook.Contains(text.Chapters[chapterIndex].Number))
+                                {
+                                    op.Set(
+                                        p => p.Texts[textIndex].Chapters[chapterIndex].Permissions[user.SFUserId],
+                                        TextInfoPermission.Write
+                                    );
+                                }
+                            }
+                        });
+                        syncMetricInfo.Updated++;
+                    }
+                    else if (!hasPermissionInMongo && (currentUserIsAdministrator || hasPermissionInParatext))
                     {
                         // Add the user to the new book in SF with book permissions and available chapter permissions
                         // This will be empty if the current user is an administrator but has no permissions for the book
@@ -1878,11 +1906,9 @@ public class ParatextService : DisposableBase, IParatextService
                         ];
                         await projectDoc.SubmitJson0OpAsync(op =>
                         {
-                            int textIndex = i;
                             op.Set(p => p.Texts[textIndex].Permissions[user.SFUserId], TextInfoPermission.Write);
-                            for (int j = 0; j < text.Chapters.Count; j++)
+                            for (int chapterIndex = 0; chapterIndex < text.Chapters.Count; chapterIndex++)
                             {
-                                int chapterIndex = j;
                                 int chapterNumber = text.Chapters[chapterIndex].Number;
 
                                 // Only record chapter level permissions that contradict the book level permissions
