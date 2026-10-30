@@ -1039,12 +1039,9 @@
     "translation_language_name_placeholder": "por ejemplo, swahili, tok pisin"
   },
   "user_feedback": {
-    "ask_for_help": "pedir ayuda",
     "close": "Cerrar",
     "error_occurred": "Se ha producido un error. Intenta enviar tus comentarios más tarde.",
-    "how_has_drafting_helped_your_project": "¿Cómo te ha ayudado el servicio de redacción de {{ siteName }} en tu proyecto?",
-    "or": "o",
-    "send_feedback": "Enviar Comentarios",
+    "has_drafting_helped_project_send_feedback": "¿Te ha ayudado {{ siteName }} redacción con tu proyecto? { 1 }Envía tus comentarios{ 2 } o { 3 }solicita ayuda{ 4 }.",
     "thank_you_for_your_feedback": "¡Gracias! Valoramos mucho tus comentarios."
   },
   "user_feedback_dialog": {
@@ -1052,12 +1049,11 @@
     "connect_to_the_internet": "Conéctate a Internet para enviar tus comentarios.",
     "feedback_label": "Tus comentarios",
     "feedback_title": "Cuéntanos cómo {{ siteName }} ha impactado tu proyecto",
-    "feedback_subtitle": "¿Cómo ha influido {{ siteName }} en el proceso y el flujo de trabajo de tu equipo?",
     "permission_question": "¿Podemos publicar tus comentarios?",
     "permission_anonymous_label": "Sí, pero, por favor, no menciones mi nombre ni el nombre del proyecto",
     "permission_private_label": "No, por favor mantén esto privado",
-    "permission_public_label": "Sí, y menciona mi nombre y el nombre del proyecto",
-    "project_for_feedback": "¿De qué proyecto se trata este comentario?",
+    "permission_public_label": "Sí, y puedes mencionar mi nombre y el idioma del proyecto",
+    "project_for_feedback": "¿A qué proyecto se refiere tu comentario?",
     "project_placeholder": "Proyecto",
     "required": "Requerido",
     "submit": "Enviar"
