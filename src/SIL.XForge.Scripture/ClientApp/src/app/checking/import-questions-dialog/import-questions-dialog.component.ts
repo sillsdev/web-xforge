@@ -46,7 +46,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { RetryingRequest } from 'xforge-common/retrying-request.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { stripHtml } from 'xforge-common/util/string-util';
 import { objectId } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { ParatextProject } from '../../core/models/paratext-project';
@@ -60,6 +59,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../shared/sfvalidators';
+import { XmlUtils } from '../../shared/utils';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import {
   EditedQuestion,
@@ -643,7 +643,7 @@ export class ImportQuestionsDialogComponent implements OnDestroy {
 
         // Comments that change the tag will have null content, so we need to have the first non-empty comment content
         // to provide the text of the question.
-        const commentContent = stripHtml(comment.content ?? '').trim();
+        const commentContent = XmlUtils.convertXmlToPlainText(comment.content ?? '');
         if (questionText.length === 0) {
           if (commentContent.length > 0) {
             questionText = commentContent;
