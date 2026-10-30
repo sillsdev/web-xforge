@@ -10,7 +10,7 @@ import { Delta } from 'quill';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, firstValueFrom, of } from 'rxjs';
+import { BehaviorSubject, firstValueFrom, NEVER, of, Subject } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -61,6 +61,7 @@ describe('EditorDraftComponent', () => {
   let component: EditorDraftComponent;
   let testOnlineStatus: TestOnlineStatusService;
   const buildProgress$ = new BehaviorSubject<BuildDto | undefined>(undefined);
+  let buildNotification$: Subject<unknown>;
 
   configureTestingModule(() => ({
     imports: [
@@ -114,6 +115,9 @@ describe('EditorDraftComponent', () => {
     when(mockDraftHandlingService.opsHaveContent(anything())).thenReturn(true);
     when(mockSFProjectService.hasDraft(anything())).thenReturn(true);
     when(mockSFProjectService.hasDraft(anything(), anything(), anything(), anything())).thenReturn(true);
+    buildNotification$ = new Subject<unknown>();
+    when(mockProjectNotificationService.buildProgress$('targetProjectId')).thenReturn(buildNotification$);
+    when(mockDraftNotificationService.draftApplyProgress$('targetProjectId')).thenReturn(NEVER);
 
     fixture = TestBed.createComponent(EditorDraftComponent);
     component = fixture.componentInstance;
@@ -152,6 +156,24 @@ describe('EditorDraftComponent', () => {
     fixture.detectChanges();
     expect(component.draftCheckState).toEqual('draft-unknown');
     expect(component.draftText).not.toBeUndefined();
+    flush();
+  }));
+
+  it('should refresh build history when a build notification is received', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of(draftHistory)
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    resetCalls(mockDraftGenerationService);
+
+    buildNotification$.next(undefined);
+    verify(mockDraftGenerationService.getBuildHistory('targetProjectId')).once();
     flush();
   }));
 
