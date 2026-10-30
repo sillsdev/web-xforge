@@ -2669,6 +2669,8 @@ describe('EditorComponent', () => {
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
       noteThreadDoc = env.getNoteThreadDoc(projectId, noteThread.dataId);
       expect(noteThreadDoc.data!.notes[0].content).toEqual(XmlUtils.encodeForXml(editedContent));
+      // The note icon tooltip shows the note as the user typed it, not the xml-encoded content
+      expect(env.getNoteThreadIconElementAtIndex('verse_1_2', 0)!.getAttribute('title')).toEqual(editedContent);
       env.dispose();
     }));
 
