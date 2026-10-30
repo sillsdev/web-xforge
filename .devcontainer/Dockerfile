@@ -6,6 +6,8 @@ ARG UBUNTU_NAME=noble
 FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION}-${UBUNTU_NAME}-amd64
 
 ARG NODE_MAJOR=22
+ARG NODE_VERSION=22.23.4
+ARG NPM_VERSION=11.11.0
 ARG PNPM_VERSION=12.11.2
 
 # Avoid prompts during package installation
@@ -35,14 +37,17 @@ RUN apt-get update \
         libc-dev \
         mercurial \
         nodejs \
+    && npm install --global n \
+    && n $NODE_VERSION \
+    && npm install --global npm@${NPM_VERSION} \
+    && npm install --global pnpm@${PNPM_VERSION} \
     && curl -fsSLo /usr/share/keyrings/brave-browser-archive-keyring.gpg \
       https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg \
     && curl -fsSLo /etc/apt/sources.list.d/brave-browser-release.sources \
       https://brave-browser-apt-release.s3.brave.com/brave-browser.sources \
     && apt-get update \
     && apt-get install --assume-yes brave-browser \
-    && apt-get distclean \
-    && npm install --global pnpm@${PNPM_VERSION}
+    && apt-get distclean
 
 # Set up Scripture Forge data directories
 RUN mkdir --parents /var/lib/scriptureforge/sync \
