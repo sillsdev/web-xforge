@@ -204,10 +204,10 @@ export class CheckingAnswersComponent implements OnInit {
       .subscribe(ops => {
         this.changeDetector.markForCheck();
         this.updateQuestionDocAudioUrls();
-        // If the user hasn't added an answer yet and is able to, then
-        // don't hold back any incoming answers from appearing right away
-        // as soon as the user adds their answer.
-        if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.canManageQuestions) {
+        // Answers from other users normally wait behind a "show more" button until the user clicks it. A user who
+        // can't see any answers until they add their own isn't looking at the answers yet, so mark incoming answers
+        // as shown now. That way all answers appear as soon as the user adds theirs, with no "show more" button.
+        if (!this.alwaysSeesAllAnswers && this.currentUserTotalAnswers === 0) {
           this.showRemoteAnswers();
           return;
         }
@@ -323,15 +323,25 @@ export class CheckingAnswersComponent implements OnInit {
     return this.isProjectAdmin || this.canAddAndEditQuestions;
   }
 
+  /**
+   * Whether the user sees every answer to a question, regardless of whether they have answered it or of the
+   * project's setting for checkers seeing each other's answers. This is true for Paratext users and users who manage
+   * questions. For everyone else (community checkers), answers are hidden until they add their own, and other users'
+   * answers are then only shown if the project allows it.
+   */
+  private get alwaysSeesAllAnswers(): boolean {
+    return this.canManageQuestions || CheckingUtils.isParatextUser(this.project, this.userService.currentUserId);
+  }
+
   get shouldSeeAnswersList(): boolean {
-    return this.canSeeOtherUserResponses || !this.canAddAnswer || this.canManageQuestions;
+    return this.alwaysSeesAllAnswers || this.canSeeOtherUserResponses;
   }
 
   get shouldShowAnswers(): boolean {
     return (
       !this.answerFormVisible &&
       this.totalAnswers > 0 &&
-      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.canManageQuestions)
+      (this.alwaysSeesAllAnswers || this.currentUserTotalAnswers > 0)
     );
   }
 
