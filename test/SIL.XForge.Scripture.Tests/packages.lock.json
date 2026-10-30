@@ -1218,8 +1218,8 @@
       },
       "Serval.Client": {
         "type": "Transitive",
-        "resolved": "1.21.0",
-        "contentHash": "1B7PnEr8R3P8B55ED2s97/WEr2hKLmDNxmyutY57FDJco3Y0CnNLvFrNlPspAMtBJdAWiML0A84RRROh6T5p+A==",
+        "resolved": "1.22.0",
+        "contentHash": "rhAxIUOlIXC9okCjY6ymbgLlmYhfwGR7+vDOTRwgUqc6XQRJAomZHaEThjfPFtAmenk/dZwS5JlzzYae+vtr/g==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4",
           "System.ComponentModel.Annotations": "5.0.0"
@@ -1650,7 +1650,7 @@
           "SIL.Converters.Usj": "[1.0.0, )",
           "SIL.Machine": "[3.9.5, )",
           "SIL.XForge": "[1.0.0, )",
-          "Serval.Client": "[1.21.0, )",
+          "Serval.Client": "[1.22.0, )",
           "Swashbuckle.AspNetCore": "[10.3.1, )",
           "Swashbuckle.AspNetCore.Newtonsoft": "[10.3.1, )"
         }

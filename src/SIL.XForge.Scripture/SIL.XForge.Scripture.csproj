@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -45,7 +45,7 @@
     <PackageReference Include="Polly" Version="8.8.0" />
     <!-- When updating Serval.Client consider that API changes must be released to Serval Prod
         prior to testing on SF QA -->
-    <PackageReference Include="Serval.Client" Version="1.21.0" />
+    <PackageReference Include="Serval.Client" Version="1.22.0" />
     <PackageReference Include="SIL.Machine" Version="3.9.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="10.3.1" />
