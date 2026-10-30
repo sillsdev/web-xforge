@@ -71,6 +71,18 @@ describe('UserService', () => {
     );
   });
 
+  it('does not allow user to submit op data that has no path to check', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const conn = clientConnect(env.server, 'user02', SystemRole.User);
+    // A rich-text delta, which the editable properties check would otherwise use a path from
+    const delta = { ops: [{ insert: 'New name' }] };
+    await expect(submitOpData(env.server, conn, USERS_COLLECTION, 'user02', delta)).rejects.toThrow(
+      'Permission denied'
+    );
+  });
+
   it('does not allow user to view others', async () => {
     const env = new TestEnvironment();
     await env.createData();
