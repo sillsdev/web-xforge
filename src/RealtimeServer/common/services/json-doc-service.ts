@@ -43,7 +43,19 @@ export abstract class JsonDocService<T> extends DocService<T> {
   }
 }
 
-/** Whether the op data is a list of JSON0 op components, each with a path. */
-function isComponentList(ops: unknown): boolean {
-  return Array.isArray(ops) && ops.every(op => op != null && typeof op === 'object' && Array.isArray(op.p));
+/** The properties by which a JSON0 op component says what it changes. */
+const INSTRUCTIONS: string[] = ['na', 'li', 'ld', 'lm', 'oi', 'od', 'si', 'sd', 't'];
+
+/** Whether the op data is a list of JSON0 op components, each with a path and something to change. */
+export function isComponentList(ops: unknown): ops is ShareDB.Op[] {
+  return (
+    Array.isArray(ops) &&
+    ops.every(
+      op =>
+        op != null &&
+        typeof op === 'object' &&
+        Array.isArray(op.p) &&
+        INSTRUCTIONS.some(instruction => instruction in op)
+    )
+  );
 }
