@@ -459,7 +459,7 @@
     "leave_and_discard": "Leave & discard changes",
     "next": "Növbəti",
     "offline_message": "You are offline. Please connect to the internet to save and sync your draft sources.",
-    "overview_reference": "İstinad",
+    "overview_reference": "Reference",
     "overview_source": "Mənbə",
     "overview_translated_project": "Translated project",
     "previous": "Əvvəlki",
@@ -670,7 +670,7 @@
     "question": "Sual",
     "reference_from": "-dan İstinaddır",
     "reference_to": "-ya İstinaddır",
-    "reference": "İstinad",
+    "reference": "Reference",
     "row": "Sıra",
     "select_all": "Hamısını seç",
     "select_questions": "Select questions to import",
@@ -779,7 +779,7 @@
     "must_be_inside_verse_range": "Ayənin çərçivəsindən kənar olmamalıdır",
     "must_be_same_book_and_chapter": "Eyni kitab və fəsil olmalıdır",
     "new_question": "Yeni sual",
-    "question": "Sual",
+    "question": "Question",
     "required_with_asterisk": "*Tələb olunur",
     "save": "Yadda saxlamaq",
     "scripture_reference": "Kəlamin istinadı"
@@ -1039,12 +1039,9 @@
     "translation_language_name_placeholder": "e.g. Swahili, Tok Pisin"
   },
   "user_feedback": {
-    "ask_for_help": "köməyə soruşun",
     "close": "Bağla",
     "error_occurred": "An error occurred. Please try submitting feedback later.",
-    "how_has_drafting_helped_your_project": "How has {{ siteName }} drafting helped your project?",
-    "or": "və ya",
-    "send_feedback": "Send Feedback",
+    "has_drafting_helped_project_send_feedback": "Has {{ siteName }} drafting helped your project? { 1 }Send feedback{ 2 } or { 3 }ask for help{ 4 }.",
     "thank_you_for_your_feedback": "Thank you! We greatly value your feedback."
   },
   "user_feedback_dialog": {
@@ -1052,12 +1049,11 @@
     "connect_to_the_internet": "Please connect to the internet to send your feedback.",
     "feedback_label": "Your feedback",
     "feedback_title": "Tell us how {{ siteName }} has impacted your project",
-    "feedback_subtitle": "How has {{ siteName }} influenced your team's process and workflow?",
     "permission_question": "May we publish your feedback?",
-    "permission_anonymous_label": "Yes, but please don't use my name or project name",
+    "permission_anonymous_label": "Yes, but please don't use my name or the project language",
     "permission_private_label": "No, please keep this private",
-    "permission_public_label": "Yes, and mention my name and project name",
-    "project_for_feedback": "What project is this feedback about?",
+    "permission_public_label": "Yes, and you can mention my name and the project language",
+    "project_for_feedback": "Which project is your feedback about?",
     "project_placeholder": "Layihə",
     "required": "Tələb olunur",
     "submit": "Göndərmək"
