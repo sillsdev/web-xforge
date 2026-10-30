@@ -6059,9 +6059,13 @@ public class MachineApiServiceTests
                         );
                         foreach (var chapter in text.Chapters)
                         {
+                            // A user who cannot write the book has no chapter permissions from Paratext. They are
+                            // only granted to administrators for added chapters, by UpdateParatextPermissionsForNewBooksAsync.
                             chapter.Permissions.TryAdd(
                                 userId,
-                                chapter.Number <= writeChapters ? TextInfoPermission.Write : TextInfoPermission.Read
+                                canWriteBook && chapter.Number <= writeChapters
+                                    ? TextInfoPermission.Write
+                                    : TextInfoPermission.Read
                             );
                         }
                     }
@@ -6108,7 +6112,8 @@ public class MachineApiServiceTests
                         Arg.Any<IDocument<SFProject>>(),
                         booksToUpdate: Arg.Any<int[]>(),
                         currentUserOnly: true,
-                        writeToParatext: false
+                        writeToParatext: false,
+                        addedChapters: Arg.Any<IReadOnlyDictionary<int, int[]>?>()
                     )
                 )
                 .Do(callInfo =>
@@ -6116,18 +6121,22 @@ public class MachineApiServiceTests
                     UserSecret userSecret = callInfo.ArgAt<UserSecret>(0);
                     var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(2);
                     int[] booksToUpdate = callInfo.ArgAt<int[]>(3);
+                    var addedChapters = callInfo.ArgAt<IReadOnlyDictionary<int, int[]>?>(6);
                     foreach (var text in projectDoc.Data.Texts.Where(t => booksToUpdate.Contains(t.BookNum)))
                     {
                         text.Permissions.TryAdd(
                             userSecret.Id,
                             canWriteBook ? TextInfoPermission.Write : TextInfoPermission.Read
                         );
+                        int[] added = addedChapters?.GetValueOrDefault(text.BookNum) ?? [];
                         foreach (var chapter in text.Chapters)
                         {
-                            chapter.Permissions.TryAdd(
-                                userSecret.Id,
-                                chapter.Number <= writeChapters ? TextInfoPermission.Write : TextInfoPermission.Read
-                            );
+                            // An administrator who cannot write the book is only given write permission on added chapters
+                            bool writable =
+                                chapter.Number <= writeChapters && (canWriteBook || added.Contains(chapter.Number));
+                            chapter.Permissions[userSecret.Id] = writable
+                                ? TextInfoPermission.Write
+                                : TextInfoPermission.Read;
                         }
                     }
                 });
@@ -6175,6 +6184,12 @@ public class MachineApiServiceTests
                 Is.EqualTo(numberOfChapters)
             );
 
+            // Project01 already has chapters 3 and 4 of the book. If the user cannot write to the book, but has write
+            // permission on chapters, only the chapters added to the book are written, not the existing chapters.
+            // A newly created book has no existing chapters, so all of its writable chapters are written.
+            int existingChapters = targetProjectId == Project01 ? 2 : 0;
+            bool canWriteAddedChaptersOnly = !canWriteBook && writeChapters > 0;
+
             int numberOfTexts = 0;
             if (canWriteBook && writeChapters > 0)
             {
@@ -6186,13 +6201,20 @@ public class MachineApiServiceTests
                 // The number of texts will correspond to the number of chapters in the book to start with
                 numberOfTexts = numberOfChapters;
             }
+            else if (canWriteAddedChaptersOnly)
+            {
+                numberOfTexts = numberOfChapters - existingChapters;
+            }
 
             await Assert.ThatAsync(
                 () => Texts.CountDocumentsAsync(t => t.Id.Contains(targetProjectId)),
                 Is.EqualTo(numberOfTexts)
             );
 
-            Assert.That(result.ChangesSaved, Is.EqualTo(canWriteBook && writeChapters > 0));
+            Assert.That(
+                result.ChangesSaved,
+                Is.EqualTo((canWriteBook && writeChapters > 0) || canWriteAddedChaptersOnly)
+            );
             if (writeChapters < numberOfChapters)
             {
                 Assert.That(result.Failures, Is.Not.Empty);
