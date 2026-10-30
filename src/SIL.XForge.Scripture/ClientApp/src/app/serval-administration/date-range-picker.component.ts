@@ -36,6 +36,19 @@ export interface NormalizedDateRange {
   end: Date;
 }
 
+/** The normalized range from the beginning of the day `days` days ago through the end of today. */
+export function lastDaysDateRange(days: number): NormalizedDateRange {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  start.setDate(start.getDate() - days);
+  // Normalize the end the same way as the date range picker does, to the last millisecond of today
+  const end = new Date();
+  end.setHours(0, 0, 0, 0);
+  end.setDate(end.getDate() + 1);
+  end.setMilliseconds(end.getMilliseconds() - 1);
+  return { start, end };
+}
+
 /**
  * Date range picker component for selecting date ranges. Manages its own form validation and emits normalized and valid
  * date range changes.
@@ -63,34 +76,21 @@ export class DateRangePickerComponent implements OnInit {
   /** When the date range is not the default, highlight the control and show a reset button. */
   @Input() showReset: boolean = false;
 
-  /** When true, initialize the control with null as the selected default range. */
-  @Input() set startWithEmptyRange(value: boolean | null) {
-    if (!!value) {
-      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
-      this.defaultRange = undefined;
-      this.isDefaultRange = true;
-    } else {
-      // Set initial range
-      const initialEndDate = new Date(this.maxSelectableDate);
-      const initialStartDate = new Date(this.maxSelectableDate);
-      initialStartDate.setDate(initialStartDate.getDate() - this.defaultDaysBack);
-
-      const normalizedStart = this.beginningOfTheDayOf(initialStartDate);
-      const normalizedEnd = this.endOfTheDayOf(initialEndDate);
-
-      this.dateRangeForm.setValue({ start: normalizedStart, end: normalizedEnd }, { emitEvent: false });
-      this.defaultRange = {
-        start: new Date(normalizedStart),
-        end: new Date(normalizedEnd)
-      };
-      this.isDefaultRange = true;
-
-      // Tell parent of the initial range.
-      this.dateRangeChange.emit({
-        start: new Date(normalizedStart),
-        end: new Date(normalizedEnd)
-      });
-    }
+  /**
+   * The range that the control shows initially and that the reset button restores. Undefined means no range. Setting
+   * this replaces the range in the control without emitting dateRangeChange, since the parent already knows the range.
+   */
+  @Input() set defaultRange(range: NormalizedDateRange | undefined) {
+    this._defaultRange = range;
+    this.parentRange = range;
+    this.dateRangeForm.setValue(
+      {
+        start: range == null ? null : new Date(range.start),
+        end: range == null ? null : new Date(range.end)
+      },
+      { emitEvent: false }
+    );
+    this.isDefaultRange = true;
   }
 
   /** Maximum selectable date (today) */
@@ -105,15 +105,18 @@ export class DateRangePickerComponent implements OnInit {
     end: FormControl<Date | null>;
   }>;
 
-  private readonly defaultDaysBack = 14;
-
   /** Event emitted when the date range changes with a valid normalized range */
   @Output() dateRangeChange = new EventEmitter<NormalizedDateRange | undefined>();
 
-  /** Whether the last emitted range is equal to the initial default range. */
+  /** Whether the range in the control is equal to the default range. */
   isDefaultRange: boolean = true;
 
-  private defaultRange: NormalizedDateRange | undefined;
+  private _defaultRange: NormalizedDateRange | undefined;
+  /**
+   * The range that the parent knows about, which is the default range or the last emitted range. The date inputs echo
+   * programmatic changes back through the form, so this prevents telling the parent about a range it already knows.
+   */
+  private parentRange: NormalizedDateRange | undefined;
 
   constructor(
     private formBuilder: FormBuilder,
@@ -167,15 +170,15 @@ export class DateRangePickerComponent implements OnInit {
   }
 
   protected resetToDefaultDateRange(): void {
-    if (this.defaultRange == null) {
+    if (this._defaultRange == null) {
       this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: true });
       return;
     }
 
     this.dateRangeForm.setValue(
       {
-        start: new Date(this.defaultRange.start),
-        end: new Date(this.defaultRange.end)
+        start: new Date(this._defaultRange.start),
+        end: new Date(this._defaultRange.end)
       },
       { emitEvent: true }
     );
@@ -188,9 +191,12 @@ export class DateRangePickerComponent implements OnInit {
    * end date undefined). It is also called while typing into the input controls.
    */
   private emitNormalizedIfValid(inputRange: { start: Date | null | undefined; end: Date | null | undefined }): void {
-    if (inputRange.start == null && inputRange.end == null && this.defaultRange == null) {
+    if (inputRange.start == null && inputRange.end == null && this._defaultRange == null) {
       this.isDefaultRange = true;
-      this.dateRangeChange.emit();
+      if (this.parentRange != null) {
+        this.parentRange = undefined;
+        this.dateRangeChange.emit();
+      }
       return;
     }
     if (inputRange.start == null || inputRange.end == null) return;
@@ -208,7 +214,9 @@ export class DateRangePickerComponent implements OnInit {
 
     // Dates are a valid and normalized range. Emit.
     const normalizedRange: NormalizedDateRange = { start: normalizedStart, end: normalizedEnd };
-    this.isDefaultRange = this.areRangesEqual(normalizedRange, this.defaultRange);
+    this.isDefaultRange = this.areRangesEqual(normalizedRange, this._defaultRange);
+    if (this.areRangesEqual(normalizedRange, this.parentRange)) return;
+    this.parentRange = normalizedRange;
     this.dateRangeChange.emit(normalizedRange);
   }
 

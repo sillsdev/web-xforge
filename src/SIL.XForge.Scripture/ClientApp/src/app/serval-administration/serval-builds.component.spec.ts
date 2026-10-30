@@ -1,11 +1,12 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { BehaviorSubject, firstValueFrom, Observable, of, skip, Subject, take } from 'rxjs';
+import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { MockConsole } from 'xforge-common/mock-console';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -22,7 +23,7 @@ import { BuildStates } from '../machine-api/build-states';
 import { BuildConfidences } from '../translate/draft-generation/build-confidences/build-confidences';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
-import { NormalizedDateRange } from './date-range-picker.component';
+import { lastDaysDateRange, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { ServalAdministrationService } from './serval-administration.service';
 import { ServalBuildProblemsDialog } from './serval-build-problems-dialog.component';
@@ -406,10 +407,122 @@ describe('ServalBuildsComponent', () => {
       env.component.ngOnInit();
       env.waitForRowUpdate();
 
-      verify(mockDraftGenerationService.getBuildsSince(anything(), 'sf-project-123')).once();
-      let useUnspecifiedDateRange: boolean | undefined;
-      env.component.useUnspecifiedDateRange$.pipe(take(1)).subscribe(v => (useUnspecifiedDateRange = v));
-      expect(useUnspecifiedDateRange).toBe(true);
+      verify(mockDraftGenerationService.getBuildsSince(undefined, 'sf-project-123')).once();
+      expect(env.component['defaultDateRange']).toBeUndefined();
+    }));
+
+    it('requests builds of the last 14 days when there is no project filter', fakeAsync(() => {
+      const env = new TestEnvironment();
+
+      // SUT
+      env.component.ngOnInit();
+      env.waitForRowUpdate();
+
+      const expectedRange: NormalizedDateRange = lastDaysDateRange(14);
+      expect(env.component['defaultDateRange']).toEqual(expectedRange);
+      expect(env.buildsSinceArgs()).toEqual([expectedRange.start, undefined]);
+      verify(mockDraftGenerationService.getBuildsSince(anything(), anything())).once();
+    }));
+
+    it('requests all builds of a project when a project filter is added', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.component.ngOnInit();
+      env.waitForRowUpdate();
+
+      // SUT
+      env.queryParams$.next({ projectId: 'sf-project-123' });
+      env.waitForRowUpdate();
+
+      expect(env.component['defaultDateRange']).toBeUndefined();
+      expect(env.buildsSinceArgs()).toEqual([undefined, 'sf-project-123']);
+      verify(mockDraftGenerationService.getBuildsSince(anything(), anything())).twice();
+    }));
+
+    it('requests builds of the last 14 days when the project filter is cleared', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.queryParams$.next({ projectId: 'sf-project-123' });
+      env.component.ngOnInit();
+      env.component['onDateRangeChange']({ start: new Date('2025-01-01'), end: new Date('2025-01-31') });
+      env.waitForRowUpdate();
+
+      // SUT
+      env.queryParams$.next({});
+      env.waitForRowUpdate();
+
+      const expectedRange: NormalizedDateRange = lastDaysDateRange(14);
+      expect(env.component['defaultDateRange']).toEqual(expectedRange);
+      expect(env.buildsSinceArgs()).toEqual([expectedRange.start, undefined]);
+    }));
+
+    it('keeps the selected date range when switching to another project', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const selectedRange: NormalizedDateRange = { start: new Date('2025-01-01'), end: new Date('2025-01-31') };
+      env.queryParams$.next({ projectId: 'sf-project-1' });
+      env.component.ngOnInit();
+      env.component['onDateRangeChange'](selectedRange);
+      env.waitForRowUpdate();
+
+      // SUT
+      env.queryParams$.next({ projectId: 'sf-project-2' });
+      env.waitForRowUpdate();
+
+      expect(env.buildsSinceArgs()).toEqual([selectedRange.start, 'sf-project-2']);
+    }));
+
+    it('loads builds once per project filter change when the date range picker is rendered', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockI18nService.locale$).thenReturn(of({ canonicalTag: 'en' } as Locale));
+      env.fixture.detectChanges();
+      env.waitForRowUpdate();
+
+      // SUT
+      env.queryParams$.next({ projectId: 'sf-project-123' });
+      env.fixture.detectChanges();
+      env.waitForRowUpdate();
+      env.queryParams$.next({});
+      env.fixture.detectChanges();
+      env.waitForRowUpdate();
+
+      const calls = [0, 1, 2].map(i => env.buildsSinceArgs(i));
+      const expectedStart: Date = lastDaysDateRange(14).start;
+      expect(calls).toEqual([
+        [expectedStart, undefined],
+        [undefined, 'sf-project-123'],
+        [expectedStart, undefined]
+      ]);
+      verify(mockDraftGenerationService.getBuildsSince(anything(), anything())).thrice();
+    }));
+
+    it('does not reload builds when only the search text in the URL changes', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.queryParams$.next({ projectId: 'sf-project-123' });
+      env.component.ngOnInit();
+      env.waitForRowUpdate();
+
+      // SUT
+      env.queryParams$.next({ projectId: 'sf-project-123', q: 'search text' });
+      env.waitForRowUpdate();
+
+      verify(mockDraftGenerationService.getBuildsSince(anything(), anything())).once();
+    }));
+
+    it('discards the builds of a load that was preempted by a newer load', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const slowBuilds$ = new Subject<ServalBuildReportDto[]>();
+      when(mockDraftGenerationService.getBuildsSince(anything(), 'sf-project-1')).thenReturn(slowBuilds$);
+      when(mockDraftGenerationService.getBuildsSince(anything(), 'sf-project-2')).thenReturn(
+        of([env.createReport({ buildId: 'build-of-project-2' })])
+      );
+      env.queryParams$.next({ projectId: 'sf-project-1' });
+      env.component.ngOnInit();
+      env.queryParams$.next({ projectId: 'sf-project-2' });
+      env.waitForRowUpdate();
+
+      // SUT
+      slowBuilds$.next([env.createReport({ buildId: 'build-of-project-1' })]);
+      env.waitForRowUpdate();
+
+      expect(env.component['rows'].map(row => row.report.build?.id)).toEqual(['build-of-project-2']);
     }));
 
     it('loads the filtered project name from the project doc', fakeAsync(() => {
@@ -1992,7 +2105,7 @@ describe('ServalBuildsComponent', () => {
         start: new Date('2024-01-01T00:00:00Z'),
         end: new Date('2024-01-31T23:59:59Z')
       };
-      env.component['dateRange$'].next(range);
+      env.component['buildsQuery$'].next({ range });
       env.component['rows'] = [
         env.createRow({
           projectId: 'proj-a',
@@ -2216,9 +2329,17 @@ class TestEnvironment {
     when(mockI18nService.localeCode).thenReturn('en');
     when(mockI18nService.getLanguageDisplayName(anything())).thenReturn(undefined);
     when(mockedActivatedRoute.queryParams).thenReturn(this.queryParams$);
+    when(mockServalAdministrationService.get(anything())).thenResolve({ data: undefined } as SFProjectProfileDoc);
 
     this.fixture = TestBed.createComponent(ServalBuildsComponent);
     this.component = this.fixture.componentInstance;
+  }
+
+  /** The since and projectId arguments of a call to getBuildsSince, by default of the last call. */
+  buildsSinceArgs(callIndex?: number): [Date | undefined, string | undefined] {
+    const captor = capture(mockDraftGenerationService.getBuildsSince);
+    const [since, projectId] = callIndex == null ? captor.last() : captor.byCallIndex(callIndex);
+    return [since, projectId];
   }
 
   /** Adequate wait for rows to update in response to any changes in filtering/searching. */

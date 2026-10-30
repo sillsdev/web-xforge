@@ -31,16 +31,16 @@ import {
   catchError,
   combineLatest,
   distinctUntilChanged,
+  filter,
   firstValueFrom,
   from,
   map,
   Observable,
   of,
-  ReplaySubject,
   shareReplay,
   startWith,
   switchMap,
-  take
+  tap
 } from 'rxjs';
 import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -66,7 +66,7 @@ import { DisplayConfidenceComponent } from '../translate/draft-generation/build-
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
-import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
+import { DateRangePickerComponent, lastDaysDateRange, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { SearchRecordsComponent } from './search-records.component';
@@ -140,6 +140,14 @@ export interface ServalBuildSummary {
   buildsSfDidNotKnowAbout: number;
 }
 
+/** Which Serval builds to load. */
+interface BuildsQuery {
+  /** If specified, only builds for this SF project are loaded. */
+  projectId?: string;
+  /** If specified, only builds that began in this range are loaded. */
+  range?: NormalizedDateRange;
+}
+
 /** Presentation details for a summary item displayed above the builds table. */
 interface SummaryDisplayItem {
   label: string;
@@ -209,8 +217,9 @@ export interface BuildInputItem {
 export class ServalBuildsComponent extends DataLoadingComponent implements OnInit {
   /** Max problems to preview in problems card. */
   public readonly problemPreviewLimit: number = 8;
-  useUnspecifiedDateRange$: ReplaySubject<boolean> = new ReplaySubject<boolean>();
   protected currentProjectFilter?: string;
+  /** The date range that the date range picker starts with, and returns to when reset. */
+  protected defaultDateRange?: NormalizedDateRange;
   /** Display name of the project that builds are filtered to, loaded from the project doc. */
   protected filteredProjectName?: string;
 
@@ -235,7 +244,8 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   protected readonly searchControl: FormControl<string> = new FormControl('', { nonNullable: true });
   /** The URL parameter. */
   private currentSearchQueryParam: string | null = null;
-  private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
+  /** Undefined until the URL query params have been read. */
+  private readonly buildsQuery$ = new BehaviorSubject<BuildsQuery | undefined>(undefined);
   private readonly requesterIdentityCache: Map<string, Observable<RequesterInfo>> = new Map();
   /** Sequence ID of searching records. Later initiated searches have higher IDs. */
   private searchId: number = 0;
@@ -267,17 +277,24 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   }
 
   ngOnInit(): void {
-    combineLatest([
-      this.onlineStatusService.onlineStatus$,
-      this.dateRange$,
-      // only take the first value since we don't want the search filter to trigger a new query
-      this.useUnspecifiedDateRange$.pipe(take(1))
-    ])
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(([isOnline, range, noDateRange]) => {
-        if (range != null || noDateRange) {
-          this.loadingStarted();
-          void this.loadBuilds(range, isOnline);
+    combineLatest([this.onlineStatusService.onlineStatus$, this.buildsQuery$.pipe(filter(notNull))])
+      .pipe(
+        tap(() => this.loadingStarted()),
+        // Starting a new load cancels the request of the previous load, so only the latest load is shown
+        switchMap(([isOnline, query]) =>
+          isOnline
+            ? this.draftGenerationService
+                .getBuildsSince(query.range?.start, query.projectId)
+                .pipe(map(reports => ({ query, reports })))
+            : of(undefined)
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(loadedBuilds => {
+        try {
+          this.showLoadedBuilds(loadedBuilds);
+        } finally {
+          this.loadingFinished();
         }
       });
 
@@ -297,18 +314,30 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         const projectFilter: string | undefined = isPopulatedString(saParams.projectId)
           ? saParams.projectId
           : undefined;
-        if (projectFilter !== this.currentProjectFilter) {
+        const previousQuery: BuildsQuery | undefined = this.buildsQuery$.value;
+        if (previousQuery == null || projectFilter !== this.currentProjectFilter) {
           this.filteredProjectName = undefined;
           this.currentProjectFilter = projectFilter;
           if (projectFilter != null) void this.loadFilteredProjectName(projectFilter);
+
+          // Switching from one project to another keeps the selected date range
+          const isSwitchBetweenProjects: boolean = previousQuery?.projectId != null && projectFilter != null;
+          if (!isSwitchBetweenProjects) {
+            // All of the builds for a project can be loaded, but builds for all projects are limited to recent ones.
+            // Assigning a new default range also makes the date range picker show it.
+            this.defaultDateRange = projectFilter == null ? lastDaysDateRange(14) : undefined;
+          }
+          const range: NormalizedDateRange | undefined = isSwitchBetweenProjects
+            ? previousQuery?.range
+            : this.defaultDateRange;
+          this.buildsQuery$.next({ projectId: projectFilter, range });
         }
-        this.useUnspecifiedDateRange$.next(this.currentProjectFilter != null);
         this.applyFiltersAndStats();
       });
   }
 
   protected onDateRangeChange(range: NormalizedDateRange | undefined): void {
-    this.dateRange$.next(range);
+    this.buildsQuery$.next({ ...this.buildsQuery$.value, range });
   }
 
   protected clearProjectFilter(): void {
@@ -359,7 +388,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportCsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
     } else {
-      this.buildConfidencesExportService.exportCsv(rows, this.dateRange$.value);
+      this.buildConfidencesExportService.exportCsv(rows, this.buildsQuery$.value?.range);
     }
   }
 
@@ -368,7 +397,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportRsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
     } else {
-      this.buildConfidencesExportService.exportRsv(rows, this.dateRange$.value);
+      this.buildConfidencesExportService.exportRsv(rows, this.buildsQuery$.value?.range);
     }
   }
 
@@ -377,7 +406,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       const { spreadsheetRows, dateRange, meanDurationMs, maxDurationMs } = this.createSpreadsheetData();
       this.exportService.exportTsv(spreadsheetRows, dateRange, meanDurationMs, maxDurationMs, 'serval_builds');
     } else {
-      this.buildConfidencesExportService.exportTsv(rows, this.dateRange$.value);
+      this.buildConfidencesExportService.exportTsv(rows, this.buildsQuery$.value?.range);
     }
   }
 
@@ -391,7 +420,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     meanDurationMs: number;
     maxDurationMs: number;
   } {
-    const dateRange: NormalizedDateRange | undefined = this.dateRange$.value;
+    const dateRange: NormalizedDateRange | undefined = this.buildsQuery$.value?.range;
     const spreadsheetRows: SpreadsheetRow[] = ServalBuildsComponent.createSpreadsheetRows(this.rows);
     const meanDurationMs: number = this.summaryStats?.meanDurationMs ?? 0;
     const maxDurationMs: number = this.summaryStats?.maxDurationMs ?? 0;
@@ -591,28 +620,23 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return identity$;
   }
 
-  private async loadBuilds(range: NormalizedDateRange | undefined, isOnline: boolean): Promise<void> {
-    try {
-      if (!isOnline) {
-        this.allRows = [];
-        this.rows = [];
-        this.summaryStats = undefined;
-        this.summaryDisplayItems = [];
-        return;
-      }
-
-      const reports: ServalBuildReportDto[] | undefined = await firstValueFrom(
-        this.draftGenerationService.getBuildsSince(range?.start, this.currentProjectFilter ?? undefined)
-      );
-
-      const reportsInRange: ServalBuildReportDto[] = (reports ?? []).filter(
-        (report: ServalBuildReportDto) => !this.didReportBeginOutOfDateRange(report, range)
-      );
-      this.allRows = this.buildRows(reportsInRange);
-      this.applyFiltersAndStats();
-    } finally {
-      this.loadingFinished();
+  /** Shows the loaded builds, or no builds when offline (undefined). */
+  private showLoadedBuilds(
+    loadedBuilds: { query: BuildsQuery; reports: ServalBuildReportDto[] | undefined } | undefined
+  ): void {
+    if (loadedBuilds == null) {
+      this.allRows = [];
+      this.rows = [];
+      this.summaryStats = undefined;
+      this.summaryDisplayItems = [];
+      return;
     }
+
+    const reportsInRange: ServalBuildReportDto[] = (loadedBuilds.reports ?? []).filter(
+      (report: ServalBuildReportDto) => !this.didReportBeginOutOfDateRange(report, loadedBuilds.query.range)
+    );
+    this.allRows = this.buildRows(reportsInRange);
+    this.applyFiltersAndStats();
   }
 
   /** Sets the display name of the project that builds are filtered to, from the project doc. */

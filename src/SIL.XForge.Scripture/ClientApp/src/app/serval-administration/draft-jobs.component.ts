@@ -37,7 +37,7 @@ import { NoticeComponent } from '../shared/notice/notice.component';
 import { trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
 import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
 import { projectLabel } from '../shared/utils';
-import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
+import { DateRangePickerComponent, lastDaysDateRange, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -179,8 +179,9 @@ export class DraftJobsComponent extends DataLoadingComponent implements OnInit {
   /** Cache for project short names */
   private projectShortNames = new Map<string, string | undefined>();
   filteredProjectName = '';
-  private currentDateRange: NormalizedDateRange | undefined;
-  private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(undefined);
+  protected readonly defaultDateRange: NormalizedDateRange = lastDaysDateRange(14);
+  private currentDateRange: NormalizedDateRange | undefined = this.defaultDateRange;
+  private readonly dateRange$ = new BehaviorSubject<NormalizedDateRange | undefined>(this.defaultDateRange);
 
   constructor(
     noticeService: NoticeService,
