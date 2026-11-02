@@ -32,12 +32,13 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../../../core/models/sf-project-profile-doc';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
-import { BuildDto, ServalDiagnosticCode } from '../../../../machine-api/build-dto';
+import { BuildDto } from '../../../../machine-api/build-dto';
 import { BuildStates } from '../../../../machine-api/build-states';
 import { trainingSourceRangesWithTargetDetail, VerboseScriptureRange } from '../../../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../../../shared/scripture-range-display';
 import { RIGHT_TO_LEFT_MARK } from '../../../../shared/verse-utils';
 import { DisplayConfidenceComponent } from '../../build-confidences/display-confidence.component';
+import { DraftDiagnosticsComponent } from '../../draft-diagnostics/draft-diagnostics.component';
 import { DraftDownloadButtonComponent } from '../../draft-download-button/draft-download-button.component';
 import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-import-wizard.component';
 import { DraftOptionsService } from '../../draft-options.service';
@@ -78,6 +79,7 @@ interface SourceInfo {
   imports: [
     NgClass,
     DisplayConfidenceComponent,
+    DraftDiagnosticsComponent,
     DraftDownloadButtonComponent,
     DraftPreviewBooksComponent,
     MatButton,
@@ -376,23 +378,8 @@ export class DraftHistoryEntryComponent {
     });
   }
 
-  booksWithLowConfidence(build: BuildDto): number {
-    return build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0;
-  }
-
   protected hasLowConfidence(build: BuildDto): boolean {
     return hasLowConfidence(build);
-  }
-
-  protected lowConfidenceBookName(build: BuildDto): string | undefined {
-    const bookId: string | undefined = build?.executionData?.diagnostics?.find(
-      d => d.code === ServalDiagnosticCode.LowConfidence
-    )?.data?.bookId;
-    if (bookId != null) {
-      return this.i18n.localizeBook(bookId);
-    } else {
-      return undefined;
-    }
   }
 
   private async getProjectSourceInfo(
