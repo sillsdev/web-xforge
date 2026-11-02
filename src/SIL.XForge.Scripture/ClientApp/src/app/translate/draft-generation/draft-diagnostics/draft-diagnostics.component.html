@@ -1,0 +1,21 @@
+<ng-container *transloco="let t; read: 'draft_diagnostics'">
+  <app-display-confidence
+    [bookNameWithLowConfidence]="lowConfidenceBookName"
+    [booksWithLowConfidence]="booksWithLowConfidence"
+    [showNotice]="showLowConfidenceDiagnostic"
+  ></app-display-confidence>
+  @for (diagnostic of build?.executionData?.diagnostics; track $index) {
+    @if (diagnostic.code === ServalDiagnosticCode.TooFewSegmentsSelectedForTraining) {
+      <app-notice type="warning" mode="fill-dark" data-test-id="too-few-segments-selected-for-training">
+        <transloco
+          key="draft_diagnostics.too_few_segments_selected_for_training"
+          [params]="{
+            minimumTrainCount: diagnostic.data.minimumTrainCount,
+            trainCount: diagnostic.data.trainCount,
+            learnMoreLink: urlService.improvingDraftQuality
+          }"
+        ></transloco
+      ></app-notice>
+    }
+  }
+</ng-container>
