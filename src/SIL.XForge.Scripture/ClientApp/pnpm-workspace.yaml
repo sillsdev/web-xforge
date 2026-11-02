@@ -9,11 +9,6 @@ allowBuilds:
   unrs-resolver: true
 minimumReleaseAge: 10080 # 7 days
 minimumReleaseAgeExclude:
-  - http-cache-semantics@4.3.0
-  - handlebars@4.7.10
-  - "@angular/common@20.3.34"
-  - body-parser@1.20.9 || 2.4.0
-  - follow-redirects@1.16.2
   - joi@17.13.9
 minimumReleaseAgeExcludePrune: true
 overrides:
@@ -26,7 +21,6 @@ overrides:
   qs@>=2.2.5 <6.16.0: ^6.16.0
   qs@>=6.14.2 <=6.15.3: ^6.16.0
   uuid@<11.1.1: ^11.1.1
-  webpack: "5.105.0" # Fix for @storybook/builder-webpack5. Remove if updating Angular
   webpack-dev-server@<=5.2.5: ^5.2.6
 patchedDependencies:
   http-proxy@1.18.1: patches/http-proxy@1.18.1.patch
