@@ -27,6 +27,7 @@ export enum ServalDiagnosticSeverity {
  * Not a comprehensive list of the build diagnostics, but the ones which we can correctly handle
  */
 export enum ServalDiagnosticCode {
+  TooFewSegmentsSelectedForTraining = 'CONFIG-0003',
   LowConfidence = 'MODEL-0003'
 }
 

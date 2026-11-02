@@ -298,6 +298,9 @@
     "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal. [link:learnMoreLink]Learn more[/link]",
     "one_book": "1 book"
   },
+  "draft_diagnostics": {
+    "too_few_segments_selected_for_training": "This draft used less training data than is recommended. We recommend a minimum of {{ minimumTrainCount }} verses of training data, and this draft was generated with only {{ trainCount }} verses of training data. Please select more training data to improve the quality of the draft. [link:learnMoreLink]Learn more[/link]"
+  },
   "draft_generation_steps": {
     "back": "Back",
     "books_are_hidden_hide_explanation": "{{ numBooks }} books are hidden. {{ underlineStart }}Hide explanation{{ underlineEnd }}",
