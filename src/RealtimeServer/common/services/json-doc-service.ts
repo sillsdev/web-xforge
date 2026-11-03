@@ -26,8 +26,7 @@ export abstract class JsonDocService<T> extends DocService<T> {
   }
 
   protected getMatchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path | undefined): number {
-    // Op data that is not a list of components has no path, and no template matches a path that is not there
-    if (path == null) {
+    if (!Array.isArray(path)) {
       return -1;
     }
     for (let i = 0; i < pathTemplates.length; i++) {
