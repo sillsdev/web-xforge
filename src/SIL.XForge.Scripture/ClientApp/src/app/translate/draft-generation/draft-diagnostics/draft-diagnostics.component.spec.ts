@@ -94,7 +94,7 @@ describe('DraftDiagnosticsComponent', () => {
   });
 
   describe('too few segments selected for training', () => {
-    it('should not show the low confidence warning if there are no books with low confidence', fakeAsync(() => {
+    it('should show the too few segments selected for training warning if there is a diagnostic', fakeAsync(() => {
       const env = new TestEnvironment();
       const build = {
         executionData: {
@@ -116,9 +116,11 @@ describe('DraftDiagnosticsComponent', () => {
       expect(
         env.fixture.nativeElement.querySelector('app-notice[data-test-id="too-few-segments-selected-for-training"]')
       ).not.toBeNull();
+      expect(env.component.tooFewSegmentsSelectedForTraining).not.toBeUndefined();
       expect(env.component.showLowConfidenceDiagnostic).toBeFalse();
     }));
   });
+
   it('should not show notices for unknown diagnostics', fakeAsync(() => {
     const env = new TestEnvironment();
     const build = {
@@ -138,6 +140,7 @@ describe('DraftDiagnosticsComponent', () => {
     env.fixture.detectChanges();
 
     expect(env.fixture.nativeElement.querySelector('app-notice')).toBeNull();
+    expect(env.component.tooFewSegmentsSelectedForTraining).toBeUndefined();
     expect(env.component.showLowConfidenceDiagnostic).toBeFalse();
   }));
 

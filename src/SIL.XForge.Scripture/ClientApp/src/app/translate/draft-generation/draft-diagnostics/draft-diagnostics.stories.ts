@@ -67,7 +67,7 @@ export const MultipleDiagnostics: Story = {
       executionData: {
         diagnostics: [
           { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'MAT' } } as Partial<ServalBuildDiagnostic>,
-          { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'MARK' } },
+          { code: ServalDiagnosticCode.LowConfidence, data: { bookId: 'MRK' } },
           {
             code: ServalDiagnosticCode.TooFewSegmentsSelectedForTraining,
             data: { minimumTrainCount: 600, trainCount: 13 }
