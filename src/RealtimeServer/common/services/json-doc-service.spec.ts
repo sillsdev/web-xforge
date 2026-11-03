@@ -43,7 +43,7 @@ describe('JsonDocService', () => {
   it('rejects an op whose path is not an array', () => {
     const service = new TestService();
     const matchAnything: ObjPathTemplate[] = [new ObjPathTemplate()];
-    // Path is an arary.
+    // Path is an array.
     expect(service.matchingPathTemplate(matchAnything, [])).not.toBe(-1);
     // Path is not an array.
     expect(service.matchingPathTemplate(matchAnything, 'someString' as unknown as ShareDB.Path)).toBe(-1);
