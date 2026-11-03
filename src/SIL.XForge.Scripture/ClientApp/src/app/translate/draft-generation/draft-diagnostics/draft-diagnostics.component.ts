@@ -1,9 +1,8 @@
 import { Component, Input } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
-import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { BuildDto, ServalDiagnosticCode } from '../../../machine-api/build-dto';
+import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticCode } from '../../../machine-api/build-dto';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { DisplayConfidenceComponent } from '../build-confidences/display-confidence.component';
 
@@ -11,7 +10,7 @@ import { DisplayConfidenceComponent } from '../build-confidences/display-confide
   selector: 'app-draft-diagnostics',
   templateUrl: './draft-diagnostics.component.html',
   styleUrl: './draft-diagnostics.component.scss',
-  imports: [DisplayConfidenceComponent, NoticeComponent, TranslocoModule, TranslocoMarkupModule]
+  imports: [DisplayConfidenceComponent, NoticeComponent, TranslocoModule]
 })
 /**
  * Displays the supported draft diagnostics in an human-friendly format.
@@ -30,6 +29,12 @@ export class DraftDiagnosticsComponent {
   get booksWithLowConfidence(): number {
     return (
       this.build?.executionData?.diagnostics?.filter(d => d.code === ServalDiagnosticCode.LowConfidence).length ?? 0
+    );
+  }
+
+  get tooFewSegmentsSelectedForTraining(): ServalBuildDiagnostic | undefined {
+    return this.build?.executionData?.diagnostics?.find(
+      d => d.code === ServalDiagnosticCode.TooFewSegmentsSelectedForTraining
     );
   }
 
