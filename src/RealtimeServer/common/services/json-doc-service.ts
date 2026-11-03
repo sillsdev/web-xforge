@@ -1,6 +1,5 @@
 import ShareDB from 'sharedb';
 import { ObjProxyArg } from 'ts-object-path';
-import { OwnedData } from '../models/owned-data';
 import { RealtimeServer } from '../realtime-server';
 import { obj, ObjPathTemplate } from '../utils/obj-path';
 import { DocService } from './doc-service';
@@ -26,7 +25,10 @@ export abstract class JsonDocService<T> extends DocService<T> {
     return opList.every(op => this.getMatchingPathTemplate(this.editableProps, op.p) !== -1);
   }
 
-  protected getMatchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path, _entity?: OwnedData): number {
+  protected getMatchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path | undefined): number {
+    if (!Array.isArray(path)) {
+      return -1;
+    }
     for (let i = 0; i < pathTemplates.length; i++) {
       if (pathTemplates[i].matches(path)) {
         return i;

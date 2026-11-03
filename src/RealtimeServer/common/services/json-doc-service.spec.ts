@@ -40,6 +40,16 @@ describe('JsonDocService', () => {
     ).toBe(false);
   });
 
+  it('rejects an op whose path is not an array', () => {
+    const service = new TestService();
+    const matchAnything: ObjPathTemplate[] = [new ObjPathTemplate()];
+    // Path is an array.
+    expect(service.matchingPathTemplate(matchAnything, [])).not.toBe(-1);
+    // Path is not an array.
+    expect(service.matchingPathTemplate(matchAnything, 'someString' as unknown as ShareDB.Path)).toBe(-1);
+    expect(service.matchingPathTemplate(matchAnything, { length: 1 } as unknown as ShareDB.Path)).toBe(-1);
+  });
+
   it('rejects ops when any of them changes a property that is not editable', () => {
     const service = new TestService();
     const allowedOp: ShareDB.Op = { p: ['name'], od: 'Old', oi: 'New' };
@@ -64,5 +74,9 @@ class TestService extends JsonDocService<unknown> {
 
   changesOnlyEditable(ops: ShareDB.Op[] | ShareDB.Op): boolean {
     return this.changesOnlyEditableProps(ops);
+  }
+
+  matchingPathTemplate(pathTemplates: ObjPathTemplate[], path: ShareDB.Path | undefined): number {
+    return this.getMatchingPathTemplate(pathTemplates, path);
   }
 }
