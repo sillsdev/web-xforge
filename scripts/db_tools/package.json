@@ -17,9 +17,9 @@
     "mongodb": "^4.17.2",
     "ot-json0": "^1.1.0",
     "rich-text": "^4.1.0",
-    "sharedb": "^1.9.2",
+    "sharedb": "^7.0.0",
     "sharedb-access": "^5.0.0",
-    "sharedb-mongo": "^1.0.0",
+    "sharedb-mongo": "^6.0.2",
     "socket.io-client": "^4.8.4",
     "ws": "^8.22.0",
     "yargs": "^17.7.3"
@@ -30,7 +30,7 @@
     "@types/node": "^16.18.126",
     "@types/ws": "^8.18.1",
     "@types/yargs": "^17.0.35",
-    "sharedb-mingo-memory": "^1.2.0",
+    "sharedb-mingo-memory": "^5.0.2",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "typescript": "~5.9.3"
