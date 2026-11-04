@@ -15786,7 +15786,7 @@ snapshots:
       he: 1.2.0
       param-case: 3.0.4
       relateurl: 0.2.7
-      terser: 5.51.2
+      terser: 5.43.1
 
   html-webpack-plugin@5.6.8(webpack@5.112.0(@swc/core@1.16.2)(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(postcss@8.5.23)(uglify-js@3.19.3)):
     dependencies:
@@ -19726,7 +19726,7 @@ snapshots:
       graceful-fs: 4.2.11
       mime-db: 1.54.0
       minimizer-webpack-plugin: 5.13.1(@swc/core@1.16.2)(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(postcss@8.5.23)(uglify-js@3.19.3)(webpack@5.112.0(@swc/core@1.16.2)(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(postcss@8.5.23)(uglify-js@3.19.3))
-      schema-utils: 4.5.0
+      schema-utils: 4.8.1(webpack@5.112.0(@swc/core@1.16.2)(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@6.1.0)(postcss@8.5.23)(uglify-js@3.19.3))
       tapable: 2.3.3
       watchpack: 2.6.3
       webpack-sources: 3.6.0
