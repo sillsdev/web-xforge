@@ -456,6 +456,34 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_InvalidDraftChapterSynced()
+    {
+        var env = new TestEnvironment();
+        env.SetupSFData(
+            true,
+            true,
+            false,
+            new Book("MAT", 2) { InvalidChapters = { 1, 2 }, DraftAppliedChapters = { 1 } }
+        );
+        env.SetupPTData(new Book("MAT", 2) { InvalidChapters = { 1, 2 } });
+
+        // SUT
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        // Verify project in Scripture Forge
+        SFProject project = env.GetProject();
+        Assert.That(project.Texts[0].Chapters[0].IsValid, Is.False);
+        Assert.That(project.Texts[0].Chapters[0].DraftApplied, Is.True);
+        Assert.That(project.Texts[0].Chapters[1].IsValid, Is.False);
+        Assert.That(project.Texts[0].Chapters[1].DraftApplied, Is.False);
+        env.VerifyProjectSync(true);
+
+        // Verify the sync metrics
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
+    }
+
+    [Test]
     public async Task SyncAsync_BooksChanged()
     {
         var env = new TestEnvironment();
@@ -3388,6 +3416,7 @@ public class ParatextSyncRunnerTests
         public int HighestTargetChapter { get; }
         public int HighestSourceChapter { get; }
 
+        public HashSet<int> DraftAppliedChapters { get; } = [];
         public HashSet<int> InvalidChapters { get; } = [];
         public HashSet<int> MissingTargetChapters { get; set; } = [];
         public HashSet<int> MissingSourceChapters { get; set; } = [];
@@ -4023,6 +4052,7 @@ public class ParatextSyncRunnerTests
                         {
                             Number = c,
                             LastVerse = 10,
+                            DraftApplied = book.DraftAppliedChapters.Contains(c),
                             IsValid = !book.InvalidChapters.Contains(c),
                             Permissions = { },
                         }),
@@ -4615,7 +4645,7 @@ public class ParatextSyncRunnerTests
             string bookId,
             int highestChapter,
             bool changed,
-            HashSet<int> missingChapters = null
+            HashSet<int>? missingChapters = null
         )
         {
             MockGetBookText(paratextId, bookId);

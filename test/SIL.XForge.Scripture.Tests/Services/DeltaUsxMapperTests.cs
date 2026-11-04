@@ -126,6 +126,29 @@ public class DeltaUsxMapperTests
     }
 
     [Test]
+    public void ToUsx_FirstChapterIsInvalid()
+    {
+        // Set up a USX document with just the two valid chapters
+        XDocument usxDoc = Usx("RUT", null, "3.0", Chapter("2"), Verse("1"), Chapter("3"), Verse("1"));
+
+        // Set up all 4 chapter deltas, with 1 and 4 being invalid
+        List<ChapterDelta> chapterDeltas =
+        [
+            new ChapterDelta(1, 1, false, Delta.New().InsertChapter("1").InsertVerse("1").Insert("\n")),
+            new ChapterDelta(2, 1, true, Delta.New().InsertChapter("2").InsertVerse("1").Insert("\n")),
+            new ChapterDelta(3, 1, true, Delta.New().InsertChapter("3").InsertVerse("1").Insert("\n")),
+            new ChapterDelta(4, 1, false, Delta.New().InsertChapter("4").InsertVerse("1").Insert("\n")),
+        ];
+
+        // SUT
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+
+        // Ensure that the USX round trips perfectly
+        XDocument newUsxDoc = mapper.ToUsx(usxDoc, chapterDeltas);
+        Assert.That(XNode.DeepEquals(newUsxDoc, usxDoc), Is.True);
+    }
+
+    [Test]
     public void ToUsx_InvalidChapters()
     {
         // Set up a USX document with two invalid chapters

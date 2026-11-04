@@ -1148,7 +1148,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
         XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
             oldUsxDoc,
             text.Chapters.OrderBy(c => c.Number)
-                .Select(c => new ChapterDelta(c.Number, c.LastVerse, c.IsValid, textDocs[c.Number].Data))
+                .Select(c => new ChapterDelta(
+                    c.Number,
+                    c.LastVerse,
+                    // If a draft was applied but has invalid USFM, sync it so the user can resolve in Paratext
+                    c.IsValid || (c.DraftApplied ?? false),
+                    textDocs[c.Number].Data
+                ))
         );
 
         if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
