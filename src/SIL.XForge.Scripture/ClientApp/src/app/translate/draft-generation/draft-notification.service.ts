@@ -31,7 +31,7 @@ export class DraftNotificationService extends NotificationServiceBase {
 }
 
 /** Whether the state is the final notification sent after applying a draft, whether it succeeded or failed. */
-export function isDraftApplyFinished(state: DraftApplyState): boolean {
+function isDraftApplyFinished(state: DraftApplyState): boolean {
   return (
     state.bookNum === 0 &&
     state.chapterNum === 0 &&
