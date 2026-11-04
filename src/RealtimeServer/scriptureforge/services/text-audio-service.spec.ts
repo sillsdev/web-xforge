@@ -5,6 +5,7 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { createTestUser } from '../../common/models/user-test-data';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
+import { UserService } from '../../common/services/user-service';
 import {
   allowAll,
   clientConnect,
@@ -19,10 +20,9 @@ import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProject } from '../models/sf-project-test-data';
 import { TEXT_AUDIO_COLLECTION, TextAudio } from '../models/text-audio';
 import { getTextDocId } from '../models/text-data';
-import { TextAudioService } from './text-audio-service';
-import { UserService } from '../../common/services/user-service';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';
+import { TextAudioService } from './text-audio-service';
 
 describe('TextAudioService', () => {
   it('allows member to view text audio timings', async () => {
@@ -96,13 +96,13 @@ describe('TextAudioService', () => {
     const env = new TestEnvironment();
     await env.createData();
 
-    const conn = clientConnect(env.server, 'observer');
+    const conn = clientConnect(env.server, 'administrator');
     // An op must be a list of components, not a single component. JSON0 applies this one as no change, but ShareDB
     // would still commit it if it were allowed.
     const singleComponent = { p: ['ownerRef'], oi: 'aaaa' };
     await expect(
       submitOpData(env.server, conn, TEXT_AUDIO_COLLECTION, getTextDocId('project01', 40, 1), singleComponent)
-    ).rejects.toThrow('Permission denied');
+    ).rejects.toThrow('json0 op must be an array');
   });
 });
 

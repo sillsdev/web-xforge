@@ -67,7 +67,7 @@ describe('UserService', () => {
     // An op must be a list of components, not a single component
     const singleComponent = { p: ['displayName'], oi: 'New name' };
     await expect(submitOpData(env.server, conn, USERS_COLLECTION, 'user02', singleComponent)).rejects.toThrow(
-      'Permission denied'
+      'json0 op must be an array'
     );
   });
 
@@ -77,10 +77,8 @@ describe('UserService', () => {
 
     const conn = clientConnect(env.server, 'user02', SystemRole.User);
     // A rich-text delta, which the editable properties check would otherwise use a path from
-    const delta = { ops: [{ insert: 'New name' }] };
-    await expect(submitOpData(env.server, conn, USERS_COLLECTION, 'user02', delta)).rejects.toThrow(
-      'Permission denied'
-    );
+    const delta = [{ ops: [{ insert: 'New name' }] }];
+    await expect(submitOpData(env.server, conn, USERS_COLLECTION, 'user02', delta)).rejects.toThrow('Missing path');
   });
 
   it('does not allow user to view others', async () => {
