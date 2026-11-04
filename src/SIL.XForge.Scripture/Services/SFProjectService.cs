@@ -497,28 +497,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 DateSubmitted = DateTime.UtcNow,
             }
         );
-    }
 
-    /// <summary>
-    /// Determines whether the specified user has already submitted feedback for the specified project.
-    /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="projectId">The project identifier.</param>
-    /// <param name="source">The page source where the feedback was requested.</param>
-    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
-    /// <exception cref="ForbiddenException">The user is not a member of the project.</exception>
-    public async Task<bool> HasUserSubmittedFeedbackAsync(string curUserId, string projectId, string source)
-    {
-        Attempt<SFProject> attempt = await RealtimeService.TryGetSnapshotAsync<SFProject>(projectId);
-        if (!attempt.TryResult(out SFProject project))
-            throw new DataNotFoundException("The project does not exist.");
-
-        if (!project.UserRoles.ContainsKey(curUserId))
-            throw new ForbiddenException();
-
-        return await _userFeedback
-            .Query()
-            .AnyAsync(f => f.ProjectRef == projectId && f.UserRef == curUserId && f.Source == source);
+        // Record the submission on the user's project config so that the draft feedback notice can be hidden
+        if (!string.IsNullOrEmpty(projectId) && feedbackParams.Source == FeedbackSourcePage.GenerateDraftPage)
+        {
+            await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+            IDocument<SFProjectUserConfig> userConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
+                SFProjectUserConfig.GetDocId(projectId, curUserId)
+            );
+            if (userConfigDoc.IsLoaded)
+                await userConfigDoc.SubmitJson0OpAsync(op =>
+                    op.Set(puc => puc.DraftFeedbackSubmissionDate, DateTime.UtcNow)
+                );
+        }
     }
 
     /// <summary>
