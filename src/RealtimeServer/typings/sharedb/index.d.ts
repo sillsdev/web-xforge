@@ -1,4 +1,4 @@
-// Type definitions for sharedb 5.1.1
+// Type definitions for sharedb 6.0.1
 // Project: https://github.com/share/sharedb
 // Definitions by: Steve Oney <https://github.com/soney>
 //                 Eric Hwang <https://github.com/ericyhwang>
@@ -30,11 +30,22 @@ declare class ShareDB {
   constructor(options?: {
     db?: any;
     pubsub?: ShareDB.PubSub;
+    extraDbs?: { [extraDbName: string]: ShareDB.ExtraDB };
     milestoneDb?: ShareDB.MilestoneDB;
-    presence?: boolean;
-    disableDocAction?: boolean;
-    disableSpaceDelimitedActions?: boolean;
+    suppressPublish?: boolean;
+    maxSubmitRetries?: number;
     doNotForwardSendPresenceErrorsToClient?: boolean;
+    doNotCommitNoOps?: boolean;
+    errorHandler?: ShareDB.ErrorHandler;
+    presence?: boolean;
+    /**
+     * @deprecated disableDocAction was removed in v1.0
+     */
+    disableDocAction?: boolean;
+    /**
+     * @deprecated disableSpaceDelimitedActions was removed in v1.0
+     */
+    disableSpaceDelimitedActions?: boolean;
   });
   connect(connection?: Connection, req?: any): Connection;
   /**
@@ -47,8 +58,8 @@ declare class ShareDB {
     index: string,
     id: string,
     op: common.RawOp,
-    options: SubmitRequest['options'],
-    callback: (err: Error | string | null, ops: common.RawOp[] | undefined, request: SubmitRequest) => void
+    options: ShareDB.SubmitRequest['options'],
+    callback: (err: Error | string | null, ops: common.RawOp[] | undefined, request: ShareDB.SubmitRequest) => void
   ): void;
   /**
    * Registers a projection that can be used from clients just like a normal collection.
@@ -341,26 +352,46 @@ declare namespace ShareDB {
 
     interface SubmitContext extends BaseContext, SubmitRequest {}
   }
-}
 
-interface SubmitRequest {
-  index: string;
-  projection: ShareDB.Projection | undefined;
-  collection: string;
-  extra: any | null;
-  // For custom use in middleware
-  custom: any;
-  id: string;
-  op: common.RawOp;
-  options: any;
-  start: number;
+  interface SubmitRequest {
+    index: string;
+    projection: ShareDB.Projection | undefined;
+    collection: string;
+    extra: any | null;
+    // For custom use in middleware
+    custom: any;
+    id: string;
+    op: common.RawOp;
+    options: any;
+    start: number;
 
-  saveMilestoneSnapshot: boolean | null;
-  suppressPublish: boolean | null;
-  maxRetries: number | null;
-  retries: number;
+    saveMilestoneSnapshot: boolean | null;
+    suppressPublish: boolean | null;
+    maxRetries: number | null;
+    retries: number;
 
-  snapshot: common.Snapshot | null;
-  ops: common.RawOp[];
-  channels: string[] | null;
+    snapshot: common.Snapshot | null;
+    ops: common.RawOp[];
+    channels: string[] | null;
+  }
+
+  type ErrorHandler = (error: Error, context: ErrorHandlerContext) => void;
+  interface ErrorHandlerContext {
+    agent?: ShareDB.Agent;
+  }
+
+  // The DBs in `extraDbs` are only ever used for queries, so they don't need the other DB methods.
+  interface ExtraDB {
+    query: DBQueryMethod;
+    close(callback?: (err?: Error) => void): void;
+  }
+
+  type DBQueryMethod = (
+    collection: string,
+    query: any,
+    fields: ShareDB.ProjectionFields,
+    options: any,
+    callback: DBQueryCallback
+  ) => void;
+  type DBQueryCallback = (err: Error | null, snapshots: Snapshot[], extra?: any) => void;
 }
