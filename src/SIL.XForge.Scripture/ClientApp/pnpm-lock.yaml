@@ -180,8 +180,8 @@ importers:
         specifier: ^7.8.2
         version: 7.8.2
       sharedb:
-        specifier: ^5.2.2
-        version: 5.2.2
+        specifier: ^7.0.0
+        version: 7.0.0
       tinycolor2:
         specifier: ^1.6.0
         version: 1.6.0
@@ -295,8 +295,8 @@ importers:
         specifier: ^19.3.0
         version: 19.3.0(@types/react@19.3.0)
       '@types/sharedb':
-        specifier: ^1.0.24
-        version: 1.0.24
+        specifier: ^6.0.1
+        version: 6.0.1
       '@types/tinycolor2':
         specifier: ^1.4.6
         version: 1.4.6
@@ -3700,8 +3700,8 @@ packages:
   '@types/serve-static@1.15.10':
     resolution: {integrity: sha512-tRs1dB+g8Itk72rlSI2ZrW6vZg0YrLI81iQSTkMmOqnqCaNr/8Ek4VwWcN5vZgCYWbg/JJSGBlUaYGAOP73qBw==}
 
-  '@types/sharedb@1.0.24':
-    resolution: {integrity: sha512-lsE7RuMxwuUOXf7ey79bVyE4ORztM8EZcUp7Tve6YbacgkGSO1SjwluZsjCyLWU77aDlVI5Iu0QG2KykRW6IRw==}
+  '@types/sharedb@6.0.1':
+    resolution: {integrity: sha512-rCuj+DfjNj2wh94pVVfUDWd0Z6lrR2Fj9lPloJCzsrA/xhi7gBvplOHGw7BHM7chU0YfS3qBO58BvYuC0UL81Q==}
 
   '@types/sockjs@0.3.36':
     resolution: {integrity: sha512-MK9V6NzAS1+Ud7JV9lJLFqW85VbC9dq3LmwZCuBe4wBDgKC0Kj/jd8Xl+nSviU+Qc3+m7umHHyHg//2KSa0a0Q==}
@@ -8385,14 +8385,14 @@ packages:
   sharedb-access@5.0.0:
     resolution: {integrity: sha512-qXMZp/gA8ANLeWA4ChSwIv7DSJt9JLXX8lQWEFXFINT0/D+anX1s6U7+BR1DU1DWg5wy3mtgfFLGLIcZhNzsVw==}
 
-  sharedb-milestone-mongo@2.1.0:
-    resolution: {integrity: sha512-M/iY0PDPSljL3ehKihpC1p6ezgf/RJtxwDmedZkTHfpm8sxl8URbJ7DiEd9ekuAAhlS1U8HnMpBHraLNMuuT2g==}
+  sharedb-milestone-mongo@3.0.1:
+    resolution: {integrity: sha512-Qg7UJE5A7rFIruwfkhAHBHjuw9ztNgxcUWCA5KGrtMpCHc0Nn18w2ahgnRdmOZtYbASBlrluWeFb9MLdCmPozA==}
 
-  sharedb-mongo@5.1.0:
-    resolution: {integrity: sha512-ppxHizFRg5ZbTWOXMMi0gsXUsSq00s9e7gzEhMYOK6pT4xVse2dsJodWwwTnWUVq92p+28qXrJRjufl2DTkhLw==}
+  sharedb-mongo@6.0.2:
+    resolution: {integrity: sha512-qsYRJo/efIkl6GOXlOdRAcE8l8Q6i5DhWAajj3teqVmdc74zwY/ujrH4WPeL2MMg7R7jP+hZU2KXQgz03Ui1vA==}
 
-  sharedb@5.2.2:
-    resolution: {integrity: sha512-F9zf+OsQZLM13Vu1Jw6om4MB1jgPqCGdIR92qkPaeiEnimR9Ig3j7dVsvXEbJnkTrljlkb2aMDNRVEU/dlGGtg==}
+  sharedb@7.0.0:
+    resolution: {integrity: sha512-qLa+ZVwTkG9EGcZujysko8cA2FxOS4j6CCiqO+WHCrP6e/sPS6xDu6kfDLY/L9G8mm5tPs/xCcxjX9xI5WlKbA==}
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -13288,7 +13288,7 @@ snapshots:
       '@types/node': 22.20.4
       '@types/send': 0.17.6
 
-  '@types/sharedb@1.0.24': {}
+  '@types/sharedb@6.0.1': {}
 
   '@types/sockjs@0.3.36':
     dependencies:
@@ -18299,10 +18299,10 @@ snapshots:
       mongodb: 4.17.2
       ot-json0: 1.1.0
       rich-text: 4.1.0
-      sharedb: 5.2.2
+      sharedb: 7.0.0
       sharedb-access: 5.0.0(supports-color@8.1.1)
-      sharedb-milestone-mongo: 2.1.0
-      sharedb-mongo: 5.1.0
+      sharedb-milestone-mongo: 3.0.1
+      sharedb-mongo: 6.0.2
       ts-object-path: 0.1.2
       websocket-json-stream: 0.0.3
       ws: 8.22.0
@@ -18729,17 +18729,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  sharedb-milestone-mongo@2.1.0:
+  sharedb-milestone-mongo@3.0.1:
     dependencies:
       mongodb: 4.17.2
-      sharedb: 5.2.2
+      sharedb: 7.0.0
 
-  sharedb-mongo@5.1.0:
+  sharedb-mongo@6.0.2:
     dependencies:
       mongodb: 4.17.2
-      sharedb: 5.2.2
+      sharedb: 7.0.0
 
-  sharedb@5.2.2:
+  sharedb@7.0.0:
     dependencies:
       arraydiff: 0.1.3
       async: 3.2.6
