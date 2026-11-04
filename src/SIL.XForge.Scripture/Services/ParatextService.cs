@@ -1873,18 +1873,25 @@ public class ParatextService : DisposableBase, IParatextService
                     int[]? addedChaptersInBook = null;
                     bool isExistingBook =
                         addedChapters is not null && addedChapters.TryGetValue(bookNum, out addedChaptersInBook);
-                    if (!hasPermissionInMongo && isExistingBook && !hasPermissionInParatext)
+                    if (
+                        !hasPermissionInMongo
+                        && isExistingBook
+                        && !hasPermissionInParatext
+                        && currentUserIsAdministrator
+                    )
                     {
                         // The book already existed, and the user cannot edit it in Paratext. Do not grant write access
                         // to the whole book. Only grant it on the chapters that were added.
                         await projectDoc.SubmitJson0OpAsync(op =>
                         {
+                            int i = textIndex;
                             for (int chapterIndex = 0; chapterIndex < text.Chapters.Count; chapterIndex++)
                             {
-                                if (addedChaptersInBook.Contains(text.Chapters[chapterIndex].Number))
+                                int j = chapterIndex;
+                                if (addedChaptersInBook.Contains(text.Chapters[j].Number))
                                 {
                                     op.Set(
-                                        p => p.Texts[textIndex].Chapters[chapterIndex].Permissions[user.SFUserId],
+                                        p => p.Texts[i].Chapters[j].Permissions[user.SFUserId],
                                         TextInfoPermission.Write
                                     );
                                 }
@@ -1906,16 +1913,18 @@ public class ParatextService : DisposableBase, IParatextService
                         ];
                         await projectDoc.SubmitJson0OpAsync(op =>
                         {
-                            op.Set(p => p.Texts[textIndex].Permissions[user.SFUserId], TextInfoPermission.Write);
+                            int i = textIndex;
+                            op.Set(p => p.Texts[i].Permissions[user.SFUserId], TextInfoPermission.Write);
                             for (int chapterIndex = 0; chapterIndex < text.Chapters.Count; chapterIndex++)
                             {
-                                int chapterNumber = text.Chapters[chapterIndex].Number;
+                                int j = chapterIndex;
+                                int chapterNumber = text.Chapters[j].Number;
 
                                 // Only record chapter level permissions that contradict the book level permissions
                                 if (!(editableChapters.Contains(chapterNumber) || currentUserIsAdministrator))
                                 {
                                     op.Set(
-                                        p => p.Texts[textIndex].Chapters[chapterIndex].Permissions[user.SFUserId],
+                                        p => p.Texts[i].Chapters[j].Permissions[user.SFUserId],
                                         TextInfoPermission.Read
                                     );
                                 }
