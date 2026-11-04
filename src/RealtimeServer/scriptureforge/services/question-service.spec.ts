@@ -246,7 +246,7 @@ describe('QuestionService', () => {
     const singleComponent = { p: ['answers', 0], ld: {} };
     await expect(
       submitOpData(env.server, conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), singleComponent)
-    ).rejects.toThrow('Permission denied');
+    ).rejects.toThrow('json0 op must be an array');
   });
 
   it('allows user to like the answer of another user and to remove their like', async () => {
@@ -288,7 +288,7 @@ describe('QuestionService', () => {
         getQuestionDocId('project01', QUESTION_ID),
         componentWithoutPath
       )
-    ).rejects.toMatchObject({ code: 'ERR_OT_OP_NOT_APPLIED', message: 'Missing path' });
+    ).rejects.toMatchObject({ code: 'ERR_OT_OP_BADLY_FORMED', message: 'Missing path' });
   });
 
   it('fails a component with no instruction with the error from JSON0 rather than one of its own', async () => {
