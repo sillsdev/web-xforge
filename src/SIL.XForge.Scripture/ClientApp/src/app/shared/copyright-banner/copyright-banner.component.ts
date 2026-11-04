@@ -2,8 +2,8 @@ import { Component, Input } from '@angular/core';
 import { of } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { stripHtml } from 'xforge-common/util/string-util';
 import { NoticeComponent } from '../notice/notice.component';
+import { XmlUtils } from '../utils';
 
 @Component({
   selector: 'app-copyright-banner',
@@ -43,7 +43,7 @@ export class CopyrightBannerComponent {
     }
 
     this.dialogService.openGenericDialog({
-      message: of(stripHtml(copyrightNotice)),
+      message: of(XmlUtils.convertXmlToPlainText(copyrightNotice)),
       options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
     });
   }
