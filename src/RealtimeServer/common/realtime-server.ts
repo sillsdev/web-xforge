@@ -275,8 +275,6 @@ export class RealtimeServer extends ShareDB {
       db,
       milestoneDb,
       presence: true,
-      disableDocAction: true,
-      disableSpaceDelimitedActions: true,
       doNotForwardSendPresenceErrorsToClient: true
     });
     shareDBAccess(this);

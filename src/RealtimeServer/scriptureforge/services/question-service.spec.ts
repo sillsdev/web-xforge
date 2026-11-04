@@ -216,7 +216,7 @@ describe('QuestionService', () => {
     // before it is denied
     const conn = clientConnect(env.server, CHECKER_ID);
     // An op must be a list of components, not a single component
-    const singleComponent = { p: ['answers', 0], ld: {} };
+    const singleComponent = [{ p: ['answers', 0], ld: {} }];
     await expect(
       submitOpData(env.server, conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', QUESTION_ID), singleComponent)
     ).rejects.toThrow('Permission denied');
@@ -261,7 +261,7 @@ describe('QuestionService', () => {
         getQuestionDocId('project01', QUESTION_ID),
         componentWithoutPath
       )
-    ).rejects.toMatchObject({ code: 'ERR_OT_OP_NOT_APPLIED', message: 'Missing path' });
+    ).rejects.toMatchObject({ code: 'ERR_OT_OP_BADLY_FORMED', message: 'Missing path' });
   });
 
   it('fails a component with no instruction with the error from JSON0 rather than one of its own', async () => {
