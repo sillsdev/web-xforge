@@ -173,15 +173,13 @@
           "builder": "@storybook/angular:start-storybook",
           "options": {
             "browserTarget": "SIL.XForge.Scripture:build",
-            "port": 6006,
-            "sourceMap": false
+            "port": 6006
           }
         },
         "build-storybook": {
           "builder": "@storybook/angular:build-storybook",
           "options": {
-            "browserTarget": "SIL.XForge.Scripture:build",
-            "sourceMap": false
+            "browserTarget": "SIL.XForge.Scripture:build"
           }
         }
       }
