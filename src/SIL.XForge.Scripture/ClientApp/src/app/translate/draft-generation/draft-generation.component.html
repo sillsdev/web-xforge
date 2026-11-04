@@ -189,10 +189,7 @@
               </app-notice>
             }
             @if (showUserFeedbackNotice) {
-              <app-user-feedback
-                [requireReferenceProject]="true"
-                (submitted)="hasUserSubmittedFeedback = true"
-              ></app-user-feedback>
+              <app-user-feedback [requireReferenceProject]="true"></app-user-feedback>
             }
             @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
               <section class="action-button-strip">
