@@ -192,6 +192,33 @@ a {
   }
 }
 
+app-notice {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter-notice-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.clear-filter-btn {
+  margin-left: 8px;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
 .status-icon.status-is-userrequested {
   color: var(--sf-serval-builds-status-userrequested);
 }

@@ -15,6 +15,7 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
 import { notNull } from '../../type-utils';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { BuildDto } from '../machine-api/build-dto';
 import { BuildStates } from '../machine-api/build-states';
@@ -23,6 +24,7 @@ import { DraftGenerationService } from '../translate/draft-generation/draft-gene
 import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
+import { ServalAdministrationService } from './serval-administration.service';
 import { ServalBuildProblemsDialog } from './serval-build-problems-dialog.component';
 import {
   buildProjectDisplayName,
@@ -49,6 +51,7 @@ const mockExportService = mock(DraftJobsExportService);
 const mockUserService = mock(UserService);
 const mockI18nService = mock(I18nService);
 const mockedActivatedRoute = mock(ActivatedRoute);
+const mockServalAdministrationService = mock(ServalAdministrationService);
 const mockedConsole: MockConsole = MockConsole.install();
 
 describe('ServalBuildsComponent', () => {
@@ -67,6 +70,7 @@ describe('ServalBuildsComponent', () => {
       { provide: UserService, useMock: mockUserService },
       { provide: I18nService, useMock: mockI18nService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
+      { provide: ServalAdministrationService, useMock: mockServalAdministrationService },
       provideNoopAnimations()
     ]
   }));
@@ -378,15 +382,48 @@ describe('ServalBuildsComponent', () => {
       const env = new TestEnvironment();
       const matchingRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-123' });
       const otherRow: ServalBuildRow = env.createRow({ projectId: 'sf-project-999' });
-      env.component['allRows'] = [matchingRow, otherRow];
 
       // SUT
       env.component.ngOnInit();
+      env.waitForRowUpdate();
+      env.component['allRows'] = [matchingRow, otherRow];
       env.queryParams$.next({ q: 'project-123' });
       env.waitForRowUpdate();
 
       expect(env.component['searchControl'].value).toBe('project-123');
       expect(env.component['rows']).toEqual([matchingRow]);
+    }));
+
+    it('requests only builds for the project in the URL', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockServalAdministrationService.get('sf-project-123')).thenResolve({
+        data: { shortName: 'P123', name: 'Project 123' }
+      } as SFProjectProfileDoc);
+
+      env.queryParams$.next({ projectId: 'sf-project-123' });
+
+      // SUT
+      env.component.ngOnInit();
+      env.waitForRowUpdate();
+
+      verify(mockDraftGenerationService.getBuildsSince(anything(), 'sf-project-123')).once();
+      let useUnspecifiedDateRange: boolean | undefined;
+      env.component.useUnspecifiedDateRange$.pipe(take(1)).subscribe(v => (useUnspecifiedDateRange = v));
+      expect(useUnspecifiedDateRange).toBe(true);
+    }));
+
+    it('loads the filtered project name from the project doc', fakeAsync(() => {
+      const env = new TestEnvironment();
+      when(mockServalAdministrationService.get('sf-filtered-project')).thenResolve({
+        data: { shortName: 'FProj', name: 'Filtered Project' }
+      } as SFProjectProfileDoc);
+      env.queryParams$.next({ projectId: 'sf-filtered-project' });
+
+      // SUT
+      env.component.ngOnInit();
+      env.waitForRowUpdate();
+
+      expect(env.component['filteredProjectName']).toBe('FProj - Filtered Project');
     }));
 
     it('updates query param q when search text changes', fakeAsync(() => {
@@ -2158,7 +2195,7 @@ class TestEnvironment {
 
     when(mockNoticeService.loadingStarted(anything())).thenReturn(undefined);
     when(mockNoticeService.loadingFinished(anything())).thenReturn(undefined);
-    when(mockDraftGenerationService.getBuildsSince(anything())).thenReturn(this.builds$);
+    when(mockDraftGenerationService.getBuildsSince(anything(), anything())).thenReturn(this.builds$);
     when(mockDialogService.openMatDialog(anything(), anything())).thenReturn(undefined as never);
     when(mockDialogService.openGenericDialog(anything())).thenReturn({
       dialogRef: undefined as never,

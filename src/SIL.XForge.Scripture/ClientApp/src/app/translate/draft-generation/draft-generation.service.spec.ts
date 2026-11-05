@@ -462,7 +462,39 @@ describe('DraftGenerationService', () => {
       tick();
 
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/since:${sinceDate.toISOString()}`
+        `${MACHINE_API_BASE_URL}translation/builds/since?dateTime=${encodeURIComponent(sinceDate.toISOString())}`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush([sampleReport]);
+      tick();
+    }));
+
+    it('should request builds without a date', fakeAsync(() => {
+      // SUT
+      service.getBuildsSince(undefined, 'project01').subscribe(result => {
+        expect(result).toEqual([sampleReport]);
+      });
+      tick();
+
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/since?projectId=project01`
+      );
+      expect(req.request.method).toEqual('GET');
+      req.flush([sampleReport]);
+      tick();
+    }));
+
+    it('should request builds for a specific project', fakeAsync(() => {
+      const sinceDate = new Date('2025-01-01T00:00:00.000Z');
+
+      // SUT
+      service.getBuildsSince(sinceDate, 'project01').subscribe(result => {
+        expect(result).toEqual([sampleReport]);
+      });
+      tick();
+
+      const req = httpTestingController.expectOne(
+        `${MACHINE_API_BASE_URL}translation/builds/since?dateTime=${encodeURIComponent(sinceDate.toISOString())}&projectId=project01`
       );
       expect(req.request.method).toEqual('GET');
       req.flush([sampleReport]);
@@ -493,7 +525,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/since:${sinceDate.toISOString()}`
+        `${MACHINE_API_BASE_URL}translation/builds/since?dateTime=${encodeURIComponent(sinceDate.toISOString())}`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.Forbidden, statusText: 'Forbidden' });
@@ -514,7 +546,7 @@ describe('DraftGenerationService', () => {
 
       // Setup the HTTP request
       const req = httpTestingController.expectOne(
-        `${MACHINE_API_BASE_URL}translation/builds/since:${sinceDate.toISOString()}`
+        `${MACHINE_API_BASE_URL}translation/builds/since?dateTime=${encodeURIComponent(sinceDate.toISOString())}`
       );
       expect(req.request.method).toEqual('GET');
       req.flush(null, { status: HttpStatusCode.NotFound, statusText: 'Not Found' });
