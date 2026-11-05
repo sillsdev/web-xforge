@@ -4,7 +4,7 @@ import { MatProgressBar, ProgressBarMode } from '@angular/material/progress-bar'
 import { TranslocoModule } from '@ngneat/transloco';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject, map, merge, Observable } from 'rxjs';
+import { BehaviorSubject, map, merge, Observable, Subscription } from 'rxjs';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -66,9 +66,7 @@ export class SyncProgressComponent {
 
   private sourceProjectDoc?: SFProjectDoc;
   private _projectDoc?: SFProjectDoc;
-
-  private readonly syncProgressHandler = (projectId: string, progressState: ProgressState): void =>
-    this.updateProgressState(projectId, progressState);
+  private syncProgressSubscription?: Subscription;
 
   constructor(
     private readonly projectService: SFProjectService,
@@ -77,13 +75,7 @@ export class SyncProgressComponent {
     private readonly errorReportingService: ErrorReportingService,
     private readonly onlineStatus: OnlineStatusService,
     private destroyRef: DestroyRef
-  ) {
-    this.projectNotificationService.setNotifySyncProgressHandler(this.syncProgressHandler);
-    this.destroyRef.onDestroy(async () => {
-      await this.projectNotificationService.stop();
-      this.projectNotificationService.removeNotifySyncProgressHandler(this.syncProgressHandler);
-    });
-  }
+  ) {}
 
   get appOnline(): boolean {
     return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
@@ -107,7 +99,6 @@ export class SyncProgressComponent {
     if (this._projectDoc?.data == null || !this.appOnline) {
       return;
     }
-    await this.projectNotificationService.start();
     if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
@@ -116,9 +107,6 @@ export class SyncProgressComponent {
           // Only show progress for the source project when the user has sync
           if (isParatextRole(role)) {
             this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
-
-            // Subscribe to SignalR notifications for the source project
-            await this.projectNotificationService.subscribeToProject(this.sourceProjectDoc.id);
           }
         } catch (error) {
           this.sourceProjectDoc = undefined;
@@ -138,8 +126,19 @@ export class SyncProgressComponent {
         : merge(this._projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
     checkSyncStatus$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => this.checkSyncStatus());
 
-    // Subscribe to SignalR notifications for the target project
-    await this.projectNotificationService.subscribeToProject(this._projectDoc.id);
+    // Show the sync progress of the target project, and of the source project if the user can sync it
+    const projectIds: string[] = [this._projectDoc.id];
+    if (this.sourceProjectDoc != null) projectIds.push(this.sourceProjectDoc.id);
+    this.syncProgressSubscription?.unsubscribe();
+    this.syncProgressSubscription = merge(
+      ...projectIds.map(projectId =>
+        this.projectNotificationService
+          .syncProgress$(projectId)
+          .pipe(map(progressState => ({ projectId, progressState })))
+      )
+    )
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(({ projectId, progressState }) => this.updateProgressState(projectId, progressState));
   }
 
   public isActiveProjectSource(): boolean {

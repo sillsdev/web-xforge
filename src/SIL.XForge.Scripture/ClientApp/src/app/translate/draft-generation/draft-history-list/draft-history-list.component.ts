@@ -1,7 +1,7 @@
 import { Component, DestroyRef } from '@angular/core';
 import { TranslocoModule, TranslocoService } from '@ngneat/transloco';
 import ObjectID from 'bson-objectid';
-import { combineLatest, filter, take } from 'rxjs';
+import { combineLatest, filter, map, switchMap, take } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -27,10 +27,6 @@ export class DraftHistoryListComponent {
     this.draftGenerationService.draftHistoryCutOffDate,
     { showTime: false, showTimeZone: false }
   );
-  private readonly notifyBuildProgressHandler = (projectId: string): void => {
-    this.loadHistory(projectId);
-  };
-
   private readonly projectId$ = this.activatedProject.projectId$.pipe(filterNullish(), take(1));
 
   constructor(
@@ -44,26 +40,21 @@ export class DraftHistoryListComponent {
   ) {
     combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$.pipe(filter(isOnline => isOnline))])
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
-      .subscribe(async ([projectId]) => {
+      .subscribe(([projectId]) => {
         // Determine whether to show or hide the older drafts warning
         this.showOlderDraftsNotSupportedWarning =
           ObjectID.isValid(projectId) &&
           new ObjectID(projectId).getTimestamp() < this.draftGenerationService.draftHistoryCutOffDate;
         // Initially load the history
         this.loadHistory(projectId);
-        // Start the connection to SignalR
-        await projectNotificationService.start();
-        // Subscribe to notifications for this project
-        await projectNotificationService.subscribeToProject(projectId);
-        // When build notifications are received, reload the build history
-        // NOTE: We do not need the build state, so just ignore it.
-        projectNotificationService.setNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
       });
-    destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
-      await projectNotificationService.stop();
-      projectNotificationService.removeNotifyBuildProgressHandler(this.notifyBuildProgressHandler);
-    });
+    // When build notifications are received, reload the build history
+    this.projectId$
+      .pipe(
+        switchMap(projectId => projectNotificationService.buildProgress$(projectId).pipe(map(() => projectId))),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(projectId => this.loadHistory(projectId));
   }
 
   get nonActiveBuilds(): BuildDto[] {

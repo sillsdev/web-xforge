@@ -19,7 +19,7 @@ import {
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TranslocoMarkupComponent } from 'ngx-transloco-markup';
-import { BehaviorSubject, filter } from 'rxjs';
+import { BehaviorSubject, filter, Subscription } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -303,10 +303,6 @@ export class DraftImportWizardComponent implements OnInit {
   syncComplete = false;
   skipSync = false;
 
-  private readonly notifyDraftApplyProgressHandler = (projectId: string, draftApplyState: DraftApplyState): void => {
-    this.updateDraftApplyState(projectId, draftApplyState);
-  };
-
   constructor(
     @Inject(MAT_DIALOG_DATA) readonly data: BuildDto,
     @Inject(MatDialogRef) private readonly dialogRef: MatDialogRef<DraftImportWizardComponent, boolean>,
@@ -325,13 +321,6 @@ export class DraftImportWizardComponent implements OnInit {
     this.draftedScriptureRange = VerboseScriptureRange.fromCombinedRanges(
       (this.data.additionalInfo?.translationScriptureRanges ?? []).map(range => range.scriptureRange)
     );
-
-    this.draftNotificationService.setNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
-    destroyRef.onDestroy(async () => {
-      // Stop the SignalR connection when the component is destroyed
-      await draftNotificationService.stop();
-      this.draftNotificationService.removeNotifyDraftApplyProgressHandler(this.notifyDraftApplyProgressHandler);
-    });
   }
 
   get isAppOnline(): boolean {
@@ -709,9 +698,13 @@ export class DraftImportWizardComponent implements OnInit {
       throw new Error('Missing project context for import');
     }
 
-    // Subscribe to SignalR updates
-    await this.draftNotificationService.start();
-    await this.draftNotificationService.subscribeToProject(this.sourceProjectId);
+    // Listen for progress until the draft has been applied
+    const sourceProjectId: string = this.sourceProjectId;
+    const draftApplyProgress: Subscription = this.draftNotificationService
+      .draftApplyProgress$(sourceProjectId)
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(draftApplyState => this.updateDraftApplyState(sourceProjectId, draftApplyState));
+    await this.draftNotificationService.whenListening(sourceProjectId);
 
     // Build a scripture range and timestamp to import. Scope to the chapters that were actually drafted for each
     // selected book, so a partial-book draft imports only its chapters instead of attempting (and failing) every
@@ -734,6 +727,7 @@ export class DraftImportWizardComponent implements OnInit {
         timestamp
       );
     } catch (error) {
+      draftApplyProgress.unsubscribe();
       if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
         this.importError = this.i18n.translateStatic('draft_import_wizard.project_deleted');
         // Reload the projects

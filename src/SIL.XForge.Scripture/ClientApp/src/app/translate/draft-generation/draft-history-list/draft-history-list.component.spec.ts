@@ -1,8 +1,8 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -188,6 +188,19 @@ describe('DraftHistoryListComponent', () => {
     expect(env.component.history).toEqual([newBuild, build]);
   }));
 
+  it('should reload history when a build notification is received', fakeAsync(() => {
+    const build = {
+      state: BuildStates.Completed,
+      additionalInfo: { dateRequested: '2025-08-01T12:00:00.000Z' }
+    } as BuildDto;
+    const env = new TestEnvironment({ buildHistory: [build] });
+    tick();
+    verify(mockedDraftGenerationService.getBuildHistory('project01')).once();
+
+    env.buildProgress$.next(undefined);
+    verify(mockedDraftGenerationService.getBuildHistory('project01')).twice();
+  }));
+
   it('should show history with faulted and canceled builds', fakeAsync(() => {
     const build = {
       id: 'completed',
@@ -252,6 +265,7 @@ describe('DraftHistoryListComponent', () => {
     component: DraftHistoryListComponent;
     fixture: ComponentFixture<DraftHistoryListComponent>;
     onlineStatusService: TestOnlineStatusService;
+    readonly buildProgress$ = new Subject<unknown>();
 
     constructor(args: { buildHistory: BuildDto[] | undefined; isOnline?: boolean; projectId?: string }) {
       const { buildHistory, isOnline, projectId } = args;
@@ -261,6 +275,7 @@ describe('DraftHistoryListComponent', () => {
       when(mockedDraftGenerationService.getBuildHistory(effectiveProjectId)).thenReturn(
         new BehaviorSubject(buildHistory)
       );
+      when(mockedProjectNotificationService.buildProgress$(effectiveProjectId)).thenReturn(this.buildProgress$);
 
       this.onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
       if (isOnline === false) this.onlineStatusService.setIsOnline(false);
