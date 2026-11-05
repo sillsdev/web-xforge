@@ -1,9 +1,5 @@
-.primary {
-  --theme: var(--sf-single-audio-button-progress-played-primary);
-}
-
-.secondary {
-  --theme: var(--sf-single-audio-button-progress-played-secondary);
+:host {
+  --theme: var(--sf-single-audio-button-progress-played);
 }
 
 :host button {

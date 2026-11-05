@@ -1,4 +1,3 @@
-import { NgClass } from '@angular/common';
 import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -14,7 +13,7 @@ import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
   selector: 'app-single-button-audio-player',
   templateUrl: './single-button-audio-player.component.html',
   styleUrls: ['./single-button-audio-player.component.scss'],
-  imports: [TranslocoModule, NgClass, MatProgressSpinner, MatIcon, MatTooltip]
+  imports: [TranslocoModule, MatProgressSpinner, MatIcon, MatTooltip]
 })
 export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent implements OnChanges, OnDestroy {
   private _source?: string;
@@ -24,7 +23,6 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
   readonly AudioStatus = AudioStatus;
   readonly hasFinishedPlayingOnce$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
-  @Input() theme: 'primary' | 'secondary' = 'primary';
   @Input() start?: number;
   @Input() end?: number;
   @Input() override set source(source: string | undefined) {

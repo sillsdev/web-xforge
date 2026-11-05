@@ -22,7 +22,7 @@
   </div>
   @if (audioUrl != null) {
     <div class="audio-added">
-      <app-single-button-audio-player #audio [source]="audioUrl" (click)="toggleAudio()" theme="secondary">
+      <app-single-button-audio-player #audio [source]="audioUrl" (click)="toggleAudio()">
         <mat-icon>{{ audio.playing ? "stop" : "play_arrow" }}</mat-icon>
       </app-single-button-audio-player>
       <button mat-icon-button (click)="deleteAudio()" class="clear">

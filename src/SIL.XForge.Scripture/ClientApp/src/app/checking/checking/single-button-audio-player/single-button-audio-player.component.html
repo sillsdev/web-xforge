@@ -1,12 +1,4 @@
-<button
-  type="button"
-  [style.--audio-progress]="progressInDegrees"
-  [ngClass]="{
-    primary: theme === 'primary',
-    secondary: theme !== 'primary'
-  }"
-  *transloco="let t; read: 'checking_audio_player'"
->
+<button type="button" [style.--audio-progress]="progressInDegrees" *transloco="let t; read: 'checking_audio_player'">
   @if (isAudioAvailable) {
     <ng-content></ng-content>
   } @else if (audioStatus === AudioStatus.Initializing) {
