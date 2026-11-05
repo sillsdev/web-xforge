@@ -1,0 +1,20 @@
+<ng-container *transloco="let t; read: 'draft_diagnostics'">
+  <div class="diagnostics">
+    <app-display-confidence
+      [bookNameWithLowConfidence]="lowConfidenceBookName"
+      [booksWithLowConfidence]="booksWithLowConfidence"
+      [showNotice]="showLowConfidenceDiagnostic"
+    ></app-display-confidence>
+    @if (tooFewSegmentsSelectedForTraining != null) {
+      <app-notice type="warning" mode="fill-dark" data-test-id="too-few-segments-selected-for-training">
+        {{
+          t("too_few_segments_selected_for_training", {
+            minimumTrainCount: tooFewSegmentsSelectedForTraining.data.minimumTrainCount,
+            trainCount: tooFewSegmentsSelectedForTraining.data.trainCount
+          })
+        }}
+        <a [href]="urlService.improvingDraftQuality" target="_blank">{{ t("learn_more") }}</a>
+      </app-notice>
+    }
+  </div>
+</ng-container>

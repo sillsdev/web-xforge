@@ -35,11 +35,7 @@
           </div>
         } @else {
           @if (draftIsAvailable) {
-            <app-display-confidence
-              [bookNameWithLowConfidence]="lowConfidenceBookName(entry)"
-              [booksWithLowConfidence]="booksWithLowConfidence(entry)"
-              [showNotice]="true"
-            ></app-display-confidence>
+            <app-draft-diagnostics [build]="entry"></app-draft-diagnostics>
             <p>{{ t("click_book_to_preview_draft") }}</p>
             <p class="book-buttons">
               <app-draft-preview-books [build]="entry" />
