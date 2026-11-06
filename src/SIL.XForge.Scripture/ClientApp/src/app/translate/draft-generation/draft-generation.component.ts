@@ -34,6 +34,7 @@ import { issuesEmailTemplate } from 'xforge-common/utils';
 import { environment } from '../../../environments/environment';
 import { SelectableProject } from '../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -41,7 +42,6 @@ import { BuildStates } from '../../machine-api/build-states';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
-import { FeedbackSourcePage } from '../../shared/user-feedback/user-feedback-dialog.component';
 import { UserFeedbackComponent } from '../../shared/user-feedback/user-feedback.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -59,6 +59,11 @@ import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
 import { OnboardingRequestService, OpenOnboardingRequest } from './onboarding-request.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
+
+/** Number of days the user feedback notice stays hidden after the user dismisses it. */
+const USER_FEEDBACK_DISMISSAL_DAYS = 180;
+/** Number of days the user feedback notice stays hidden after the user submits feedback. */
+const USER_FEEDBACK_SUBMISSION_DAYS = 365;
 
 @Component({
   selector: 'app-draft-generation',
@@ -139,7 +144,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   onboardingRequest?: OpenOnboardingRequest | null;
   responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
-  hasUserSubmittedFeedback?: boolean;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 1.5;
@@ -202,10 +207,20 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   get showUserFeedbackNotice(): boolean {
     return (
       this.featureFlags.userFeedbackNotice.enabled &&
-      this.hasUserSubmittedFeedback === false &&
       this.hasUsedDraftGenerationThreeMonths &&
+      !this.isWithinDays(this.projectUserConfigDoc?.data?.draftFeedbackDismissalDate, USER_FEEDBACK_DISMISSAL_DAYS) &&
+      !this.isWithinDays(this.projectUserConfigDoc?.data?.draftFeedbackSubmissionDate, USER_FEEDBACK_SUBMISSION_DAYS) &&
       !this.isDraftFaulted(this.draftJob)
     );
+  }
+
+  /** Whether an ISO date string is less than the given number of days before now. */
+  private isWithinDays(isoDate: string | undefined, days: number): boolean {
+    if (isoDate == null) return false;
+    const time: number = new Date(isoDate).getTime();
+    if (isNaN(time)) return false;
+    const oneDayInMS = 24 * 60 * 60 * 1000;
+    return Date.now() - time < days * oneDayInMS;
   }
 
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
@@ -245,6 +260,10 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   ngOnInit(): void {
     this.loadingStarted();
+
+    this.activatedProjectUserConfigService.projectUserConfigDoc$
+      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(projectUserConfigDoc => (this.projectUserConfigDoc = projectUserConfigDoc));
 
     // Clear the latest draft result notification, as the user is now viewing the draft generation page
     combineLatest([
@@ -345,19 +364,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     this.i18n.locale$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
     });
-
-    const projectId: string | undefined = this.activatedProject.projectId;
-    if (projectId != null && this.featureFlags.userFeedbackNotice.enabled) {
-      void this.onlineStatusService.online.then(() =>
-        this.projectService
-          .onlineHasUserSubmittedFeedback(projectId, FeedbackSourcePage.GenerateDraftPage)
-          .then(hasFeedback => {
-            this.hasUserSubmittedFeedback = hasFeedback;
-          })
-          // Leaves the flag undefined on failure so that the notice remains hidden
-          .catch(() => {})
-      );
-    }
   }
 
   get formattingOptionsRequired(): boolean {

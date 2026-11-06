@@ -160,6 +160,12 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       },
       unreadDraftResult: {
         bsonType: 'string'
+      },
+      draftFeedbackDismissalDate: {
+        bsonType: 'string'
+      },
+      draftFeedbackSubmissionDate: {
+        bsonType: 'string'
       }
     },
     additionalProperties: false
@@ -185,6 +191,8 @@ export class SFProjectUserConfigService extends SFProjectDataService<SFProjectUs
       this.pathTemplate(puc => puc.editorTabsOpen),
       this.pathTemplate(puc => puc.lynxInsightState),
       this.pathTemplate(puc => puc.unreadDraftResult),
+      this.pathTemplate(puc => puc.draftFeedbackDismissalDate),
+      this.pathTemplate(puc => puc.draftFeedbackSubmissionDate),
       this.pathTemplate(puc => puc.noteRefsRead),
       this.pathTemplate(puc => puc.questionRefsRead),
       this.pathTemplate(puc => puc.answerRefsRead),

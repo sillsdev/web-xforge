@@ -40,4 +40,6 @@ public class SFProjectUserConfig : ProjectData
     public string? SelectedDraftTargetParatextId { get; set; }
     public bool? ShowEditorTabsInSinglePane { get; set; }
     public string? UnreadDraftResult { get; set; }
+    public DateTime? DraftFeedbackDismissalDate { get; set; }
+    public DateTime? DraftFeedbackSubmissionDate { get; set; }
 }
