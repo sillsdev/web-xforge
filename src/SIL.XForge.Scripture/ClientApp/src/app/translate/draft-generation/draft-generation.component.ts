@@ -42,6 +42,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { VerboseScriptureRange } from '../../shared/scripture-range';
 import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-display';
+import { FeedbackNoticeTimingService } from '../../shared/user-feedback/feedback-notice-timing.service';
 import { UserFeedbackComponent } from '../../shared/user-feedback/user-feedback.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -59,11 +60,6 @@ import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
 import { OnboardingRequestService, OpenOnboardingRequest } from './onboarding-request.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
-
-/** Number of days the user feedback notice stays hidden after the user dismisses it. */
-const USER_FEEDBACK_DISMISSAL_DAYS = 180;
-/** Number of days the user feedback notice stays hidden after the user submits feedback. */
-const USER_FEEDBACK_SUBMISSION_DAYS = 365;
 
 @Component({
   selector: 'app-draft-generation',
@@ -174,6 +170,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     private readonly projectService: SFProjectService,
     private readonly featureFlags: FeatureFlagService,
     private readonly permissions: PermissionsService,
+    private readonly feedbackNoticeTiming: FeedbackNoticeTimingService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'DraftGenerationComponent');
@@ -207,20 +204,13 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   get showUserFeedbackNotice(): boolean {
     return (
       this.featureFlags.userFeedbackNotice.enabled &&
-      this.hasUsedDraftGenerationThreeMonths &&
-      !this.isWithinDays(this.projectUserConfigDoc?.data?.draftFeedbackDismissalDate, USER_FEEDBACK_DISMISSAL_DAYS) &&
-      !this.isWithinDays(this.projectUserConfigDoc?.data?.draftFeedbackSubmissionDate, USER_FEEDBACK_SUBMISSION_DAYS) &&
+      this.hasUsedDraftGenerationLongEnough &&
+      !this.feedbackNoticeTiming.isDraftingNoticeHiddenByRecentResponse(
+        this.projectUserConfigDoc?.data?.draftFeedbackDismissalDate,
+        this.projectUserConfigDoc?.data?.draftFeedbackSubmissionDate
+      ) &&
       !this.isDraftFaulted(this.draftJob)
     );
-  }
-
-  /** Whether an ISO date string is less than the given number of days before now. */
-  private isWithinDays(isoDate: string | undefined, days: number): boolean {
-    if (isoDate == null) return false;
-    const time: number = new Date(isoDate).getTime();
-    if (isNaN(time)) return false;
-    const oneDayInMS = 24 * 60 * 60 * 1000;
-    return Date.now() - time < days * oneDayInMS;
   }
 
   onboardingRequestAged(onboardingRequest: OpenOnboardingRequest): boolean {
@@ -245,17 +235,12 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     return this.permissions.canConfigureSources(this.activatedProject.projectDoc);
   }
 
-  private get hasUsedDraftGenerationThreeMonths(): boolean {
-    // search the dates that builds were requested. If a new build was just started
-    // its date would count towards the 90 day threshold
-    const dates: number[] = (this.draftHistoryList?.history ?? [])
+  private get hasUsedDraftGenerationLongEnough(): boolean {
+    // Usage is measured by the dates that builds were requested. A build that was just started counts too.
+    const dates: string[] = (this.draftHistoryList?.history ?? [])
       .map(b => b.additionalInfo?.dateRequested)
-      .filter((d): d is string => d != null)
-      .map(d => new Date(d).getTime());
-
-    if (dates.length === 0) return false;
-    const threeMonthsInMs = 90 * 24 * 60 * 60 * 1000;
-    return Math.max(...dates) - Math.min(...dates) >= threeMonthsInMs;
+      .filter((d): d is string => d != null);
+    return this.feedbackNoticeTiming.hasUsedDraftingLongEnough(dates);
   }
 
   ngOnInit(): void {

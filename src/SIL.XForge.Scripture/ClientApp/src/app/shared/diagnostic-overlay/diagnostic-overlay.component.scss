@@ -61,7 +61,8 @@ table {
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   font-weight: 500;
 }
 
@@ -77,4 +78,38 @@ h3 {
 
 .collapsed .header {
   flex-direction: column;
+}
+
+.nav-and-content {
+  display: flex;
+  gap: 8px;
+}
+
+.tab-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.tab-nav {
+  writing-mode: vertical-rl;
+  display: flex;
+  align-self: flex-start;
+
+  button {
+    padding: 1em 0.6em;
+    border: none;
+    border-block-start: 2px solid transparent;
+    cursor: pointer;
+    font: inherit;
+    color: $foreground-color;
+    background-color: rgba($foreground-color, 0.08);
+
+    &:hover {
+      background-color: rgba($foreground-color, 0.16);
+    }
+
+    &.active {
+      border-block-start-color: $foreground-color;
+    }
+  }
 }
