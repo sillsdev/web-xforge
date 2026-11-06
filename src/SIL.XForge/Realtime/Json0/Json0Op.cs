@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
@@ -14,19 +13,19 @@ public class Json0Op
     public List<object> Path { get; set; } = [];
 
     [JsonProperty("li")]
-    public object InsertItem { get; set; }
+    public object? InsertItem { get; set; }
 
     [JsonProperty("ld")]
-    public object DeleteItem { get; set; }
+    public object? DeleteItem { get; set; }
 
     [JsonProperty("lm")]
     public int? MoveIndex { get; set; }
 
     [JsonProperty("oi")]
-    public object InsertProp { get; set; }
+    public object? InsertProp { get; set; }
 
     [JsonProperty("od")]
-    public object DeleteProp { get; set; }
+    public object? DeleteProp { get; set; }
 
     [JsonProperty("na")]
     public int? Add { get; set; }

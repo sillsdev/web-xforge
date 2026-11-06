@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -22,7 +21,7 @@ public class SFScrTextCollection : ScrTextCollection
     /// </summary>
     public static string ResourcesByIdDirectory => Path.Join(SettingsDirectory, "_resourcesById");
 
-    protected override string DictionariesDirectoryInternal => null;
+    protected override string? DictionariesDirectoryInternal => null;
 
     protected override void InitializeInternal(string settingsDir, bool allowMigration)
     {
@@ -44,10 +43,10 @@ public class SFScrTextCollection : ScrTextCollection
         throw new NotImplementedException("This method should not be used in SF context.");
 
     /// <remarks>This method's implementation was mostly copied from ParatextBase.</remarks>
-    protected override WritingSystemDefinition CreateWsDef(string languageId, bool allowSldr)
+    protected override WritingSystemDefinition? CreateWsDef(string languageId, bool allowSldr)
     {
         // Only check SLDR if allowed for this call and all internet access is enabled - SLDR isn't set up to use proxy.
-        WritingSystemDefinition wsDef = null;
+        WritingSystemDefinition? wsDef = null;
         if (allowSldr && InternetAccess.Status == InternetUse.Enabled && !_sldrLookupFailed.Contains(languageId))
         {
             try

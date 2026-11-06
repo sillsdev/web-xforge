@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.IO;
 using System.Text;
@@ -26,7 +25,7 @@ public class BsonValueConverterTests
         Assert.AreEqual(expected, actual);
 
         // SUT 2
-        BsonValue readValue = env.Read(actual);
+        BsonValue? readValue = env.Read(actual);
         Assert.AreEqual(bsonValue, readValue);
     }
 
@@ -46,7 +45,7 @@ public class BsonValueConverterTests
         Assert.AreEqual(expected, actual);
 
         // SUT 2
-        BsonValue readValue = env.Read(actual);
+        BsonValue? readValue = env.Read(actual);
         Assert.AreEqual(bsonValue, readValue);
     }
 
@@ -67,7 +66,7 @@ public class BsonValueConverterTests
         Assert.AreEqual(expected, actual);
 
         // SUT 2
-        BsonValue readValue = env.Read(actual);
+        BsonValue? readValue = env.Read(actual);
         Assert.AreEqual(expectedValue, readValue);
     }
 
@@ -79,7 +78,7 @@ public class BsonValueConverterTests
         var expectedValue = new BsonArray();
 
         // SUT
-        BsonValue readValue = env.Read(token);
+        BsonValue? readValue = env.Read(token);
         Assert.AreEqual(expectedValue, readValue);
     }
 
@@ -91,7 +90,7 @@ public class BsonValueConverterTests
         var expectedValue = new BsonDocument();
 
         // SUT
-        BsonValue readValue = env.Read(token);
+        BsonValue? readValue = env.Read(token);
         Assert.AreEqual(expectedValue, readValue);
     }
 
@@ -114,7 +113,7 @@ public class BsonValueConverterTests
         Assert.AreEqual(expected, actual);
 
         // SUT 2
-        BsonValue readValue = env.Read(actual);
+        BsonValue? readValue = env.Read(actual);
         Assert.AreEqual(bsonValue, readValue);
     }
 
@@ -135,7 +134,7 @@ public class BsonValueConverterTests
         Assert.AreEqual(expected, actual);
 
         // SUT 2
-        BsonValue readValue = env.Read(actual);
+        BsonValue? readValue = env.Read(actual);
         Assert.AreEqual(bsonValue, readValue);
     }
 

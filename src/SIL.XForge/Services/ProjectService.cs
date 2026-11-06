@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -137,7 +136,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         }
     }
 
-    public async Task<string> GetProjectRoleAsync(string curUserId, string projectId)
+    public async Task<string?> GetProjectRoleAsync(string curUserId, string projectId)
     {
         TModel project;
         try
@@ -274,7 +273,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     )
     {
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
-        ProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectDoc.Id);
+        ProjectSecret? projectSecret = await ProjectSecrets.GetAsync(projectDoc.Id);
         if (!string.IsNullOrWhiteSpace(shareKey) && projectSecret != null)
         {
             int index = projectSecret.ShareKeys.FindIndex(sk =>
@@ -328,7 +327,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     protected bool IsOnProject(TModel project, string userId) => project.UserRoles.ContainsKey(userId);
 
     protected bool IsProjectAdmin(TModel project, string userId) =>
-        project.UserRoles.TryGetValue(userId, out string role) && role == ProjectAdminRole;
+        project.UserRoles.TryGetValue(userId, out string? role) && role == ProjectAdminRole;
 
     protected string GetAudioDir(string projectId) => Path.Join(SiteOptions.Value.SiteDir, "audio", projectId);
 

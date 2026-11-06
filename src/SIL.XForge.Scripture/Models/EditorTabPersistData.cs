@@ -1,4 +1,3 @@
-#nullable disable warnings
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
@@ -9,12 +8,12 @@ public class EditorTabPersistData
     /// <summary>
     /// Corresponds to EditorTabType.
     /// </summary>
-    public string TabType { get; set; }
+    public string? TabType { get; set; }
 
     /// <summary>
     /// Which tab group this tab belongs to.
     /// </summary>
-    public string GroupId { get; set; }
+    public string? GroupId { get; set; }
 
     /// <summary>
     /// Whether the tab is selected within its group.

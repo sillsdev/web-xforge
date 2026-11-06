@@ -1,4 +1,3 @@
-#nullable disable warnings
 using Microsoft.Win32;
 using PtxUtils;
 
@@ -13,21 +12,21 @@ class DotNetCoreRegistry : RegistryU
 
     protected override bool KeyExistsInternal(RegistryKey key, string subKey) => false;
 
-    protected override bool RegEntryExistsInternal(RegistryKey key, string subKey, string regEntry, out object value)
+    protected override bool RegEntryExistsInternal(RegistryKey key, string subKey, string regEntry, out object? value)
     {
         value = null;
         return false;
     }
 
-    protected override object GetValInternal(string baseKey, string subKey, string key) => null;
+    protected override object? GetValInternal(string baseKey, string subKey, string key) => null;
 
-    protected override object GetValInternal(string registryPath) => null;
+    protected override object? GetValInternal(string registryPath) => null;
 
-    protected override object GetValIfExistsInternal(string registryPath) => null;
+    protected override object? GetValIfExistsInternal(string registryPath) => null;
 
-    protected override string GetStringInternal(string basekey, string path, string key) => null;
+    protected override string? GetStringInternal(string basekey, string path, string key) => null;
 
-    protected override string GetStringInternal(string registryPath) => null;
+    protected override string? GetStringInternal(string registryPath) => null;
 
     protected override void DelKeyInternal(string baseKey, string subKey) { }
 

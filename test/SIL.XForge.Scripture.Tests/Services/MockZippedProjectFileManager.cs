@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.IO;
 using System.Text;
@@ -21,10 +20,10 @@ public class MockZippedProjectFileManager(ZipFile zipFile, bool loadDblSettings,
     public override void WriteFileCreatingBackup(
         string relFilePath,
         Action<string> writeFile,
-        Action<string> validateFile = null
+        Action<string>? validateFile = null
     ) => throw new NotImplementedException();
 
-    public override TextWriter OpenFileForWrite(string relFilePath, Encoding encoding = null) =>
+    public override TextWriter OpenFileForWrite(string relFilePath, Encoding? encoding = null) =>
         throw new NotImplementedException();
 
     public override BinaryWriter OpenFileForByteWrite(string relFilePath) => throw new NotImplementedException();

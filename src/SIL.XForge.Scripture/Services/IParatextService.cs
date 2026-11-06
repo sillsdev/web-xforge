@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -50,7 +49,7 @@ public interface IParatextService
         string paratextId,
         int bookNum,
         XDocument usx,
-        Dictionary<int, string> chapterAuthors = null
+        Dictionary<int, string>? chapterAuthors = null
     );
     string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
     Task<IReadOnlyList<ParatextNote>?> GetNoteThreadsAsync(UserSecret userSecret, string paratextId);
@@ -130,8 +129,8 @@ public interface IParatextService
     Task<ParatextProject> SendReceiveAsync(
         UserSecret userSecret,
         string paratextId,
-        IProgress<ProgressState> progress = null,
+        IProgress<ProgressState>? progress = null,
         CancellationToken token = default,
-        SyncMetrics syncMetrics = null
+        SyncMetrics? syncMetrics = null
     );
 }

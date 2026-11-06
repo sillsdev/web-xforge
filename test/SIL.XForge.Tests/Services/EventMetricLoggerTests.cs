@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -319,7 +318,7 @@ public class EventMetricLoggerTests
             { "longInteger", longInteger },
             { "singleFloat", singleFloat },
             { "stringArray", stringArray },
-            { "nullValue", null },
+            { "nullValue", null! },
         };
 
         // SUT
