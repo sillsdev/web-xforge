@@ -84,7 +84,8 @@ public interface IParatextService
         IDocument<SFProject> projectDoc,
         int[] booksToUpdate,
         bool currentUserOnly,
-        bool writeToParatext
+        bool writeToParatext,
+        IReadOnlyDictionary<int, int[]>? addedChapters = null
     );
     string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
     string GetRepoRevision(UserSecret userSecret, string paratextId);
