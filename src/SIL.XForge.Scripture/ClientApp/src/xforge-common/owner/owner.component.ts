@@ -4,6 +4,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { AvatarComponent } from '../avatar/avatar.component';
 import { I18nService } from '../i18n.service';
+import { UserDoc } from '../models/user-doc';
 import { UserProfileDoc } from '../models/user-profile-doc';
 import { UserService } from '../user.service';
 
@@ -19,7 +20,7 @@ export class OwnerComponent implements OnInit {
   @Input() dateTime: string = '';
   @Input() layoutStacked: boolean = false;
   @Input() showTimeZone: boolean = false;
-  private ownerDoc?: UserProfileDoc;
+  private ownerDoc?: UserProfileDoc | UserDoc;
 
   constructor(
     private readonly userService: UserService,
@@ -45,8 +46,12 @@ export class OwnerComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    if (this.ownerRef != null) {
-      this.ownerDoc = await this.userService.getProfile(this.ownerRef);
-    }
+    if (this.ownerRef == null) return;
+    // The current user's profile doc may never have been fetched before this point, and if we're offline it would not
+    // be available. Their user doc is always loaded, so use it instead, regardless of whether we're offline.
+    this.ownerDoc =
+      this.ownerRef === this.userService.currentUserId
+        ? await this.userService.getCurrentUser()
+        : await this.userService.getProfile(this.ownerRef);
   }
 }
