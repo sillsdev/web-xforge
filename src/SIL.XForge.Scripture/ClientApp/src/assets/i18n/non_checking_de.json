@@ -84,6 +84,7 @@
   "collaborators": {
     "all": "Alles",
     "allow_add_edit_questions": "Kann Fragen hinzufügen und bearbeiten",
+    "allow_change_answer_status": "Kann Antworten als erledigt und für den Export markieren",
     "allow_manage_audio": "Kann Audio der Bibelstelle verwalten",
     "awaiting_response_from": "Warten auf Antwort von{{ newLine }}{{ email }}",
     "cancel_invite": "Einladung abbrechen",
@@ -297,6 +298,10 @@
     "low_confidence_book": "Die Qualität des Entwurfs für „ {{ book }} “ ist möglicherweise geringer als üblich. [link:learnMoreLink]Weitere Informationen[/link]",
     "low_confidence_books": "Die Qualität des Entwurfs für „ {{ number }} “ Bücher ist möglicherweise geringer als üblich. [link:learnMoreLink]Weitere Informationen[/link]",
     "one_book": "1 Buch"
+  },
+  "draft_diagnostics": {
+    "learn_more": "Mehr erfahren",
+    "too_few_segments_selected_for_training": "Dieser Entwurf wurde mit weniger Schulungsdaten generiert, als empfohlen wird. Wir empfehlen mindestens {{ minimumTrainCount }} Verse als Schulungsdaten; dieser Entwurf wurde jedoch mit nur {{ trainCount }} Versen als Schulungsdaten generiert. Bitte wähle mehr Schulungsdaten aus, um die Qualität des Entwurfs zu verbessern."
   },
   "draft_generation_steps": {
     "back": "Zurück",
@@ -786,6 +791,7 @@
   },
   "roles": {
     "allow_add_edit_questions": "Kann Fragen hinzufügen und bearbeiten",
+    "allow_change_answer_status": "Kann Antworten als erledigt und für den Export markieren",
     "allow_manage_audio": "Kann Audio der Bibelstelle verwalten",
     "cancel": "Abbrechen",
     "none": "Keine",
@@ -1039,12 +1045,9 @@
     "translation_language_name_placeholder": "z. B. Suaheli, Tok Pisin"
   },
   "user_feedback": {
-    "ask_for_help": "frag nach Hilfe",
     "close": "Schließen",
     "error_occurred": "Es ist ein Fehler aufgetreten. Bitte versuche später erneut, Dein Feedback zu senden.",
-    "how_has_drafting_helped_your_project": "Wie hat das Generieren des Entwurfs unter {{ siteName }} Deinem Projekt geholfen?",
-    "or": "oder",
-    "send_feedback": "Rückmeldung senden",
+    "has_drafting_helped_project_send_feedback": "War das Generieren eines Entwurfs für {{ siteName }} hilfreich für Dein Projekt? { 1 }Sende eine Rückmeldung{ 2 } oder { 3 }frage nach Hilfe{ 4 }.",
     "thank_you_for_your_feedback": "Vielen Dank! Wir wissen Deine Rückmeldung sehr zu schätzen."
   },
   "user_feedback_dialog": {
@@ -1052,12 +1055,11 @@
     "connect_to_the_internet": "Bitte verbinde Dich mit dem Internet, um Deine Rückmeldung zu senden.",
     "feedback_label": "Deine Rückmeldung",
     "feedback_title": "Erzähle uns, wie sich {{ siteName }} auf Dein Projekt ausgewirkt hat",
-    "feedback_subtitle": "Wie hat {{ siteName }} den Prozess und den Arbeitsablauf Deines Teams beeinflusst?",
     "permission_question": "Dürfen wir Deine Rückmeldung veröffentlichen?",
-    "permission_anonymous_label": "Ja, aber bitte erwähnt weder meinen Namen noch den Namen des Projekts",
+    "permission_anonymous_label": "Ja, aber bitte erwähnt weder meinen Namen noch die Sprache des Projekts",
     "permission_private_label": "Nein, bitte behaltet das für Euch",
-    "permission_public_label": "Ja, und erwähnt bitte meinen Namen und den Namen des Projekts",
-    "project_for_feedback": "Um welches Projekt geht es bei dieser Rückmeldung?",
+    "permission_public_label": "Ja, und Ihr könnt meinen Namen und die Sprache des Projekts erwähnen",
+    "project_for_feedback": "Um welches Projekt geht es bei Deiner Rückmeldung?",
     "project_placeholder": "Projekt",
     "required": "Obligatorisch",
     "submit": "Absenden"

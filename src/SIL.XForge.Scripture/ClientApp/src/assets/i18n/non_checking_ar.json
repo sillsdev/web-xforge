@@ -84,6 +84,7 @@
   "collaborators": {
     "all": "كلّ",
     "allow_add_edit_questions": "يمكن إضافة وتحرير الأسئلة",
+    "allow_change_answer_status": "Can resolve answers & mark them for export",
     "allow_manage_audio": "يمكنه إدارة ملفات الصوت الخاصة بالكتاب المقدس",
     "awaiting_response_from": "في انتظار الرد من{{ newLine }}{{ email }}",
     "cancel_invite": "إلغاء الدعوة",
@@ -297,6 +298,10 @@
     "low_confidence_book": "Draft quality for {{ book }} may be lower than normal. [link:learnMoreLink]Learn more[/link]",
     "low_confidence_books": "Draft quality for {{ number }} books may be lower than normal. [link:learnMoreLink]Learn more[/link]",
     "one_book": "1 سِفْر"
+  },
+  "draft_diagnostics": {
+    "learn_more": "اعرف المزيد",
+    "too_few_segments_selected_for_training": "This draft used less training data than is recommended. We recommend a minimum of {{ minimumTrainCount }} verses of training data, and this draft was generated with only {{ trainCount }} verses of training data. Please select more training data to improve the quality of the draft."
   },
   "draft_generation_steps": {
     "back": "رجوع",
@@ -786,6 +791,7 @@
   },
   "roles": {
     "allow_add_edit_questions": "يمكن إضافة وتحرير الأسئلة",
+    "allow_change_answer_status": "Can resolve answers & mark them for export",
     "allow_manage_audio": "يمكنه إدارة ملفات الصوت الخاصة بالكتاب المقدس",
     "cancel": "إلغاء",
     "none": "لا شيء",
@@ -1039,12 +1045,9 @@
     "translation_language_name_placeholder": "على سبيل المثال: السواحيلية، والتوك بيسين"
   },
   "user_feedback": {
-    "ask_for_help": "ask for help",
     "close": "إغلاق",
     "error_occurred": "An error occurred. Please try submitting feedback later.",
-    "how_has_drafting_helped_your_project": "How has {{ siteName }} drafting helped your project?",
-    "or": "أو",
-    "send_feedback": "Send Feedback",
+    "has_drafting_helped_project_send_feedback": "Has {{ siteName }} drafting helped your project? { 1 }Send feedback{ 2 } or { 3 }ask for help{ 4 }.",
     "thank_you_for_your_feedback": "Thank you! We greatly value your feedback."
   },
   "user_feedback_dialog": {
@@ -1052,12 +1055,11 @@
     "connect_to_the_internet": "Please connect to the internet to send your feedback.",
     "feedback_label": "Your feedback",
     "feedback_title": "Tell us how {{ siteName }} has impacted your project",
-    "feedback_subtitle": "How has {{ siteName }} influenced your team's process and workflow?",
     "permission_question": "May we publish your feedback?",
-    "permission_anonymous_label": "Yes, but please don't use my name or project name",
+    "permission_anonymous_label": "Yes, but please don't use my name or the project language",
     "permission_private_label": "No, please keep this private",
-    "permission_public_label": "Yes, and mention my name and project name",
-    "project_for_feedback": "What project is this feedback about?",
+    "permission_public_label": "Yes, and you can mention my name and the project language",
+    "project_for_feedback": "Which project is your feedback about?",
     "project_placeholder": "مشروع",
     "required": "مطلوبة",
     "submit": "إرسال"
