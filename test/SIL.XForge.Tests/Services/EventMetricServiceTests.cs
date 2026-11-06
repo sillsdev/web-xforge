@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -323,7 +322,7 @@ public class EventMetricServiceTests
             { "stringArray", stringArray },
             { "uri", uri },
             { "enum", enumValue },
-            { "nullValue", null },
+            { "nullValue", null! },
         };
         Dictionary<string, BsonValue> expectedPayload = new Dictionary<string, BsonValue>
         {
@@ -444,7 +443,7 @@ public class EventMetricServiceTests
 
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
         Assert.IsNotNull(eventMetric.Tags);
-        Assert.AreEqual(3, eventMetric.Tags.Count);
+        Assert.AreEqual(3, eventMetric.Tags!.Count);
         Assert.AreEqual("abc-123-def-456", eventMetric.Tags[TestEnvironment.SomeActivityTagKey]?.AsString);
         Assert.AreEqual("xyz-789", eventMetric.Tags["someOtherThing"]?.AsString);
         Assert.AreEqual(42, eventMetric.Tags["someNumber"]?.AsInt64);
@@ -479,7 +478,7 @@ public class EventMetricServiceTests
         // Verify the saved event metric
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
         Assert.IsNotNull(eventMetric.Tags);
-        Assert.AreEqual(4, eventMetric.Tags.Count);
+        Assert.AreEqual(4, eventMetric.Tags!.Count);
 
         // Child tag should be present
         Assert.AreEqual("child-value", eventMetric.Tags["childTag"]?.AsString);
@@ -532,7 +531,7 @@ public class EventMetricServiceTests
             { "singleFloat", singleFloat },
             { "stringArray", stringArray },
             { "uri", uri },
-            { "nullValue", null },
+            { "nullValue", null! },
             { "someObject", someObject },
             { "someJObject", someJObject },
             { "someJsonString", serializedJsonInput },
@@ -569,7 +568,7 @@ public class EventMetricServiceTests
 
         EventMetric eventMetric = env.EventMetrics.Query().OrderByDescending(e => e.TimeStamp).First();
         Assert.IsNotNull(eventMetric.Tags);
-        Assert.AreEqual(expectBsonItems.Count, eventMetric.Tags.Count);
+        Assert.AreEqual(expectBsonItems.Count, eventMetric.Tags!.Count);
         expectBsonItems.ForEach(kvp => Assert.AreEqual(kvp.Value, eventMetric.Tags[kvp.Key]));
     }
 

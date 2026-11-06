@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Globalization;
 using System.Linq;
@@ -54,7 +53,7 @@ public class MutexAttribute(string? resource = null, int timeoutSec = MutexAttri
             );
         }
 
-        string blockedBy;
+        string? blockedBy;
 
         try
         {

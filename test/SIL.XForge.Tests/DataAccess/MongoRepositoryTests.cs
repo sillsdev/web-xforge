@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Linq;
 using System.Net;
@@ -334,6 +333,6 @@ public class MongoRepositoryTests
 
     public class TestClass : IIdentifiable
     {
-        public string Id { get; set; }
+        public string Id { get; set; } = string.Empty;
     }
 }

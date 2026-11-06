@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -232,14 +231,16 @@ public class Startup
 
         app.UseStatusCodePagesWithReExecute("/Status/Error", "?code={0}");
 
-        IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetService<IOptions<SiteOptions>>();
+        IOptions<SiteOptions> siteOptions = app.ApplicationServices.GetRequiredService<IOptions<SiteOptions>>();
         string[] allowedHosts = siteOptions.Value.GetOriginHosts();
         app.UseForwardedHeaders(
             new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.All, AllowedHosts = allowedHosts }
         );
         app.UseHostValidation(allowedHosts);
 
-        app.UseRequestLocalization(app.ApplicationServices.GetService<IOptions<RequestLocalizationOptions>>().Value);
+        app.UseRequestLocalization(
+            app.ApplicationServices.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value
+        );
 
         app.UseStaticFiles(
             new StaticFileOptions
@@ -327,7 +328,7 @@ public class Startup
                             if (
                                 context.Context.Items.TryGetValue("OriginalPath", out object? originalPathObj)
                                 && originalPathObj is string originalPath
-                                && contentTypeProvider.TryGetContentType(originalPath, out string contentType)
+                                && contentTypeProvider.TryGetContentType(originalPath, out string? contentType)
                             )
                             {
                                 context.Context.Response.ContentType = contentType;
@@ -455,7 +456,7 @@ public class Startup
     /// </remarks>
     internal bool IsSpaRoute(HttpContext context)
     {
-        string path = context.Request.Path.Value;
+        string? path = context.Request.Path.Value;
         HashSet<string> spaRoutes =
             context.Request.Method == HttpMethods.Get ? SpaGetRoutes
             : context.Request.Method == HttpMethods.Post ? SpaPostRoutes
@@ -476,7 +477,7 @@ public class Startup
 
         // Then look at what is before the first dash or dot. Match paths like /polyfills-C3D4E5F6.js.map and
         // /polyfills.js as "polyfills".
-        string beginning = exact.Split('-', '.').FirstOrDefault();
+        string beginning = exact.Split('-', '.').First();
         if (spaRoutes.Contains(beginning))
             return true;
 

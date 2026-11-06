@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -178,13 +177,13 @@ public static partial class NotesFormatter
     private static List<Comment> ParseThread(XElement threadElem, ParatextUser ptUser)
     {
         List<Comment> result = [];
-        Comment comment = null;
+        Comment? comment = null;
         foreach (var commentElem in threadElem.Elements("comment"))
         {
             if (comment is null)
             {
                 comment = new Comment(ptUser);
-                XAttribute threadId = threadElem.Attribute("id");
+                XAttribute? threadId = threadElem.Attribute("id");
                 if (threadId is not null)
                     comment.Thread = threadId.Value;
                 ParseSelection(threadElem.Element("selection"), comment);
@@ -203,7 +202,7 @@ public static partial class NotesFormatter
     private static void ParseComment(XElement commentElem, Comment comment)
     {
         comment.User = commentElem.Attribute("user")?.Value;
-        string commentDate = commentElem.Attribute("date")?.Value;
+        string? commentDate = commentElem.Attribute("date")?.Value;
         if (commentDate is not null)
             comment.Date = commentDate;
         comment.ExternalUser = commentElem.Attribute("extUser")?.Value;

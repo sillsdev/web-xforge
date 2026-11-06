@@ -1,4 +1,3 @@
-#nullable disable warnings
 namespace SIL.XForge.Configuration;
 
 /// <summary>
@@ -6,5 +5,5 @@ namespace SIL.XForge.Configuration;
 /// </summary>
 public class AudioOptions
 {
-    public string FfmpegPath { get; set; }
+    public string? FfmpegPath { get; set; }
 }

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -96,7 +95,7 @@ public class AudioService : IAudioService
 
     private static Task WaitForExitAsync(Process process)
     {
-        var tcs = new TaskCompletionSource<object>();
+        var tcs = new TaskCompletionSource<object?>();
         process.EnableRaisingEvents = true;
         process.Exited += (sender, args) => tcs.TrySetResult(null);
         return tcs.Task;

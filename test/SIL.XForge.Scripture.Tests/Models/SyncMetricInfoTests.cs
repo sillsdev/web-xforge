@@ -1,4 +1,3 @@
-#nullable disable warnings
 using NUnit.Framework;
 
 namespace SIL.XForge.Scripture.Models;

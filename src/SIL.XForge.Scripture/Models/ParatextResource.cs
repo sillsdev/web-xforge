@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Globalization;
 using System.Text;
@@ -73,7 +72,7 @@ public class ParatextResource : ParatextProject
     /// <remarks>
     /// This is used to see if the manifest has changed.
     /// </remarks>
-    public string ManifestChecksum { get; set; }
+    public string? ManifestChecksum { get; set; }
 
     /// <summary>
     /// Gets or sets the permissions checksum.
@@ -84,7 +83,7 @@ public class ParatextResource : ParatextProject
     /// <remarks>
     /// This is used to see if the permissions have changed.
     /// </remarks>
-    public string PermissionsChecksum { get; set; }
+    public string? PermissionsChecksum { get; set; }
 
     /// <inheritdoc/>
     public override string ToString()

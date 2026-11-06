@@ -1,6 +1,6 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 
 namespace SIL.XForge.Utils;
@@ -26,7 +26,7 @@ public class ObjectPath
 
     public IReadOnlyList<object> Items { get; }
 
-    public bool TryGetValue<TObj, TField>(TObj obj, out TField value)
+    public bool TryGetValue<TObj, TField>(TObj obj, [MaybeNullWhen(false)] out TField value)
     {
         var getter = (Func<TObj, TField>)Expression.Compile();
         try

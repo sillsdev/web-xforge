@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,7 +20,7 @@ public class SFProjectRights : ISFProjectRights
     public SFProjectRights(IFileSystemService fileSystemService)
     {
         string json = fileSystemService.FileReadText(Filename);
-        var rightsByRole = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string[]>>>(json);
+        var rightsByRole = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, string[]>>>(json)!;
         foreach ((string role, Dictionary<string, string[]> rights) in rightsByRole)
         {
             AddRights(role, rights.SelectMany(kvp => kvp.Value.Select(operation => (kvp.Key, operation))));
@@ -89,7 +88,7 @@ public class SFProjectRights : ISFProjectRights
     )
     {
         // Ensure that the user has a role
-        if (userId == null || !project.UserRoles.TryGetValue(userId, out string userRole))
+        if (userId == null || !project.UserRoles.TryGetValue(userId, out string? userRole))
         {
             return false;
         }
