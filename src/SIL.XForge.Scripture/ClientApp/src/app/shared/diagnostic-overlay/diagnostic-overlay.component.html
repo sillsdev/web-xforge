@@ -15,44 +15,86 @@
     </button>
   </div>
   @if (isExpanded) {
-    <h3>{{ totalDocsCount | l10nNumber }} documents tracked by realtime service</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Collection</th>
-          <th>Docs</th>
-          <th>Subscribers</th>
-          <th>Queries</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (docType of docCountsByCollection | keyvalue; track docType.key) {
-          <tr>
-            <td>{{ docType.key }}</td>
-            <td>{{ docType.value.docs | l10nNumber }}</td>
-            <td>{{ docType.value.subscribers | l10nNumber }}</td>
-            <td>{{ docType.value.queries | l10nNumber }}</td>
-          </tr>
+    <div class="nav-and-content">
+      <div class="tab-nav" role="tablist">
+        @for (t of tabs; track t.id) {
+          <button type="button" role="tab" [class.active]="tab === t.id" (click)="selectTab(t.id)">
+            {{ t.label }}
+          </button>
         }
-      </tbody>
-    </table>
-
-    <h3>Components affecting loading indicator</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Component</th>
-          <th>Count</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (component of noticeService.loadingCountsByCallerId | keyvalue; track component.key) {
-          <tr [class.bold]="component.value > 0">
-            <td>{{ component.key }}</td>
-            <td>{{ component.value | l10nNumber }}</td>
-          </tr>
+      </div>
+      <div class="tab-content" role="tabpanel">
+        @if (tab === "realtime") {
+          <h3>{{ totalDocsCount | l10nNumber }} documents tracked by realtime service</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Collection</th>
+                <th>Docs</th>
+                <th>Subscribers</th>
+                <th>Queries</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (docType of docCountsByCollection | keyvalue; track docType.key) {
+                <tr>
+                  <td>{{ docType.key }}</td>
+                  <td>{{ docType.value.docs | l10nNumber }}</td>
+                  <td>{{ docType.value.subscribers | l10nNumber }}</td>
+                  <td>{{ docType.value.queries | l10nNumber }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else if (tab === "loading") {
+          <h3>Components affecting loading indicator</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (component of noticeService.loadingCountsByCallerId | keyvalue; track component.key) {
+                <tr [class.bold]="component.value > 0">
+                  <td>{{ component.key }}</td>
+                  <td>{{ component.value | l10nNumber }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else if (tab === "feedback") {
+          <h3>Feedback notice timing</h3>
+          <p>
+            <label>
+              <input type="checkbox" class="test-mode-toggle" [(ngModel)]="feedbackNoticeTiming.testMode" />
+              Test mode (short delays)
+            </label>
+          </p>
+          <h4>Generate draft page</h4>
+          <table class="drafting-feedback-notice-delays">
+            <thead>
+              <tr>
+                <th>Delay</th>
+                <th>{{ feedbackNoticeTiming.testMode ? "Test" : "Production" }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of draftingFeedbackNoticeDurationLabels; track row.key) {
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td>{{ formatDuration(feedbackNoticeTiming.draftingDurations[row.key]) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p>
+            Drafting is measured from the project's first draft request to its most recent one. Test mode shortens the
+            delays of every feedback notice, and is stored in this browser only.
+          </p>
         }
-      </tbody>
-    </table>
+      </div>
+    </div>
   }
 </div>
