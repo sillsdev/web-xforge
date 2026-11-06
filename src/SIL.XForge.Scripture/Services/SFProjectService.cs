@@ -64,6 +64,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IRepository<SFProjectSecret> projectSecrets,
         ISecurityService securityService,
         IFileSystemService fileSystemService,
+        IStorageProvider storageProvider,
         ILogger<SFProjectService> logger,
         IMachineProjectService machineProjectService,
         ISyncService syncService,
@@ -80,7 +81,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IGuidService guidService,
         IMongoClient mongoClient
     )
-        : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService)
+        : base(realtimeService, siteOptions, audioService, projectSecrets, fileSystemService, storageProvider)
     {
         _logger = logger;
         _machineProjectService = machineProjectService;
@@ -316,16 +317,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             string projectDir = Path.Join(SiteOptions.Value.SiteDir, "sync", ptProjectId);
             if (FileSystemService.DirectoryExists(projectDir))
                 FileSystemService.DeleteDirectory(projectDir);
-            string audioDir = GetAudioDir(projectId);
-            if (FileSystemService.DirectoryExists(audioDir))
-                FileSystemService.DeleteDirectory(audioDir);
-            string trainingDataDir = Path.Join(
-                SiteOptions.Value.SiteDir,
-                TrainingDataService.DirectoryName,
-                ptProjectId
-            );
-            if (FileSystemService.DirectoryExists(trainingDataDir))
-                FileSystemService.DeleteDirectory(trainingDataDir);
+
+            await StorageProvider.DeleteDirectoryAsync(AudioService.DirectoryName, projectId);
+            await StorageProvider.DeleteDirectoryAsync(TrainingDataService.DirectoryName, projectId);
 
             string[] projectUserIds = [.. projectDoc.Data.UserRoles.Keys];
             await projectDoc.DeleteAsync();

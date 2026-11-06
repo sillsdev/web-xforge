@@ -4,11 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Options;
 using MiniExcelLibs;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -42,7 +41,12 @@ public class TrainingDataServiceTests
 
         // Set up the training data files
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Line1\nLine2"));
-        env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream);
+        env.StorageProvider.GetFileAsync(
+                TrainingDataService.DirectoryName,
+                Project01,
+                Arg.Is<string>(f => f.Contains(Data01))
+            )
+            .Returns(fileStream);
 
         // SUT
         await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
@@ -62,11 +66,21 @@ public class TrainingDataServiceTests
         await using var fileStream1 = new MemoryStream(
             Encoding.UTF8.GetBytes("D1Source1,D1Target1\nD1Source2,D1Target2")
         );
-        env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream1);
+        env.StorageProvider.GetFileAsync(
+                TrainingDataService.DirectoryName,
+                Project01,
+                Arg.Is<string>(f => f.Contains(Data01))
+            )
+            .Returns(fileStream1);
         await using var fileStream2 = new MemoryStream(
             Encoding.UTF8.GetBytes("Source_Heading\tTarget_Heading\n\"D2 Source 1\"\t\"D2 Target 1\"")
         );
-        env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data02)), FileMode.Open).Returns(fileStream2);
+        env.StorageProvider.GetFileAsync(
+                TrainingDataService.DirectoryName,
+                Project01,
+                Arg.Is<string>(f => f.Contains(Data02))
+            )
+            .Returns(fileStream2);
 
         // SUT
         await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
@@ -105,13 +119,18 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public async Task GetTextsAsync_MissingTrainingDataDirectory()
+    public async Task GetTextsAsync_FileNotFound()
     {
         var env = new TestEnvironment();
         string[] dataIds = [Data01];
         List<ISFText> sourceTexts = [];
         List<ISFText> targetTexts = [];
-        env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
+        env.StorageProvider.GetFileAsync(
+                TrainingDataService.DirectoryName,
+                Project01,
+                Arg.Is<string>(f => f.Contains(Data01))
+            )
+            .ThrowsAsync(new DataNotFoundException("Not found"));
 
         // SUT
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
@@ -148,21 +167,6 @@ public class TrainingDataServiceTests
     }
 
     [Test]
-    public async Task GetTextsAsync_SkipsWhenFileNotFound()
-    {
-        var env = new TestEnvironment();
-        env.FileSystemService.FileExists(Arg.Any<string>()).Returns(false);
-        string[] dataIds = [Data01, Data02];
-        List<ISFText> sourceTexts = [];
-        List<ISFText> targetTexts = [];
-
-        // SUT
-        await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
-        env.FileSystemService.Received().FileExists(Arg.Any<string>());
-        env.FileSystemService.DidNotReceive().OpenFile(Arg.Any<string>(), FileMode.Open);
-    }
-
-    [Test]
     public async Task GetTextsAsync_UnmatchedDoubleQuote()
     {
         var env = new TestEnvironment();
@@ -173,7 +177,12 @@ public class TrainingDataServiceTests
         // Set up the training data files
         byte[] buffer = Encoding.UTF8.GetBytes("first row\tis ok\ndata, 'valid quotes'\tbroken 'quote, \" test'");
         await using var fileStream = new MemoryStream(buffer);
-        env.FileSystemService.OpenFile(Arg.Is<string>(p => p.Contains(Data01)), FileMode.Open).Returns(fileStream);
+        env.StorageProvider.GetFileAsync(
+                TrainingDataService.DirectoryName,
+                Project01,
+                Arg.Is<string>(f => f.Contains(Data01))
+            )
+            .Returns(fileStream);
 
         // SUT
         await env.Service.GetTextsAsync(User01, Project01, dataIds, sourceTexts, targetTexts);
@@ -290,17 +299,19 @@ public class TrainingDataServiceTests
         // Set up the input file
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data\n\"\","));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
-        env.FileSystemService.Received(1).DeleteFile(Arg.Any<string>());
         env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -312,21 +323,22 @@ public class TrainingDataServiceTests
         // Set up the input file
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data"));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
-        // We will also check that the directory is created
+        // We will also check that the old file is deleted
         env.FileSystemService.FileExists(Arg.Any<string>()).Returns(false);
-        env.FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(false);
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
-        env.FileSystemService.Received(1).CreateDirectory(Arg.Any<string>());
         env.FileSystemService.DidNotReceive().DeleteFile(Arg.Any<string>());
         env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
     }
@@ -339,17 +351,19 @@ public class TrainingDataServiceTests
         // Set up the input file
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test\tData"));
         env.FileSystemService.OpenFile(FileTsv, FileMode.Open).Returns(fileStream);
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileTsv);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
-        env.FileSystemService.Received(1).DeleteFile(Arg.Any<string>());
         env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -361,15 +375,18 @@ public class TrainingDataServiceTests
         // Set up the input file
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test;Data"));
         env.FileSystemService.OpenFile(FileTxt, FileMode.Open).Returns(fileStream);
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileTxt);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
         env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
     }
@@ -387,23 +404,22 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
-        string path = Path.Join(
-            env.SiteOptions.Value.SiteDir,
-            TrainingDataService.DirectoryName,
-            Project01,
-            $"{User01}_{Data01}.csv"
-        );
         await using var outputStream = new NonDisposingMemoryStream();
-        env.FileSystemService.CreateFile(path).Returns(outputStream);
+        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+
+        // Handle the storage of the CSV file
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
         using var reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
@@ -429,14 +445,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
-        string path = Path.Join(
-            env.SiteOptions.Value.SiteDir,
-            TrainingDataService.DirectoryName,
-            Project01,
-            $"{User01}_{Data01}.csv"
-        );
         await using var outputStream = new NonDisposingMemoryStream();
-        env.FileSystemService.CreateFile(path).Returns(outputStream);
+        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
 
         // SUT
         await Assert.ThrowsAsync<FormatException>(() =>
@@ -472,14 +482,8 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
-        string path = Path.Join(
-            env.SiteOptions.Value.SiteDir,
-            TrainingDataService.DirectoryName,
-            Project01,
-            $"{User01}_{Data01}.csv"
-        );
         await using var outputStream = new NonDisposingMemoryStream();
-        env.FileSystemService.CreateFile(path).Returns(outputStream);
+        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
 
         // SUT
         await Assert.ThrowsAsync<FormatException>(() =>
@@ -507,28 +511,27 @@ public class TrainingDataServiceTests
         env.FileSystemService.OpenFile(FileExcel, FileMode.Open).Returns(fileStream);
 
         // Create the output file
-        string path = Path.Join(
-            env.SiteOptions.Value.SiteDir,
-            TrainingDataService.DirectoryName,
-            Project01,
-            $"{User01}_{Data01}.csv"
-        );
         await using var outputStream = new NonDisposingMemoryStream();
-        env.FileSystemService.CreateFile(path).Returns(outputStream);
+        env.FileSystemService.CreateFile(Arg.Any<string>()).Returns(outputStream);
+
+        // Handle the storage of the CSV file
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileExcel);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
         using var reader = new StreamReader(outputStream);
         string text = await reader.ReadToEndAsync();
         text = text.TrimEnd(); // Remove trailing new lines
-        text = text.Replace("\r\n", " "); // Handle newlines in both linux and windows environments
+        text = text.Replace("\r\n", " "); // Handle newlines in both Linux and Windows environments
         text = text.Replace("\n", " ");
         Assert.AreEqual($"Test,Data Skip,Row", text);
         outputStream.ForceDispose();
@@ -542,17 +545,19 @@ public class TrainingDataServiceTests
         // Set up the input file
         await using var fileStream = new MemoryStream(Encoding.UTF8.GetBytes("Test,Data,More\nSecond,Row,\"\""));
         env.FileSystemService.OpenFile(FileCsv, FileMode.Open).Returns(fileStream);
+        Uri fileUri = new Uri("http://example.com/");
+        env.StorageProvider.MoveFileAsync(
+                Arg.Any<string>(),
+                TrainingDataService.DirectoryName,
+                Project01,
+                $"{User01}_{Data01}.csv"
+            )
+            .Returns(Task.FromResult(fileUri));
 
         // SUT
         Uri actual = await env.Service.SaveTrainingDataAsync(User01, Project01, Data01, FileCsv);
-        Assert.That(
-            actual
-                .ToString()
-                .StartsWith($"/assets/{TrainingDataService.DirectoryName}/{Project01}/{User01}_{Data01}.csv?t="),
-            Is.True
-        );
+        Assert.That(actual, Is.EqualTo(fileUri));
 
-        env.FileSystemService.Received(1).DeleteFile(Arg.Any<string>());
         env.FileSystemService.Received(1).MoveFile(Arg.Any<string>(), Arg.Any<string>());
     }
 
@@ -567,7 +572,6 @@ public class TrainingDataServiceTests
         );
 
         Assert.That(trainingDataDoc.IsLoaded, Is.True);
-        conn.Dispose();
 
         await env.Service.MarkFileDeleted(User01, Project01, Data01);
 
@@ -627,8 +631,7 @@ public class TrainingDataServiceTests
     {
         public TestEnvironment()
         {
-            SiteOptions = Substitute.For<IOptions<SiteOptions>>();
-            SiteOptions.Value.Returns(new SiteOptions { SiteDir = "site-dir" });
+            StorageProvider = Substitute.For<IStorageProvider>();
             FileSystemService = Substitute.For<IFileSystemService>();
             FileSystemService.DirectoryExists(Arg.Any<string>()).Returns(true);
 
@@ -685,13 +688,13 @@ public class TrainingDataServiceTests
                     Arg.Any<IOwnedData>()
                 )
                 .Returns(true);
-            Service = new TrainingDataService(FileSystemService, realtimeService, ProjectRights, SiteOptions);
+            Service = new TrainingDataService(FileSystemService, ProjectRights, realtimeService, StorageProvider);
             RealtimeService = realtimeService;
         }
 
         public IFileSystemService FileSystemService { get; }
         public TrainingDataService Service { get; }
-        public IOptions<SiteOptions> SiteOptions { get; }
+        public IStorageProvider StorageProvider { get; }
         public IRealtimeService RealtimeService { get; }
         public ISFProjectRights ProjectRights { get; }
     }
