@@ -10,6 +10,9 @@ See the software [architecture](doc/architecture.md) overview.
 
 When writing code, follow all rules in [Code rules](doc/code-rules.md) and [Code rules for AI](doc/code-rules-ai.md).
 
+When working on the end-to-end tests, also read
+[the e2e instructions](src/SIL.XForge.Scripture/ClientApp/e2e/AGENTS.md).
+
 ## Code review
 
 Instructions for what to look for when performing a code review can be found in [REVIEW.md](REVIEW.md).

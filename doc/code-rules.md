@@ -46,3 +46,7 @@ For more information, see the [architecture](architecture.md) overview.
 ## Frontend code
 
 - Pay attention to available types and type guards in src/SIL.XForge.Scripture/ClientApp/src/type-utils.ts.
+
+## Terminology
+
+- In SF, a user can "sign up" to get an account. Once they have an account, they "log in" to their account using the "login" page. (Users do not "sign in" or use a "signin" page.)

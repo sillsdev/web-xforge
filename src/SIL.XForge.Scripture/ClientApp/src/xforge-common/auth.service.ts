@@ -546,6 +546,33 @@ export class AuthService {
       return;
     }
 
+    // In an 11 hour period of testing a thousand logins, it was found that login attempts to registry-dev.paratext.org
+    // work fine over windows of time (eg no errors during some 90-150 min windows), but problem periods come and go
+    // where ~30% of login attempts fail. In these failure situations, the Registry intermittently refuses an
+    // authorization code it has just issued, or Auth0 can not get through the gateway to the Registry at all. The
+    // failures are both experienced by Auth0 when it attempts to communicate with the Registry. In most cases (95%),
+    // the Registry issued a code, Auth0 gives the code to the Registry, and then Auth0 reports to SF a `request-error`
+    // - `invalid_request` - `invalid or expired authorization code` with no payload. In the other 5% of cases, the
+    // Registry issued a code, Auth0 gives the code to the Registry, the Registry responds to Auth0 with a 502 Bad
+    // Gateway, and then Auth0 reports to SF a `request-error` - `invalid_request` - `Failed to obtain access token`
+    // with payload of `502 Bad Gateway` `nginx/...`. Both of these failures reach SF with error=invalid_request. A
+    // manual retry will usually succeed. Although it could fail; failures tend to be concentrated in problem windows.
+
+    // Transient errors where we should direct the user to retry Paratext Registry login.
+    const registryExchangeFailures: string[] = [
+      'invalid or expired authorization code',
+      'Failed to obtain access token'
+    ];
+    if (
+      hasPropWithValue(error, 'error', 'invalid_request') &&
+      registryExchangeFailures.some(description => hasPropWithValue(error, 'error_description', description))
+    ) {
+      // This behaviour is very similar to the other handling in this method. But as a known problem, it is separated
+      // out with its own message.
+      await this.dialogService.message('error_messages.paratext_registry_problem', 'error_messages.login');
+      return;
+    }
+
     // Unknown log in error
     this.reportingService.silentError(`Error occurred in ${method}`, ErrorReportingService.normalizeError(error));
     await this.dialogService.message('error_messages.error_occurred_login', 'error_messages.try_again');
