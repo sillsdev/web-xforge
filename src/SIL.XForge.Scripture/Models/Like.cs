@@ -1,7 +1,6 @@
-#nullable disable warnings
 namespace SIL.XForge.Scripture.Models;
 
 public class Like
 {
-    public string OwnerRef { get; set; }
+    public string? OwnerRef { get; set; }
 }

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Localization;
@@ -31,7 +30,7 @@ public class SharedResourceTests
         var publicProps = sharedKeys!.GetFields(BindingFlags.Public | BindingFlags.Static);
         foreach (var propInfo in publicProps.Where(x => x.FieldType == typeof(string)))
         {
-            var keyValue = (string)propInfo.GetValue(null);
+            var keyValue = (string)propInfo.GetValue(null)!;
             var englishStringFromResource = localizer.GetString(keyValue);
             // verify that each key is found
             Assert.IsFalse(

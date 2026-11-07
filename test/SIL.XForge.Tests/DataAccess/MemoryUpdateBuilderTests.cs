@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Collections.Generic;
 using NUnit.Framework;
 using SIL.XForge.Models;
@@ -77,7 +76,7 @@ public class MemoryUpdateBuilderTests
     {
         // Setup environment
         var env = new TestEnvironment(false);
-        string oldValue = env.TestEntity.TestStringField;
+        string? oldValue = env.TestEntity.TestStringField;
         string expected = "updated_test_value";
 
         // Test string field set
@@ -104,7 +103,7 @@ public class MemoryUpdateBuilderTests
     {
         // Setup environment
         var env = new TestEnvironment();
-        string expected = null;
+        string? expected = null;
 
         // Test string field unset
         Assert.AreNotEqual(expected, env.TestEntity.TestStringField);
@@ -114,11 +113,11 @@ public class MemoryUpdateBuilderTests
 
     private class TestEntity : IIdentifiable
     {
-        public string Id { get; set; }
+        public required string Id { get; set; }
         public int TestNumber { get; set; }
         public List<TestEntity> TestChildCollection { get; set; } = [];
         public List<string> TestStringCollection { get; set; } = [];
-        public string TestStringField { get; set; }
+        public string? TestStringField { get; set; }
     }
 
     private class TestEnvironment

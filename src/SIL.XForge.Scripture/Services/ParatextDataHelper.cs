@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -57,7 +56,7 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
             if (comments.Count == 0)
                 continue;
 
-            string verseRef = thread.ScriptureSelection?.VerseRef.ToString();
+            string? verseRef = thread.ScriptureSelection?.VerseRef.ToString();
             if (string.IsNullOrEmpty(verseRef))
                 verseRef = comments[0].VerseRef;
 
@@ -135,7 +134,7 @@ public class ParatextDataHelper(IFileSystemService fileSystemService) : IParatex
         )
         {
             // Get first *.vrs file that is not custom.vrs
-            string verseFilePath = fileSystemService
+            string? verseFilePath = fileSystemService
                 .EnumerateFiles(scrText.FullPath, "*.vrs")
                 .FirstOrDefault(fileName =>
                     !Path.GetFileName(fileName)

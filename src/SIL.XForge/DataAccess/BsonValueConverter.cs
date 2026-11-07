@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -37,7 +36,7 @@ public class BsonValueConverter : JsonConverter<BsonValue>
             {
                 if (reader.TokenType == JsonTokenType.PropertyName)
                 {
-                    string propertyName = reader.GetString();
+                    string propertyName = reader.GetString()!;
                     reader.Read();
 
                     // Recursively deserialize the value

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using Autofac;
 using Autofac.Extras.DynamicProxy;
 using Castle.DynamicProxy;
@@ -42,5 +41,6 @@ public static class EventMetricsContainerBuilderExtensions
     /// <typeparam name="T">The class type.</typeparam>
     /// <param name="containerBuilder">The container builder.</param>
     public static void RegisterEventMetrics<TI, T>(this ContainerBuilder containerBuilder)
+        where TI : notnull
         where T : class, TI => containerBuilder.RegisterType<T>().As<TI>().EnableInterfaceInterceptors();
 }

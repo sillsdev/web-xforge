@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -49,7 +48,7 @@ public class MemoryRealtimeService : IRealtimeService
     /// <remarks>
     /// This is only for unit test use.
     /// </remarks>
-    public string LastModifiedUserId { get; set; }
+    public string? LastModifiedUserId { get; set; }
 
     /// <summary>
     /// Count of calls to DeleteUserAsync(), for tests.
@@ -62,7 +61,7 @@ public class MemoryRealtimeService : IRealtimeService
 
     public void CheckIfRunning() { }
 
-    public Task<IConnection> ConnectAsync(string userId = null) =>
+    public Task<IConnection> ConnectAsync(string? userId = null) =>
         Task.FromResult<IConnection>(new MemoryConnection(this));
 
     public virtual Task DeleteProjectAsync(string projectId) => Task.CompletedTask;
@@ -89,7 +88,7 @@ public class MemoryRealtimeService : IRealtimeService
     /// <remarks>
     /// This is overridable for unit tests.
     /// </remarks>
-    public Task<string> GetLastModifiedUserIdAsync<T>(string id, int version)
+    public Task<string?> GetLastModifiedUserIdAsync<T>(string id, int version)
         where T : IIdentifiable => Task.FromResult(LastModifiedUserId);
 
     public IQueryable<T> QuerySnapshots<T>()

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using SIL.XForge.Models;
@@ -31,7 +30,7 @@ public class OnboardingRequest : IIdentifiable
     /// <summary>
     /// The resolution of this request: "unresolved' (default), "approved", "declined", or "outsourced".
     /// </summary>
-    public string Resolution { get; set; }
+    public string? Resolution { get; set; }
 
     /// <summary>
     /// Gets the status of this request based on assignee and resolution.
@@ -83,12 +82,12 @@ public class OnboardingRequestSummary
     /// <summary>
     /// The resolution of this request. See <see cref="OnboardingRequest.Resolution"/>.
     /// </summary>
-    public string Resolution { get; set; }
+    public string? Resolution { get; set; }
 
     /// <summary>
     /// The status of this request. See <see cref="OnboardingRequest.Status"/>.
     /// </summary>
-    public string Status { get; set; }
+    public string? Status { get; set; }
 
     public static OnboardingRequestSummary FromRequest(OnboardingRequest request) =>
         new OnboardingRequestSummary

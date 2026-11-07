@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,6 +5,7 @@ using System.Linq;
 namespace SIL.XForge.Utils;
 
 public class DictionaryComparer<TKey, TValue> : IEqualityComparer<Dictionary<TKey, TValue>>
+    where TKey : notnull
 {
     public bool Equals(Dictionary<TKey, TValue>? x, Dictionary<TKey, TValue>? y) =>
         (x ?? []).OrderBy(p => p.Key).SequenceEqual((y ?? []).OrderBy(p => p.Key));

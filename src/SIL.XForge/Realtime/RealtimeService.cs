@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -97,7 +96,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
             RestartServer();
     }
 
-    public async Task<IConnection> ConnectAsync(string userId = null)
+    public async Task<IConnection> ConnectAsync(string? userId = null)
     {
         RealtimeOptions options = _realtimeOptions.Value;
         var conn = new Connection(this, options.DocumentCacheDisabled);
@@ -204,7 +203,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
     /// <returns>
     /// The user id, or null if unknown.
     /// </returns>
-    public async Task<string> GetLastModifiedUserIdAsync<T>(string id, int version)
+    public async Task<string?> GetLastModifiedUserIdAsync<T>(string id, int version)
         where T : IIdentifiable
     {
         // Get the collection and definitions

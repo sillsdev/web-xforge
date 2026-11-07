@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -20,7 +19,7 @@ public class HangfireDashboardAuthorizationFilter(AuthOptions authOptions) : IDa
     public bool Authorize(DashboardContext context)
     {
         // Get the access token
-        string accessToken = context.GetHttpContext().Request.Cookies["Hangfire"];
+        string? accessToken = context.GetHttpContext().Request.Cookies["Hangfire"];
         if (string.IsNullOrWhiteSpace(accessToken))
         {
             return false;

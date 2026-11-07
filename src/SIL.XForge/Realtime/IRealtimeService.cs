@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Linq;
 using System.Threading.Tasks;
 using SIL.XForge.Models;
@@ -11,7 +10,7 @@ public interface IRealtimeService
     void StopServer();
     void CheckIfRunning();
 
-    Task<IConnection> ConnectAsync(string userId = null);
+    Task<IConnection> ConnectAsync(string? userId = null);
 
     string GetCollectionName<T>()
         where T : IIdentifiable;
@@ -22,6 +21,6 @@ public interface IRealtimeService
     Task DeleteProjectAsync(string projectId);
     Task DeleteUserAsync(string userId);
 
-    Task<string> GetLastModifiedUserIdAsync<T>(string id, int version)
+    Task<string?> GetLastModifiedUserIdAsync<T>(string id, int version)
         where T : IIdentifiable;
 }
