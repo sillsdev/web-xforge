@@ -304,7 +304,7 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
 
@@ -328,11 +328,9 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
-
-        // We will also check that the old file is deleted
         env.FileSystemService.FileExists(Arg.Any<string>()).Returns(false);
 
         // SUT
@@ -356,7 +354,7 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
 
@@ -380,7 +378,7 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
 
@@ -413,7 +411,7 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
 
@@ -520,7 +518,7 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
 
@@ -550,7 +548,7 @@ public class TrainingDataServiceTests
                 Arg.Any<string>(),
                 TrainingDataService.DirectoryName,
                 Project01,
-                $"{User01}_{Data01}.csv"
+                TrainingDataService.GetTrainingDataFileName(User01, Data01)
             )
             .Returns(Task.FromResult(fileUri));
 

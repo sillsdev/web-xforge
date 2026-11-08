@@ -24,6 +24,7 @@ public class S3StorageProvider(
 {
     public static readonly char[] InvalidFilePathChars =
     [
+        .. Enumerable.Range(0, 32).Select(x => (char)x), // Control characters (0-31)
         '\\',
         '{',
         '}',
@@ -39,7 +40,7 @@ public class S3StorageProvider(
         '~',
         '#',
         '|',
-        .. Enumerable.Range(128, 255).Select(x => (char)x),
+        .. Enumerable.Range(128, 128).Select(x => (char)x), // Non-ASCII (128-255)
     ];
 
     private static readonly char[] InvalidFileNameChars = [.. InvalidFilePathChars, .. Path.GetInvalidFileNameChars()];

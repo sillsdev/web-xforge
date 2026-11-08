@@ -37,6 +37,17 @@ public class TrainingDataService(
     };
 
     /// <summary>
+    /// Gets the filename for a training data CSV file.
+    /// </summary>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="dataId">The data identifier.</param>
+    /// <returns>The filename.</returns>
+    /// <remarks>
+    /// No checking is performed on the parameters to ensure that they contain valid filename characters.
+    /// </remarks>
+    public static string GetTrainingDataFileName(string userId, string dataId) => $"{userId}_{dataId}.csv";
+
+    /// <summary>
     /// Converts an Excel file to a two column CSV file.
     /// </summary>
     /// <param name="excelStream">The stream containing the Excel file. The stream will be left open.</param>
@@ -241,7 +252,12 @@ public class TrainingDataService(
         await ConvertToCsvAsync(path, outputPath);
 
         // Upload and return the URL to the file
-        return await storageProvider.MoveFileAsync(outputPath, DirectoryName, projectId, $"{userId}_{dataId}.csv");
+        return await storageProvider.MoveFileAsync(
+            outputPath,
+            DirectoryName,
+            projectId,
+            GetTrainingDataFileName(userId, dataId)
+        );
     }
 
     /// <summary>

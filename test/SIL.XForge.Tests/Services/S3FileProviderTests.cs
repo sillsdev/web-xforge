@@ -14,6 +14,9 @@ using SIL.ObjectModel;
 
 namespace SIL.XForge.Services;
 
+/// <summary>
+/// Unit tests for the <see cref="S3FileProvider"/> implementation.
+/// </summary>
 [TestFixture]
 public class S3FileProviderTests
 {
@@ -104,6 +107,11 @@ public class S3FileProviderTests
         var fileInfo = env.Service.GetFileInfo("/folder-1/folder-1-a/ContentTest.txt");
 
         Assert.That(fileInfo.Exists, Is.True);
+        Assert.That(fileInfo.IsDirectory, Is.False);
+        Assert.That(fileInfo.LastModified, Is.EqualTo(new DateTimeOffset(env.LastModified, TimeSpan.Zero)));
+        Assert.That(fileInfo.Name, Is.EqualTo("ContentTest.txt"));
+        Assert.That(fileInfo.PhysicalPath, Is.Null);
+        Assert.That(fileInfo.Length, Is.EqualTo(9));
 
         using var textReader = new StreamReader(fileInfo.CreateReadStream());
         Assert.That(textReader.ReadToEnd(), Is.EqualTo("Test Data"));
@@ -128,11 +136,24 @@ public class S3FileProviderTests
                     if (
                         key
                         is $"{directoryName}/"
+                            or $"{directoryName}/dummy.pdf"
                             or $"{directoryName}/folder-1/"
                             or $"{directoryName}/folder-1/folder-1-b/"
+                            or $"{directoryName}/folder-1/folder-1-a/ContentTest.txt"
                     )
                     {
-                        return Task.FromResult(new GetObjectMetadataResponse());
+                        return Task.FromResult(
+                            new GetObjectMetadataResponse
+                            {
+                                LastModified = LastModified,
+                                ContentLength = key switch
+                                {
+                                    $"{directoryName}/dummy.pdf" => 88929,
+                                    $"{directoryName}/folder-1/folder-1-a/ContentTest.txt" => 9,
+                                    _ => 0,
+                                },
+                            }
+                        );
                     }
 
                     throw new AmazonS3Exception("Not found") { StatusCode = HttpStatusCode.NotFound };
@@ -188,7 +209,7 @@ public class S3FileProviderTests
                         ContentLength = key switch
                         {
                             $"{directoryName}/dummy.pdf" => 88929,
-                            $"{directoryName}/folder-1/folder-1-a/ContentTest.txt" => 7,
+                            $"{directoryName}/folder-1/folder-1-a/ContentTest.txt" => 9,
                             _ => 0,
                         },
                     };
