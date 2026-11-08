@@ -13,7 +13,7 @@ namespace SIL.XForge.Services;
 public class S3FileInfo(IAmazonS3 amazonS3, string bucketName, string key) : IFileInfo
 {
     private bool? _exists;
-    private GetObjectResponse? _fileObject;
+    private GetObjectMetadataResponse? _metadata;
 
     /// <inheritdoc />
     public bool Exists
@@ -24,7 +24,7 @@ public class S3FileInfo(IAmazonS3 amazonS3, string bucketName, string key) : IFi
             {
                 try
                 {
-                    GetFileObject();
+                    GetObjectMetadata();
                     _exists = true;
                 }
                 catch (AmazonS3Exception e)
@@ -45,35 +45,38 @@ public class S3FileInfo(IAmazonS3 amazonS3, string bucketName, string key) : IFi
     }
 
     /// <inheritdoc />
-    public long Length => GetFileObject().ContentLength;
+    public long Length => GetObjectMetadata().ContentLength;
 
     /// <inheritdoc />
     public string? PhysicalPath => null;
 
     /// <inheritdoc />
-    public string Name => Path.GetFileName(GetFileObject().Key.TrimEnd('/'));
+    public string Name => Path.GetFileName(key.TrimEnd('/'));
 
     /// <inheritdoc />
     public DateTimeOffset LastModified =>
-        new DateTimeOffset(DateTime.SpecifyKind(GetFileObject().LastModified ?? DateTime.MinValue, DateTimeKind.Utc));
+        new DateTimeOffset(
+            DateTime.SpecifyKind(GetObjectMetadata().LastModified ?? DateTime.MinValue, DateTimeKind.Utc)
+        );
 
     /// <inheritdoc />
-    public bool IsDirectory => GetFileObject().Key.EndsWith('/');
+    public bool IsDirectory => key.EndsWith('/');
 
     /// <inheritdoc />
     public Stream CreateReadStream()
     {
         // Copy to a memory stream to allow seeking,
         // as the HashStream the AWS SDK uses does not support seeking.
+        using GetObjectResponse fileObject = amazonS3.GetObjectAsync(bucketName, key).GetAwaiter().GetResult();
         MemoryStream memStream = new MemoryStream();
-        GetFileObject().ResponseStream.CopyTo(memStream);
+        fileObject.ResponseStream.CopyTo(memStream);
         memStream.Seek(0, SeekOrigin.Begin);
         return memStream;
     }
 
-    private GetObjectResponse GetFileObject()
+    private GetObjectMetadataResponse GetObjectMetadata()
     {
-        _fileObject ??= amazonS3.GetObjectAsync(bucketName, key).GetAwaiter().GetResult();
-        return _fileObject;
+        _metadata ??= amazonS3.GetObjectMetadataAsync(bucketName, key).GetAwaiter().GetResult();
+        return _metadata;
     }
 }

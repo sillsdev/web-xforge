@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class StorageProviderServiceCollectionExtensions
 {
     /// <summary>
-    /// Adds the appropriate storage provider base don the application configuration.
+    /// Adds the appropriate storage provider based on the application configuration.
     /// </summary>
     /// <param name="services">The services.</param>
     /// <param name="configuration">The configuration.</param>

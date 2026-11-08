@@ -9,6 +9,9 @@ using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Services;
 
+/// <summary>
+/// Unit tests for the <see cref="FileSystemStorageProvider"/> service.
+/// </summary>
 [TestFixture]
 public class FileSystemStorageProviderTests
 {

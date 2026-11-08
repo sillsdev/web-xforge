@@ -12,6 +12,9 @@ using Options = Microsoft.Extensions.Options.Options;
 
 namespace SIL.XForge.Services;
 
+/// <summary>
+/// Unit tests for the <see cref="S3StorageProvider"/> implementation.
+/// </summary>
 [TestFixture]
 public class S3StorageProviderTests
 {

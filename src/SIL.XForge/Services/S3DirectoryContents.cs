@@ -49,13 +49,13 @@ public class S3DirectoryContents(IAmazonS3 amazonS3, string bucketName, string d
             response = amazonS3.ListObjectsV2Async(request).GetAwaiter().GetResult();
 
             // Yield directories
-            foreach (string prefix in response.CommonPrefixes)
+            foreach (string prefix in (response.CommonPrefixes ?? []))
             {
                 yield return new S3FileInfo(amazonS3, bucketName, prefix);
             }
 
             // Yield files
-            foreach (S3Object obj in response.S3Objects.Where(obj => obj.Key != _key))
+            foreach (S3Object obj in (response.S3Objects ?? []).Where(obj => obj.Key != _key))
             {
                 yield return new S3FileInfo(amazonS3, bucketName, obj.Key);
             }
