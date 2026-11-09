@@ -36,7 +36,7 @@ This directory contains the configuration to use
 
    ```bash
    cd /workspaces/web-xforge/src/SIL.XForge.Scripture &&
-     dotnet watch run --node-options=--inspect=9230 |
+     dotnet watch run --Realtime:NodeOptions=--inspect=9230 |
       sed --unbuffered '/^\[[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/d' |
       sed --unbuffered 's/^      //' |
       sed --unbuffered --regexp-extended \
@@ -50,7 +50,7 @@ This directory contains the configuration to use
 
    ```bash
    cd /workspaces/web-xforge/src/SIL.XForge.Scripture &&
-     dotnet run --node-options=--inspect=9230
+     dotnet run --Realtime:NodeOptions=--inspect=9230
    ```
 
 7. Open `http://localhost:5000` in a browser on your host machine.
