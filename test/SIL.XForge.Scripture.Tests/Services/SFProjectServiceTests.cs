@@ -4336,7 +4336,7 @@ public class SFProjectServiceTests
 
         // SUT
         await Assert.ThrowsAsync<DataNotFoundException>(() =>
-            env.Service.AddUserFeedbackAsync(User01, "ProjectNotExist", feedbackParams)
+            env.Service.AddUserFeedbackAsync(User01, "invalid_project", feedbackParams)
         );
     }
 
