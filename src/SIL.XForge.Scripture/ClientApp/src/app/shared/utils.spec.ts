@@ -8,6 +8,7 @@ import { anything, instance, mock, verify } from 'ts-mockito';
 import { SelectableProject } from '../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import {
+  areDateRangesEqual,
   booksFromScriptureRange,
   checkAppAccess,
   compareProjectsForSorting,
@@ -328,6 +329,39 @@ describe('shared utils', () => {
     it('returns undefined for values that are not strings, numbers, or Dates', () => {
       expect(parseDate({})).toBeUndefined();
       expect(parseDate(true)).toBeUndefined();
+    });
+  });
+
+  describe('areDateRangesEqual', () => {
+    const start = '2026-06-01T00:00:00.000Z';
+    const end = '2026-06-30T23:59:59.999Z';
+
+    it('returns true when both ranges are undefined', () => {
+      expect(areDateRangesEqual(undefined, undefined)).toBe(true);
+    });
+
+    it('returns false when only one range is undefined', () => {
+      const range = { start: new Date(start), end: new Date(end) };
+      expect(areDateRangesEqual(range, undefined)).toBe(false);
+      expect(areDateRangesEqual(undefined, range)).toBe(false);
+    });
+
+    it('returns true for different Date instances with the same times', () => {
+      const left = { start: new Date(start), end: new Date(end) };
+      const right = { start: new Date(start), end: new Date(end) };
+      expect(areDateRangesEqual(left, right)).toBe(true);
+    });
+
+    it('returns false when the start times differ', () => {
+      const left = { start: new Date(start), end: new Date(end) };
+      const right = { start: new Date('2026-06-02T00:00:00.000Z'), end: new Date(end) };
+      expect(areDateRangesEqual(left, right)).toBe(false);
+    });
+
+    it('returns false when the end times differ', () => {
+      const left = { start: new Date(start), end: new Date(end) };
+      const right = { start: new Date(start), end: new Date('2026-06-29T23:59:59.999Z') };
+      expect(areDateRangesEqual(left, right)).toBe(false);
     });
   });
   describe('checkAppAccess function', () => {
