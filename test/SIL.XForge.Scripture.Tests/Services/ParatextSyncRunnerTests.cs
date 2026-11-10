@@ -2641,6 +2641,152 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_RemovesResourceAccessForTargetProjectUsers()
+    {
+        // Set up the environment so there will be Paratext changes
+        var env = new TestEnvironment();
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+
+        // Make user02 an SF only user
+        await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
+
+        // Ensure that the source is project02, and give user01 access
+        Assert.AreEqual("project02", env.GetProject().TranslateConfig.Source!.ProjectRef);
+        await env.SetUserRole("user01", SFProjectRole.PTObserver, "project02");
+        string sourceParatextId = env.GetProject().TranslateConfig.Source!.ParatextId;
+
+        // Set up the environment so the Paratext service will return that source is a resource
+        env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+        env.ParatextService.SendReceiveAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
+            )
+            .Returns(new ParatextResource());
+        env.ParatextService.GetResourcePermissionAsync(sourceParatextId, "user01", CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.None));
+
+        // SUT
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        env.MockLogger.AssertEventCount(
+            logEvent => logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message!, "Starting"),
+            1
+        );
+
+        // Ensure that the resource permissions were checked
+        await env
+            .ParatextService.Received(1)
+            .GetResourcePermissionAsync(sourceParatextId, "user01", CancellationToken.None);
+
+        // Ensure that the user was removed from the resource
+        await env.SFProjectService.Received(1).RemoveUserWithoutPermissionsCheckAsync("user01", "project02", "user01");
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(0, 1, 0)));
+    }
+
+    [Test]
+    public async Task SyncAsync_KeepResourceAccessForTargetProjectUsers()
+    {
+        // Set up the environment so there will be Paratext changes
+        var env = new TestEnvironment();
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+
+        // Make user02 an SF only user
+        await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
+
+        // Ensure that the source is project02, and give user01 access
+        Assert.AreEqual("project02", env.GetProject().TranslateConfig.Source!.ProjectRef);
+        await env.SetUserRole("user01", SFProjectRole.PTObserver, "project02");
+        string sourceParatextId = env.GetProject().TranslateConfig.Source!.ParatextId;
+
+        // Set up the environment so the Paratext service will return that source is a resource
+        env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+        env.ParatextService.SendReceiveAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
+            )
+            .Returns(new ParatextResource());
+        env.ParatextService.GetResourcePermissionAsync(sourceParatextId, "user01", CancellationToken.None)
+            .Returns(Task.FromResult(TextInfoPermission.Read));
+
+        // SUT
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        env.MockLogger.AssertEventCount(
+            logEvent => logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message!, "Starting"),
+            1
+        );
+
+        // Ensure that the resource permissions were checked
+        await env
+            .ParatextService.Received(1)
+            .GetResourcePermissionAsync(sourceParatextId, "user01", CancellationToken.None);
+
+        // Ensure that no users were added to the resource
+        await env.SFProjectService.Received(0).AddUserAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(0, 0, 0)));
+    }
+
+    [Test]
+    public async Task SyncAsync_DoesNotRemoveUsersFromSourceResourceIfParatextTokenExpired()
+    {
+        // Set up the environment so there will be Paratext changes
+        var env = new TestEnvironment();
+        env.SetupSFData(true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+        env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+
+        // Make user02 an SF only user
+        await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
+
+        // Ensure that the source is project02, and give user01 access
+        Assert.AreEqual("project02", env.GetProject().TranslateConfig.Source!.ProjectRef);
+        await env.SetUserRole("user01", SFProjectRole.PTObserver, "project02");
+        string sourceParatextId = env.GetProject().TranslateConfig.Source!.ParatextId;
+
+        // Set up the environment so the Paratext service will return that source is a resource
+        env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+        env.ParatextService.SendReceiveAsync(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<IProgress<ProgressState>>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
+            )
+            .Returns(new ParatextResource());
+        env.ParatextService.GetResourcePermissionAsync(sourceParatextId, "user01", CancellationToken.None)
+            .ThrowsAsync(new ParatextTokenExpiredException());
+
+        // SUT
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        env.MockLogger.AssertEventCount(
+            logEvent => logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message!, "Starting"),
+            1
+        );
+
+        // Ensure that the resource permissions were checked
+        await env
+            .ParatextService.Received(1)
+            .GetResourcePermissionAsync(sourceParatextId, "user01", CancellationToken.None);
+
+        // Ensure that no users were removed from the resource
+        await env
+            .SFProjectService.DidNotReceive()
+            .RemoveUserWithoutPermissionsCheckAsync("user01", "project02", "user01");
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(0, 0, 0)));
+    }
+
+    [Test]
     public async Task SyncAsync_BiblicalTermsAreUpdated()
     {
         var env = new TestEnvironment();
@@ -4096,11 +4242,11 @@ public class ParatextSyncRunnerTests
             }
         }
 
-        public Task SetUserRole(string userId, string role)
+        public Task SetUserRole(string userId, string role, string sfProjectId = "project01")
         {
             return RealtimeService
                 .GetRepository<SFProject>()
-                .UpdateAsync(p => p.Id == "project01", u => u.Set(pr => pr.UserRoles[userId], role));
+                .UpdateAsync(p => p.Id == sfProjectId, u => u.Set(pr => pr.UserRoles[userId], role));
         }
 
         public void SetupNoteChanges(

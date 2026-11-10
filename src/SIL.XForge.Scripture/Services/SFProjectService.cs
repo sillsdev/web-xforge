@@ -2321,11 +2321,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (_paratextService.IsResource(project.ParatextId))
             {
                 // If the project is a resource, get the permission from the DBL
-                string permission = await _paratextService.GetResourcePermissionAsync(
-                    project.ParatextId,
-                    userId,
-                    CancellationToken.None
-                );
+                string permission;
+                try
+                {
+                    permission = await _paratextService.GetResourcePermissionAsync(
+                        project.ParatextId,
+                        userId,
+                        CancellationToken.None
+                    );
+                }
+                catch (ParatextTokenExpiredException)
+                {
+                    permission = TextInfoPermission.None;
+                }
                 return permission switch
                 {
                     TextInfoPermission.None => Attempt.Failure(ProjectRole.None),

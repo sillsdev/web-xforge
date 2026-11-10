@@ -559,7 +559,7 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task GetResourcePermissionAsync_UserNoResourcePermissionWhenUnauthorized()
+    public async Task GetResourcePermissionAsync_ThrowsParatextTokenExpiredExceptionWhenUnauthorized()
     {
         // Set up environment
         var env = new TestEnvironment();
@@ -575,18 +575,9 @@ public class ParatextServiceTests
             .Throws(new UnauthorizedAccessException());
 
         // SUT
-        var paratextId = env.Resource2Id;
-        var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
-
-        Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
-        await env
-            .MockJwtTokenHelper.Received()
-            .RefreshAccessTokenAsync(
-                Arg.Any<ParatextOptions>(),
-                Arg.Any<Tokens>(),
-                Arg.Any<HttpClient>(),
-                CancellationToken.None
-            );
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() =>
+            env.Service.GetResourcePermissionAsync(env.Resource2Id, env.User01, CancellationToken.None)
+        );
     }
 
     [Test]

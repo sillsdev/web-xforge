@@ -373,24 +373,37 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     }
 
                     // Remove PT users who are in the target project, and no longer have access to the resource
-                    List<string> usersToCheck =
+                    List<string> userIdsToCheck =
                     [
                         .. _projectDoc
-                            .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Data.UserRoles.Where(u =>
+                                SFProjectRole.IsParatextRole(u.Value) && sourceProject.Data.UserRoles.ContainsKey(u.Key)
+                            )
                             .Select(u => u.Key)
                             .Except(usersToAdd),
                     ];
-                    foreach (string uid in usersToCheck)
+                    foreach (string sfUserId in userIdsToCheck)
                     {
-                        string permission = await _paratextService.GetResourcePermissionAsync(
-                            sourceParatextId,
-                            uid,
-                            token
-                        );
-                        if (permission == TextInfoPermission.None)
+                        try
                         {
-                            await _projectService.RemoveUserWithoutPermissionsCheckAsync(uid, sourceProjectRef, uid);
-                            _syncMetrics.ResourceUsers.Deleted++;
+                            string permission = await _paratextService.GetResourcePermissionAsync(
+                                sourceParatextId,
+                                sfUserId,
+                                token
+                            );
+                            if (permission == TextInfoPermission.None)
+                            {
+                                await _projectService.RemoveUserWithoutPermissionsCheckAsync(
+                                    sfUserId,
+                                    sourceProjectRef,
+                                    sfUserId
+                                );
+                                _syncMetrics.ResourceUsers.Deleted++;
+                            }
+                        }
+                        catch (ParatextTokenExpiredException)
+                        {
+                            // Do not remove the user if the Paratext token is expired
                         }
                     }
                 }
