@@ -2324,6 +2324,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 string permission = await _paratextService.GetResourcePermissionAsync(
                     project.ParatextId,
                     userId,
+                    TextInfoPermission.None,
                     CancellationToken.None
                 );
                 return permission switch

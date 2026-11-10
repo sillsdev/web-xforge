@@ -611,16 +611,23 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Gets the permission a user has to access a resource, according to a DBL server.
     /// </summary>
-    /// <param name="paratextId">The paratext resource identifier.</param>
-    /// <param name="sfUserId">The user SF identifier.</param>
+    /// <param name="paratextId">The Paratext resource identifier.</param>
+    /// <param name="sfUserId">The Scripture Forge user identifier.</param>
+    /// <param name="previousPermission">The previous permission this user had for this resource.</param>
     /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// Read or None.
     /// </returns>
     /// <remarks>
-    /// See <see cref="TextInfoPermission" /> for permission values.
+    /// <para>See <see cref="TextInfoPermission" /> for permission values.</para>
+    /// <para>The previous permission will be returned if an exception occurs checking the DBL.</para>
     /// </remarks>
-    public async Task<string> GetResourcePermissionAsync(string paratextId, string sfUserId, CancellationToken token)
+    public async Task<string> GetResourcePermissionAsync(
+        string paratextId,
+        string sfUserId,
+        string previousPermission,
+        CancellationToken token
+    )
     {
         // See if the source is even a resource
         if (!IsResource(paratextId))
@@ -629,11 +636,10 @@ public class ParatextService : DisposableBase, IParatextService
             return TextInfoPermission.None;
         }
 
-        bool canRead;
         try
         {
             UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
-            canRead = SFInstallableDblResource.CheckResourcePermission(
+            bool canRead = SFInstallableDblResource.CheckResourcePermission(
                 paratextId,
                 userSecret,
                 _paratextOptions.Value,
@@ -644,14 +650,13 @@ public class ParatextService : DisposableBase, IParatextService
                 _exceptionHandler,
                 _dblServerUri
             );
+            return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
         }
         catch (UnauthorizedAccessException)
         {
             // This will usually be caused by refresh token expiration
-            canRead = false;
+            return previousPermission;
         }
-
-        return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
     }
 
     private static string ExplainSRResults(IEnumerable<SendReceiveResult>? srResults)
@@ -898,9 +903,16 @@ public class ParatextService : DisposableBase, IParatextService
 
         if (IsResource(sfProject.ParatextId))
         {
-            foreach (string sfUserId in sfProject.UserRoles.Keys)
+            Dictionary<string, string> userPermissions = sfProject.UserRoles.ToDictionary(
+                u => u.Key,
+                u => SFProjectRole.IsParatextRole(u.Value) ? TextInfoPermission.Read : TextInfoPermission.None
+            );
+            foreach ((string sfUserId, string permission) in userPermissions)
             {
-                permissions.Add(sfUserId, await GetResourcePermissionAsync(sfProject.ParatextId, sfUserId, token));
+                permissions.Add(
+                    sfUserId,
+                    await GetResourcePermissionAsync(sfProject.ParatextId, sfUserId, permission, token)
+                );
             }
         }
         else

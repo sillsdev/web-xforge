@@ -373,23 +373,40 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     }
 
                     // Remove PT users who are in the target project, and no longer have access to the resource
-                    List<string> usersToCheck =
+                    List<string> userIdsToCheck =
                     [
                         .. _projectDoc
                             .Data.UserRoles.Where(u => SFProjectRole.IsParatextRole(u.Value))
                             .Select(u => u.Key)
                             .Except(usersToAdd),
                     ];
-                    foreach (string uid in usersToCheck)
+
+                    // Retrieve the users' permissions from the source project, so that if there
+                    // is a problem with their refreshToken, their existing permission is retained.
+                    Dictionary<string, string> usersToCheck = sourceProject
+                        .Data.UserRoles.Where(u => userIdsToCheck.Contains(u.Key))
+                        .ToDictionary(
+                            u => u.Key,
+                            u =>
+                                SFProjectRole.IsParatextRole(u.Value)
+                                    ? TextInfoPermission.Read
+                                    : TextInfoPermission.None
+                        );
+                    foreach ((string sfUserId, string permission) in usersToCheck)
                     {
-                        string permission = await _paratextService.GetResourcePermissionAsync(
+                        string newPermission = await _paratextService.GetResourcePermissionAsync(
                             sourceParatextId,
-                            uid,
+                            sfUserId,
+                            permission,
                             token
                         );
-                        if (permission == TextInfoPermission.None)
+                        if (newPermission == TextInfoPermission.None)
                         {
-                            await _projectService.RemoveUserWithoutPermissionsCheckAsync(uid, sourceProjectRef, uid);
+                            await _projectService.RemoveUserWithoutPermissionsCheckAsync(
+                                sfUserId,
+                                sourceProjectRef,
+                                sfUserId
+                            );
                             _syncMetrics.ResourceUsers.Deleted++;
                         }
                     }

@@ -1052,7 +1052,12 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User03,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
@@ -1190,7 +1195,12 @@ public class SFProjectServiceTests
             );
         await env
             .ParatextService.DidNotReceiveWithAnyArgs()
-            .GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+            .GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            );
     }
 
     [Test]
@@ -1255,7 +1265,12 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.None;
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User03,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>())
@@ -1435,7 +1450,12 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User03,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         var bookList = new List<int>() { 40, 41 };
@@ -1513,7 +1533,7 @@ public class SFProjectServiceTests
         // UpdatePermissionsAsync() should be inquiring about this and setting permissions as appropriate.
         await env
             .ParatextService.Received()
-            .GetResourcePermissionAsync(Resource01PTId, User03, Arg.Any<CancellationToken>());
+            .GetResourcePermissionAsync(Resource01PTId, User03, Arg.Any<string>(), Arg.Any<CancellationToken>());
         resource = env.GetProject(Resource01);
         // Book and chapter level read permissions are not written for resources
         Assert.That(resource.Texts.First().Permissions.ContainsKey(User03), Is.False);
@@ -2009,7 +2029,12 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User03,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         var bookList = new List<int>() { 40, 41 };
@@ -2514,7 +2539,12 @@ public class SFProjectServiceTests
             DraftingSourcesParatextIds = [newResourceParatextId],
             TrainingSourcesParatextIds = [newResourceParatextId],
         };
-        env.ParatextService.GetResourcePermissionAsync(newResourceParatextId, Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.GetResourcePermissionAsync(
+                newResourceParatextId,
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                CancellationToken.None
+            )
             .Returns(Task.FromResult(TextInfoPermission.Read));
 
         // Ensure that the new project does not exist
@@ -2928,7 +2958,12 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         env.ParatextService.TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                CancellationToken.None
+            )
             .Returns(Task.FromResult(TextInfoPermission.Read));
         env.ParatextService.GetPermissionsAsync(
                 Arg.Any<UserSecret>(),
@@ -3150,7 +3185,12 @@ public class SFProjectServiceTests
                 Arg.Any<CancellationToken>()
             )
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Administrator)));
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User01,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult(TextInfoPermission.Read));
         // SUT
         string sfProjectId = await env.Service.CreateProjectAsync(
@@ -3267,7 +3307,12 @@ public class SFProjectServiceTests
             )
             .Returns(Task.FromResult(Attempt.Success(userRoleOnPTProject)));
         string userDBLPermissionForResource = TextInfoPermission.Read;
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User03, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User03,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns<Task<string>>(Task.FromResult(userDBLPermissionForResource));
 
         var bookList = new List<int>() { 40, 41 };
@@ -3402,7 +3447,12 @@ public class SFProjectServiceTests
     public async Task CreateResourceProjectAsync_AlreadyExists_AddUser()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                CancellationToken.None
+            )
             .Returns(Task.FromResult(TextInfoPermission.Read));
         SFProject existingSfProject = env.GetProject(Resource01);
         // SUT
@@ -3421,7 +3471,12 @@ public class SFProjectServiceTests
     public async Task CreateResourceProjectAsync_AlreadyExists_AddUserAlreadyExists()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                CancellationToken.None
+            )
             .Returns(Task.FromResult(TextInfoPermission.None));
         SFProject existingSfProject = env.GetProject(Resource01);
         // SUT
@@ -3440,7 +3495,12 @@ public class SFProjectServiceTests
     public async Task CreateResourceProjectAsync_NotExisting_AddUser()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                CancellationToken.None
+            )
             .Returns(Task.FromResult(TextInfoPermission.Read));
         int projectCount = env.RealtimeService.GetRepository<SFProject>().Query().Count();
         // SUT
@@ -3459,7 +3519,12 @@ public class SFProjectServiceTests
     public async Task AddUserToResourceProjectAsync_UserResourcePermission()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User02, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User02,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult(TextInfoPermission.Read));
 
         User user = env.GetUser(User02);
@@ -3475,7 +3540,12 @@ public class SFProjectServiceTests
     public async Task AddUserToResourceProjectAsync_UserResourceNoPermission()
     {
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcePermissionAsync(Arg.Any<string>(), User01, Arg.Any<CancellationToken>())
+        env.ParatextService.GetResourcePermissionAsync(
+                Arg.Any<string>(),
+                User01,
+                Arg.Any<string>(),
+                Arg.Any<CancellationToken>()
+            )
             .Returns(Task.FromResult(TextInfoPermission.None));
 
         User user = env.GetUser(User01);
@@ -6429,7 +6499,12 @@ public class SFProjectServiceTests
                 );
 
             ParatextService
-                .GetResourcePermissionAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+                .GetResourcePermissionAsync(
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    CancellationToken.None
+                )
                 .Returns(TextInfoPermission.Read);
 
             ParatextService

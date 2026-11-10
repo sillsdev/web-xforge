@@ -554,12 +554,17 @@ public class ParatextServiceTests
         env.SetRestClientFactory(user01Secret);
 
         var paratextId = "resid_is_16_char";
-        var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
+        var permission = await env.Service.GetResourcePermissionAsync(
+            paratextId,
+            env.User01,
+            TextInfoPermission.Read,
+            CancellationToken.None
+        );
         Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
     }
 
     [Test]
-    public async Task GetResourcePermissionAsync_UserNoResourcePermissionWhenUnauthorized()
+    public async Task GetResourcePermissionAsync_KeepPreviousResourcePermissionWhenUnauthorized()
     {
         // Set up environment
         var env = new TestEnvironment();
@@ -576,9 +581,14 @@ public class ParatextServiceTests
 
         // SUT
         var paratextId = env.Resource2Id;
-        var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
+        var permission = await env.Service.GetResourcePermissionAsync(
+            paratextId,
+            env.User01,
+            TextInfoPermission.Read,
+            CancellationToken.None
+        );
 
-        Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
+        Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
         await env
             .MockJwtTokenHelper.Received()
             .RefreshAccessTokenAsync(
@@ -597,7 +607,12 @@ public class ParatextServiceTests
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         env.SetRestClientFactory(user01Secret);
         var paratextId = env.Resource2Id;
-        var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
+        var permission = await env.Service.GetResourcePermissionAsync(
+            paratextId,
+            env.User01,
+            TextInfoPermission.None,
+            CancellationToken.None
+        );
         Assert.That(permission, Is.EqualTo(TextInfoPermission.Read));
     }
 
