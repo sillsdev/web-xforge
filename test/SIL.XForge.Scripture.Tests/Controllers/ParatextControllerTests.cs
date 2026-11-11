@@ -96,13 +96,12 @@ public class ParatextControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         var settings = new SFProjectCreateSettings { ParatextId = Paratext01 };
-        env.ProjectService.CreateProjectAsync(User01, settings)
-            .ThrowsAsync(new UnauthorizedAccessException("Forbidden"));
+        env.ProjectService.CreateProjectAsync(User01, settings).ThrowsAsync(new ParatextTokenExpiredException());
 
         // SUT
         ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+        Assert.IsInstanceOf<UnauthorizedObjectResult>(actual.Result);
     }
 
     [Test]
@@ -212,16 +211,16 @@ public class ParatextControllerTests
     }
 
     [Test]
-    public async Task GetAsync_UnauthorizedAccessException()
+    public async Task GetAsync_Unauthorized()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Throws<UnauthorizedAccessException>();
+        env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Throws(new ParatextTokenExpiredException());
 
         // SUT
         ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+        Assert.IsInstanceOf<UnauthorizedObjectResult>(actual.Result);
     }
 
     [Test]
@@ -517,16 +516,16 @@ public class ParatextControllerTests
     }
 
     [Test]
-    public async Task ResourcesAsync_UnauthorizedAccessException()
+    public async Task ResourcesAsync_ParatextTokenExpiredExceptionException()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ParatextService.GetResourcesAsync(User01).Throws<UnauthorizedAccessException>();
+        env.ParatextService.GetResourcesAsync(User01).Throws(new ParatextTokenExpiredException());
 
         // SUT
         ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+        Assert.IsInstanceOf<UnauthorizedObjectResult>(actual.Result);
     }
 
     [Test]
@@ -574,12 +573,12 @@ public class ParatextControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ProjectService.SyncAsync(User01, Project01).ThrowsAsync(new UnauthorizedAccessException("Forbidden"));
+        env.ProjectService.SyncAsync(User01, Project01).ThrowsAsync(new ParatextTokenExpiredException());
 
         // SUT
         ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual.Result);
+        Assert.IsInstanceOf<UnauthorizedObjectResult>(actual.Result);
     }
 
     private class TestEnvironment
