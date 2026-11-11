@@ -1010,7 +1010,7 @@ public class MachineApiController : ControllerBase
         }
         catch (ParatextTokenExpiredException e)
         {
-            return Unauthorized(e);
+            return Unauthorized(e.Message);
         }
     }
 
