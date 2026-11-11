@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable } from '@angular/core';
+import { distinctUntilChanged, skip } from 'rxjs';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SelectableProject } from '../../../../core/models/selectable-project';
 import { ParatextService } from '../../../../core/paratext.service';
@@ -18,10 +19,15 @@ export class EditorTabAddResourceDialogService {
     private readonly userProjectsService: SFUserProjectsService,
     private readonly destroyRef: DestroyRef
   ) {
-    this.userProjectsService.projectDocs$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(async projects => {
-      if (projects == null) return;
-      this.projects = await this.paratextService.getProjects();
-    });
+    // Refresh the cached projects when the user's project subscription changes, ignoring the initial emission
+    // and ensuring that getProjects() has already populated the cache. Ensure that any errors do not throw,
+    // as the caller of getProjects() will appropriately handle any errors in its UI.
+    this.userProjectsService.projectDocs$
+      .pipe(filterNullish(), distinctUntilChanged(), skip(1), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async () => {
+        if (this.projects == null) return;
+        this.projects = await this.paratextService.getProjects().catch(() => (this.projects = undefined));
+      });
   }
 
   async getProjects(): Promise<ParatextProject[] | undefined> {
