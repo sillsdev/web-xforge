@@ -15,7 +15,8 @@ export enum CommandErrorCode {
   InvalidParams = -32602,
   InternalError = -32603,
   Forbidden = -32000,
-  NotFound = -32001
+  NotFound = -32001,
+  Unauthorized = -31999
 }
 
 interface JsonRpcRequest {

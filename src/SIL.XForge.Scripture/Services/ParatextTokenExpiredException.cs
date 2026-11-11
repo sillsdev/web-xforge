@@ -9,8 +9,8 @@ public class ParatextTokenExpiredException : Exception
 {
     private const string DefaultMessage = "The Paratext refresh token has expired.";
 
-    public ParatextTokenExpiredException()
-        : base(DefaultMessage) { }
+    public ParatextTokenExpiredException(string? message = DefaultMessage)
+        : base(message) { }
 
     public ParatextTokenExpiredException(Exception innerException)
         : base(DefaultMessage, innerException) { }
