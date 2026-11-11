@@ -176,6 +176,19 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(false);
   }));
 
+  it('should display the Paratext credentials update prompt when sync throws an unauthorized error', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineSync(env.projectId)).thenReject(
+      new CommandError(CommandErrorCode.Unauthorized, 'Forbidden')
+    );
+
+    env.clickElement(env.syncButton);
+
+    verify(mockedProjectService.onlineSync(env.projectId)).once();
+    verify(mockedAuthService.requestParatextCredentialUpdate()).once();
+    expect(env.component.syncActive).toBe(false);
+  }));
+
   it('should report error if sync has a problem', fakeAsync(() => {
     const env = new TestEnvironment();
     verify(mockedProjectService.get(env.projectId)).once();

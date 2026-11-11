@@ -2474,7 +2474,7 @@ public class MachineApiControllerTests
                 Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
                 CancellationToken.None
             )
-            .Throws(new UnauthorizedAccessException());
+            .Throws(new ParatextTokenExpiredException());
 
         // SUT
         ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
@@ -2482,7 +2482,7 @@ public class MachineApiControllerTests
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<UnauthorizedResult>(actual);
+        Assert.IsInstanceOf<UnauthorizedObjectResult>(actual);
     }
 
     private class TestEnvironment

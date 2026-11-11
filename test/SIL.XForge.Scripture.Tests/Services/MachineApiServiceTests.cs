@@ -5314,10 +5314,10 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.ProjectService.SyncAsync(User01, Project01).Throws(new UnauthorizedAccessException());
+        env.ProjectService.SyncAsync(User01, Project01).Throws(new ParatextTokenExpiredException());
 
         // SUT
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() =>
             env.Service.StartPreTranslationBuildAsync(
                 User01,
                 new BuildConfig { ProjectId = Project01 },

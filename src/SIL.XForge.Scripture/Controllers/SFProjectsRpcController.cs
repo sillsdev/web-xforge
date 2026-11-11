@@ -657,9 +657,13 @@ public class SFProjectsRpcController(
             await projectService.SyncAsync(UserId, projectId);
             return Ok();
         }
-        catch (Exception ex) when (ex is ForbiddenException or UnauthorizedAccessException)
+        catch (ForbiddenException)
         {
             return ForbiddenError();
+        }
+        catch (ParatextTokenExpiredException e)
+        {
+            return UnauthorizedError(e.Message);
         }
         catch (DataNotFoundException dnfe)
         {
