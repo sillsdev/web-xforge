@@ -835,8 +835,8 @@
     "error_fetching_resources": "Ocorreu um erro na busca de recursos da Digital Bible Library. Você só poderá selecionar projetos.",
     "export_all": "All answers",
     "export_checking_answers": "Set which answers will be exported as comments when syncing with Paratext.",
-    "export_marked_for_export": "Answers flagged for review",
-    "export_none": "No answers",
+    "export_marked_for_export": "Respostas sinalizadas para revisão",
+    "export_none": "Sem resposta",
     "exporting_answers": "Exporting Answers",
     "see_others_answers_and_comments": "Permitir que os verificadores vejam as respostas uns dos outros",
     "select_project_or_resource": "Selecione o projeto do Paratext ou o recurso da Digital Bible Library no qual seu projeto se baseia. Se o seu projeto se baseia num projeto do Paratext, é melhor configurá-lo como um projeto derivado no Paratext.",
@@ -971,7 +971,7 @@
     "save": "Salvar",
     "upload_failed": "The training data file could not be uploaded. Please try again or use a different file.",
     "upload_training_data": "Upload Training Data",
-    "uploading": "Uploading..."
+    "uploading": "Enviando..."
   },
   "translate_overview": {
     "progress": "Progresso",
