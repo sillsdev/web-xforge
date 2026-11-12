@@ -4,13 +4,16 @@ import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslocoService } from '@ngneat/transloco';
-import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { User, UserProfile } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser, createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
+import { AuthService } from 'xforge-common/auth.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { SF_TYPE_REGISTRY } from '../../app/core/models/sf-type-registry';
+import { AvatarComponent } from '../avatar/avatar.component';
 import { isSafari } from '../utils';
 import { OwnerComponent } from './owner.component';
 
@@ -36,6 +39,16 @@ describe('OwnerComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.userName).toBe('checking.unknown_author');
+  }));
+
+  it('displays the current user from their user doc, whose profile doc may not be available offline', fakeAsync(() => {
+    const template = '<app-owner ownerRef="currentUser" [includeAvatar]="true"></app-owner>';
+    const env = new TestEnvironment(template);
+    tick();
+    env.fixture.detectChanges();
+    expect(env.userName).toBe('checking.me');
+    const avatar: AvatarComponent = env.avatar.query(By.directive(AvatarComponent)).componentInstance;
+    expect(avatar.user?.displayName).toBe('Current User');
   }));
 
   it('displays avatar', () => {
@@ -91,6 +104,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
 
   readonly mockedTranslocoService = mock(TranslocoService);
+  readonly mockedAuthService = mock(AuthService);
 
   private readonly realtimeService: TestRealtimeService;
 
@@ -100,6 +114,7 @@ class TestEnvironment {
       providers: [
         provideTestRealtime(SF_TYPE_REGISTRY),
         { provide: TranslocoService, useFactory: () => instance(this.mockedTranslocoService) },
+        { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         provideHttpClient(withInterceptorsFromDi()),
         provideHttpClientTesting()
       ]
@@ -111,6 +126,12 @@ class TestEnvironment {
       id: 'user01',
       data: createTestUserProfile({ displayName: 'User 01' })
     });
+    // Only the current user's user doc exists, as when offline before their profile doc has ever been fetched
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'currentUser',
+      data: createTestUser({ displayName: 'Current User' })
+    });
+    when(this.mockedAuthService.currentUserId).thenReturn('currentUser');
     when(this.mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
     );

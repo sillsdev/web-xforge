@@ -42,7 +42,7 @@
     },
     {
       // Attach to and debug the running realtime server. The dotnet backend needs to have been started with
-      // --node-options=--inspect=9230 or --node-options=--inspect-brk=9230
+      // --Realtime:NodeOptions=--inspect=9230 or --Realtime:NodeOptions=--inspect-brk=9230
       // While this can attach to realtime server in Docker, the source maps do not seem to be working.
       "name": "Attach to backend realtime server (inc Docker)",
       "request": "attach",
@@ -108,7 +108,7 @@
       "request": "launch",
       "preLaunchTask": "dotnet build",
       "program": "${workspaceRoot}/src/SIL.XForge.Scripture/bin/Debug/net10.0/SIL.XForge.Scripture.dll",
-      "args": ["--start-ng-serve=listen", "--node-options=--inspect=9230"],
+      "args": ["--start-ng-serve=listen", "--Realtime:NodeOptions=--inspect=9230"],
       "cwd": "${workspaceRoot}/src/SIL.XForge.Scripture/",
       "stopAtEntry": false,
       "console": "integratedTerminal",
