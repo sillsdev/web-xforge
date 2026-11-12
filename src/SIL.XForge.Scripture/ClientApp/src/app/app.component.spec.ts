@@ -372,6 +372,20 @@ describe('AppComponent', () => {
     expect(env.location.path()).toEqual('/projects');
   }));
 
+  it('shows the removed from project dialog once when the project keeps changing', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.selectedProjectId).toEqual('project01');
+    // The sync that removes the user goes on to change the project before the app has navigated away
+    env.removeUserFromProject('project01', { thenChangeProjectTimes: 2 });
+
+    verify(mockedDialogService.message(anything())).once();
+    verify(mockedSFProjectService.localDelete('project01')).once();
+    expect(env.location.path()).toEqual('/projects');
+  }));
+
   it('response to remote project change for serval admin', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setCurrentUser('user05');
@@ -1009,9 +1023,12 @@ class TestEnvironment {
     this.wait();
   }
 
-  removeUserFromProject(projectId: string): void {
+  removeUserFromProject(projectId: string, { thenChangeProjectTimes = 0 } = {}): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
+    for (let i = 0; i < thenChangeProjectTimes; i++) {
+      projectDoc.submitJson0Op(op => op.inc(p => p.sync.queuedCount, 1), false);
+    }
     this.wait();
   }
 
