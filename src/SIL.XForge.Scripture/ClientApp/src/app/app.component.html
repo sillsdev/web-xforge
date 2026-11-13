@@ -11,8 +11,15 @@
     }
     <mat-toolbar color="primary">
       <mat-toolbar-row>
-        @if (!isDrawerPermanent && isProjectSelected) {
-          <button id="hamburger-menu-button" mat-icon-button (click)="toggleDrawer()">
+        @if (isProjectSelected) {
+          <button
+            id="hamburger-menu-button"
+            mat-icon-button
+            (click)="toggleDrawer()"
+            aria-controls="menu-drawer"
+            [attr.aria-expanded]="isDrawerOpen"
+            [matTooltip]="isDrawerOpen ? t('hide_menu') : t('show_menu')"
+          >
             <mat-icon>menu</mat-icon>
           </button>
         }
@@ -231,7 +238,7 @@
         #drawer
         id="menu-drawer"
         [mode]="isDrawerPermanent ? 'side' : 'over'"
-        [opened]="isExpanded || isDrawerPermanent"
+        [opened]="isDrawerOpen"
         (closed)="drawerCollapsed()"
         autoFocus="false"
       >
