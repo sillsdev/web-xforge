@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using Newtonsoft.Json;
 
@@ -28,6 +27,6 @@ public class IntegerToUtcDateTimeConverter : JsonConverter
 
     /// <inheritdoc />
     /// <exception cref="NotImplementedException">This method is not supported.</exception>
-    public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer) =>
+    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer) =>
         throw new NotImplementedException();
 }

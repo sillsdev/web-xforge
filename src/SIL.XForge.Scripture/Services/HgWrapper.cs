@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.IO;
 using System.Linq;
@@ -65,10 +64,10 @@ public class HgWrapper : IHgWrapper
     /// <returns>
     /// The Mercurial revision identifier.
     /// </returns>
-    public string GetLastPublicRevision(string repository)
+    public string? GetLastPublicRevision(string repository)
     {
         string ids = RunCommand(repository, """log --rev "public()" --template "{node}\n" """);
-        string revision = ids.Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
+        string? revision = ids.Split('\n', StringSplitOptions.RemoveEmptyEntries).LastOrDefault()?.Trim();
         return revision;
     }
 

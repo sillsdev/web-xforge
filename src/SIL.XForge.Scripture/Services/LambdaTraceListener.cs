@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Text;
 
@@ -17,9 +16,9 @@ public class LambdaTraceListener : System.Diagnostics.TraceListener
     }
 
     ///<remarks>Writes are buffered, to be sent upon WriteLine.</remarks>
-    public override void Write(string message) => _buffer.Append(message);
+    public override void Write(string? message) => _buffer.Append(message);
 
-    public override void WriteLine(string message)
+    public override void WriteLine(string? message)
     {
         string combinedMessage = _buffer + message;
         _buffer.Clear();

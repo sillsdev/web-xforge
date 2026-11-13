@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -56,6 +55,6 @@ public class SharedResource
     /// Map of culture identifier (language tag) to interface language object (local name displayed in the chooser)
     /// </summary>
     public static readonly Dictionary<string, InterfaceLanguage> Cultures = JsonConvert
-        .DeserializeObject<List<InterfaceLanguage>>(File.ReadAllText("locales.json"))
+        .DeserializeObject<List<InterfaceLanguage>>(File.ReadAllText("locales.json"))!
         .ToDictionary(culture => culture.CanonicalTag);
 }
