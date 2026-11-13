@@ -1,11 +1,19 @@
 <app-notice type="primary" mode="basic" icon="chat_bubble_outline">
-  @for (i of feedbackPrompt | async; track $index) {
-    <!-- prettier-ignore -->
-    @if (i.id == null) {{{ i.text }}}
-    @else if (i.id === 1) {
-      <a href="javascript:;" (click)="onSendFeedback()">{{ i.text }}</a>
-    } @else if (i.id === 3) {
-      <a href="mailto:{{ issueEmail }}" target="_blank" rel="noopener noreferrer">{{ i.text }}</a>
-    }
-  }
+  <div class="feedback-content">
+    <div>
+      @for (i of feedbackPrompt | async; track $index) {
+        <!-- prettier-ignore -->
+        @if (i.id == null) {{{ i.text }}}
+        @else if (i.id === 1) {
+          <a href="javascript:;" (click)="onSendFeedback()">{{ i.text }}</a>
+        } @else if (i.id === 3) {
+          <a href="mailto:{{ issueEmail }}" target="_blank" rel="noopener noreferrer">{{ i.text }}</a>
+        }
+      }
+    </div>
+
+    <button mat-icon-button type="button" class="dismiss-button" (click)="onDismiss()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
 </app-notice>

@@ -34,4 +34,8 @@ export interface SFProjectUserConfig extends ProjectData {
   selectedDraftTargetParatextId?: string;
   showEditorTabsInSinglePane?: boolean;
   unreadDraftResult?: DraftResult;
+  /** ISO date string of when the user dismissed the draft feedback notice. */
+  draftFeedbackDismissalDate?: string;
+  /** ISO date string of when the user last submitted draft feedback. */
+  draftFeedbackSubmissionDate?: string;
 }
