@@ -514,7 +514,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <returns>The job identifier.</returns>
     /// <exception cref="DataNotFoundException">The project or user does not exist.</exception>
     /// <exception cref="ForbiddenException">The user is not an administrator or translator.</exception>
-    /// <exception cref="UnauthorizedAccessException">The user cannot access the Paratext Registry or Archives.</exception>
+    /// <exception cref="ParatextTokenExpiredException">
+    /// The user cannot access the Paratext Registry or Archives, or their tokens have expired and cannot be refreshed.
+    /// </exception>
     public async Task<string> SyncAsync(string curUserId, string projectId)
     {
         // Ensure the project exists
@@ -541,13 +543,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             throw new DataNotFoundException("The user does not exist.");
 
         // Ensure that the user can access the Paratext registry
-        // NOTE: These next two methods will throw UnauthorizedAccessException on failure to refresh the token
+        // NOTE: These next two methods will throw ParatextTokenExpiredException on failure to refresh the token
         if (!await _paratextService.CanUserAuthenticateToPTRegistryAsync(userSecret))
-            throw new UnauthorizedAccessException();
+            throw new ParatextTokenExpiredException("Cannot authenticate with the Paratext Registry");
 
         // Ensure that the user can access the Paratext archives
         if (!await _paratextService.CanUserAuthenticateToPTArchivesAsync(curUserId))
-            throw new UnauthorizedAccessException();
+            throw new ParatextTokenExpiredException("Cannot authenticate with the Paratext Archives");
 
         // Queue the sync
         return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
@@ -2665,7 +2667,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 // The user does not have Paratext access
             }
-            catch (UnauthorizedAccessException)
+            catch (ParatextTokenExpiredException)
             {
                 // The user's refresh token is invalid
             }

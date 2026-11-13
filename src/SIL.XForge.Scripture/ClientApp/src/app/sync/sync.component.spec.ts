@@ -163,10 +163,10 @@ describe('SyncComponent', () => {
     verify(mockedNoticeService.show('Successfully synchronized Sync Test Project with Paratext.')).once();
   }));
 
-  it('should display the Paratext credentials update prompt when sync throws a forbidden error', fakeAsync(() => {
+  it('should display the Paratext credentials update prompt when sync throws an unauthorized error', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedProjectService.onlineSync(env.projectId)).thenReject(
-      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
+      new CommandError(CommandErrorCode.Unauthorized, 'refresh token expired')
     );
 
     env.clickElement(env.syncButton);

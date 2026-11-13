@@ -22,12 +22,33 @@ public class JwtTokenHelperTests
 
         // Mock the Registry Server response
         var handler = new MockHttpMessageHandler([
+            (
+                url: "api8/token",
+                message: """{"error": "invalid_grant", "error_description": "refresh token expired"}""",
+                statusCode: HttpStatusCode.BadRequest
+            ),
+        ]);
+        HttpClient httpClient = handler.CreateHttpClient();
+
+        // SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() =>
+            env.Service.RefreshAccessTokenAsync(new ParatextOptions(), new Tokens(), httpClient, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task RefreshAccessTokenAsync_BadRequestInvalidContent()
+    {
+        var env = new TestEnvironment();
+
+        // Mock the Registry Server response
+        var handler = new MockHttpMessageHandler([
             (url: "api8/token", message: string.Empty, statusCode: HttpStatusCode.BadRequest),
         ]);
         HttpClient httpClient = handler.CreateHttpClient();
 
         // SUT
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() =>
             env.Service.RefreshAccessTokenAsync(new ParatextOptions(), new Tokens(), httpClient, CancellationToken.None)
         );
     }
