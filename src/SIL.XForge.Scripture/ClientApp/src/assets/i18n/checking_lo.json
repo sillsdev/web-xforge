@@ -247,7 +247,7 @@
     "no_audio_file_uploaded": "No audio file uploaded",
     "no_timing_data_uploaded": "No timing data uploaded",
     "not_upload_audio_offline": "Audio files cannot be uploaded without connecting to the internet.",
-    "save": "ວັກທີ່ມີຄຳຖາມ",
+    "save": "ບັນທຶກຄຳຕອບ",
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
