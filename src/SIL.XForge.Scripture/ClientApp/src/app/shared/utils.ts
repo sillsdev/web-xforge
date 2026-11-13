@@ -326,3 +326,15 @@ export function parseDate(value: unknown): Date | undefined {
   if (Number.isNaN(parsed.getTime())) return undefined;
   return parsed;
 }
+
+/**
+ * Determines whether two date ranges have the same start and end times. Two undefined ranges are considered equal.
+ */
+export function areDateRangesEqual(
+  left: { start: Date; end: Date } | undefined,
+  right: { start: Date; end: Date } | undefined
+): boolean {
+  if (left == null && right == null) return true;
+  if (left == null || right == null) return false;
+  return left.start.getTime() === right.start.getTime() && left.end.getTime() === right.end.getTime();
+}
