@@ -569,7 +569,7 @@ public class ParatextControllerTests
     }
 
     [Test]
-    public async Task SyncAsync_Unauthorized()
+    public async Task SyncAsync_ParatextTokenExpired()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -579,6 +579,19 @@ public class ParatextControllerTests
         ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
 
         Assert.IsInstanceOf<UnauthorizedObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task SyncAsync_Unauthorized()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.ProjectService.SyncAsync(User01, Project01).ThrowsAsync(new UnauthorizedAccessException());
+
+        // SUT
+        ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
 
     private class TestEnvironment

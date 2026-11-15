@@ -5058,7 +5058,7 @@ public class ParatextServiceTests
         );
 
         // One SUT
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentNullException>(
             () =>
                 env.Service.CanUserAuthenticateToPTRegistryAsync(new UserSecret() { Id = null, ParatextTokens = null }),
             "the user secret does not have usable content"
@@ -5071,6 +5071,14 @@ public class ParatextServiceTests
             await env.Service.CanUserAuthenticateToPTRegistryAsync(user01Secret),
             Is.False,
             "authorization token is not accepted by server. unauthorized."
+        );
+
+        env.MakeRegistryClientReturn(env.TokensExpiredHttpResponseMessage);
+
+        // One SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(
+            () => env.Service.CanUserAuthenticateToPTRegistryAsync(user01Secret),
+            "the paratext tokens are not throwing the correct exception when expired"
         );
 
         using HttpResponseMessage okResponse = TestEnvironment.MakeOkHttpResponseMessage(
@@ -5097,7 +5105,7 @@ public class ParatextServiceTests
         string userSFId = env.User01;
 
         // One SUT
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentNullException>(
             () => env.Service.CanUserAuthenticateToPTArchivesAsync(null),
             "unacceptable null input"
         );
@@ -5125,6 +5133,14 @@ public class ParatextServiceTests
 
         // One SUT
         Assert.That(await env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId), Is.True, "authorized");
+
+        mockSource.CanUserAuthenticateToPTArchives().Throws(new ParatextTokenExpiredException());
+
+        // One SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(
+            () => env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId),
+            "unauthorized"
+        );
     }
 
     [Test]
@@ -6887,6 +6903,14 @@ public class ParatextServiceTests
         {
             RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
             Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem")),
+        };
+
+        public readonly HttpResponseMessage TokensExpiredHttpResponseMessage = new HttpResponseMessage(
+            HttpStatusCode.BadRequest
+        )
+        {
+            RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+            Content = new ByteArrayContent(Encoding.UTF8.GetBytes("tokens are invalid or have expired")),
         };
 
         public readonly HttpResponseMessage NotFoundHttpResponseMessage = new HttpResponseMessage(

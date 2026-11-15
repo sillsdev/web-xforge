@@ -14,15 +14,16 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SelectableProject } from '../../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
+import { ParatextService } from '../../../../core/paratext.service';
 import { PermissionsService } from '../../../../core/permissions.service';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { ProjectSelectComponent } from '../../../../project-select/project-select.component';
 import { SyncProgressComponent } from '../../../../sync/sync-progress/sync-progress.component';
-import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 export interface EditorTabAddResourceDialogData {
   excludedParatextIds: string[];
 }
@@ -75,12 +76,21 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
   constructor(
     private readonly destroyRef: DestroyRef,
     readonly onlineStatus: OnlineStatusService,
-    private readonly editorTabAddResourceDialogService: EditorTabAddResourceDialogService,
+    private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
+    private readonly userProjectsService: SFUserProjectsService,
     private readonly dialogRef: MatDialogRef<EditorTabAddResourceDialogComponent, SFProjectDoc>,
     @Inject(MAT_DIALOG_DATA) readonly dialogData: EditorTabAddResourceDialogData
-  ) {}
+  ) {
+    // Refresh the cached projects when the user's project subscription changes
+    this.userProjectsService.projectDocs$
+      .pipe(filterNullish(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async () => {
+        if (this.isLoading) return;
+        await this.getProjectsAndResources();
+      });
+  }
 
   get appOnline(): boolean {
     return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;
@@ -179,14 +189,14 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     this.isLoading = true;
 
     await Promise.all([
-      this.editorTabAddResourceDialogService
+      this.paratextService
         .getProjects()
         .then(projects => {
           this.projectLoadingFailed = false;
           this.projects = this.filterConnectable(projects);
         })
         .catch(() => (this.projectLoadingFailed = true)),
-      this.editorTabAddResourceDialogService
+      this.paratextService
         .getResources()
         .then(resources => {
           this.resourceLoadingFailed = false;

@@ -369,7 +369,7 @@ public class ParatextController : ControllerBase
         {
             return NotFound();
         }
-        catch (ForbiddenException)
+        catch (Exception ex) when (ex is ForbiddenException or UnauthorizedAccessException)
         {
             return Forbid();
         }
