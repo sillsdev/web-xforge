@@ -199,6 +199,7 @@ describe('DraftHistoryListComponent', () => {
 
     env.buildProgress$.next(undefined);
     verify(mockedDraftGenerationService.getBuildHistory('project01')).twice();
+    expect(env.component.history).toEqual([build]);
   }));
 
   it('should show history with faulted and canceled builds', fakeAsync(() => {
