@@ -82,21 +82,21 @@ public class JwtTokenHelper(IExceptionHandler exceptionHandler, ILogger<JwtToken
         stopwatch.Stop();
         DateTime requestTime = DateTime.UtcNow;
 
-        // Rethrow 400 errors as unauthorized, as these are related to invalid or expired tokens
+        // Rethrow 400 errors as ParatextTokenExpiredException
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
             string errorJson = await response.Content.ReadAsStringAsync(token);
             try
             {
-                // Attempt to retrive the error description from the response
+                // Attempt to retrieve the error description from the response
                 JObject errorDetails = JObject.Parse(errorJson);
                 string? errorDescription = (string?)errorDetails["error_description"];
                 throw new ParatextTokenExpiredException(errorDescription);
             }
-            catch (JsonReaderException)
+            catch (JsonReaderException e)
             {
-                // If there is a problem parsing the JSON, just throw the excpetion with the default message
-                throw new ParatextTokenExpiredException();
+                // If there is a problem parsing the JSON, just throw the exception with the default message
+                throw new ParatextTokenExpiredException(e);
             }
         }
 
