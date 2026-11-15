@@ -5,7 +5,6 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <RootNamespace>SIL.XForge.Scripture</RootNamespace>
-    <LangVersion>latest</LangVersion>
     <RealtimeServerRoot>..\..\src\RealtimeServer\</RealtimeServerRoot>
     <Nullable>enable</Nullable>
     <!--
