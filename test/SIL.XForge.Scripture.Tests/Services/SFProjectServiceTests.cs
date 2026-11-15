@@ -3588,7 +3588,7 @@ public class SFProjectServiceTests
         env.ParatextService.CanUserAuthenticateToPTArchivesAsync(User01).Returns(false);
 
         // SUT
-        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() => env.Service.SyncAsync(User01, Project01));
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
     }
 
     [Test]
@@ -3597,6 +3597,29 @@ public class SFProjectServiceTests
         // Setup
         var env = new TestEnvironment();
         env.ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>()).Returns(false);
+
+        // SUT
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task SyncAsync_TokensExpiredAccessingArchives()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        env.ParatextService.CanUserAuthenticateToPTArchivesAsync(User01).Throws(new ParatextTokenExpiredException());
+
+        // SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() => env.Service.SyncAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task SyncAsync_TokensExpiredAccessingRegistry()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        env.ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>())
+            .Throws(new ParatextTokenExpiredException());
 
         // SUT
         await Assert.ThrowsAsync<ParatextTokenExpiredException>(() => env.Service.SyncAsync(User01, Project01));

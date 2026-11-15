@@ -14,7 +14,8 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { TranslocoModule } from '@ngneat/transloco';
 import { map, repeat, take, timer } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
+import { filterNullish, quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { ParatextProject } from '../../../../core/models/paratext-project';
 import { SelectableProject } from '../../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../../core/models/sf-project-doc';
@@ -78,9 +79,18 @@ export class EditorTabAddResourceDialogComponent implements OnInit {
     private readonly editorTabAddResourceDialogService: EditorTabAddResourceDialogService,
     private readonly projectService: SFProjectService,
     private readonly permissionsService: PermissionsService,
+    private readonly userProjectsService: SFUserProjectsService,
     private readonly dialogRef: MatDialogRef<EditorTabAddResourceDialogComponent, SFProjectDoc>,
     @Inject(MAT_DIALOG_DATA) readonly dialogData: EditorTabAddResourceDialogData
-  ) {}
+  ) {
+    // Refresh the cached projects when the user's project subscription changes
+    this.userProjectsService.projectDocs$
+      .pipe(filterNullish(), quietTakeUntilDestroyed(this.destroyRef))
+      .subscribe(async () => {
+        if (this.isLoading) return;
+        await this.getProjectsAndResources();
+      });
+  }
 
   get appOnline(): boolean {
     return this.onlineStatus.isOnline && this.onlineStatus.isBrowserOnline;

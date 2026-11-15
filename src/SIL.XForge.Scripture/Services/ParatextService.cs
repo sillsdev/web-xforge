@@ -396,21 +396,23 @@ public class ParatextService : DisposableBase, IParatextService
         }
     }
 
+    /// <summary>
+    /// Determines if the user can authenticate with the Paratext Registry.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
     /// <returns>
-    /// True if the user secret is able to access the PT Registry. PT Registry is a web service such as at
-    /// registry.paratext.org.
-    /// False if there is a problem with authorization or connecting to the PT Registry.
+    /// Returns <c>true</c> if the user secret is able to access the PT Registry;
+    /// otherwise, <c>false</c> if there is a problem with authorization or connecting to the PT Registry,
+    /// that is not related to token expiration.
     /// </returns>
+    /// <remarks>The PT Registry is a web service such as at registry.paratext.org.</remarks>
+    /// <exception cref="ArgumentException">The user secret, user identifier, or Paratext tokens are null.</exception>
+    /// <exception cref="ParatextTokenExpiredException">The Paratext token has expired.</exception>
     public async Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret? userSecret)
     {
-        if (userSecret == null)
-        {
-            throw new ArgumentNullException(nameof(userSecret));
-        }
-        if (userSecret.Id == null || userSecret.ParatextTokens == null)
-        {
-            throw new ArgumentException(nameof(userSecret));
-        }
+        ArgumentNullException.ThrowIfNull(userSecret);
+        ArgumentNullException.ThrowIfNull(userSecret.Id);
+        ArgumentNullException.ThrowIfNull(userSecret.ParatextTokens);
         try
         {
             await CallApiAsync(userSecret, HttpMethod.Get, "userinfo", content: null);
@@ -420,25 +422,33 @@ public class ParatextService : DisposableBase, IParatextService
             // Registry.
             return true;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException e)
         {
+            if (e.StatusCode == HttpStatusCode.BadRequest)
+                throw new ParatextTokenExpiredException(e);
             return false;
         }
     }
 
+    /// <summary>
+    /// Determines if the user can authenticate with the Paratext Archives.
+    /// </summary>
+    /// <param name="sfUserId">The Scripture Forge user identifier.</param>
     /// <returns>
-    /// True if the user secret is able to access the PT Archives. PT Archives is a service such as at
-    /// archives.paratext.org, which provides Mercurial project repositores, and may sometimes be referred to as
-    /// "the Send and Receive server".
-    /// False if there is a problem with authorization or connecting to the PT Archives.
+    /// Returns <c>true</c> if the user secret is able to access the PT Archives;
+    /// otherwise, <c>false</c> if there is a problem with authorization or connecting to the PT Archives,
+    /// that is not related to token expiration.
     /// </returns>
+    /// <remarks>
+    /// The PT Archives is a service such as at archives.paratext.org, which provides Mercurial project repositories,
+    /// and may sometimes be referred to as "the Send and Receive server".
+    /// </remarks>
+    /// <exception cref="ArgumentException">The SF user identifier is null.</exception>
+    /// <exception cref="ArgumentException">The SF user identifier is an empty string or whitespace.</exception>
+    /// <exception cref="ParatextTokenExpiredException">The Paratext token has expired.</exception>
     public async Task<bool> CanUserAuthenticateToPTArchivesAsync(string sfUserId)
     {
-        if (string.IsNullOrWhiteSpace(sfUserId))
-        {
-            throw new ArgumentException(nameof(sfUserId));
-        }
-
+        ArgumentException.ThrowIfNullOrWhiteSpace(sfUserId);
         IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(
             sfUserId,
             CancellationToken.None

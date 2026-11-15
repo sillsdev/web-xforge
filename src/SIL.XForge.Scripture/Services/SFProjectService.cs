@@ -545,11 +545,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // Ensure that the user can access the Paratext registry
         // NOTE: These next two methods will throw ParatextTokenExpiredException on failure to refresh the token
         if (!await _paratextService.CanUserAuthenticateToPTRegistryAsync(userSecret))
-            throw new ParatextTokenExpiredException("Cannot authenticate with the Paratext Registry");
+            throw new UnauthorizedAccessException("Cannot access the Paratext Registry");
 
         // Ensure that the user can access the Paratext archives
         if (!await _paratextService.CanUserAuthenticateToPTArchivesAsync(curUserId))
-            throw new ParatextTokenExpiredException("Cannot authenticate with the Paratext Archives");
+            throw new UnauthorizedAccessException("Cannot access the Paratext Archives");
 
         // Queue the sync
         return await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
