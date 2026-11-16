@@ -1231,8 +1231,8 @@
       },
       "Serval.Client": {
         "type": "Transitive",
-        "resolved": "1.22.0",
-        "contentHash": "rhAxIUOlIXC9okCjY6ymbgLlmYhfwGR7+vDOTRwgUqc6XQRJAomZHaEThjfPFtAmenk/dZwS5JlzzYae+vtr/g==",
+        "resolved": "1.23.0",
+        "contentHash": "A3ZywBHHjzjtANSj955OO32j0Fu6Lud3kyuCmbD3GOx5c9yCehGzRgisisjLY7kXtHWb7P7kH2G+jcmMrLwZ1g==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4",
           "System.ComponentModel.Annotations": "5.0.0"
@@ -1262,8 +1262,8 @@
       },
       "SIL.Machine": {
         "type": "Transitive",
-        "resolved": "3.9.5",
-        "contentHash": "gkeD142+lU//3PizwYWNFCPBSnpEjaLm0WIiMc7MVThKWQZpERaXzXNkFfLFjPSWprJuiyzlcPLHMKPU/b2k3Q==",
+        "resolved": "3.9.7",
+        "contentHash": "buUH2nB+nVJpai45Nex1X/+uAVMNbWD+RNZH/DC1H4gEM5In9+B8iPjAYv/oU508rv5Clc7+lbAtdRNlGRnYgg==",
         "dependencies": {
           "CaseExtensions": "1.1.0",
           "Newtonsoft.Json": "13.0.4",
@@ -1662,9 +1662,9 @@
           "ParatextData": "[9.5.0.24, )",
           "Polly": "[8.8.0, )",
           "SIL.Converters.Usj": "[1.0.0, )",
-          "SIL.Machine": "[3.9.5, )",
+          "SIL.Machine": "[3.9.7, )",
           "SIL.XForge": "[1.0.0, )",
-          "Serval.Client": "[1.22.0, )",
+          "Serval.Client": "[1.23.0, )",
           "Swashbuckle.AspNetCore": "[10.3.1, )",
           "Swashbuckle.AspNetCore.Newtonsoft": "[10.3.1, )"
         }

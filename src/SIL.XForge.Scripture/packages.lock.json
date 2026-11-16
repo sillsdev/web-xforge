@@ -107,9 +107,9 @@
       },
       "Serval.Client": {
         "type": "Direct",
-        "requested": "[1.22.0, )",
-        "resolved": "1.22.0",
-        "contentHash": "rhAxIUOlIXC9okCjY6ymbgLlmYhfwGR7+vDOTRwgUqc6XQRJAomZHaEThjfPFtAmenk/dZwS5JlzzYae+vtr/g==",
+        "requested": "[1.23.0, )",
+        "resolved": "1.23.0",
+        "contentHash": "A3ZywBHHjzjtANSj955OO32j0Fu6Lud3kyuCmbD3GOx5c9yCehGzRgisisjLY7kXtHWb7P7kH2G+jcmMrLwZ1g==",
         "dependencies": {
           "Newtonsoft.Json": "13.0.4",
           "System.ComponentModel.Annotations": "5.0.0"
@@ -117,9 +117,9 @@
       },
       "SIL.Machine": {
         "type": "Direct",
-        "requested": "[3.9.5, )",
-        "resolved": "3.9.5",
-        "contentHash": "gkeD142+lU//3PizwYWNFCPBSnpEjaLm0WIiMc7MVThKWQZpERaXzXNkFfLFjPSWprJuiyzlcPLHMKPU/b2k3Q==",
+        "requested": "[3.9.7, )",
+        "resolved": "3.9.7",
+        "contentHash": "buUH2nB+nVJpai45Nex1X/+uAVMNbWD+RNZH/DC1H4gEM5In9+B8iPjAYv/oU508rv5Clc7+lbAtdRNlGRnYgg==",
         "dependencies": {
           "CaseExtensions": "1.1.0",
           "Newtonsoft.Json": "13.0.4",
