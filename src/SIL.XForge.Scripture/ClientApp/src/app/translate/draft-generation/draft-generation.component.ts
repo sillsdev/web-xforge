@@ -1,9 +1,8 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { MatExpansionPanel, MatExpansionPanelContent, MatExpansionPanelHeader } from '@angular/material/expansion';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
@@ -16,7 +15,7 @@ import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
+import { filter, switchMap, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -45,11 +44,7 @@ import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-d
 import { UserFeedbackComponent } from '../../shared/user-feedback/user-feedback.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
-import {
-  DraftGenerationStepsComponent,
-  DraftGenerationStepsResult
-} from './draft-generation-steps/draft-generation-steps.component';
+import { activeBuildStates } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
@@ -91,7 +86,6 @@ const USER_FEEDBACK_SUBMISSION_DAYS = 365;
     NgCircleProgressModule,
     L10nNumberPipe,
     L10nPercentPipe,
-    DraftGenerationStepsComponent,
     DraftInformationComponent,
     DraftHistoryListComponent,
     UserFeedbackComponent
@@ -118,8 +112,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   jobSubscription?: Subscription;
   isOnline = true;
-
-  currentPage: 'initial' | 'steps' = 'initial';
 
   /**
    * Once true, UI can proceed with display according to status of fetched job.
@@ -397,13 +389,9 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    if (this.featureFlags.partialBookDrafting.enabled) {
-      const projectId = this.activatedProject.projectId;
-      if (projectId != null) {
-        await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
-      }
-    } else {
-      this.currentPage = 'steps';
+    const projectId = this.activatedProject.projectId;
+    if (projectId != null) {
+      await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
     }
   }
 
@@ -429,22 +417,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     }
 
     this.cancelBuild();
-  }
-
-  onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
-    const sfProjectId: string | undefined = this.activatedProject.projectId;
-    if (sfProjectId == null) {
-      throw new Error('SF Project ID is not set');
-    }
-    this.startBuild({
-      projectId: sfProjectId,
-      trainingDataFiles: result.trainingDataFiles,
-      trainingScriptureRanges: result.trainingScriptureRanges,
-      translationScriptureRanges: result.translationScriptureRanges || [],
-      fastTraining: result.fastTraining,
-      useEcho: result.useEcho,
-      sendEmailOnBuildFinished: result.sendEmailOnBuildFinished
-    });
   }
 
   /**
@@ -505,46 +477,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   canCancel(job?: BuildDto): boolean {
     return job == null || this.isDraftInProgress(job);
-  }
-
-  startBuild(buildConfig: BuildConfig): void {
-    let userNotified = false;
-    this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.draftGenerationService
-      .startBuildOrGetActiveBuild(buildConfig)
-      .pipe(
-        tap((result?: StartBuildResult) => {
-          // If a build was already active (started by another user, or by this user elsewhere), the submitted
-          // configuration was not used, so tell the user
-          if (result?.joinedExistingBuild === true && !userNotified) {
-            userNotified = true;
-            void this.dialogService.message('draft_generation.draft_already_running');
-          }
-
-          const job: BuildDto | undefined = result?.job;
-          this.currentPage = 'initial';
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-
-          // Ensure flag is set for case where first completed build happens while component is loaded
-          if (this.isDraftComplete(job)) {
-            this.lastCompletedBuild = job;
-          }
-        }),
-        catchError(error => {
-          if (error instanceof HttpErrorResponse && error.status === 401) {
-            this.authService.requestParatextCredentialUpdate();
-          }
-
-          return of(undefined);
-        }),
-        quietTakeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((result?: StartBuildResult) => (this.draftJob = result?.job));
   }
 
   projectLabel(project?: SelectableProject): string {
