@@ -66,6 +66,7 @@ public class MachineProjectService(
 
     // Supported translation engines
     internal const string Echo = "echo";
+    internal const string Llm = "llm-remote";
     internal const string Nmt = "nmt";
 
     // These tags are used for the ClearML task to differentiate Scripture Forge jobs
@@ -458,7 +459,7 @@ public class MachineProjectService(
                 .Data.UserRoles.Where(ur => ur.Value is SFProjectRole.Administrator or SFProjectRole.Translator)
                 .Select(ur => ur.Key);
 
-            async Task setDraftResultAsync(string userId)
+            async Task SetDraftResultAsync(string userId)
             {
                 IDocument<SFProjectUserConfig> userConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
                     SFProjectUserConfig.GetDocId(sfProjectId, userId)
@@ -478,7 +479,7 @@ public class MachineProjectService(
                 await userConfigDoc.SubmitJson0OpAsync(op => op.Set(puc => puc.UnreadDraftResult, draftResult));
             }
 
-            await Task.WhenAll(userIds.Select(setDraftResultAsync));
+            await Task.WhenAll(userIds.Select(SetDraftResultAsync));
         }
         catch (Exception e)
         {
@@ -542,7 +543,7 @@ public class MachineProjectService(
             curUserId,
             projectDoc,
             projectSecret,
-            buildConfig.UseEcho,
+            buildConfig.DraftingEngine,
             cancellationToken
         );
 
@@ -551,7 +552,7 @@ public class MachineProjectService(
         await RecreateOrUpdateTranslationEngineIfRequiredAsync(
             translationEngineId,
             projectDoc.Data,
-            buildConfig.UseEcho,
+            buildConfig.DraftingEngine,
             cancellationToken
         );
 
@@ -697,14 +698,14 @@ public class MachineProjectService(
     /// and updates the project secret with the translation engine identifier.
     /// </summary>
     /// <param name="sfProject">The Scripture Forge project</param>
-    /// <param name="useEcho">If <c>true</c> use Echo.</param>
+    /// <param name="draftingEngine">The drafting engine.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The translation engine id.</returns>
     /// <exception cref="DataNotFoundException">The translation engine could not be created.</exception>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task<string> CreateServalProjectAsync(
         SFProject sfProject,
-        bool useEcho,
+        DraftingEngine draftingEngine,
         CancellationToken cancellationToken
     )
     {
@@ -717,8 +718,8 @@ public class MachineProjectService(
             {
                 Name = sfProject.Id,
                 SourceLanguage = GetSourceLanguage(sfProject),
-                TargetLanguage = GetTargetLanguage(sfProject, useEcho),
-                Type = GetTranslationEngineType(useEcho),
+                TargetLanguage = GetTargetLanguage(sfProject, draftingEngine),
+                Type = GetTranslationEngineType(draftingEngine),
             };
 
             // Add the project to Serval
@@ -851,7 +852,7 @@ public class MachineProjectService(
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="projectDoc">The project document.</param>
     /// <param name="projectSecret">The project secret.</param>
-    /// <param name="useEcho">If <c>true</c> use Echo.</param>
+    /// <param name="draftingEngine">Te drafting engine.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The translation engine identifier.</returns>
     /// <exception cref="DataNotFoundException">The project, user, or translation engine does not exist.</exception>
@@ -861,17 +862,23 @@ public class MachineProjectService(
         string curUserId,
         IDocument<SFProject> projectDoc,
         SFProjectSecret projectSecret,
-        bool useEcho,
+        DraftingEngine draftingEngine,
         CancellationToken cancellationToken
     )
     {
         string? translationEngineId = projectSecret.ServalData?.PreTranslationEngineId;
         if (!await TranslationEngineExistsAsync(projectDoc.Id, translationEngineId, cancellationToken))
         {
+            // This error can occur if the project is deleted while the build is running
+            if (projectDoc.Data is null)
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+
             // We do not have one, likely because the translation is a back translation
             // We can only get the language tags for back translations from the ScrText,
             // which is not present until after the first sync (not from the Registry).
-            if (string.IsNullOrWhiteSpace(projectDoc.Data?.WritingSystem.Tag))
+            if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
             {
                 // Get the user secret
                 Attempt<UserSecret?> userSecretAttempt = await userSecrets.TryGetAsync(curUserId, cancellationToken);
@@ -880,28 +887,16 @@ public class MachineProjectService(
                     throw new DataNotFoundException("The user does not exist.");
                 }
 
-                // This error can occur if the project is deleted while the build is running
-                if (projectDoc.Data is null)
-                {
-                    throw new DataNotFoundException("The project does not exist.");
-                }
-
                 // Update the target writing system tag
-                if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
+                WritingSystem writingSystem = paratextService.GetWritingSystem(userSecret, projectDoc.Data.ParatextId);
+                if (!string.IsNullOrEmpty(writingSystem.Tag))
                 {
-                    WritingSystem writingSystem = paratextService.GetWritingSystem(
-                        userSecret,
-                        projectDoc.Data.ParatextId
-                    );
-                    if (!string.IsNullOrEmpty(writingSystem.Tag))
+                    await projectDoc.SubmitJson0OpAsync(op =>
                     {
-                        await projectDoc.SubmitJson0OpAsync(op =>
-                        {
-                            op.Set(p => p.WritingSystem.Region, writingSystem.Region);
-                            op.Set(p => p.WritingSystem.Script, writingSystem.Script);
-                            op.Set(p => p.WritingSystem.Tag, writingSystem.Tag);
-                        });
-                    }
+                        op.Set(p => p.WritingSystem.Region, writingSystem.Region);
+                        op.Set(p => p.WritingSystem.Script, writingSystem.Script);
+                        op.Set(p => p.WritingSystem.Tag, writingSystem.Tag);
+                    });
                 }
             }
 
@@ -919,7 +914,7 @@ public class MachineProjectService(
             );
 
             // Create the Serval project, and get the translation engine id
-            translationEngineId = await CreateServalProjectAsync(projectDoc.Data, useEcho, cancellationToken);
+            translationEngineId = await CreateServalProjectAsync(projectDoc.Data, draftingEngine, cancellationToken);
         }
 
         // Ensure a translation engine id is present
@@ -957,7 +952,7 @@ public class MachineProjectService(
     /// Gets the target language for the project
     /// </summary>
     /// <param name="project">The project.</param>
-    /// <param name="useEcho">If <c>true</c> use Echo.</param>
+    /// <param name="draftingEngine">The drafting engine.</param>
     /// <returns>The target language.</returns>
     /// <exception cref="DataNotFoundException">
     /// The source was not specified for the project, or the project does not exist.
@@ -968,8 +963,8 @@ public class MachineProjectService(
     /// This can be mocked in unit tests.
     /// Echo requires the target and source language to be the same, as it outputs your source texts
     /// </remarks>
-    protected internal virtual string GetTargetLanguage(SFProject project, bool useEcho) =>
-        useEcho ? GetSourceLanguage(project) : project.WritingSystem.Tag!;
+    protected internal virtual string GetTargetLanguage(SFProject project, DraftingEngine draftingEngine) =>
+        draftingEngine == DraftingEngine.Echo ? GetSourceLanguage(project) : project.WritingSystem.Tag!;
 
     /// <summary>
     /// Gets the segments from the text with Unix/Linux line endings.
@@ -1040,7 +1035,7 @@ public class MachineProjectService(
         options = AddTags(options);
 
         // If Fast Training is enabled, override the max_steps
-        if (buildConfig.FastTraining)
+        if (buildConfig.DraftingEngine == DraftingEngine.NmtWithFastTraining)
         {
             options["max_steps"] = 20;
         }
@@ -1113,6 +1108,19 @@ public class MachineProjectService(
             ],
         };
 
+        // TODO: We will need the final model name from the research team
+        const string modelName = "openai/gpt-example";
+
+        // Handle LLM configuration
+        if (buildConfig.DraftingEngine == DraftingEngine.Llm)
+        {
+            translationBuildConfig.Model = modelName;
+        }
+        else if (buildConfig.DraftingEngine == DraftingEngine.NmtWithLlmPostProcessing)
+        {
+            translationBuildConfig.Enhancements = [new EnhancementConfig { Type = "polish", Model = modelName }];
+        }
+
         // The legacy draft UI does not specify an explicit target training range, so it is derived here from the
         // union of the source training ranges. The new draft component always specifies a target training range,
         // though it may be an empty string, which is NOT the same as not specifying one at all (an empty range means
@@ -1165,23 +1173,32 @@ public class MachineProjectService(
     /// <summary>
     /// Gets the translation engine type string for Serval.
     /// </summary>
-    /// <param name="useEcho">If <c>true</c> use Echo.</param>
+    /// <param name="draftingEngine">The drafting engine.</param>
     /// <returns>The translation engine type string for Serval.</returns>
-    protected internal virtual string GetTranslationEngineType(bool useEcho) => useEcho ? Echo : Nmt;
+    protected internal virtual string GetTranslationEngineType(DraftingEngine draftingEngine)
+    {
+        return draftingEngine switch
+        {
+            DraftingEngine.Echo => Echo,
+            DraftingEngine.Llm => Llm,
+            DraftingEngine.Nmt or DraftingEngine.NmtWithFastTraining or DraftingEngine.NmtWithLlmPostProcessing => Nmt,
+            _ => throw new ArgumentOutOfRangeException(nameof(draftingEngine)),
+        };
+    }
 
     /// <summary>
     /// Recreates the translation engine if the source or target language has changed.
     /// </summary>
     /// <param name="translationEngineId">The translation engine identifier.</param>
     /// <param name="project">The project.</param>
-    /// <param name="useEcho">If <c>true</c> use Echo.</param>
+    /// <param name="draftingEngine">The drafting engine.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An asynchronous task.</returns>
     /// <remarks>This can be mocked in unit tests.</remarks>
     protected internal virtual async Task RecreateOrUpdateTranslationEngineIfRequiredAsync(
         string translationEngineId,
         SFProject project,
-        bool useEcho,
+        DraftingEngine draftingEngine,
         CancellationToken cancellationToken
     )
     {
@@ -1195,7 +1212,7 @@ public class MachineProjectService(
             bool updateTranslationEngine = false;
 
             // See if the target language has changed
-            string projectTargetLanguage = GetTargetLanguage(project, useEcho);
+            string projectTargetLanguage = GetTargetLanguage(project, draftingEngine);
             if (translationEngine.TargetLanguage != projectTargetLanguage)
             {
                 string message =
@@ -1215,7 +1232,7 @@ public class MachineProjectService(
             }
 
             // See if the translation engine type has changed
-            string translationEngineType = GetTranslationEngineType(useEcho);
+            string translationEngineType = GetTranslationEngineType(draftingEngine);
             if (translationEngine.Type != translationEngineType)
             {
                 string message =
@@ -1252,7 +1269,7 @@ public class MachineProjectService(
             );
 
             // Create the new translation engine id
-            translationEngineId = await CreateServalProjectAsync(project, useEcho, cancellationToken);
+            translationEngineId = await CreateServalProjectAsync(project, draftingEngine, cancellationToken);
             logger.LogInformation($"Created Translation Engine {translationEngineId}.");
         }
     }
@@ -1303,7 +1320,7 @@ public class MachineProjectService(
             additionalTrainingData.TargetCorpusId = await UploadAdditionalTrainingDataAsync(
                 project.Id,
                 additionalTrainingData.TargetCorpusId,
-                languageCode: GetTargetLanguage(project, buildConfig.UseEcho),
+                languageCode: GetTargetLanguage(project, buildConfig.DraftingEngine),
                 targetCorpusFiles,
                 targetTexts,
                 cancellationToken
@@ -1422,7 +1439,7 @@ public class MachineProjectService(
         }
 
         // Ensure we have serval data
-        if (projectSecret?.ServalData is null)
+        if (projectSecret.ServalData is null)
         {
             throw new DataNotFoundException("The Serval data cannot be found.");
         }
@@ -1692,16 +1709,8 @@ public class MachineProjectService(
                 cancellationToken
             );
 
-            bool useEcho = translationEngine.Type == Echo;
-            string type = GetTranslationEngineType(useEcho);
-
-            // We check for the type, taking account of Pascal Case (Serval 1.1) and Kebab Case (Serval 1.2)
-            return translationEngine.Name == projectId
-                && string.Equals(
-                    translationEngine.Type.Replace("-", string.Empty, StringComparison.OrdinalIgnoreCase),
-                    type.Replace("-", string.Empty, StringComparison.OrdinalIgnoreCase),
-                    StringComparison.InvariantCultureIgnoreCase
-                );
+            // Ensure that the translation engine was created for this project
+            return translationEngine.Name == projectId;
         }
         catch (ServalApiException e)
             when (e.StatusCode is StatusCodes.Status403Forbidden or StatusCodes.Status404NotFound)
