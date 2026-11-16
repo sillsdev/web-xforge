@@ -53,8 +53,6 @@ describe('DraftGenerationService', () => {
     trainingDataFiles: [],
     translationScriptureRanges: [],
     trainingScriptureRanges: [],
-    fastTraining: false,
-    useEcho: false,
     sendEmailOnBuildFinished: false
   };
   const buildDto: BuildDto = {

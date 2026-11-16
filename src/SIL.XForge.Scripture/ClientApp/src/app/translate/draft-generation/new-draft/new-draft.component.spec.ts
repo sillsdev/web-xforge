@@ -5,12 +5,13 @@ import { Canon } from '@sillsdev/scripture';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, filter, firstValueFrom, Observable, of, Subject } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
@@ -587,8 +588,7 @@ describe('NewDraftComponent', () => {
             trainingScriptureRanges: [{ projectId: 'testProjectId', scriptureRange: '' }],
             trainingDataFiles: [],
             availableTrainingDataFiles: [],
-            fastTraining: false,
-            useEcho: false,
+            draftingEngine: DraftingEngine.Nmt,
             sendEmailOnBuildFinished: false
           })
         )
@@ -619,8 +619,7 @@ describe('NewDraftComponent', () => {
             ],
             trainingDataFiles: [],
             availableTrainingDataFiles: [],
-            fastTraining: false,
-            useEcho: false,
+            draftingEngine: DraftingEngine.Nmt,
             sendEmailOnBuildFinished: false
           })
         )
@@ -655,8 +654,7 @@ describe('NewDraftComponent', () => {
             ],
             trainingDataFiles: [],
             availableTrainingDataFiles: [],
-            fastTraining: false,
-            useEcho: false,
+            draftingEngine: DraftingEngine.Nmt,
             sendEmailOnBuildFinished: false
           })
         )

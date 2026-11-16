@@ -53,6 +53,7 @@ export interface BuildExecutionData {
   sourceLanguageTag?: string;
   targetLanguageTag?: string;
   trainCount: number;
+  usage?: ServalBuildUsage;
 }
 
 /** Additional information about a Serval build. */
@@ -70,4 +71,12 @@ export interface ServalBuildAdditionalInfo {
   trainingDataFileIds: string[];
   requestedByUserId?: string;
   canDenormalizeQuotes: boolean;
+  translationEngineType?: string;
+}
+
+/** Cost and token usage information for a Serval build. */
+export interface ServalBuildUsage {
+  totalCostCredits: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
 }
