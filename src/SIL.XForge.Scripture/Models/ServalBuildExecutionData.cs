@@ -19,6 +19,7 @@ public record ServalBuildExecutionData
     public string? ResolvedTargetLanguage { get; init; }
     public string? SourceLanguageTag { get; init; }
     public string? TargetLanguageTag { get; init; }
+    public ServalBuildUsage? Usage { get; init; }
 }
 
 public record ServalBuildDiagnostic
@@ -28,6 +29,13 @@ public record ServalBuildDiagnostic
     public required string Message { get; init; }
     public required ServalDiagnosticSeverity Severity { get; init; }
     public required Dictionary<string, object> Data { get; init; }
+}
+
+public record ServalBuildUsage
+{
+    public required decimal TotalCostCredits { get; init; }
+    public required int TotalInputTokens { get; init; }
+    public required int TotalOutputTokens { get; init; }
 }
 
 public enum ServalDiagnosticSeverity

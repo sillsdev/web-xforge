@@ -36,4 +36,20 @@ public class DraftConfig
     public string? DraftedScriptureRange { get; set; }
     public bool? DraftInProgress { get; set; }
     public bool? LastDraftSuccessful { get; set; }
+
+    /// <summary>
+    /// Gets or sets the available drafting engines.
+    /// </summary>
+    /// <remarks>If this is <c>null</c>, only Nmt will be available.</remarks>
+    public HashSet<string>? AvailableDraftingEngines { get; set; }
+
+    /// <summary>
+    /// Gets or sets the currently selected drafting engine to use by default for the next build.
+    /// </summary>
+    /// <remarks>
+    /// This may not necessarily be the drafting engine used for the current build, as the curent build may have
+    /// specified its own value for the <see cref="BuildConfig.DraftingEngine"/>, or this value may have been changed
+    /// while a build is under way.
+    /// </remarks>
+    public string? DraftingEngine { get; set; }
 }

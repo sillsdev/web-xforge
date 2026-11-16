@@ -3469,12 +3469,16 @@ public partial class MachineApiService(
                 _listProjectScriptureRangeComparer
             );
             op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, true);
-            op.Set(p => p.TranslateConfig.DraftConfig.FastTraining, buildConfig.FastTraining);
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.FastTraining,
+                buildConfig.DraftingEngine == DraftingEngine.NmtWithFastTraining
+            );
             op.Set(p => p.TranslateConfig.DraftConfig.SendEmailOnBuildFinished, buildConfig.SendEmailOnBuildFinished);
-            op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.UseEcho);
+            op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.DraftingEngine == DraftingEngine.Echo);
             if (!projectDoc.Data.TranslateConfig.PreTranslate)
             {
                 op.Set(p => p.TranslateConfig.PreTranslate, true);
+                op.Set(p => p.TranslateConfig.DraftConfig.DraftingEngine, nameof(DraftingEngine.Nmt));
             }
         });
 
@@ -3698,6 +3702,34 @@ public partial class MachineApiService(
     }
 
     /// <summary>
+    /// Gets the <see cref="DraftingEngine" /> value for the <see cref="TranslationBuild" />.
+    /// </summary>
+    /// <param name="translationBuild">The build from Serval.</param>
+    /// <returns>The drafting engine. Returns <c>null</c> if the drafting enging could not be determined.</returns>
+    internal static DraftingEngine? GetDraftingEngine(TranslationBuild translationBuild)
+    {
+        // Normalise the engine types to handle kebab-case and PascalCase (bug in Serval 1.22.0 and 1.23.0-rc.1)
+        string? engineType = translationBuild.EngineType?.ToLowerInvariant();
+        if (engineType == MachineProjectService.Llm.Replace("-", string.Empty, StringComparison.OrdinalIgnoreCase))
+        {
+            engineType = MachineProjectService.Llm;
+        }
+
+        return engineType switch
+        {
+            MachineProjectService.Echo => DraftingEngine.Echo,
+            MachineProjectService.Llm => DraftingEngine.Llm,
+            MachineProjectService.Nmt when translationBuild.Enhancements?.Count > 0 =>
+                DraftingEngine.NmtWithLlmPostProcessing,
+            MachineProjectService.Nmt
+                when translationBuild.Phases?.FirstOrDefault(p => p.Stage == PhaseStage.Train)?.StepCount
+                    == MachineProjectService.FastTrainingSteps => DraftingEngine.NmtWithFastTraining,
+            MachineProjectService.Nmt => DraftingEngine.Nmt,
+            _ => null,
+        };
+    }
+
+    /// <summary>
     /// Creates the Build DTO for the front end.
     /// </summary>
     /// <param name="translationBuild">The translation build from Serval.</param>
@@ -3740,6 +3772,7 @@ public partial class MachineApiService(
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
+                TranslationEngineType = GetDraftingEngine(translationBuild)?.ToString(),
             },
             DeploymentVersion = translationBuild.DeploymentVersion,
             ExecutionData =
@@ -3757,6 +3790,14 @@ public partial class MachineApiService(
                         SourceLanguageTag = executionData.EngineSourceLanguageTag,
                         TargetLanguageTag = executionData.EngineTargetLanguageTag,
                         TrainCount = executionData.TrainCount,
+                        Usage = executionData.Usage is null
+                            ? null
+                            : new ServalBuildUsage
+                            {
+                                TotalCostCredits = executionData.Usage.TotalCostCredits,
+                                TotalInputTokens = executionData.Usage.TotalInputTokens,
+                                TotalOutputTokens = executionData.Usage.TotalOutputTokens,
+                            },
                     },
         };
 
