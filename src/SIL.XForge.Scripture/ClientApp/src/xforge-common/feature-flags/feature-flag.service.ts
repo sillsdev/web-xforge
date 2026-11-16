@@ -379,11 +379,12 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly partialBookDrafting: FeatureFlag = new FeatureFlagFromStorage(
+  /** @deprecated This feature flag is no longer used */
+  readonly partialBookDrafting: FeatureFlag = new StaticFeatureFlag(
     'PartialBookDrafting',
     'Partial book drafting',
     20,
-    new StaticFeatureFlagStore(true)
+    this.featureFlagStore
   );
 
   // Off until we redesign how we determine whether the user has submitted feedback or dismissed the notice. Storing
