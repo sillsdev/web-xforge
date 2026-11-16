@@ -14,7 +14,7 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
-import { DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftingEngine, DraftUsfmConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -74,7 +74,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     chapterNum: number | undefined = undefined,
     currentBuild: boolean = false
   ): boolean {
-    const scriptureRange: string | undefined = (
+    const scriptureRange: string = (
       (currentBuild
         ? project?.translateConfig.draftConfig.currentScriptureRange
         : project?.translateConfig.draftConfig.draftedScriptureRange) ?? ''
@@ -448,5 +448,19 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineAddUserFeedback(projectId: string, feedbackParams: UserFeedbackParams): Promise<void> {
     return await this.onlineInvoke('addUserFeedback', { projectId, feedbackParams });
+  }
+
+  onlineSetAvailableDraftingEngines(projectId: string, draftingEngines: DraftingEngine[]): Promise<void> {
+    return this.onlineInvoke('setAvailableDraftingEngines', {
+      projectId,
+      draftingEngines
+    });
+  }
+
+  onlineSetDraftingEngine(projectId: string, draftingEngine: DraftingEngine): Promise<void> {
+    return this.onlineInvoke('setDraftingEngine', {
+      projectId,
+      draftingEngine
+    });
   }
 }

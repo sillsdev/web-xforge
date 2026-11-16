@@ -1,5 +1,5 @@
 import { InjectionToken } from '@angular/core';
-import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftingEngine, ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 
@@ -17,9 +17,8 @@ export interface BuildConfig {
   availableTrainingDataFiles?: string[];
   trainingScriptureRanges: ProjectScriptureRange[];
   translationScriptureRanges: ProjectScriptureRange[];
-  fastTraining: boolean;
-  useEcho: boolean;
   sendEmailOnBuildFinished: boolean;
+  draftingEngine?: DraftingEngine;
 }
 
 /** The outcome of a request to start a draft build. */

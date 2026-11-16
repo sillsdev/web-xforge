@@ -286,6 +286,15 @@ export class SFProjectService extends ProjectService<SFProject> {
               },
               draftInProgress: {
                 bsonType: 'bool'
+              },
+              availableDraftingEngines: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
+                }
+              },
+              draftingEngine: {
+                bsonType: 'string'
               }
             },
             additionalProperties: false
