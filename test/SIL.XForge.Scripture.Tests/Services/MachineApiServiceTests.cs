@@ -1028,6 +1028,7 @@ public class MachineApiServiceTests
             ],
             TargetQuoteConvention = "standard_english",
             CanDenormalizeQuotes = true,
+            EngineType = MachineProjectService.Llm,
         };
         env.ConfigureTranslationBuild(translationBuild);
 
@@ -1063,6 +1064,7 @@ public class MachineApiServiceTests
         Assert.AreEqual(ParallelCorpusId01, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(0));
         Assert.AreEqual(parallelCorpusId2, actual.AdditionalInfo.ParallelCorporaIds!.ElementAt(1));
         Assert.That(actual.AdditionalInfo.CanDenormalizeQuotes, Is.True);
+        Assert.That(actual.AdditionalInfo.TranslationEngineType, Is.EqualTo(nameof(DraftingEngine.Llm)));
     }
 
     [Test]
@@ -1756,6 +1758,9 @@ public class MachineApiServiceTests
         const string resolvedTargetLanguage = "en_NZ";
         const double averagePretranslationConfidence = 0.5;
         const bool diagnosticsTruncated = true;
+        const decimal totalCostCredits = 123.0M;
+        const int totalInputTokens = 456;
+        const int totalOutputTokens = 789;
         var diagnostic = new Diagnostic
         {
             Category = "MODEL",
@@ -1802,6 +1807,12 @@ public class MachineApiServiceTests
                                     Severity = diagnostic.Severity,
                                 },
                             ],
+                            Usage = new BuildUsage
+                            {
+                                TotalCostCredits = totalCostCredits,
+                                TotalInputTokens = totalInputTokens,
+                                TotalOutputTokens = totalOutputTokens,
+                            },
                         },
                     },
                 ])
@@ -1820,7 +1831,8 @@ public class MachineApiServiceTests
         ServalBuildDto? build = reports[0].Build;
         Assert.That(build, Is.Not.Null);
         Assert.That(build!.ExecutionData, Is.Not.Null);
-        Assert.That(build.ExecutionData!.TrainCount, Is.EqualTo(trainCount));
+        Assert.That(build.ExecutionData!.Usage, Is.Not.Null);
+        Assert.That(build.ExecutionData.TrainCount, Is.EqualTo(trainCount));
         Assert.That(build.ExecutionData.PretranslateCount, Is.EqualTo(pretranslateCount));
         Assert.That(build.ExecutionData.SourceLanguageTag, Is.EqualTo(sourceLanguageTag));
         Assert.That(build.ExecutionData.TargetLanguageTag, Is.EqualTo(targetLanguageTag));
@@ -1836,6 +1848,9 @@ public class MachineApiServiceTests
         Assert.That(build.ExecutionData.Diagnostics[0].Data, Is.EqualTo(diagnostic.Data).UsingPropertiesComparer());
         Assert.That(build.ExecutionData.Diagnostics[0].Message, Is.EqualTo(diagnostic.Message));
         Assert.That((int)build.ExecutionData.Diagnostics[0].Severity, Is.EqualTo((int)diagnostic.Severity));
+        Assert.That(build.ExecutionData.Usage!.TotalCostCredits, Is.EqualTo(totalCostCredits));
+        Assert.That(build.ExecutionData.Usage!.TotalInputTokens, Is.EqualTo(totalInputTokens));
+        Assert.That(build.ExecutionData.Usage!.TotalOutputTokens, Is.EqualTo(totalOutputTokens));
     }
 
     [Test]
@@ -2910,6 +2925,53 @@ public class MachineApiServiceTests
             Assert.That(actual?.VerseConfidences, Is.Not.Empty);
             Assert.That(actual?.LowestConfidence, Is.Not.Null);
         }
+    }
+
+    [TestCase(MachineProjectService.Echo, DraftingEngine.Echo)]
+    [TestCase("Echo", DraftingEngine.Echo)]
+    [TestCase(MachineProjectService.Nmt, DraftingEngine.Nmt)]
+    [TestCase("Nmt", DraftingEngine.Nmt)]
+    [TestCase(MachineProjectService.Llm, DraftingEngine.Llm)]
+    [TestCase("LlmRemote", DraftingEngine.Llm)]
+    [TestCase("smt-transfer", null)]
+    [TestCase(null, null)]
+    public void GetDraftingEngine_Success(string? engineType, DraftingEngine? expected)
+    {
+        var translationBuild = new TranslationBuild { EngineType = engineType };
+        DraftingEngine? actual = MachineApiService.GetDraftingEngine(translationBuild);
+        Assert.That(actual, Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void GetDraftingEngine_NmtWithFastTraining()
+    {
+        var translationBuild = new TranslationBuild
+        {
+            EngineType = MachineProjectService.Nmt,
+            Phases =
+            [
+                new Phase
+                {
+                    Stage = PhaseStage.Train,
+                    Step = 20,
+                    StepCount = 20,
+                },
+            ],
+        };
+        DraftingEngine? actual = MachineApiService.GetDraftingEngine(translationBuild);
+        Assert.That(actual, Is.EqualTo(DraftingEngine.NmtWithFastTraining));
+    }
+
+    [Test]
+    public void GetDraftingEngine_NmtWithLlmPostProcessing()
+    {
+        var translationBuild = new TranslationBuild
+        {
+            EngineType = MachineProjectService.Nmt,
+            Enhancements = [new Enhancement { Model = "openai/gpt-example", Type = "polish" }],
+        };
+        DraftingEngine? actual = MachineApiService.GetDraftingEngine(translationBuild);
+        Assert.That(actual, Is.EqualTo(DraftingEngine.NmtWithLlmPostProcessing));
     }
 
     [Test]
@@ -5451,7 +5513,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_SavesEchoAndFastTraining()
+    public async Task StartPreTranslationBuildAsync_SavesEcho()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -5462,12 +5524,33 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
             User01,
-            new BuildConfig
-            {
-                ProjectId = Project02,
-                FastTraining = true,
-                UseEcho = true,
-            },
+            new BuildConfig { ProjectId = Project02, DraftingEngine = DraftingEngine.Echo },
+            CancellationToken.None
+        );
+
+        await env.SyncService.Received(1).SyncAsync(Arg.Any<SyncConfig>());
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+
+        project = env.Projects.Get(Project02);
+        Assert.IsFalse(project.TranslateConfig.DraftConfig.FastTraining);
+        Assert.IsTrue(project.TranslateConfig.DraftConfig.UseEcho);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_SavesFastTraining()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        SFProject project = env.Projects.Get(Project02);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.FastTraining);
+        Assert.IsNull(project.TranslateConfig.DraftConfig.UseEcho);
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02, DraftingEngine = DraftingEngine.NmtWithFastTraining },
             CancellationToken.None
         );
 
@@ -5478,7 +5561,7 @@ public class MachineApiServiceTests
 
         project = env.Projects.Get(Project02);
         Assert.IsTrue(project.TranslateConfig.DraftConfig.FastTraining);
-        Assert.IsTrue(project.TranslateConfig.DraftConfig.UseEcho);
+        Assert.IsFalse(project.TranslateConfig.DraftConfig.UseEcho);
     }
 
     [Test]
