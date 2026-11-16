@@ -3469,12 +3469,16 @@ public partial class MachineApiService(
                 _listProjectScriptureRangeComparer
             );
             op.Set(pd => pd.TranslateConfig.DraftConfig.DraftInProgress, true);
-            op.Set(p => p.TranslateConfig.DraftConfig.FastTraining, buildConfig.FastTraining);
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.FastTraining,
+                buildConfig.DraftingEngine == DraftingEngine.NmtWithFastTraining
+            );
             op.Set(p => p.TranslateConfig.DraftConfig.SendEmailOnBuildFinished, buildConfig.SendEmailOnBuildFinished);
-            op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.UseEcho);
+            op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.DraftingEngine == DraftingEngine.Echo);
             if (!projectDoc.Data.TranslateConfig.PreTranslate)
             {
                 op.Set(p => p.TranslateConfig.PreTranslate, true);
+                op.Set(p => p.TranslateConfig.DraftConfig.DraftingEngine, nameof(DraftingEngine.Nmt));
             }
         });
 
@@ -3740,6 +3744,7 @@ public partial class MachineApiService(
                 DateFinished = translationBuild.DateFinished,
                 Step = translationBuild.Step,
                 TranslationEngineId = translationBuild.Engine.Id,
+                TranslationEngineType = translationBuild.EngineType,
             },
             DeploymentVersion = translationBuild.DeploymentVersion,
             ExecutionData =
@@ -3757,6 +3762,14 @@ public partial class MachineApiService(
                         SourceLanguageTag = executionData.EngineSourceLanguageTag,
                         TargetLanguageTag = executionData.EngineTargetLanguageTag,
                         TrainCount = executionData.TrainCount,
+                        Usage = executionData.Usage is null
+                            ? null
+                            : new ServalBuildUsage
+                            {
+                                TotalCostCredits = executionData.Usage.TotalCostCredits,
+                                TotalInputTokens = executionData.Usage.TotalInputTokens,
+                                TotalOutputTokens = executionData.Usage.TotalOutputTokens,
+                            },
                     },
         };
 

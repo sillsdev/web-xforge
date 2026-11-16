@@ -19,6 +19,7 @@ public class ServalBuildAdditionalInfo
     public HashSet<ProjectScriptureRange> TrainingScriptureRanges { get; init; } = [];
     public HashSet<string> TrainingDataFileIds { get; init; } = [];
     public string TranslationEngineId { get; init; } = string.Empty;
+    public string? TranslationEngineType { get; init; }
     public HashSet<ProjectScriptureRange> TranslationScriptureRanges { get; init; } = [];
-    public bool CanDenormalizeQuotes { get; set; } = false;
+    public bool CanDenormalizeQuotes { get; init; }
 }

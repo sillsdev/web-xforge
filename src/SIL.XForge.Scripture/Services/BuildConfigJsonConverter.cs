@@ -49,18 +49,6 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
             serializer.Serialize(writer, value.TranslationScriptureRanges);
         }
 
-        if (value.FastTraining)
-        {
-            writer.WritePropertyName(nameof(value.FastTraining));
-            serializer.Serialize(writer, value.FastTraining);
-        }
-
-        if (value.UseEcho)
-        {
-            writer.WritePropertyName(nameof(value.UseEcho));
-            serializer.Serialize(writer, value.UseEcho);
-        }
-
         if (value.SendEmailOnBuildFinished)
         {
             writer.WritePropertyName(nameof(value.SendEmailOnBuildFinished));
@@ -69,6 +57,25 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
 
         writer.WritePropertyName(nameof(value.ProjectId));
         serializer.Serialize(writer, value.ProjectId);
+
+        // Handle any parameters from older versions of Scripture Forge
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (value.UseEcho)
+        {
+            writer.WritePropertyName(nameof(value.DraftingEngine));
+            serializer.Serialize(writer, nameof(DraftingEngine.Echo));
+        }
+        else if (value.FastTraining)
+        {
+            writer.WritePropertyName(nameof(value.DraftingEngine));
+            serializer.Serialize(writer, nameof(DraftingEngine.NmtWithFastTraining));
+        }
+        else
+        {
+            writer.WritePropertyName(nameof(value.DraftingEngine));
+            serializer.Serialize(writer, value.DraftingEngine.ToString());
+        }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         writer.WriteEndObject();
     }
