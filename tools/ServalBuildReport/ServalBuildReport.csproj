@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.14" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
     <PackageReference Include="MiniExcel" Version="1.46.0" />
-    <PackageReference Include="Serval.Client" Version="1.21.0" />
+    <PackageReference Include="Serval.Client" Version="1.22.0" />
   </ItemGroup>
 
 </Project>
