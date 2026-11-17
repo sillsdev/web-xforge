@@ -1391,4 +1391,66 @@ public class SFProjectsRpcController(
             throw;
         }
     }
+
+    public async Task<IRpcMethodResult> SetAvailableDraftingEngines(string projectId, DraftingEngine[] draftingEngines)
+    {
+        try
+        {
+            await projectService.SetAvailableDraftingEnginesAsync(UserId, SystemRoles, projectId, draftingEngines);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException e)
+        {
+            return NotFoundError(e.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", nameof(SetAvailableDraftingEngines) },
+                    { "projectId", projectId },
+                    { "draftingEngines", string.Join(',', draftingEngines) },
+                }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> SetDraftingEngine(string projectId, DraftingEngine draftingEngine)
+    {
+        try
+        {
+            await projectService.SetDraftingEngineAsync(UserId, SystemRoles, projectId, draftingEngine);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (InvalidOperationException e)
+        {
+            return InvalidParamsError(e.Message);
+        }
+        catch (DataNotFoundException e)
+        {
+            return NotFoundError(e.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", nameof(SetDraftingEngine) },
+                    { "projectId", projectId },
+                    { "draftingEngine", draftingEngine.ToString() },
+                }
+            );
+            throw;
+        }
+    }
 }

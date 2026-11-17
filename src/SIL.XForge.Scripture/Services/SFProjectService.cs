@@ -2271,6 +2271,81 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
     }
 
+    /// <summary>
+    /// Sets the available drafting engines for a project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="systemRoles">The system roles that the current user has.</param>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <param name="draftingEngines">The drafting engines.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <exception cref="ForbiddenException">
+    /// The user does not have permission to set the available drafting engines.
+    /// </exception>
+    public async Task SetAvailableDraftingEnginesAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        DraftingEngine[] draftingEngines
+    )
+    {
+        // Require the user to be a Serval Admin or a System Admin
+        if (!(systemRoles.Contains(SystemRole.SystemAdmin) || systemRoles.Contains(SystemRole.ServalAdmin)))
+            throw new ForbiddenException();
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        await projectDoc.SubmitJson0OpAsync(op =>
+            op.Set(
+                p => p.TranslateConfig.DraftConfig.AvailableDraftingEngines,
+                [.. draftingEngines.Select(e => e.ToString())]
+            )
+        );
+    }
+
+    /// <summary>
+    /// Sets the drafting engine for a project.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="systemRoles">The system roles that the current user has.</param>
+    /// <param name="projectId">The Scripture Forge project identifier.</param>
+    /// <param name="draftingEngine">The drafting engine.</param>
+    /// <returns>An asynchronous task.</returns>
+    /// <exception cref="ForbiddenException">The user does not have permission to set the drafting engine.</exception>
+    /// <exception cref="InvalidOperationException">The drafting engine is not on the available list.</exception>
+    public async Task SetDraftingEngineAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        DraftingEngine draftingEngine
+    )
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+
+        // Require the user to be a Translator, a Project Admin, a Serval Admin or a System Admin
+        if (
+            !(
+                IsProjectTranslator(projectDoc.Data, curUserId)
+                || IsProjectAdmin(projectDoc.Data, curUserId)
+                || systemRoles.Contains(SystemRole.SystemAdmin)
+                || systemRoles.Contains(SystemRole.ServalAdmin)
+            )
+        )
+            throw new ForbiddenException();
+
+        // Ensure that the drafting engine is available for the project.
+        // If this value is not specified, NMT is available.
+        HashSet<string> available =
+            projectDoc.Data.TranslateConfig.DraftConfig.AvailableDraftingEngines ?? [nameof(DraftingEngine.Nmt)];
+        if (!available.Contains(draftingEngine.ToString()))
+            throw new InvalidOperationException("The specified drafting engine is not allowed.");
+
+        await projectDoc.SubmitJson0OpAsync(op =>
+            op.Set(p => p.TranslateConfig.DraftConfig.DraftingEngine, draftingEngine.ToString())
+        );
+    }
+
     protected override async Task RemoveUserFromProjectAsync(
         IConnection conn,
         IDocument<SFProject> projectDoc,
