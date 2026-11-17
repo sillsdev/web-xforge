@@ -5006,6 +5006,102 @@ public class MachineApiServiceTests
         );
     }
 
+    [TestCase(DraftingEngine.Echo)]
+    [TestCase(DraftingEngine.Llm)]
+    [TestCase(DraftingEngine.NmtWithFastTraining)]
+    public async Task StartPreTranslationBuildAsync_Success_AllowedDraftingEnginesConfigured(
+        DraftingEngine draftingEngine
+    )
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            Project01,
+            u => u.Set(p => p.TranslateConfig.DraftConfig.AvailableDraftingEngines, [nameof(DraftingEngine.Llm)])
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, DraftingEngine = draftingEngine },
+            CancellationToken.None
+        );
+
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
+    }
+
+    [TestCase(DraftingEngine.Nmt)]
+    [TestCase(DraftingEngine.NmtWithLlmPostProcessing)]
+    public async Task StartPreTranslationBuildAsync_Invalid_AllowedDraftingEnginesConfigured(
+        DraftingEngine draftingEngine
+    )
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            Project01,
+            u => u.Set(p => p.TranslateConfig.DraftConfig.AvailableDraftingEngines, [nameof(DraftingEngine.Llm)])
+        );
+
+        // SUT
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01, DraftingEngine = draftingEngine },
+                CancellationToken.None
+            )
+        );
+    }
+
+    [TestCase(DraftingEngine.Nmt)]
+    [TestCase(DraftingEngine.Echo)]
+    [TestCase(DraftingEngine.NmtWithFastTraining)]
+    public async Task StartPreTranslationBuildAsync_Success_AllowedDraftingEnginesNotConfigured(
+        DraftingEngine draftingEngine
+    )
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, DraftingEngine = draftingEngine },
+            CancellationToken.None
+        );
+
+        await env.ProjectService.Received(1).SyncAsync(User01, Project01);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(HangfireJobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.IsTrue(env.Projects.Get(Project01).TranslateConfig.DraftConfig.DraftInProgress);
+    }
+
+    [TestCase(DraftingEngine.Llm)]
+    [TestCase(DraftingEngine.NmtWithLlmPostProcessing)]
+    public async Task StartPreTranslationBuildAsync_Invalid_AllowedDraftingEnginesNotConfigured(
+        DraftingEngine draftingEngine
+    )
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            env.Service.StartPreTranslationBuildAsync(
+                User01,
+                new BuildConfig { ProjectId = Project01, DraftingEngine = draftingEngine },
+                CancellationToken.None
+            )
+        );
+    }
+
     [TestCase(1, 0, 0)]
     [TestCase(0, 1, 0)]
     [TestCase(0, 0, 1)]
