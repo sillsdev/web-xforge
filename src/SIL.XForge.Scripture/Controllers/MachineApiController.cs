@@ -962,6 +962,7 @@ public class MachineApiController : ControllerBase
     /// <param name="buildConfig">The build configuration.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translation build was successfully started.</response>
+    /// <response code="400">The selected drafting engine may not be used.</response>
     /// <response code="401">Your Paratext tokens have expired, and you must log in again.</response>
     /// <response code="403">You do not have permission to build this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
@@ -1003,6 +1004,10 @@ public class MachineApiController : ControllerBase
         catch (ForbiddenException)
         {
             return Forbid();
+        }
+        catch (InvalidOperationException)
+        {
+            return BadRequest();
         }
         catch (LimitExceededException e)
         {

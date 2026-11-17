@@ -2387,6 +2387,27 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_DraftingEngineNotAllowed()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService.StartPreTranslationBuildAsync(
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
+            .Throws(new InvalidOperationException());
+
+        // SUT
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<BadRequestResult>(actual);
+    }
+
+    [Test]
     public async Task StartPreTranslationBuildAsync_NoPermission()
     {
         // Set up test environment
