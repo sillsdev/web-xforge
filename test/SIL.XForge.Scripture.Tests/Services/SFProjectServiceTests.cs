@@ -5457,6 +5457,113 @@ public class SFProjectServiceTests
         );
     }
 
+    [Test]
+    public async Task SetAvailableDraftingEnginesAsync_RequiresSystemAdminOrServalAdmin()
+    {
+        var env = new TestEnvironment();
+
+        // SUT 1
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SetAvailableDraftingEnginesAsync(User01, [SystemRole.User], Project01, [DraftingEngine.Nmt])
+        );
+
+        // SUT 2
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SetAvailableDraftingEnginesAsync(User01, [SystemRole.None], Project01, [DraftingEngine.Nmt])
+        );
+
+        // SUT 3
+        await Assert.DoesNotThrowAsync(() =>
+            env.Service.SetAvailableDraftingEnginesAsync(
+                User01,
+                [SystemRole.SystemAdmin],
+                Project01,
+                [DraftingEngine.Nmt]
+            )
+        );
+
+        // SUT 4
+        await Assert.DoesNotThrowAsync(() =>
+            env.Service.SetAvailableDraftingEnginesAsync(
+                User01,
+                [SystemRole.ServalAdmin],
+                Project01,
+                [DraftingEngine.Nmt]
+            )
+        );
+    }
+
+    [Test]
+    public async Task SetAvailableDraftingEnginesAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        Assert.That(env.GetProject(Project01).TranslateConfig.DraftConfig.AvailableDraftingEngines, Is.Null);
+
+        // SUT
+        await env.Service.SetAvailableDraftingEnginesAsync(
+            User01,
+            [SystemRole.SystemAdmin],
+            Project01,
+            [DraftingEngine.Nmt]
+        );
+        Assert.That(
+            env.GetProject(Project01).TranslateConfig.DraftConfig.AvailableDraftingEngines,
+            Is.EqualTo([nameof(DraftingEngine.Nmt)])
+        );
+    }
+
+    [Test]
+    public async Task SetDraftingEngineAsync_RequiresTranslatorOrProjectAdminOrSystemAdminOrServalAdmin()
+    {
+        var env = new TestEnvironment();
+
+        // SUT 1
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SetDraftingEngineAsync(User02, [SystemRole.User], Project01, DraftingEngine.Nmt)
+        );
+
+        // SUT 2
+        await Assert.ThrowsAsync<ForbiddenException>(() =>
+            env.Service.SetDraftingEngineAsync(User03, [SystemRole.User], Project01, DraftingEngine.Nmt)
+        );
+
+        // SUT 3
+        await Assert.DoesNotThrowAsync(() =>
+            env.Service.SetDraftingEngineAsync(User01, [SystemRole.User], Project01, DraftingEngine.Nmt)
+        );
+
+        // SUT 4
+        await Assert.DoesNotThrowAsync(() =>
+            env.Service.SetDraftingEngineAsync(User05, [SystemRole.User], Project01, DraftingEngine.Nmt)
+        );
+
+        // SUT 5
+        await Assert.DoesNotThrowAsync(() =>
+            env.Service.SetDraftingEngineAsync(User02, [SystemRole.SystemAdmin], Project01, DraftingEngine.Nmt)
+        );
+
+        // SUT 6
+        await Assert.DoesNotThrowAsync(() =>
+            env.Service.SetDraftingEngineAsync(User02, [SystemRole.ServalAdmin], Project01, DraftingEngine.Nmt)
+        );
+    }
+
+    [Test]
+    public async Task SetDraftingEngineAsync_Success()
+    {
+        var env = new TestEnvironment();
+
+        Assert.That(env.GetProject(Project01).TranslateConfig.DraftConfig.DraftingEngine, Is.Null);
+
+        // SUT
+        await env.Service.SetDraftingEngineAsync(User01, [SystemRole.User], Project01, DraftingEngine.Nmt);
+        Assert.That(
+            env.GetProject(Project01).TranslateConfig.DraftConfig.DraftingEngine,
+            Is.EqualTo(nameof(DraftingEngine.Nmt))
+        );
+    }
+
     private class TestEnvironment
     {
         public static readonly Uri WebsiteUrl = new Uri("http://localhost/", UriKind.Absolute);
