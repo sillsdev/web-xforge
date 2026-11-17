@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Net;
 using System.Net.Http;
@@ -7,10 +6,8 @@ using Duende.IdentityModel.Client;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Http.Resilience;
 using Polly;
-using Polly.CircuitBreaker;
-using Polly.Retry;
-using Polly.Timeout;
 using Serval.Client;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Models;
@@ -68,41 +65,39 @@ public static class MachineServiceCollectionExtensions
         services
             .AddHttpClient(MachineApi.HttpClientName)
             .SetHandlerLifetime(TimeSpan.FromMinutes(5))
-            .AddPolicyHandler(GetRetryPolicy())
-            .AddPolicyHandler(GetCircuitBreakerPolicy())
-            .AddPolicyHandler(GetTimeoutPolicy());
+            .AddResilienceHandler("ServalResilience", ConfigureServalResilience);
         services.AddSingleton<ITranslationEnginesClient, TranslationEnginesClient>(sp =>
         {
             // Instantiate the translation engines client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new TranslationEnginesClient(httpClient);
         });
         services.AddSingleton<ITranslationBuildsClient, TranslationBuildsClient>(sp =>
         {
             // Instantiate the translation builds client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new TranslationBuildsClient(httpClient);
         });
         services.AddSingleton<ITranslationEngineTypesClient, TranslationEngineTypesClient>(sp =>
         {
             // Instantiate the translation engines client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new TranslationEngineTypesClient(httpClient);
         });
         services.AddSingleton<IDataFilesClient, DataFilesClient>(sp =>
         {
             // Instantiate the data files client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new DataFilesClient(httpClient);
         });
         services.AddSingleton<ICorporaClient, CorporaClient>(sp =>
         {
             // Instantiate the corpora client with our named HTTP client
-            var factory = sp.GetService<IHttpClientFactory>();
+            var factory = sp.GetRequiredService<IHttpClientFactory>();
             var httpClient = factory.CreateClient(MachineApi.HttpClientName);
             return new CorporaClient(httpClient);
         });
@@ -114,20 +109,36 @@ public static class MachineServiceCollectionExtensions
         return services;
     }
 
-    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy() =>
-        Policy<HttpResponseMessage>
+    private static void ConfigureServalResilience(ResiliencePipelineBuilder<HttpResponseMessage> builder)
+    {
+        var transientPredicate = new PredicateBuilder<HttpResponseMessage>()
             .Handle<HttpRequestException>()
-            .OrResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
-            .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            .HandleResult(r => r.StatusCode >= HttpStatusCode.InternalServerError);
 
-    private static AsyncCircuitBreakerPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
-        Policy<HttpResponseMessage>
-            .Handle<HttpRequestException>()
-            .OrResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+        builder.AddRetry(
+            new HttpRetryStrategyOptions
+            {
+                ShouldHandle = transientPredicate,
+                MaxRetryAttempts = 6,
+                Delay = TimeSpan.FromSeconds(2),
+                BackoffType = DelayBackoffType.Exponential,
+                UseJitter = false,
+            }
+        );
 
-    private static AsyncTimeoutPolicy<HttpResponseMessage> GetTimeoutPolicy() =>
+        builder.AddCircuitBreaker(
+            new HttpCircuitBreakerStrategyOptions
+            {
+                ShouldHandle = transientPredicate,
+                FailureRatio = 0.5,
+                MinimumThroughput = 5,
+                SamplingDuration = TimeSpan.FromMinutes(2),
+                BreakDuration = TimeSpan.FromSeconds(30),
+            }
+        );
+
         // NOTE: The Serval Get Build endpoint has a long polling timeout of 40 seconds,
         // so ensure any timeout values support this
-        Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromMinutes(5), TimeoutStrategy.Pessimistic);
+        builder.AddTimeout(new HttpTimeoutStrategyOptions { Timeout = TimeSpan.FromMinutes(5) });
+    }
 }
