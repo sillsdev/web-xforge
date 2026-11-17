@@ -3260,6 +3260,7 @@ public partial class MachineApiService(
     {
         string draftGenerationRequestId = ObjectId.GenerateNewId().ToString();
         Activity.Current?.AddTag(MachineProjectService.DraftGenerationRequestIdKey, draftGenerationRequestId);
+
         // Load the project from the realtime service
         await using IConnection conn = await realtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
@@ -3272,6 +3273,19 @@ public partial class MachineApiService(
         if (!projectRights.HasRight(projectDoc.Data, curUserId, SFProjectDomain.Drafts, Operation.Create))
         {
             throw new ForbiddenException();
+        }
+
+        // See if the drafting engine is available for the project.
+        // Echo and Fast Training are always allowed (as these are for developer testing).
+        HashSet<string> availableDraftingEngines =
+        [
+            nameof(DraftingEngine.Echo),
+            nameof(DraftingEngine.NmtWithFastTraining),
+            .. projectDoc.Data.TranslateConfig.DraftConfig.AvailableDraftingEngines ?? [nameof(DraftingEngine.Nmt)],
+        ];
+        if (!availableDraftingEngines.Contains(buildConfig.DraftingEngine.ToString()))
+        {
+            throw new InvalidOperationException();
         }
 
         // See if there is a build limit enforced
