@@ -124,4 +124,20 @@ public interface ISFProjectService : IProjectService
     Task SetUserProjectPermissionsAsync(string curUserId, string projectId, string userId, string[] permissions);
     Task<BookProgress[]> GetProjectProgressAsync(string curUserId, string projectId);
     Task UpdateProjectReferencesAsync(string projectId, ParatextSettings settings);
+
+    [LogEventMetric(EventScope.Drafting)]
+    Task SetAvailableDraftingEnginesAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        DraftingEngine[] draftingEngines
+    );
+
+    [LogEventMetric(EventScope.Drafting)]
+    Task SetDraftingEngineAsync(
+        string curUserId,
+        string[] systemRoles,
+        string projectId,
+        DraftingEngine draftingEngine
+    );
 }
