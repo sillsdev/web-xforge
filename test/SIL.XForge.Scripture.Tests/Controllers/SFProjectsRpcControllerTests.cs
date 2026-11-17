@@ -2417,6 +2417,129 @@ public class SFProjectsRpcControllerTests
         env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
     }
 
+    [Test]
+    public async Task SetAvailableDraftingEngines_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.SetAvailableDraftingEngines(Project01, [DraftingEngine.Nmt]);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env
+            .SFProjectService.Received()
+            .SetAvailableDraftingEnginesAsync(User01, Roles, Project01, Arg.Any<DraftingEngine[]>());
+    }
+
+    [Test]
+    public async Task SetAvailableDraftingEngines_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetAvailableDraftingEnginesAsync(User01, Roles, Project01, Arg.Any<DraftingEngine[]>())
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.SetAvailableDraftingEngines(Project01, [DraftingEngine.Nmt]);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetAvailableDraftingEngines_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetAvailableDraftingEnginesAsync(User01, Roles, Project01, Arg.Any<DraftingEngine[]>())
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetAvailableDraftingEngines(Project01, [DraftingEngine.Nmt]);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetAvailableDraftingEngines_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetAvailableDraftingEnginesAsync(User01, Roles, Project01, Arg.Any<DraftingEngine[]>())
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetAvailableDraftingEngines(Project01, [DraftingEngine.Nmt])
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
+    public async Task SetDraftingEngine_Success()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        var result = await env.Controller.SetDraftingEngine(Project01, DraftingEngine.Nmt);
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        await env.SFProjectService.Received().SetDraftingEngineAsync(User01, Roles, Project01, DraftingEngine.Nmt);
+    }
+
+    [Test]
+    public async Task SetDraftingEngine_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetDraftingEngineAsync(User01, Roles, Project01, DraftingEngine.Nmt)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        var result = await env.Controller.SetDraftingEngine(Project01, DraftingEngine.Nmt);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetDraftingEngine_InvalidParams()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Invalid Format";
+        env.SFProjectService.SetDraftingEngineAsync(User01, Roles, Project01, DraftingEngine.Nmt)
+            .Throws(new InvalidOperationException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetDraftingEngine(Project01, DraftingEngine.Nmt);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual((int)RpcErrorCode.InvalidParams, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetDraftingEngine_NotFound()
+    {
+        var env = new TestEnvironment();
+        const string errorMessage = "Not Found";
+        env.SFProjectService.SetDraftingEngineAsync(User01, Roles, Project01, DraftingEngine.Nmt)
+            .Throws(new DataNotFoundException(errorMessage));
+
+        // SUT
+        var result = await env.Controller.SetDraftingEngine(Project01, DraftingEngine.Nmt);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(errorMessage, (result as RpcMethodErrorResult)!.Message);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public async Task SetDraftingEngine_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SetDraftingEngineAsync(User01, Roles, Project01, DraftingEngine.Nmt)
+            .Throws(new ArgumentNullException());
+
+        // SUT
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            env.Controller.SetDraftingEngine(Project01, DraftingEngine.Nmt)
+        );
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
