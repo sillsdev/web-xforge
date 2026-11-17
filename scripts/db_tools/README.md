@@ -12,6 +12,7 @@
 - As of the time of writing, some of the scripts require pnpm packages from the Realtime server, rather than the `db_tools` directory, because they were written before pnpm packages had been added to this directory. Because of this, two scripts that use the same package might not necessarily use the same version of the package.
 - As much as possible, package versions in `db_tools` should be kept in sync with the versions used in `src/Realtimeserver` and `src/SIL.XForge.Scripture/ClientApp`.
 - If ShareDB has been updated recently, there may be a version mismatch between your local machine and the version used on a production server. This can cause a ShareDB client in one of the scripts to fail to connect to an older ShareDB server. If this problem is encountered, install the version of ShareDB used on the server you're trying to connect to.
+- A script can connect to a running realtime server as a user, with `createUserConnection` in `utils.js` and that user's access token. What it does then goes through the realtime server, with that user's permissions. `remove-duplicate-paratext-users.ts` does this as a system administrator.
 - Some scripts require `mongosh`, which is not available for all versions of MongoDB. You might not be able to run the script without updating to a newer version of MongoDB. The `mongosh` command supersedes the `mongo` command, which is slated for removal.
 
 # Setting up ssh config

@@ -1,3 +1,4 @@
+const ShareDBClient = require('sharedb/lib/client');
 const WebSocket = require('ws');
 
 // Configuration constants
@@ -181,6 +182,33 @@ function createWS(connectionConfig) {
   return new WebSocket(connectionConfig.wsConnectionString, [], { origin: connectionConfig.origin });
 }
 
+/**
+ * Connects to a running realtime server as a user, over a websocket, the way the web app does. Changes made over this
+ * connection go through the realtime server: the user's permissions apply, the server's middleware runs, and other
+ * clients that have the doc open are told about the change.
+ *
+ * @param {Object} connectionConfig One of the configs in databaseConfigs. Its wsConnectionString says where the
+ * realtime server listens (any query in it, such as "?server=true", is left out), and its origin is sent as the origin
+ * of the connection.
+ * @param {string} accessToken An access token of the user to connect as, as the web app sends to the realtime server.
+ * The realtime server checks it, and takes the user's ID and system role from it.
+ * @returns {Promise<{ conn: ShareDBClient.Connection, close: () => void }>} The connection, and a function that closes
+ * it. The promise is rejected if the realtime server refuses the connection, such as when the token has expired.
+ */
+function createUserConnection(connectionConfig, accessToken) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(connectionConfig.wsConnectionString);
+    url.search = '';
+    const socket = new WebSocket(`${url}?access_token=${accessToken}`, { origin: connectionConfig.origin });
+    const conn = new ShareDBClient.Connection(socket);
+    socket.once('open', () => resolve({ conn, close: () => conn.close() }));
+    // The error message is built here, and names the server without the query, because the query contains the token.
+    socket.once('error', err =>
+      reject(new Error(`Could not connect to the realtime server at ${url}: ${err.message}`))
+    );
+  });
+}
+
 module.exports = {
   fetchDoc,
   submitDocOp,
@@ -192,6 +220,7 @@ module.exports = {
   useColor,
   colored,
   createWS,
+  createUserConnection,
   colors,
   devConfig,
   qaConfig,
