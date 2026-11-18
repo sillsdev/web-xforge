@@ -36,6 +36,7 @@ import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature
 import { FileService } from 'xforge-common/file.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from 'xforge-common/location.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -62,6 +63,8 @@ import { GlobalNoticesComponent } from './shared/global-notices/global-notices.c
 import { checkAppAccess } from './shared/utils';
 
 declare function gtag(...args: any): void;
+
+export const DRAWER_HIDDEN_SETTING = 'nav_drawer_hidden';
 
 @Component({
   selector: 'app-root',
@@ -107,6 +110,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   protected isAppOnline: boolean = false;
   protected isExpanded: boolean = false;
+  /** Whether the user hid the docked drawer. Remembered per device; only applies on wide windows. */
+  protected isDrawerHiddenByUser: boolean = false;
   protected isScreenTiny = false;
 
   private currentUserDoc?: UserDoc;
@@ -139,11 +144,13 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly themeService: ThemeService,
     private readonly fontService: FontService,
     private readonly brandingService: BrandingService,
+    private readonly localSettings: LocalSettingsService,
     onlineStatusService: OnlineStatusService,
     readonly experimentalFeatures: ExperimentalFeaturesService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'AppComponent');
+    this.isDrawerHiddenByUser = this.localSettings.get<boolean>(DRAWER_HIDDEN_SETTING) ?? false;
     this.breakpointObserver
       .observe(this.breakpointService.width('>', Breakpoint.LG))
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
@@ -477,8 +484,18 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.isExpanded = true;
   }
 
+  /** Whether the navigation drawer is shown: docked unless the user hid it on wide windows, pop-over otherwise. */
+  get isDrawerOpen(): boolean {
+    return this.isDrawerPermanent ? !this.isDrawerHiddenByUser : this.isExpanded;
+  }
+
   toggleDrawer(): void {
-    this.isExpanded = !this.isExpanded;
+    if (this.isDrawerPermanent) {
+      this.isDrawerHiddenByUser = !this.isDrawerHiddenByUser;
+      this.localSettings.set(DRAWER_HIDDEN_SETTING, this.isDrawerHiddenByUser);
+    } else {
+      this.isExpanded = !this.isExpanded;
+    }
   }
 
   drawerCollapsed(): void {
