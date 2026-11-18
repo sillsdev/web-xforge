@@ -57,6 +57,7 @@ import { InfoComponent } from '../shared/info/info.component';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { ChapterSet, trainingSourceRangesWithTargetDetail } from '../shared/scripture-range';
 import { formatScriptureRangeTokensCompact } from '../shared/scripture-range-display';
+import { areDateRangesEqual } from '../shared/utils';
 import {
   BookConfidence,
   ChapterConfidence,
@@ -269,7 +270,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
   ngOnInit(): void {
     combineLatest([
       this.onlineStatusService.onlineStatus$,
-      this.dateRange$,
+      this.dateRange$.pipe(distinctUntilChanged(areDateRangesEqual)),
       // only take the first value since we don't want the search filter to trigger a new query
       this.useUnspecifiedDateRange$.pipe(take(1))
     ])

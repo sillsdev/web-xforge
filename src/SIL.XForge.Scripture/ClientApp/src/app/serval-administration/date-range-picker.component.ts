@@ -23,6 +23,7 @@ import { MatInput } from '@angular/material/input';
 import { distinctUntilChanged, map } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
+import { areDateRangesEqual } from '../shared/utils';
 
 /** Form value for date range inputs */
 interface DateRangeFormValue {
@@ -66,9 +67,9 @@ export class DateRangePickerComponent implements OnInit {
   /** When true, initialize the control with null as the selected default range. */
   @Input() set startWithEmptyRange(value: boolean | null) {
     if (!!value) {
-      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
       this.defaultRange = undefined;
       this.isDefaultRange = true;
+      this.dateRangeForm.setValue({ start: null, end: null }, { emitEvent: false });
     } else {
       // Set initial range
       const initialEndDate = new Date(this.maxSelectableDate);
@@ -208,14 +209,8 @@ export class DateRangePickerComponent implements OnInit {
 
     // Dates are a valid and normalized range. Emit.
     const normalizedRange: NormalizedDateRange = { start: normalizedStart, end: normalizedEnd };
-    this.isDefaultRange = this.areRangesEqual(normalizedRange, this.defaultRange);
+    this.isDefaultRange = areDateRangesEqual(normalizedRange, this.defaultRange);
     this.dateRangeChange.emit(normalizedRange);
-  }
-
-  private areRangesEqual(left: NormalizedDateRange | undefined, right: NormalizedDateRange | undefined): boolean {
-    if (left == null && right == null) return true;
-    if (left == null || right == null) return false;
-    return left.start.getTime() === right.start.getTime() && left.end.getTime() === right.end.getTime();
   }
 
   /** Get the beginning of the day for a date */
