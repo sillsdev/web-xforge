@@ -34,6 +34,6 @@ public interface IRealtimeServer
     void Stop();
     bool IsServerRunning();
     bool Restart(object options);
-    Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op, OpSource? source);
+    Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op, SubmitOptions? options);
     Task<Snapshot<T>> ReplaceDocAsync<T>(int handle, string collection, string id, T data, OpSource? source);
 }

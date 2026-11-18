@@ -5,7 +5,7 @@ import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
 import MongoMilestoneDB from 'sharedb-milestone-mongo';
 import ShareDBMongo from 'sharedb-mongo';
-import { Connection, Doc, OTType } from 'sharedb/lib/client';
+import { Connection, Doc, OTType, Path } from 'sharedb/lib/client';
 import { ActivityLogger } from './activity-logger';
 import './diagnostics';
 import { ExceptionReporter } from './exception-reporter';
@@ -42,6 +42,17 @@ interface RealtimeServerOptions {
   dataValidationDisabled: boolean;
   siteId: string;
   version: string;
+}
+
+interface DuplicateKeyCheck {
+  path: Path;
+  value: any;
+  ignore: boolean;
+}
+
+interface SubmitOptions {
+  source?: string;
+  checkDuplicateKey?: DuplicateKeyCheck;
 }
 
 let server: RealtimeServer | undefined;
@@ -411,7 +422,7 @@ export = withActivityLogging({
     collection: string,
     id: string,
     ops: ShareDB.Op[],
-    source: string | undefined
+    options: SubmitOptions | undefined
   ): void => {
     if (server == null) {
       callback(new Error('Server not started.'));
@@ -422,12 +433,14 @@ export = withActivityLogging({
       callback(new Error('Connection not found.'));
       return;
     }
-    const options: any = {};
+    // TODO: Check for duplicate key
+    const source: string | undefined = options?.source;
+    const sourceOptions: any = {};
     doc.submitSource = source != null;
     if (source != null) {
-      options.source = source;
+      sourceOptions.source = source;
     }
-    doc.submitOp(ops, options, err => {
+    doc.submitOp(ops, sourceOptions, err => {
       if (source != null) {
         doc.submitSource = false;
       }

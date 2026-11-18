@@ -32,7 +32,7 @@ public interface IConnection : IDisposable, IAsyncDisposable
         object op,
         T currentDoc,
         int currentVersion,
-        OpSource? source
+        SubmitOptions? options
     );
     Task<Snapshot<T>> ReplaceDocAsync<T>(string collection, string id, T data, int currentVersion, OpSource? source);
 }

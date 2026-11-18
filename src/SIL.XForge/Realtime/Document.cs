@@ -83,12 +83,12 @@ public class Document<T> : IDocument<T>
         }
     }
 
-    public async Task SubmitOpAsync(object op, OpSource? source)
+    public async Task SubmitOpAsync(object op, SubmitOptions? options)
     {
         await _lock.WaitAsync();
         try
         {
-            Snapshot<T> snapshot = await _connection.SubmitOpAsync<T>(Collection, Id, op, Data, Version, source);
+            Snapshot<T> snapshot = await _connection.SubmitOpAsync<T>(Collection, Id, op, Data, Version, options);
             UpdateFromSnapshot(snapshot);
         }
         finally
