@@ -16,15 +16,15 @@ public interface IConnection : IDisposable, IAsyncDisposable
     Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id);
 
     Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
-        where T : IIdentifiable;
+        where T : class, IIdentifiable;
     Task<Snapshot<T>[]> FetchSnapshotsAsync<T>(IReadOnlyCollection<string> ids, DateTime timestamp)
-        where T : IIdentifiable;
+        where T : class, IIdentifiable;
     Task<Op[]> GetOpsAsync<T>(string id)
-        where T : IIdentifiable;
+        where T : class, IIdentifiable;
     IDocument<T> Get<T>(string id)
-        where T : IIdentifiable;
+        where T : class, IIdentifiable;
     Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
-        where T : IIdentifiable;
+        where T : class, IIdentifiable;
     void RollbackTransaction();
     Task<Snapshot<T>> SubmitOpAsync<T>(
         string collection,
@@ -32,7 +32,8 @@ public interface IConnection : IDisposable, IAsyncDisposable
         object op,
         T currentDoc,
         int currentVersion,
-        OpSource? source
-    );
+        SubmitOptions? options
+    )
+        where T : class;
     Task<Snapshot<T>> ReplaceDocAsync<T>(string collection, string id, T data, int currentVersion, OpSource? source);
 }

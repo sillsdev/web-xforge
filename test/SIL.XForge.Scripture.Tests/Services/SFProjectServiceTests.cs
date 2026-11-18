@@ -1890,10 +1890,12 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
+        User user = env.GetUser(User05);
 
         Assert.That(project.UserRoles.ContainsKey(User05), Is.False, "setup");
         Assert.That(project.ParatextUsers.Count, Is.EqualTo(3), "setup");
         Assert.That(project.ParatextUsers.Exists(u => u.Username == "User 05"), Is.True, "setup");
+        Assert.That(user.Sites[SiteId].Projects.Count, Is.EqualTo(2), "setup");
         env.ParatextService.TryGetProjectRoleAsync(
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
@@ -1903,9 +1905,11 @@ public class SFProjectServiceTests
 
         await env.Service.AddUserAsync(User05, Project02, null);
         project = env.GetProject(Project02);
+        user = env.GetUser(User05);
 
         Assert.That(project.UserRoles.ContainsKey(User05), Is.True, "User should have been added to project");
         Assert.That(project.ParatextUsers.Count, Is.EqualTo(3), "No new ParatextUser should have been added");
+        Assert.That(user.Sites[SiteId].Projects.Count, Is.EqualTo(2), "No new project should have been added");
     }
 
     [Test]

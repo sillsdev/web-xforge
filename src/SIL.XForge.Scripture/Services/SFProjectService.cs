@@ -1614,17 +1614,23 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 });
             else
             {
-                await projectDoc.SubmitJson0OpAsync(op =>
-                    op.Add(
-                        p => p.ParatextUsers,
-                        new ParatextUserProfile
-                        {
-                            SFUserId = userDoc.Id,
-                            Username = username,
-                            Role = projectRole,
-                            OpaqueUserId = _guidService.NewObjectId(),
-                        }
-                    )
+                await projectDoc.SubmitJson0OpAsync(
+                    op =>
+                        op.Add(
+                            p => p.ParatextUsers,
+                            new ParatextUserProfile
+                            {
+                                SFUserId = userDoc.Id,
+                                Username = username,
+                                Role = projectRole,
+                                OpaqueUserId = _guidService.NewObjectId(),
+                            }
+                        ),
+                    new SubmitOptions<SFProject>
+                    {
+                        DuplicateKeyCheck = p => p.ParatextUsers.Any(u => u.Username == username),
+                        ThrowOnDuplicateKey = false,
+                    }
                 );
             }
         }

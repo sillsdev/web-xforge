@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,8 +22,8 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
 
         // Set up excluded operations and queue
         env.Service.BeginTransaction();
@@ -80,7 +79,15 @@ public class ConnectionTests
         // Setup Queue
         env.Service.BeginTransaction();
         await env.Service.CreateDocAsync(collection, id, snapshot.Data, otTypeName, source: null);
-        await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version, source: null);
+        await env.Service.SubmitOpAsync(
+            collection,
+            id,
+            op,
+            snapshot.Data,
+            snapshot.Version,
+            // This should not throw in a transaction
+            options: new SubmitOptions<TestProject> { DuplicateKeyCheck = p => p.Id == id, ThrowOnDuplicateKey = true }
+        );
         await env.Service.ReplaceDocAsync(collection, id, data, snapshot.Version, source: null);
         await env.Service.DeleteDocAsync(collection, id);
 
@@ -109,12 +116,12 @@ public class ConnectionTests
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
         await env
             .RealtimeService.Server.Received(1)
-            .SubmitOpAsync<object>(
+            .SubmitOpAsync<TestProject>(
                 Arg.Any<int>(),
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<OpSource?>()
+                Arg.Any<SubmitOptions?>()
             );
         await env
             .RealtimeService.Server.Received(1)
@@ -132,10 +139,10 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
         var data = new TestProject { Id = id, Name = "Test Project 1" };
-        string otTypeName = OTType.Json0;
+        const string otTypeName = OTType.Json0;
         OpSource? source = OpSource.Draft;
 
         // SUT
@@ -174,10 +181,10 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
         var data = new TestProject { Id = id, Name = "Test Project 1" };
-        string otTypeName = OTType.Json0;
+        const string otTypeName = OTType.Json0;
         OpSource? source = OpSource.Draft;
 
         // SUT
@@ -204,8 +211,8 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
 
         // SUT
         env.Service.BeginTransaction();
@@ -229,8 +236,8 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
 
         // SUT
         await env.Service.DeleteDocAsync(collection, id);
@@ -276,8 +283,8 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
 
         // SUT
         await env.Service.FetchDocAsync<TestProject>(collection, id);
@@ -566,7 +573,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<OpSource?>()
+                Arg.Any<SubmitOptions?>()
             );
     }
 
@@ -575,12 +582,12 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
-        string otTypeName = OTType.Json0;
+        const string collection = "test_project";
+        const string id = "id1";
+        const string otTypeName = OTType.Json0;
         var snapshot = new Snapshot<TestProject>
         {
-            Data = new TestProject() { Id = id, SyncDisabled = false },
+            Data = new TestProject { Id = id, SyncDisabled = false },
             Version = 1,
         };
         var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
@@ -600,7 +607,7 @@ public class ConnectionTests
             op,
             snapshot.Data,
             snapshot.Version,
-            OpSource.Editor
+            new SubmitOptions { Source = OpSource.Editor }
         );
 
         // Verify result
@@ -613,7 +620,7 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Action, QueuedAction.Submit);
         Assert.AreEqual(queuedOperation.Collection, collection);
         Assert.AreEqual(queuedOperation.Op, op);
-        Assert.AreEqual(queuedOperation.Source, OpSource.Editor);
+        Assert.AreEqual(queuedOperation.Options, new SubmitOptions { Source = OpSource.Editor });
 
         // Verify that the call was not passed to the underlying realtime server
         await env
@@ -623,7 +630,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<OpSource?>()
+                Arg.Any<SubmitOptions?>()
             );
     }
 
@@ -632,11 +639,11 @@ public class ConnectionTests
     {
         // Setup
         var env = new TestEnvironment();
-        string collection = "test_project";
-        string id = "id1";
+        const string collection = "test_project";
+        const string id = "id1";
         var snapshot = new Snapshot<TestProject>
         {
-            Data = new TestProject() { Id = id, SyncDisabled = false },
+            Data = new TestProject { Id = id, SyncDisabled = false },
             Version = 1,
         };
         var builder = new Json0OpBuilder<TestProject>(snapshot.Data);
@@ -657,7 +664,7 @@ public class ConnectionTests
                 Arg.Any<string>(),
                 Arg.Any<string>(),
                 Arg.Any<object>(),
-                Arg.Any<OpSource?>()
+                Arg.Any<SubmitOptions?>()
             );
     }
 
@@ -690,14 +697,14 @@ public class ConnectionTests
         var env = new TestEnvironment();
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         const string id = "project01";
-        var ops = new Op[]
-        {
+        Op[] ops =
+        [
             new Op
             {
                 Metadata = new OpMetadata { Timestamp = DateTime.UtcNow },
                 Version = 1,
             },
-        };
+        ];
         env.RealtimeService.Server.GetOpsAsync(collection, id).Returns(Task.FromResult(ops));
 
         // SUT

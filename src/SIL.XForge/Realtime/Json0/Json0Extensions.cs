@@ -6,7 +6,11 @@ namespace SIL.XForge.Realtime.Json0;
 
 public static class Json0Extensions
 {
-    public static async Task SubmitJson0OpAsync<T>(this IDocument<T> doc, Action<Json0OpBuilder<T>> build)
+    public static async Task SubmitJson0OpAsync<T>(
+        this IDocument<T> doc,
+        Action<Json0OpBuilder<T>> build,
+        SubmitOptions? options = null
+    )
         where T : Json0Snapshot
     {
         if (!doc.IsLoaded)
@@ -15,6 +19,6 @@ public static class Json0Extensions
         var builder = new Json0OpBuilder<T>(doc.Data);
         build(builder);
         if (builder.Op.Count > 0)
-            await doc.SubmitOpAsync(builder.Op, null);
+            await doc.SubmitOpAsync(builder.Op, options);
     }
 }

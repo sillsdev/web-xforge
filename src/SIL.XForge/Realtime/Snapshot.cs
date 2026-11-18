@@ -23,5 +23,5 @@ public class Snapshot<T>
     /// <summary>
     /// The snapshot data.
     /// </summary>
-    public T Data { get; set; }
+    public T? Data { get; set; }
 }

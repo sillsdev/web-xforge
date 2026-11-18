@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -36,7 +35,7 @@ public class Connection : DisposableBase, IConnection
     private int _handle;
 
     /// <summary>
-    /// Whether or not this connection is in a transaction state.
+    /// Whether this connection is in a transaction state.
     /// </summary>
     private bool _isTransaction;
 
@@ -119,7 +118,7 @@ public class Connection : DisposableBase, IConnection
         if (_isTransaction)
         {
             // Execute the queued operations
-            while (_queuedOperations.TryDequeue(out QueuedOperation queuedOperation))
+            while (_queuedOperations.TryDequeue(out QueuedOperation? queuedOperation))
             {
                 switch (queuedOperation.Action)
                 {
@@ -129,7 +128,7 @@ public class Connection : DisposableBase, IConnection
                             queuedOperation.Collection,
                             queuedOperation.Id,
                             queuedOperation.Data,
-                            queuedOperation.OtTypeName,
+                            queuedOperation.OtTypeName!,
                             queuedOperation.Source
                         );
                         break;
@@ -141,13 +140,7 @@ public class Connection : DisposableBase, IConnection
                         );
                         break;
                     case QueuedAction.Submit:
-                        await _realtimeServer.SubmitOpAsync<object>(
-                            queuedOperation.Handle,
-                            queuedOperation.Collection,
-                            queuedOperation.Id,
-                            queuedOperation.Op,
-                            queuedOperation.Source
-                        );
+                        await queuedOperation.SubmitOpAsync(_realtimeServer);
                         break;
                     case QueuedAction.Replace:
                         await _realtimeServer.ReplaceDocAsync(
@@ -294,7 +287,7 @@ public class Connection : DisposableBase, IConnection
     /// A snapshot of the fetched document from the realtime server.
     /// </returns>
     public async Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         DocConfig docConfig = _realtimeService.GetDocConfig<T>();
         return await _realtimeServer.FetchSnapshotAsync<T>(_handle, docConfig.CollectionName, id, timestamp);
@@ -310,7 +303,7 @@ public class Connection : DisposableBase, IConnection
     /// A snapshot for each identifier, in the same order as <paramref name="ids"/>.
     /// </returns>
     public async Task<Snapshot<T>[]> FetchSnapshotsAsync<T>(IReadOnlyCollection<string> ids, DateTime timestamp)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         DocConfig docConfig = _realtimeService.GetDocConfig<T>();
         return await _realtimeServer.FetchSnapshotsAsync<T>(_handle, docConfig.CollectionName, ids, timestamp);
@@ -325,7 +318,7 @@ public class Connection : DisposableBase, IConnection
     /// The ops for the document from the realtime server.
     /// </returns>
     public async Task<Op[]> GetOpsAsync<T>(string id)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         DocConfig docConfig = _realtimeService.GetDocConfig<T>();
         return await _realtimeServer.GetOpsAsync(docConfig.CollectionName, id);
@@ -340,7 +333,7 @@ public class Connection : DisposableBase, IConnection
     /// The document.
     /// </returns>
     public IDocument<T> Get<T>(string id)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         DocConfig docConfig = _realtimeService.GetDocConfig<T>();
         if (_documents is null)
@@ -353,7 +346,7 @@ public class Connection : DisposableBase, IConnection
     }
 
     public async Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         if (ids.Count == 0)
         {
@@ -413,7 +406,7 @@ public class Connection : DisposableBase, IConnection
     /// <param name="op">The operation.</param>
     /// <param name="currentDoc">The current document (only used when in a transaction).</param>
     /// <param name="currentVersion">The current version (only used when in a transaction).</param>
-    /// <param name="source">The source of the op. This is currently only used by text documents.</param>
+    /// <param name="options">The options for the op submission, including source and duplicate key check.</param>
     /// <returns>
     /// A snapshot of the document with the submitted operation from the realtime server.
     /// </returns>
@@ -423,8 +416,9 @@ public class Connection : DisposableBase, IConnection
         object op,
         T currentDoc,
         int currentVersion,
-        OpSource? source
+        SubmitOptions? options
     )
+        where T : class
     {
         if (_isTransaction)
         {
@@ -439,7 +433,7 @@ public class Connection : DisposableBase, IConnection
                     {
                         // Do not return the submitted operation, as it will not include the queued ops,
                         // as SubmitOpAsync writes to then reads directly from the Realtime Server.
-                        _ = await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, source);
+                        _ = await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, options);
                         queueOperation = false;
                         break;
                     }
@@ -449,15 +443,22 @@ public class Connection : DisposableBase, IConnection
             // Queue this operation
             if (queueOperation)
             {
+                // We must not throw on duplicate key if in a transaction,
+                // as that could cause CommitTransactionAsync to fail.
+                if (options is SubmitOptions<T> { ThrowOnDuplicateKey: true } submitOptions)
+                {
+                    options = submitOptions with { ThrowOnDuplicateKey = false };
+                }
+
                 _queuedOperations.Enqueue(
-                    new QueuedOperation
+                    new QueuedOperation<T>
                     {
                         Action = QueuedAction.Submit,
                         Collection = collection,
                         Handle = _handle,
                         Id = id,
                         Op = op,
-                        Source = source,
+                        Options = options,
                     }
                 );
             }
@@ -471,7 +472,7 @@ public class Connection : DisposableBase, IConnection
             };
         }
 
-        return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, source);
+        return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op, options);
     }
 
     /// <summary>
@@ -534,7 +535,7 @@ public class Connection : DisposableBase, IConnection
     /// Starts the realtime server asynchronously.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
-    internal async Task StartAsync(string userId = null) =>
+    internal async Task StartAsync(string? userId = null) =>
         _handle = await _realtimeService.Server.ConnectAsync(userId);
 
     /// <summary>
@@ -543,7 +544,7 @@ public class Connection : DisposableBase, IConnection
     protected override void DisposeManagedResources() => _realtimeService.Server.Disconnect(_handle);
 
     private Document<T> GetDocument<T>(string id, DocConfig docConfig, Snapshot<T>? snapshot = null)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         string otTypeName = docConfig.OTTypeName;
         return new Document<T>(this, otTypeName, docConfig.CollectionName, id, snapshot);

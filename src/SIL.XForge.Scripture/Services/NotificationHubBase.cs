@@ -42,7 +42,7 @@ public abstract class NotificationHubBase<T>(IRealtimeService realtimeService) :
     {
         // Load the project from the realtime service
         Attempt<SFProject> attempt = await realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
-        if (!attempt.TryResult(out SFProject project))
+        if (!attempt.TryResult(out SFProject? project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }
