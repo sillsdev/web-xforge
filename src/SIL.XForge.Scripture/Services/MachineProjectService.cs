@@ -254,7 +254,7 @@ public class MachineProjectService(
             sfProjectId,
             cancellationToken
         );
-        if (!attempt.TryResult(out SFProject project))
+        if (!attempt.TryResult(out SFProject? project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }
@@ -1406,7 +1406,7 @@ public class MachineProjectService(
             buildConfig.ProjectId,
             cancellationToken
         );
-        if (!attempt.TryResult(out SFProject project))
+        if (!attempt.TryResult(out SFProject? project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }

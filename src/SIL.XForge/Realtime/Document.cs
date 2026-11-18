@@ -1,5 +1,5 @@
-#nullable disable warnings
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using SIL.XForge.Models;
@@ -10,7 +10,7 @@ namespace SIL.XForge.Realtime;
 /// This class represents a real-time document.
 /// </summary>
 public class Document<T> : IDocument<T>
-    where T : IIdentifiable
+    where T : class, IIdentifiable
 {
     private readonly IConnection _connection;
     private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
@@ -35,8 +35,9 @@ public class Document<T> : IDocument<T>
 
     public string OTTypeName { get; }
 
-    public T Data { get; private set; }
+    public T? Data { get; private set; }
 
+    [MemberNotNullWhen(true, nameof(Data))]
     public bool IsLoaded => Data != null;
 
     public async Task CreateAsync(T data, OpSource? source)
@@ -83,12 +84,13 @@ public class Document<T> : IDocument<T>
         }
     }
 
-    public async Task SubmitOpAsync(object op, OpSource? source)
+    public async Task SubmitOpAsync(object op, SubmitOptions? options)
     {
         await _lock.WaitAsync();
         try
         {
-            Snapshot<T> snapshot = await _connection.SubmitOpAsync<T>(Collection, Id, op, Data, Version, source);
+            ArgumentNullException.ThrowIfNull(Data);
+            Snapshot<T> snapshot = await _connection.SubmitOpAsync<T>(Collection, Id, op, Data, Version, options);
             UpdateFromSnapshot(snapshot);
         }
         finally

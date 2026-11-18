@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,25 +16,25 @@ public static class RealtimeExtensions
     )
         where T : IIdentifiable
     {
-        T entity = await realtimeService.QuerySnapshots<T>().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        T? entity = await realtimeService.QuerySnapshots<T>().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
         return new Attempt<T>(entity != null, entity);
     }
 
-    public static async Task<T> GetSnapshotAsync<T>(
+    public static async Task<T?> GetSnapshotAsync<T>(
         this IRealtimeService realtimeService,
         string id,
         CancellationToken cancellationToken = default
     )
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         Attempt<T> attempt = await realtimeService.TryGetSnapshotAsync<T>(id, cancellationToken);
         if (attempt.Success)
             return attempt.Result;
-        return default;
+        return null;
     }
 
     public static async Task<IDocument<T>> FetchAsync<T>(this IConnection conn, string id)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         IDocument<T> doc = conn.Get<T>(id);
         await doc.FetchAsync();
@@ -43,7 +42,7 @@ public static class RealtimeExtensions
     }
 
     public static async Task<IDocument<T>> CreateAsync<T>(this IConnection conn, string id, T data, OpSource? source)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         IDocument<T> doc = conn.Get<T>(id);
         await doc.CreateAsync(data, source);
@@ -56,7 +55,7 @@ public static class RealtimeExtensions
         Func<T> createData,
         OpSource? source
     )
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         IDocument<T> doc = conn.Get<T>(id);
         await doc.FetchOrCreateAsync(createData, source);
