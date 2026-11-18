@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
@@ -10,7 +9,7 @@ namespace SIL.XForge.Realtime;
 
 [ExcludeFromCodeCoverage(Justification = "This code is only used in unit tests")]
 public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, string collection, string id) : IDocument<T>
-    where T : IIdentifiable
+    where T : class, IIdentifiable
 {
     public string Collection { get; } = collection;
 
@@ -20,8 +19,9 @@ public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, stri
 
     public string OTTypeName { get; } = otTypeName;
 
-    public T Data { get; private set; }
+    public T? Data { get; private set; }
 
+    [MemberNotNullWhen(true, nameof(Data))]
     public bool IsLoaded => Data != null;
 
     public async Task CreateAsync(T data, OpSource? source)
@@ -44,14 +44,14 @@ public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, stri
             );
         }
         await repo.DeleteAsync(Id);
-        Data = default;
+        Data = null;
         Version = -1;
     }
 
     public async Task FetchAsync()
     {
-        Attempt<T> attempt = await repo.TryGetAsync(Id);
-        if (attempt.TryResult(out T data))
+        Attempt<T?> attempt = await repo.TryGetAsync(Id);
+        if (attempt.TryResult(out T? data))
         {
             Data = data;
             Version = 0;
@@ -65,8 +65,27 @@ public class MemoryDocument<T>(MemoryRepository<T> repo, string otTypeName, stri
             await CreateAsync(createData(), source);
     }
 
-    public async Task SubmitOpAsync(object op, OpSource? source)
+    public async Task SubmitOpAsync(object op, SubmitOptions? options)
     {
+        // Ensure that Data is not null
+        ArgumentNullException.ThrowIfNull(Data);
+
+        // Check the duplicate key if it is specified
+        if (options is SubmitOptions<T> submitOptions)
+        {
+            Func<T, bool> duplicateKeyCheck = submitOptions.DuplicateKeyCheck.Compile();
+            if (duplicateKeyCheck(Data))
+            {
+                if (submitOptions.ThrowOnDuplicateKey)
+                {
+                    throw new DuplicateKeyException();
+                }
+
+                return;
+            }
+        }
+
+        // Apply the op using an instance of the realtime server
         T data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
         data.Id = Id;
         await repo.ReplaceAsync(data);

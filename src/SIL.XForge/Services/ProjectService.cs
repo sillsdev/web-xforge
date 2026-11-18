@@ -287,7 +287,14 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
             }
         }
         string siteId = SiteOptions.Value.Id;
-        await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
+        await userDoc.SubmitJson0OpAsync(
+            op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id),
+            new SubmitOptions<User>
+            {
+                DuplicateKeyCheck = u => u.Sites[siteId].Projects.Contains(projectDoc.Id),
+                ThrowOnDuplicateKey = false,
+            }
+        );
     }
 
     protected internal virtual async Task RemoveUserFromProjectAsync(

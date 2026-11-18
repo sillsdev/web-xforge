@@ -230,7 +230,7 @@ public class UserServiceTests
             op.Set(u => u.Email, "example@example.com");
         });
         await env.Service.UpdateAvatarFromDisplayNameAsync(userId, userAuth);
-        var emailHash = StringUtils.ComputeMd5Hash(userDoc.Data.Email);
+        var emailHash = StringUtils.ComputeMd5Hash(userDoc.Data!.Email);
         expectedAvatarUrl = "https://cdn.auth0.com/avatars/un.png";
         var auth0Fallback = System.Web.HttpUtility.UrlEncode(expectedAvatarUrl);
         expectedAvatarUrl = $"https://www.gravatar.com/avatar/{emailHash}?s=480&r=pg&d={auth0Fallback}";

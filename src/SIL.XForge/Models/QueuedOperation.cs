@@ -1,4 +1,3 @@
-#nullable disable warnings
 using SIL.XForge.Realtime;
 
 namespace SIL.XForge.Models;
@@ -7,7 +6,7 @@ namespace SIL.XForge.Models;
 /// A queued operation.
 /// </summary>
 /// <remarks>
-/// This is for use by <see cref="Realtime.QueuedRealtimeServer"/>.
+/// This is for use by <see cref="Connection"/>.
 /// </remarks>
 internal class QueuedOperation
 {
@@ -20,7 +19,7 @@ internal class QueuedOperation
     /// <remarks>
     /// This corresponds to the function called on the realtime server.
     /// </remarks>
-    public QueuedAction Action { get; set; }
+    public required QueuedAction Action { get; init; }
 
     /// <summary>
     /// Gets or sets the collection.
@@ -31,7 +30,7 @@ internal class QueuedOperation
     /// <remarks>
     /// This is specified for all queued operations.
     /// </remarks>
-    public string Collection { get; set; }
+    public required string Collection { get; init; }
 
     /// <summary>
     /// Gets or sets the data.
@@ -42,7 +41,7 @@ internal class QueuedOperation
     /// <remarks>
     /// This is required for <see cref="QueuedAction.Create" />.
     /// </remarks>
-    public object Data { get; set; }
+    public object? Data { get; init; }
 
     /// <summary>
     /// Gets or sets the handle.
@@ -53,7 +52,7 @@ internal class QueuedOperation
     /// <remarks>
     /// This is specified for all queued operations.
     /// </remarks>
-    public int Handle { get; set; }
+    public required int Handle { get; init; }
 
     /// <summary>
     /// Gets or sets the identifier.
@@ -64,7 +63,7 @@ internal class QueuedOperation
     /// <remarks>
     /// This is specified for all queued operations.
     /// </remarks>
-    public string Id { get; set; }
+    public required string Id { get; init; }
 
     /// <summary>
     /// Gets or sets the operations.
@@ -76,7 +75,7 @@ internal class QueuedOperation
     /// Required for <see cref="QueuedAction.Submit" />.
     /// This is usually a collection of JSON0 or RichText operations.
     /// </remarks>
-    public object Op { get; set; }
+    public object? Op { get; init; }
 
     /// <summary>
     /// Gets or sets the name of the ot type.
@@ -88,7 +87,7 @@ internal class QueuedOperation
     /// This is required for <see cref="QueuedAction.Create" />.
     /// See <see cref="Realtime.OTType" /> for allowed values.
     /// </remarks>
-    public string OtTypeName { get; set; }
+    public string? OtTypeName { get; init; }
 
     /// <summary>
     /// Gets or sets the source of the op.
@@ -96,5 +95,20 @@ internal class QueuedOperation
     /// <value>
     /// The op source.
     /// </value>
-    public OpSource? Source { get; set; }
+    /// <remarks>
+    /// This is for <see cref="QueuedAction.Create"/>, <see cref="QueuedAction.Delete"/>,
+    /// and <see cref="QueuedAction.Replace"/> operations.
+    /// </remarks>
+    public OpSource? Source { get; init; }
+
+    /// <summary>
+    /// Gets or sets the options for the op submission.
+    /// </summary>
+    /// <value>
+    /// The op source.
+    /// </value>
+    /// <remarks>
+    /// This is only for <see cref="QueuedAction.Submit"/> operations.
+    /// </remarks>
+    public SubmitOptions? Options { get; init; }
 }

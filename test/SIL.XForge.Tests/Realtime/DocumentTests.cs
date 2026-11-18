@@ -102,12 +102,15 @@ public class DocumentTests
     public async Task SubmitOpAsync_Success()
     {
         var env = new TestEnvironment();
-        env.Connection.SubmitOpAsync(Collection, Id, _op, _data, Version, Source).Returns(Task.FromResult(_snapshot));
+        env.Connection.SubmitOpAsync(Collection, Id, _op, _data, Version, new SubmitOptions { Source = Source })
+            .Returns(Task.FromResult(_snapshot));
 
         // SUT
-        await env.Document.SubmitOpAsync(_op, Source);
+        await env.Document.SubmitOpAsync(_op, new SubmitOptions { Source = Source });
 
-        await env.Connection.Received(1).SubmitOpAsync(Collection, Id, _op, _data, Version, Source);
+        await env
+            .Connection.Received(1)
+            .SubmitOpAsync(Collection, Id, _op, _data, Version, new SubmitOptions { Source = Source });
     }
 
     private class TestEnvironment

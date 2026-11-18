@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.Options;
 using SIL.XForge.Configuration;
+using SIL.XForge.DataAccess;
 
 namespace SIL.XForge.Realtime;
 
@@ -113,8 +114,33 @@ public class RealtimeServer : IRealtimeServer
 
     public Task<Op[]> GetOpsAsync(string collection, string id) => InvokeExportAsync<Op[]>("getOps", collection, id);
 
-    public Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op, OpSource? source) =>
-        InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op, source?.ToString());
+    public async Task<Snapshot<T>> SubmitOpAsync<T>(
+        int handle,
+        string collection,
+        string id,
+        object op,
+        SubmitOptions? options
+    )
+        where T : class
+    {
+        // Check the duplicate key if it is specified
+        if (options is SubmitOptions<T> submitOptions)
+        {
+            Snapshot<T> data = await FetchDocAsync<T>(handle, collection, id);
+            Func<T, bool> duplicateKeyCheck = submitOptions.DuplicateKeyCheck.Compile();
+            if (data.Data != null && duplicateKeyCheck(data.Data))
+            {
+                if (submitOptions.ThrowOnDuplicateKey)
+                {
+                    throw new DuplicateKeyException();
+                }
+
+                return data;
+            }
+        }
+
+        return await InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op, options?.Source);
+    }
 
     public Task DeleteDocAsync(int handle, string collection, string id) =>
         InvokeExportAsync("deleteDoc", handle, collection, id);

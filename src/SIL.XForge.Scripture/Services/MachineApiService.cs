@@ -695,7 +695,7 @@ public partial class MachineApiService(
                     Delta diffDelta = textDataDoc.Data.Diff(newTextData);
                     if (diffDelta.Ops.Count > 0)
                     {
-                        await textDataDoc.SubmitOpAsync(diffDelta, OpSource.Draft);
+                        await textDataDoc.SubmitOpAsync(diffDelta, new SubmitOptions { Source = OpSource.Draft });
                     }
                     await draftHubContext.NotifyDraftApplyProgress(
                         sfProjectId,
@@ -1377,7 +1377,7 @@ public partial class MachineApiService(
                 sfProjectId,
                 cancellationToken
             );
-            if (attempt.TryResult(out SFProject project))
+            if (attempt.TryResult(out SFProject? project))
             {
                 result[engineId] = (sfProjectId, project);
             }
@@ -1683,7 +1683,7 @@ public partial class MachineApiService(
                     projectId,
                     cancellationToken
                 );
-                projectSnapshots[projectId] = attempt.TryResult(out SFProject project) ? project : null;
+                projectSnapshots[projectId] = attempt.TryResult(out SFProject? project) ? project : null;
             }
 
             return new BuildReportConfig
@@ -3472,7 +3472,7 @@ public partial class MachineApiService(
             op.Set(p => p.TranslateConfig.DraftConfig.FastTraining, buildConfig.FastTraining);
             op.Set(p => p.TranslateConfig.DraftConfig.SendEmailOnBuildFinished, buildConfig.SendEmailOnBuildFinished);
             op.Set(p => p.TranslateConfig.DraftConfig.UseEcho, buildConfig.UseEcho);
-            if (!projectDoc.Data.TranslateConfig.PreTranslate)
+            if (!projectDoc.Data!.TranslateConfig.PreTranslate)
             {
                 op.Set(p => p.TranslateConfig.PreTranslate, true);
             }
@@ -3485,8 +3485,8 @@ public partial class MachineApiService(
         // Store the project ids to sync in a hashset to prevent duplicates
         HashSet<string> syncProjectIds =
         [
-            .. projectDoc.Data.TranslateConfig.DraftConfig.TrainingSources.Select(s => s.ProjectRef),
-            .. projectDoc.Data.TranslateConfig.DraftConfig.DraftingSources.Select(s => s.ProjectRef),
+            .. projectDoc.Data!.TranslateConfig.DraftConfig.TrainingSources.Select(s => s.ProjectRef),
+            .. projectDoc.Data!.TranslateConfig.DraftConfig.DraftingSources.Select(s => s.ProjectRef),
         ];
 
         // Remove the source project, as it was synced when the target was synced
@@ -4299,7 +4299,7 @@ public partial class MachineApiService(
             sfProjectId,
             cancellationToken
         );
-        if (!attempt.TryResult(out SFProject project))
+        if (!attempt.TryResult(out SFProject? project))
         {
             throw new DataNotFoundException("The project does not exist.");
         }
