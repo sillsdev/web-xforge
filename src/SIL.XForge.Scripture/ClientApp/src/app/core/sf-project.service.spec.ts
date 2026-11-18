@@ -2,6 +2,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
@@ -169,6 +170,28 @@ describe('SFProjectService', () => {
       verify(mockedCommandService.onlineInvoke(anything(), 'applyPreTranslationToProject', anything())).once();
       expect(actual).toBe(jobId);
     }));
+
+    describe('onlineSetAvailableDraftingEngines', () => {
+      it('should invoke the command service', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const projectId = 'project01';
+        const draftingEngines = [DraftingEngine.Nmt];
+        await env.service.onlineSetAvailableDraftingEngines(projectId, draftingEngines);
+        verify(mockedCommandService.onlineInvoke(anything(), 'setAvailableDraftingEngines', anything())).once();
+        expect().nothing();
+      }));
+    });
+
+    describe('onlineDraftingEngine', () => {
+      it('should invoke the command service', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        const projectId = 'project01';
+        const draftingEngine = DraftingEngine.Llm;
+        await env.service.onlineSetDraftingEngine(projectId, draftingEngine);
+        verify(mockedCommandService.onlineInvoke(anything(), 'setDraftingEngine', anything())).once();
+        expect().nothing();
+      }));
+    });
   });
 
   class TestEnvironment {

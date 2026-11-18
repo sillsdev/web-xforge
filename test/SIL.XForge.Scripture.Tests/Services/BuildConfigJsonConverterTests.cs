@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
@@ -22,7 +23,33 @@ public class BuildConfigJsonConverterTests
         var serializer = Substitute.For<JsonSerializer>();
         var buildConfig = new BuildConfig
         {
-            FastTraining = true,
+            SendEmailOnBuildFinished = true,
+            DraftingEngine = DraftingEngine.NmtWithLlmPostProcessing,
+            ProjectId = Project01,
+        };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.Received().WriteStartObject();
+        writer.Received().WritePropertyName(nameof(buildConfig.SendEmailOnBuildFinished));
+        serializer.Received().Serialize(writer, buildConfig.SendEmailOnBuildFinished);
+        writer.Received().WritePropertyName(nameof(buildConfig.DraftingEngine));
+        serializer.Received().Serialize(writer, nameof(DraftingEngine.NmtWithLlmPostProcessing));
+        writer.Received().WritePropertyName(nameof(buildConfig.ProjectId));
+        serializer.Received().Serialize(writer, buildConfig.ProjectId);
+        writer.Received().WriteEndObject();
+    }
+
+    [Test]
+    [Obsolete]
+    public void WriteJson_Serializes_BuildConfigWithEcho()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig
+        {
             SendEmailOnBuildFinished = true,
             UseEcho = true,
             ProjectId = Project01,
@@ -32,19 +59,44 @@ public class BuildConfigJsonConverterTests
         converter.WriteJson(writer, buildConfig, serializer);
 
         writer.Received().WriteStartObject();
-        writer.Received().WritePropertyName(nameof(buildConfig.FastTraining));
-        serializer.Received().Serialize(writer, buildConfig.FastTraining);
         writer.Received().WritePropertyName(nameof(buildConfig.SendEmailOnBuildFinished));
         serializer.Received().Serialize(writer, buildConfig.SendEmailOnBuildFinished);
-        writer.Received().WritePropertyName(nameof(buildConfig.UseEcho));
-        serializer.Received().Serialize(writer, buildConfig.UseEcho);
+        writer.Received().WritePropertyName(nameof(buildConfig.DraftingEngine));
+        serializer.Received().Serialize(writer, nameof(DraftingEngine.Echo));
         writer.Received().WritePropertyName(nameof(buildConfig.ProjectId));
         serializer.Received().Serialize(writer, buildConfig.ProjectId);
         writer.Received().WriteEndObject();
     }
 
     [Test]
-    public void WriteJson_Serializes_BuildConfigWithoutBooleanValues()
+    [Obsolete]
+    public void WriteJson_Serializes_BuildConfigWithFastTraining()
+    {
+        var converter = new BuildConfigJsonConverter();
+        var writer = Substitute.For<JsonWriter>();
+        var serializer = Substitute.For<JsonSerializer>();
+        var buildConfig = new BuildConfig
+        {
+            FastTraining = true,
+            SendEmailOnBuildFinished = true,
+            ProjectId = Project01,
+        };
+
+        // SUT
+        converter.WriteJson(writer, buildConfig, serializer);
+
+        writer.Received().WriteStartObject();
+        writer.Received().WritePropertyName(nameof(buildConfig.SendEmailOnBuildFinished));
+        serializer.Received().Serialize(writer, buildConfig.SendEmailOnBuildFinished);
+        writer.Received().WritePropertyName(nameof(buildConfig.DraftingEngine));
+        serializer.Received().Serialize(writer, nameof(DraftingEngine.NmtWithFastTraining));
+        writer.Received().WritePropertyName(nameof(buildConfig.ProjectId));
+        serializer.Received().Serialize(writer, buildConfig.ProjectId);
+        writer.Received().WriteEndObject();
+    }
+
+    [Test]
+    public void WriteJson_Serializes_BuildConfigWithoutDefaultValues()
     {
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
@@ -55,9 +107,12 @@ public class BuildConfigJsonConverterTests
         converter.WriteJson(writer, buildConfig, serializer);
 
         writer.Received().WriteStartObject();
-        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.FastTraining));
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.AvailableTrainingDataFiles));
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.TrainingDataFiles));
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.TrainingScriptureRanges));
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.TranslationScriptureRanges));
         writer.DidNotReceive().WritePropertyName(nameof(buildConfig.SendEmailOnBuildFinished));
-        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.UseEcho));
+        writer.Received().WritePropertyName(nameof(buildConfig.DraftingEngine));
         writer.Received().WritePropertyName(nameof(buildConfig.ProjectId));
         serializer.Received().Serialize(writer, buildConfig.ProjectId);
         writer.Received().WriteEndObject();
@@ -185,39 +240,15 @@ public class BuildConfigJsonConverterTests
     }
 
     [Test]
-    public void ReadJson_Deserializes_JSON_Object()
+    [Obsolete]
+    public void ReadJson_Deserializes_Legacy_FastTraining()
     {
         var converter = new BuildConfigJsonConverter();
         const string jsonString = $$"""
             {
             "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
             "{{nameof(BuildConfig.FastTraining)}}":true,
-            "{{nameof(BuildConfig.SendEmailOnBuildFinished)}}":true,
-            "{{nameof(BuildConfig.UseEcho)}}":true
-            }
-            """;
-        using var stringReader = new StringReader(jsonString);
-        using var reader = new JsonTextReader(stringReader);
-        var serializer = new JsonSerializer();
-
-        // SUT
-        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
-
-        Assert.IsNotNull(buildConfig);
-        Assert.IsInstanceOf<BuildConfig>(buildConfig);
-        Assert.IsTrue(buildConfig!.FastTraining);
-        Assert.IsTrue(buildConfig.SendEmailOnBuildFinished);
-        Assert.IsTrue(buildConfig.UseEcho);
-        Assert.AreEqual(Project01, buildConfig.ProjectId);
-    }
-
-    [Test]
-    public void ReadJson_Deserializes_JSON_Object_WithoutBooleanValues()
-    {
-        var converter = new BuildConfigJsonConverter();
-        const string jsonString = $$"""
-            {
-            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.SendEmailOnBuildFinished)}}":true
             }
             """;
         using var stringReader = new StringReader(jsonString);
@@ -230,8 +261,57 @@ public class BuildConfigJsonConverterTests
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
         Assert.IsFalse(buildConfig!.FastTraining);
-        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
+        Assert.IsTrue(buildConfig.SendEmailOnBuildFinished);
+        Assert.AreEqual(DraftingEngine.NmtWithFastTraining, buildConfig.DraftingEngine);
+        Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    [Obsolete]
+    public void ReadJson_Deserializes_Legacy_UseEcho()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            "{{nameof(BuildConfig.UseEcho)}}":true
+            }
+            """;
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsInstanceOf<BuildConfig>(buildConfig);
+        Assert.IsFalse(buildConfig!.FastTraining);
         Assert.IsFalse(buildConfig.UseEcho);
+        Assert.AreEqual(DraftingEngine.Echo, buildConfig.DraftingEngine);
+        Assert.AreEqual(Project01, buildConfig.ProjectId);
+    }
+
+    [Test]
+    public void ReadJson_Deserializes_JSON_Object_WithoutDefaultValues()
+    {
+        var converter = new BuildConfigJsonConverter();
+        const string jsonString = $$"""
+            {
+            "{{nameof(BuildConfig.ProjectId)}}":"{{Project01}}",
+            }
+            """;
+        using var stringReader = new StringReader(jsonString);
+        using var reader = new JsonTextReader(stringReader);
+        var serializer = new JsonSerializer();
+
+        // SUT
+        var buildConfig = converter.ReadJson(reader, typeof(BuildConfig), null, false, serializer);
+
+        Assert.IsNotNull(buildConfig);
+        Assert.IsInstanceOf<BuildConfig>(buildConfig);
+        Assert.IsFalse(buildConfig!.SendEmailOnBuildFinished);
+        Assert.AreEqual(DraftingEngine.Nmt, buildConfig.DraftingEngine);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
     }
 
@@ -254,9 +334,7 @@ public class BuildConfigJsonConverterTests
 
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
-        Assert.IsFalse(buildConfig!.FastTraining);
-        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
-        Assert.IsFalse(buildConfig.UseEcho);
+        Assert.IsFalse(buildConfig!.SendEmailOnBuildFinished);
         CollectionAssert.AreEqual(new List<string> { Data01, Data02 }, buildConfig.TrainingDataFiles);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
     }
@@ -330,9 +408,7 @@ public class BuildConfigJsonConverterTests
 
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
-        Assert.IsFalse(buildConfig!.FastTraining);
-        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
-        Assert.IsFalse(buildConfig.UseEcho);
+        Assert.IsFalse(buildConfig!.SendEmailOnBuildFinished);
         CollectionAssert.AreEqual(
             new List<ProjectScriptureRange>
             {
@@ -369,9 +445,7 @@ public class BuildConfigJsonConverterTests
 
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
-        Assert.IsFalse(buildConfig!.FastTraining);
-        Assert.IsFalse(buildConfig.SendEmailOnBuildFinished);
-        Assert.IsFalse(buildConfig.UseEcho);
+        Assert.IsFalse(buildConfig!.SendEmailOnBuildFinished);
         CollectionAssert.AreEqual(
             new List<ProjectScriptureRange>
             {

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using SIL.XForge.Scripture.Services;
@@ -60,6 +61,7 @@ public class BuildConfig
     /// <remarks>
     /// A fast training build will be very inaccurate. Only use this value if you are testing or debugging.
     /// </remarks>
+    [Obsolete("Use DraftingEngine instead. Deprecated 2026-11.")]
     public bool FastTraining { get; set; }
 
     /// <summary>
@@ -69,6 +71,7 @@ public class BuildConfig
     /// <remarks>
     /// A build made using echo will just echo the source text. Only use this value if you are testing or debugging.
     /// </remarks>
+    [Obsolete("Use DraftingEngine instead. Deprecated 2026-11.")]
     public bool UseEcho { get; set; }
 
     /// <summary>
@@ -76,4 +79,11 @@ public class BuildConfig
     /// </summary>
     /// <value><c>true</c> if we are sending an email when the build finishes; otherwise, <c>false</c>.</value>
     public bool SendEmailOnBuildFinished { get; set; }
+
+    /// <summary>
+    /// Gets or sets the currently selected drafting engine to use by default for the next build.
+    /// </summary>
+    /// <value>The drafting engine selected for this build.</value>
+    /// <remarks>See <see cref="DraftingEngine"/> for valid values.</remarks>
+    public DraftingEngine DraftingEngine { get; set; } = DraftingEngine.Nmt;
 }

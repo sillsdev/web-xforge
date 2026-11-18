@@ -58,6 +58,14 @@ export interface DraftUsfmConfig {
   quoteFormat: QuoteFormat;
 }
 
+export enum DraftingEngine {
+  Echo = 'Echo',
+  Llm = 'Llm',
+  Nmt = 'Nmt',
+  NmtWithFastTraining = 'NmtWithFastTraining',
+  NmtWithLlmPostProcessing = 'NmtWithLlmPostProcessing'
+}
+
 export interface DraftConfig {
   draftingSources: TranslateSource[];
   trainingSources: TranslateSource[];
@@ -75,6 +83,8 @@ export interface DraftConfig {
   draftedScriptureRange?: string;
   draftInProgress?: boolean;
   lastDraftSuccessful?: boolean;
+  availableDraftingEngines?: DraftingEngine[];
+  draftingEngine?: DraftingEngine;
 }
 
 export interface TranslateConfig {
