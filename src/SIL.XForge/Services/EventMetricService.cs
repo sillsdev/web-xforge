@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -113,7 +112,7 @@ public class EventMetricService(IRepository<EventMetric> eventMetrics) : IEventM
         Dictionary<string, object?> collectedTags = [];
 
         // Walk up the activity chain collecting tags (child first, so child overrides parent)
-        Activity activity = Activity.Current;
+        Activity? activity = Activity.Current;
         while (activity is not null)
         {
             foreach (KeyValuePair<string, object?> tag in activity.TagObjects)

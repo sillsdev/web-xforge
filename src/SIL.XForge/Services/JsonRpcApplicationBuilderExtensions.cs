@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Security.Claims;
 using EdjCase.JsonRpc.Router;
@@ -22,8 +21,9 @@ public static class JsonRpcApplicationBuilderExtensions
                 b.Use(
                     async (context, next) =>
                     {
-                        var authSchemeProvider = context.RequestServices.GetService<IAuthenticationSchemeProvider>();
-                        ClaimsPrincipal principal = null;
+                        var authSchemeProvider =
+                            context.RequestServices.GetRequiredService<IAuthenticationSchemeProvider>();
+                        ClaimsPrincipal? principal = null;
                         foreach (AuthenticationScheme scheme in await authSchemeProvider.GetAllSchemesAsync())
                         {
                             AuthenticateResult result = await context.AuthenticateAsync(scheme.Name);

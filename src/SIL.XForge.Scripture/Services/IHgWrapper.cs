@@ -11,7 +11,7 @@ public interface IHgWrapper
     void Update(string repository, string rev);
     void BackupRepository(string repository, string backupFile);
     void RestoreRepository(string destination, string backupFile);
-    string GetLastPublicRevision(string repository);
+    string? GetLastPublicRevision(string repository);
     string GetRepoRevision(string repository);
     void MarkSharedChangeSetsPublic(string repository);
     string[] Pull(string repository, byte[] bundle);

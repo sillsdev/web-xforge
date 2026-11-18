@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.IO;
 using System.Threading;
@@ -25,7 +24,7 @@ public class RealtimeJsonService : IJsonService
     public RealtimeJsonService(IExceptionHandler exceptionHandler) => _exceptionHandler = exceptionHandler;
 
     /// <inheritdoc />
-    public ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
+    public ValueTask<T?> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
         try
         {

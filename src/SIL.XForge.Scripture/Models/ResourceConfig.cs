@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 
 namespace SIL.XForge.Scripture.Models;
@@ -9,7 +8,7 @@ namespace SIL.XForge.Scripture.Models;
 public class ResourceConfig
 {
     public DateTime CreatedTimestamp { get; set; }
-    public string ManifestChecksum { get; set; }
-    public string PermissionsChecksum { get; set; }
+    public string? ManifestChecksum { get; set; }
+    public string? PermissionsChecksum { get; set; }
     public int Revision { get; set; }
 }

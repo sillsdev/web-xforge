@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -128,7 +127,7 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
         where T : IIdentifiable
     {
         DocConfig docConfig = realtimeService.GetDocConfig<T>();
-        if (_documents.TryGetValue((docConfig.CollectionName, id), out object docObj))
+        if (_documents.TryGetValue((docConfig.CollectionName, id), out object? docObj))
             return (IDocument<T>)docObj;
 
         MemoryRepository<T> repo = realtimeService.GetRepository<T>();

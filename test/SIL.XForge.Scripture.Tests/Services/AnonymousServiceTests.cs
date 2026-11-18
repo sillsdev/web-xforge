@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Linq;
 using System.Threading.Tasks;
 using NSubstitute;
@@ -24,7 +23,7 @@ public class AnonymousServiceTests
         string shareKey = "key02";
         SFProject project = env.Projects.Get(Project01);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
-        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.First(sk => sk.Key == shareKey);
         env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(projectSecret);
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(project));
         env.SFProjectService.CheckShareKeyValidity(shareKey)
@@ -63,7 +62,7 @@ public class AnonymousServiceTests
         string shareKey = "key01";
         SFProject project = env.Projects.Get(Project01);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
-        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.First(sk => sk.Key == shareKey);
         env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(projectSecret);
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(project));
         env.SFProjectService.CheckShareKeyValidity(shareKey)
@@ -139,7 +138,7 @@ public class AnonymousServiceTests
         string language = "en";
         SFProject project = env.Projects.Get(Project01);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
-        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.First(sk => sk.Key == shareKey);
         env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
         env.SFProjectService.CheckShareKeyValidity(shareKey)

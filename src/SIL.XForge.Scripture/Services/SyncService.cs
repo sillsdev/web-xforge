@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -45,13 +44,13 @@ public class SyncService(
         }
 
         // Load the target project secrets, so we can store the job id
-        if (!(await projectSecrets.TryGetAsync(syncConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await projectSecrets.TryGetAsync(syncConfig.ProjectId)).TryResult(out SFProjectSecret? projectSecret))
         {
             throw new ArgumentException("The target project secret cannot be found.");
         }
 
         // See if we can sync the source project
-        string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+        string? sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
         if (!string.IsNullOrWhiteSpace(sourceProjectId) && !syncConfig.TargetOnly)
         {
             IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
@@ -60,7 +59,7 @@ public class SyncService(
                 // Load the source project secrets, so we can store the job id
                 if (
                     !(await projectSecrets.TryGetAsync(sourceProjectId)).TryResult(
-                        out SFProjectSecret sourceProjectSecret
+                        out SFProjectSecret? sourceProjectSecret
                     )
                 )
                 {
@@ -249,7 +248,7 @@ public class SyncService(
             await CancelProjectDocumentSyncAsync(projectDoc);
 
             // Cancel all jobs for the source (if present)
-            string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+            string? sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
             if (!string.IsNullOrWhiteSpace(sourceProjectId))
             {
                 IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
@@ -285,7 +284,7 @@ public class SyncService(
     private async Task CancelProjectDocumentSyncAsync(IDocument<SFProject> projectDoc)
     {
         // Load the project secrets, so we can get any job ids
-        if ((await projectSecrets.TryGetAsync(projectDoc.Data.Id)).TryResult(out SFProjectSecret projectSecret))
+        if ((await projectSecrets.TryGetAsync(projectDoc.Data.Id)).TryResult(out SFProjectSecret? projectSecret))
         {
             // Cancel all jobs for the project
             foreach (string jobId in projectSecret.JobIds)

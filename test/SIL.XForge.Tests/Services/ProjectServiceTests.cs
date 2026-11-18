@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -224,13 +223,13 @@ public class ProjectServiceTests
         IDocument<TestProject> projectDoc = Substitute.For<IDocument<TestProject>>();
         IDocument<User> userDoc = Substitute.For<IDocument<User>>();
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserFromProjectAsync(null, projectDoc, userDoc)
+            env.Service.RemoveUserFromProjectAsync(null!, projectDoc, userDoc)
         );
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserFromProjectAsync(connection, null, userDoc)
+            env.Service.RemoveUserFromProjectAsync(connection, null!, userDoc)
         );
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null)
+            env.Service.RemoveUserFromProjectAsync(connection, projectDoc, null!)
         );
     }
 
@@ -251,13 +250,13 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserAsync(null, "projectId", "projectUserId")
+            env.Service.RemoveUserAsync(null!, "projectId", "projectUserId")
         );
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserAsync("curUserId", null, "projectUserId")
+            env.Service.RemoveUserAsync("curUserId", null!, "projectUserId")
         );
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserAsync("curUserId", "projectId", null)
+            env.Service.RemoveUserAsync("curUserId", "projectId", null!)
         );
     }
 
@@ -305,10 +304,10 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserFromAllProjectsAsync(null, "projectUserId")
+            env.Service.RemoveUserFromAllProjectsAsync(null!, "projectUserId")
         );
         await Assert.ThrowsAsync<ArgumentNullException>(() =>
-            env.Service.RemoveUserFromAllProjectsAsync("curUserId", null)
+            env.Service.RemoveUserFromAllProjectsAsync("curUserId", null!)
         );
     }
 

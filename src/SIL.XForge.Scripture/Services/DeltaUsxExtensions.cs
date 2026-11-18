@@ -1,4 +1,3 @@
-#nullable disable warnings
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Realtime.RichText;
 
@@ -8,7 +7,7 @@ public static class DeltaUsxExtensions
 {
     public static Delta InsertPara(this Delta delta, JObject paraAttributes, JObject? attributes = null)
     {
-        attributes = (JObject)attributes?.DeepClone() ?? [];
+        attributes = (JObject?)attributes?.DeepClone() ?? [];
         attributes.Add(new JProperty("para", paraAttributes));
         return delta.Insert("\n", attributes);
     }
@@ -17,7 +16,7 @@ public static class DeltaUsxExtensions
     {
         if (segRef != null)
         {
-            attributes = (JObject)attributes?.DeepClone() ?? [];
+            attributes = (JObject?)attributes?.DeepClone() ?? [];
             attributes.Add(new JProperty("segment", segRef));
         }
         return delta.Insert(text, attributes);
@@ -31,7 +30,7 @@ public static class DeltaUsxExtensions
 
     public static Delta InsertEmpty(this Delta delta, string segRef, JObject? attributes = null)
     {
-        attributes = (JObject)attributes?.DeepClone() ?? [];
+        attributes = (JObject?)attributes?.DeepClone() ?? [];
         attributes.Add(new JProperty("segment", segRef));
         return delta.Insert(new { empty = true }, attributes);
     }
@@ -48,7 +47,7 @@ public static class DeltaUsxExtensions
 
         if (segRef != null)
         {
-            attributes = (JObject)attributes?.DeepClone() ?? [];
+            attributes = (JObject?)attributes?.DeepClone() ?? [];
             attributes.Add(new JProperty("segment", segRef));
         }
 

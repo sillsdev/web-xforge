@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using Newtonsoft.Json;
 using SIL.XForge.Scripture.Models;
@@ -85,7 +84,7 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
         // If we were just passed a json string, this will be the project id
         if (reader.TokenType == JsonToken.String)
         {
-            return new BuildConfig { ProjectId = serializer.Deserialize<string>(reader) };
+            return new BuildConfig { ProjectId = serializer.Deserialize<string>(reader)! };
         }
 
         // We were passed a complete object, so serialize it completely

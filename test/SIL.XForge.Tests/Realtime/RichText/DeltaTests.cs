@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
@@ -430,7 +429,7 @@ public class DeltaTests
     public void Diff_Null()
     {
         var a = Delta.New().Insert("AB");
-        Delta b = null;
+        Delta b = null!;
         Assert.That(() => a.Diff(b), Throws.ArgumentNullException);
     }
 
@@ -659,7 +658,7 @@ public class DeltaTests
             new JProperty("attributes", new JObject(new JProperty("char", new JObject(new JProperty("cid", "234")))))
         );
         Delta result = del1.Diff(del2);
-        JToken resultToken = ((JObject)result.Ops.First(o => o.Type == JTokenType.Object))["insert"]["ops"];
+        JToken resultToken = ((JObject)result.Ops.First(o => o.Type == JTokenType.Object))["insert"]!["ops"]!;
         Assert.That(JToken.DeepEquals(resultToken[0], expectedObj));
     }
 

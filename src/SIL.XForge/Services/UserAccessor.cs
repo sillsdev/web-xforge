@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System.Linq;
 using System.Security.Claims;
 using Duende.IdentityModel;
@@ -17,7 +16,7 @@ public class UserAccessor(IHttpContextAccessor httpContextAccessor) : IUserAcces
     {
         get
         {
-            string name = User?.Identity?.Name;
+            string? name = User?.Identity?.Name;
             if (!string.IsNullOrWhiteSpace(name))
                 return name;
 

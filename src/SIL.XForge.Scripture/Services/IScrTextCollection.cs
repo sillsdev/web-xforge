@@ -1,4 +1,3 @@
-#nullable disable warnings
 using Paratext.Data;
 using Paratext.Data.ProjectFileAccess;
 
@@ -6,7 +5,7 @@ namespace SIL.XForge.Scripture.Services;
 
 public interface IScrTextCollection
 {
-    void Initialize(string settingsDir = null);
+    void Initialize(string settingsDir);
     ScrText? FindById(string username, string projectId);
 
     ResourceScrText CreateResourceScrText(

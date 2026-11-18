@@ -1,4 +1,3 @@
-#nullable disable warnings
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.Realtime;
 
@@ -7,5 +6,5 @@ namespace Microsoft.AspNetCore.Builder;
 public static class RealtimeApplicationBuilderExtensions
 {
     public static void UseRealtimeServer(this IApplicationBuilder app) =>
-        app.ApplicationServices.GetService<IRealtimeService>().StartServer();
+        app.ApplicationServices.GetRequiredService<IRealtimeService>().StartServer();
 }

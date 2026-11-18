@@ -1,4 +1,3 @@
-#nullable disable warnings
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
@@ -20,7 +19,7 @@ public record SyncMetricInfo
     public int Deleted { get; set; }
     public int Updated { get; set; }
 
-    public static SyncMetricInfo operator +(SyncMetricInfo a, SyncMetricInfo b)
+    public static SyncMetricInfo? operator +(SyncMetricInfo? a, SyncMetricInfo? b)
     {
         if (a is null || b is null)
         {

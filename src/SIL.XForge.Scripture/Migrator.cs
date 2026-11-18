@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -14,7 +13,7 @@ public static class Migrator
     public static void RunMigrations(string environment)
     {
         string version = Product.Version;
-        string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string? projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         string migratorPath = Path.Join(projectPath, "RealtimeServer", "lib", "cjs", "scriptureforge", "migrator.js");
 
@@ -28,7 +27,7 @@ public static class Migrator
         var startTime = DateTime.Now;
         Console.WriteLine($"[{startTime:o}] Starting migrator");
 
-        using var process = Process.Start(startInfo);
+        using Process process = Process.Start(startInfo)!;
         while (!process.StandardOutput.EndOfStream)
         {
             Console.WriteLine(process.StandardOutput.ReadLine());
