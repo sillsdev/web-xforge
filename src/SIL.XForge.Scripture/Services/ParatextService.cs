@@ -396,21 +396,23 @@ public class ParatextService : DisposableBase, IParatextService
         }
     }
 
+    /// <summary>
+    /// Determines if the user can authenticate with the Paratext Registry.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
     /// <returns>
-    /// True if the user secret is able to access the PT Registry. PT Registry is a web service such as at
-    /// registry.paratext.org.
-    /// False if there is a problem with authorization or connecting to the PT Registry.
+    /// Returns <c>true</c> if the user secret is able to access the PT Registry;
+    /// otherwise, <c>false</c> if there is a problem with authorization or connecting to the PT Registry,
+    /// that is not related to token expiration.
     /// </returns>
+    /// <remarks>The PT Registry is a web service such as at registry.paratext.org.</remarks>
+    /// <exception cref="ArgumentException">The user secret, user identifier, or Paratext tokens are null.</exception>
+    /// <exception cref="ParatextTokenExpiredException">The Paratext token has expired.</exception>
     public async Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret? userSecret)
     {
-        if (userSecret == null)
-        {
-            throw new ArgumentNullException(nameof(userSecret));
-        }
-        if (userSecret.Id == null || userSecret.ParatextTokens == null)
-        {
-            throw new ArgumentException(nameof(userSecret));
-        }
+        ArgumentNullException.ThrowIfNull(userSecret);
+        ArgumentNullException.ThrowIfNull(userSecret.Id);
+        ArgumentNullException.ThrowIfNull(userSecret.ParatextTokens);
         try
         {
             await CallApiAsync(userSecret, HttpMethod.Get, "userinfo", content: null);
@@ -420,25 +422,33 @@ public class ParatextService : DisposableBase, IParatextService
             // Registry.
             return true;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException e)
         {
+            if (e.StatusCode == HttpStatusCode.BadRequest)
+                throw new ParatextTokenExpiredException(e);
             return false;
         }
     }
 
+    /// <summary>
+    /// Determines if the user can authenticate with the Paratext Archives.
+    /// </summary>
+    /// <param name="sfUserId">The Scripture Forge user identifier.</param>
     /// <returns>
-    /// True if the user secret is able to access the PT Archives. PT Archives is a service such as at
-    /// archives.paratext.org, which provides Mercurial project repositores, and may sometimes be referred to as
-    /// "the Send and Receive server".
-    /// False if there is a problem with authorization or connecting to the PT Archives.
+    /// Returns <c>true</c> if the user secret is able to access the PT Archives;
+    /// otherwise, <c>false</c> if there is a problem with authorization or connecting to the PT Archives,
+    /// that is not related to token expiration.
     /// </returns>
+    /// <remarks>
+    /// The PT Archives is a service such as at archives.paratext.org, which provides Mercurial project repositories,
+    /// and may sometimes be referred to as "the Send and Receive server".
+    /// </remarks>
+    /// <exception cref="ArgumentException">The SF user identifier is null.</exception>
+    /// <exception cref="ArgumentException">The SF user identifier is an empty string or whitespace.</exception>
+    /// <exception cref="ParatextTokenExpiredException">The Paratext token has expired.</exception>
     public async Task<bool> CanUserAuthenticateToPTArchivesAsync(string sfUserId)
     {
-        if (string.IsNullOrWhiteSpace(sfUserId))
-        {
-            throw new ArgumentException(nameof(sfUserId));
-        }
-
+        ArgumentException.ThrowIfNullOrWhiteSpace(sfUserId);
         IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(
             sfUserId,
             CancellationToken.None
@@ -630,27 +640,19 @@ public class ParatextService : DisposableBase, IParatextService
             return TextInfoPermission.None;
         }
 
-        try
-        {
-            UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
-            bool canRead = SFInstallableDblResource.CheckResourcePermission(
-                paratextId,
-                userSecret,
-                _paratextOptions.Value,
-                _restClientFactory,
-                _fileSystemService,
-                _jwtTokenHelper,
-                ScrTextCollection,
-                _exceptionHandler,
-                _dblServerUri
-            );
-            return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
-        }
-        catch (UnauthorizedAccessException e)
-        {
-            // This will usually be caused by refresh token expiration
-            throw new ParatextTokenExpiredException(e);
-        }
+        UserSecret userSecret = await GetUserSecretWithCurrentParatextTokens(sfUserId, token);
+        bool canRead = SFInstallableDblResource.CheckResourcePermission(
+            paratextId,
+            userSecret,
+            _paratextOptions.Value,
+            _restClientFactory,
+            _fileSystemService,
+            _jwtTokenHelper,
+            ScrTextCollection,
+            _exceptionHandler,
+            _dblServerUri
+        );
+        return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
     }
 
     private static string ExplainSRResults(IEnumerable<SendReceiveResult>? srResults)
@@ -3848,6 +3850,23 @@ public class ParatextService : DisposableBase, IParatextService
         PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
     }
 
+    /// <summary>
+    /// Gets the user secret for the specified SF user and refreshes the Paratext tokens if they are no longer valid.
+    /// </summary>
+    /// <remarks>The method serializes access to token refresh by user, ensuring only one refresh operation
+    /// runs at a time for the same SF user. If the stored token lifetime is invalid, it attempts to refresh the
+    /// Paratext access token before returning the secret.</remarks>
+    /// <param name="sfUserId">The SF user identifier associated with the user secret to retrieve.</param>
+    /// <param name="token">
+    /// The cancellation token used to observe cancellation requests while retrieving or refreshing the user secret.
+    /// </param>
+    /// <returns>The current user secret for the specified SF user, with valid Paratext tokens.</returns>
+    /// <exception cref="DataNotFoundException">
+    /// Thrown when no user secret exists for the specified SF user identifier.
+    /// </exception>
+    /// <exception cref="ParatextTokenExpiredException">
+    /// Thrown when the refresh request fails because the refresh token is invalid or expired.
+    /// </exception>
     private async Task<UserSecret> GetUserSecretWithCurrentParatextTokens(string sfUserId, CancellationToken token)
     {
         SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(sfUserId, _ => new SemaphoreSlim(1, 1));
@@ -3872,7 +3891,7 @@ public class ParatextService : DisposableBase, IParatextService
                         token
                     );
                 }
-                catch
+                catch (ParatextTokenExpiredException)
                 {
                     _logger.LogWarning(
                         $"ParatextService.GetUserSecretWithCurrentParatextTokens for sfUserId {sfUserId} is throwing "
@@ -3885,7 +3904,7 @@ public class ParatextService : DisposableBase, IParatextService
                     Attempt<User> userAttempt = await _realtimeService.TryGetSnapshotAsync<User>(sfUserId, token);
                     if (!userAttempt.TryResult(out User user))
                     {
-                        throw;
+                        throw new DataNotFoundException("Could not find the SF user id " + sfUserId);
                     }
 
                     refreshedUserTokens = await _authService.GetParatextTokensAsync(user.AuthId, token);

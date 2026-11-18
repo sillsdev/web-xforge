@@ -23,7 +23,7 @@ const mockSFProjectService = mock(SFProjectService);
 const mockParatextService = mock(ParatextService);
 const mockMatDialogRef = mock(MatDialogRef);
 const mockPermissionsService = mock(PermissionsService);
-const mockProjectsService = mock(SFUserProjectsService);
+const mockUserProjectsService = mock(SFUserProjectsService);
 
 describe('EditorTabAddResourceDialogComponent', () => {
   configureTestingModule(() => ({
@@ -34,14 +34,14 @@ describe('EditorTabAddResourceDialogComponent', () => {
       { provide: ParatextService, useMock: mockParatextService },
       { provide: PermissionsService, useMock: mockPermissionsService },
       { provide: MatDialogRef, useMock: mockMatDialogRef },
-      { provide: SFUserProjectsService, useMock: mockProjectsService },
+      { provide: SFUserProjectsService, useMock: mockUserProjectsService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: MAT_DIALOG_DATA, useValue: {} }
     ]
   }));
 
   beforeEach(() => {
-    when(mockProjectsService.projectDocs$).thenReturn(new BehaviorSubject<SFProjectProfileDoc[]>([]));
+    when(mockUserProjectsService.projectDocs$).thenReturn(new BehaviorSubject<SFProjectProfileDoc[]>([]));
   });
 
   afterEach(() => {
@@ -53,6 +53,8 @@ describe('EditorTabAddResourceDialogComponent', () => {
     spyOn<any>(env.component, 'getProjectsAndResources');
     env.component.ngOnInit();
     tick();
+    verify(mockParatextService.getProjects()).once();
+    verify(mockParatextService.getResources()).once();
     expect(env.component['getProjectsAndResources']).toHaveBeenCalled();
   }));
 
@@ -66,8 +68,8 @@ describe('EditorTabAddResourceDialogComponent', () => {
       tick();
       env.component['getProjectsAndResources']();
       tick();
-      verify(mockParatextService.getProjects()).once();
-      verify(mockParatextService.getResources()).once();
+      verify(mockParatextService.getProjects()).twice();
+      verify(mockParatextService.getResources()).twice();
       expect(env.component.projects).toEqual(env.projects);
       expect(env.component.resources).toEqual(env.resources);
       expect(env.component.projectLoadingFailed).toBe(false);

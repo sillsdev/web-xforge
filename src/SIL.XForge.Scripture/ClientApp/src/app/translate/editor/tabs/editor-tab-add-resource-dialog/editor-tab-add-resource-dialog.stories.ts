@@ -17,9 +17,7 @@ import {
   EditorTabAddResourceDialogComponent,
   EditorTabAddResourceDialogData
 } from './editor-tab-add-resource-dialog.component';
-import { EditorTabAddResourceDialogService } from './editor-tab-add-resource-dialog.service';
 
-const mockEditorTabAddResourceDialogService = mock(EditorTabAddResourceDialogService);
 const mockSFProjectService = mock(SFProjectService);
 const mockParatextService = mock(ParatextService);
 const mockMatDialogRef = mock(MatDialogRef);
@@ -87,11 +85,11 @@ const meta: Meta<StoryAppState> = {
         resources = undefined;
       }
 
-      when(mockEditorTabAddResourceDialogService.getProjects()).thenResolve(projects);
-      when(mockEditorTabAddResourceDialogService.getResources()).thenResolve(resources);
+      when(mockParatextService.getProjects()).thenResolve(projects);
+      when(mockParatextService.getResources()).thenResolve(resources);
 
       if (context.args.stillFetchingProjects) {
-        when(mockEditorTabAddResourceDialogService.getProjects()).thenReturn(
+        when(mockParatextService.getProjects()).thenReturn(
           new Promise((_resolve, _reject) => {
             // Never resolve.
           })
@@ -99,8 +97,8 @@ const meta: Meta<StoryAppState> = {
       }
 
       if (context.args.errorLoadingProjectList || context.args.online === false) {
-        when(mockEditorTabAddResourceDialogService.getProjects()).thenReject(new Error('Problem'));
-        when(mockEditorTabAddResourceDialogService.getResources()).thenReject(new Error('Problem'));
+        when(mockParatextService.getProjects()).thenReject(new Error('Problem'));
+        when(mockParatextService.getResources()).thenReject(new Error('Problem'));
       }
 
       return story();
@@ -122,7 +120,6 @@ export default meta;
 const dialogStoryConfig: MatDialogStoryConfig = {
   imports: [EditorTabAddResourceDialogComponent],
   providers: [
-    { provide: EditorTabAddResourceDialogService, useValue: instance(mockEditorTabAddResourceDialogService) },
     { provide: SFProjectService, useValue: instance(mockSFProjectService) },
     { provide: ParatextService, useValue: instance(mockParatextService) },
     { provide: PermissionsService, useValue: instance(mockPermissionsService) },

@@ -619,14 +619,14 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    public async Task SyncAsync_RefreshToken_UnauthorizedAccessException()
+    public async Task SyncAsync_RefreshToken_ParatextTokenExpiredException()
     {
         var env = new TestEnvironment();
         Book[] books = [new Book("MAT", 2), new Book("MRK", 2)];
         env.SetupSFData(true, false, false, books);
         env.SetupPTData(books);
         env.ParatextService.GetParatextUsersAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), CancellationToken.None)
-            .Throws<UnauthorizedAccessException>();
+            .Throws(new ParatextTokenExpiredException());
 
         // SUT
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -637,7 +637,10 @@ public class ParatextSyncRunnerTests
         // Check that the exception was logged in the sync metrics
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Failed));
-        StringAssert.StartsWith("System.UnauthorizedAccessException", syncMetrics.ErrorDetails);
+        StringAssert.StartsWith(
+            "SIL.XForge.Scripture.Services.ParatextTokenExpiredException",
+            syncMetrics.ErrorDetails
+        );
     }
 
     [Test]

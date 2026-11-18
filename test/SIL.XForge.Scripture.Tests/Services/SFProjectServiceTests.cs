@@ -2573,7 +2573,7 @@ public class SFProjectServiceTests
                 newProjectParatextId,
                 CancellationToken.None
             )
-            .ThrowsAsync(new UnauthorizedAccessException());
+            .ThrowsAsync(new ParatextTokenExpiredException());
 
         // Ensure that the new project does not exist
         Assert.That(
@@ -3600,6 +3600,29 @@ public class SFProjectServiceTests
 
         // SUT
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => env.Service.SyncAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task SyncAsync_TokensExpiredAccessingArchives()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        env.ParatextService.CanUserAuthenticateToPTArchivesAsync(User01).Throws(new ParatextTokenExpiredException());
+
+        // SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() => env.Service.SyncAsync(User01, Project01));
+    }
+
+    [Test]
+    public async Task SyncAsync_TokensExpiredAccessingRegistry()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        env.ParatextService.CanUserAuthenticateToPTRegistryAsync(Arg.Any<UserSecret>())
+            .Throws(new ParatextTokenExpiredException());
+
+        // SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(() => env.Service.SyncAsync(User01, Project01));
     }
 
     [Test]
