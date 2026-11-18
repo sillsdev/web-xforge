@@ -1,16 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { anything, mock, verify, when } from 'ts-mockito';
+import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { anything, mock, verify, when } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
-import { ProgressService, ProjectProgress } from '../progress-service/progress.service';
+import { BookProgress, ProgressService, ProjectProgress } from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 import { BookMultiSelectComponent } from './book-multi-select.component';
 
 const mockedProgressService = mock(ProgressService);
 const mockedI18nService = mock(I18nService);
+
+/** Creates a BookProgress with exactly 1 chapter, that reports the specified amount of progress */
+function completeBook(bookId: string, counts: { verses: number; blankVerses: number }): BookProgress {
+  const { verses, blankVerses } = counts;
+  return {
+    bookId,
+    verses,
+    blankVerses,
+    expectedVerses: verses,
+    chapters: [{ chapterNumber: 1, verses, blankVerses, expectedVerses: verses }]
+  };
+}
 
 describe('BookMultiSelectComponent', () => {
   let component: BookMultiSelectComponent;
@@ -49,13 +61,13 @@ describe('BookMultiSelectComponent', () => {
     ];
     when(mockedProgressService.getProgress(anything(), anything())).thenResolve(
       new ProjectProgress([
-        { bookId: 'GEN', verseSegments: 0, blankVerseSegments: 0 },
-        { bookId: 'EXO', verseSegments: 10_000, blankVerseSegments: 8_500 },
-        { bookId: 'LEV', verseSegments: 10_000, blankVerseSegments: 7_000 },
-        { bookId: 'MAT', verseSegments: 10_000, blankVerseSegments: 5_500 },
-        { bookId: 'LUK', verseSegments: 10_000, blankVerseSegments: 4_000 },
-        { bookId: 'TOB', verseSegments: 10_000, blankVerseSegments: 2_000 },
-        { bookId: 'WIS', verseSegments: 10_000, blankVerseSegments: 0 }
+        completeBook('GEN', { verses: 0, blankVerses: 0 }),
+        completeBook('EXO', { verses: 10_000, blankVerses: 8_500 }),
+        completeBook('LEV', { verses: 10_000, blankVerses: 7_000 }),
+        completeBook('MAT', { verses: 10_000, blankVerses: 5_500 }),
+        completeBook('LUK', { verses: 10_000, blankVerses: 4_000 }),
+        completeBook('TOB', { verses: 10_000, blankVerses: 2_000 }),
+        completeBook('WIS', { verses: 10_000, blankVerses: 0 })
       ])
     );
     when(mockedI18nService.localeCode).thenReturn('en');

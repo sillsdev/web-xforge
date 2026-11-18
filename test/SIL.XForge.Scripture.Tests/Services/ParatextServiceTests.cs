@@ -3980,6 +3980,29 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetProjectVersification_ReadsTheRepositoryWithoutAUser()
+    {
+        var env = new TestEnvironment();
+        string paratextId = env.SetupProject(env.Project01, new SFParatextUser(env.Username01));
+        // The setter derives a project-specific versification from the one assigned, so compare against the result
+        env.ProjectScrText.Settings.Versification = ScrVers.Original;
+
+        ScrVers? versification = env.Service.GetProjectVersification(paratextId);
+
+        Assert.That(versification, Is.EqualTo(env.ProjectScrText.Settings.Versification));
+        env.MockScrTextCollection.Received(1).FindById(Arg.Any<string>(), paratextId);
+    }
+
+    [Test]
+    public void GetProjectVersification_NoLocalRepository_ReturnsNull()
+    {
+        var env = new TestEnvironment();
+        env.MockScrTextCollection.FindById(Arg.Any<string>(), Arg.Any<string>()).ReturnsNull();
+
+        Assert.That(env.Service.GetProjectVersification("unknown"), Is.Null);
+    }
+
+    [Test]
     public void UpdateCommentTag_WritesTagIcon()
     {
         var env = new TestEnvironment();

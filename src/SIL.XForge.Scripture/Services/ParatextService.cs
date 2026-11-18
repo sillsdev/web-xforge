@@ -59,6 +59,14 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class ParatextService : DisposableBase, IParatextService
 {
+    /// <summary>
+    /// The username a project's repository is opened with for reads that do not act on behalf of any user, such as
+    /// <see cref="GetProjectVersification"/>. Any string would do, because the name is only attached to the
+    /// <see cref="ScrText"/> in memory and is never written to the repository. This value is recognisable in case it
+    /// ever appears in a log.
+    /// </summary>
+    private const string PlaceholderUsername = "Scripture Forge";
+
     internal HttpClient _registryClient;
     private readonly IOptions<ParatextOptions> _paratextOptions;
     private readonly IRepository<UserSecret> _userSecretRepository;
@@ -1061,6 +1069,19 @@ public class ParatextService : DisposableBase, IParatextService
             Versification = scrText.Settings.Versification,
             Visibility = scrText.Settings.Visibility.ToString(),
         };
+    }
+
+    /// <summary>
+    /// Gets the versification of a Paratext project from its local repository. Unlike the other repository reads on
+    /// this service, it takes no user, because the versification is the same regardless of who is reading it. This lets
+    /// it serve users with no Paratext account, such as Viewers and Commenters. The repository is opened with
+    /// <see cref="PlaceholderUsername"/> as the username instead.
+    /// </summary>
+    /// <returns> The versification, or null if the project repository does not exist locally </returns>
+    public ScrVers? GetProjectVersification(string paratextId)
+    {
+        using ScrText? scrText = ScrTextCollection.FindById(PlaceholderUsername, paratextId);
+        return scrText?.Settings.Versification;
     }
 
     /// <summary> Get list of book numbers in PT project. </summary>

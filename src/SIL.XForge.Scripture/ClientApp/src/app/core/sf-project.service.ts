@@ -24,7 +24,7 @@ import { QueryParameters, QueryResults } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { EventMetric } from '../event-metrics/event-metric';
-import { BookProgressWithChapterProgress } from '../shared/progress-service/progress.service';
+import { BookProgress } from '../shared/progress-service/progress.service';
 import { UserFeedbackParams } from '../shared/user-feedback/user-feedback-dialog.component';
 import { expandNumbers } from '../shared/utils';
 import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
@@ -442,8 +442,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Gets project progress by calling the backend aggregation endpoint. */
-  async getProjectProgress(projectId: string): Promise<BookProgressWithChapterProgress[]> {
-    return await this.onlineInvoke<BookProgressWithChapterProgress[]>('getProjectProgress', { projectId });
+  async getProjectProgress(projectId: string): Promise<BookProgress[]> {
+    return await this.onlineInvoke<BookProgress[]>('getProjectProgress', { projectId });
   }
 
   async onlineAddUserFeedback(projectId: string, feedbackParams: UserFeedbackParams): Promise<void> {

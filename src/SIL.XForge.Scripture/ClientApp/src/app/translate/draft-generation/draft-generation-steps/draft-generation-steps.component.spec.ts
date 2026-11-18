@@ -45,6 +45,19 @@ describe('DraftGenerationStepsComponent', () => {
   const mockFeatureFlagService = mock(FeatureFlagService);
   const mockNllbLanguageService = mock(NllbLanguageService);
   const mockProgressService = mock(ProgressService);
+
+  /** Progress for books that have every chapter present, as a single chapter holding the book's counts. */
+  function projectProgress(books: Pick<BookProgress, 'bookId' | 'verses' | 'blankVerses'>[]): ProjectProgress {
+    return new ProjectProgress(
+      books.map(book => ({
+        ...book,
+        expectedVerses: book.verses,
+        chapters: [
+          { chapterNumber: 1, verses: book.verses, blankVerses: book.blankVerses, expectedVerses: book.verses }
+        ]
+      }))
+    );
+  }
   const mockOnlineStatusService = mock(OnlineStatusService);
   const mockNoticeService = mock(NoticeService);
   const mockParatextService = mock(ParatextService);
@@ -77,13 +90,13 @@ describe('DraftGenerationStepsComponent', () => {
     when(mockActivatedProjectService.projectId).thenReturn('project01');
     when(mockActivatedProjectService.projectId$).thenReturn(of('project01'));
     when(mockProgressService.getProgress(anything(), anything())).thenResolve(
-      new ProjectProgress([
-        { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
-        { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
-        { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 },
-        { bookId: 'JDG', verseSegments: 100, blankVerseSegments: 0 }
+      projectProgress([
+        { bookId: 'GEN', verses: 100, blankVerses: 0 },
+        { bookId: 'EXO', verses: 100, blankVerses: 0 },
+        { bookId: 'LEV', verses: 100, blankVerses: 100 },
+        { bookId: 'NUM', verses: 22, blankVerses: 2 },
+        { bookId: 'DEU', verses: 0, blankVerses: 0 },
+        { bookId: 'JDG', verses: 100, blankVerses: 0 }
       ])
     );
     when(mockOnlineStatusService.isOnline).thenReturn(true);
@@ -299,12 +312,12 @@ describe('DraftGenerationStepsComponent', () => {
       const targetProjectDoc$ = new BehaviorSubject<SFProjectProfileDoc>(mockTargetProjectDoc);
       // setup empty books in the target
       const emptyBooksInTarget = [3, 8];
-      const books: BookProgress[] = allBooks.map(b => ({
+      const books = allBooks.map(b => ({
         bookId: Canon.bookNumberToId(b.bookNum),
-        verseSegments: 100,
-        blankVerseSegments: emptyBooksInTarget.includes(b.bookNum) ? 100 : 0
+        verses: 100,
+        blankVerses: emptyBooksInTarget.includes(b.bookNum) ? 100 : 0
       }));
-      const progress = new ProjectProgress(books);
+      const progress = projectProgress(books);
       when(mockProgressService.getProgress('project01', anything())).thenResolve(progress);
 
       when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
@@ -758,11 +771,12 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should set "availableTrainingBooks" correctly and with canonical book order', fakeAsync(() => {
+      // Numbers has 2 of its 22 verses untranslated, so it is offered but not selected by default
       expect(component.availableTrainingBooks).toEqual({
         source1: [
           { number: 1, selected: true },
           { number: 2, selected: true },
-          { number: 4, selected: true }
+          { number: 4, selected: false }
         ],
         source2: [
           { number: 1, selected: true },
@@ -771,7 +785,7 @@ describe('DraftGenerationStepsComponent', () => {
         project01: [
           { number: 1, selected: true },
           { number: 2, selected: true },
-          { number: 4, selected: true }
+          { number: 4, selected: false }
         ]
       });
     }));
@@ -1513,12 +1527,12 @@ describe('DraftGenerationStepsComponent', () => {
     } as SFProjectProfileDoc;
 
     when(mockProjectService.getProfile(projectId)).thenResolve(profileDoc);
-    const books: BookProgress[] = texts.map(b => ({
+    const books = texts.map(b => ({
       bookId: Canon.bookNumberToId(b),
-      verseSegments: 100,
-      blankVerseSegments: emptyBooks.includes(b) ? 100 : 0
+      verses: 100,
+      blankVerses: emptyBooks.includes(b) ? 100 : 0
     }));
-    const progress = new ProjectProgress(books);
+    const progress = projectProgress(books);
     when(mockProgressService.getProgress(projectId, anything())).thenResolve(progress);
   }
 });

@@ -57,7 +57,7 @@
           }
         }
 
-        @if (cannotAdvanceFromProjectSelection && !projectReadyToImport) {
+        @if (triedToAdvanceTooSoon && !readyToAdvanceFromProjectSelection) {
           <app-notice type="error" icon="error">{{
             !projectSelectionForm.valid ? t("select_project_description") : t("waiting_for_project_to_load")
           }}</app-notice>
@@ -71,6 +71,9 @@
         }
       </form>
 
+      @if (targetProgressFailedToLoad) {
+        <ng-container *ngTemplateOutlet="targetProgressFailedNotice"></ng-container>
+      }
       <div class="button-strip">
         <button matButton="text" (click)="cancel()" [disabled]="isImporting">
           <mat-icon>close</mat-icon>
@@ -81,7 +84,7 @@
           color="primary"
           data-test-id="step-1-next"
           (click)="advanceFromProjectSelection()"
-          [disabled]="!isAppOnline || projectLoadingFailed || !canEditProject"
+          [disabled]="!isAppOnline || projectLoadingFailed || !canEditProject || targetProgressFailedToLoad"
         >
           {{ needsConnection || showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
           <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -178,6 +181,9 @@
               [booksWithLowConfidence]="1"
             ></app-display-confidence>
           }
+          @if (targetProgressFailedToLoad) {
+            <ng-container *ngTemplateOutlet="targetProgressFailedNotice"></ng-container>
+          }
           <div class="button-strip">
             <button matButton="outlined" matStepperPrevious [disabled]="isImporting">
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -188,7 +194,7 @@
               matStepperNext
               color="primary"
               data-test-id="step-3-next"
-              [disabled]="!isAppOnline || isImporting"
+              [disabled]="!isAppOnline || isImporting || !targetProgressLoaded"
             >
               {{ showBookSelection || showOverwriteConfirmation ? t("next") : t("import") }}
               <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -229,7 +235,9 @@
             color="primary"
             matStepperNext
             data-test-id="step-4-next"
-            [disabled]="!isAppOnline || selectedBooks.length === 0 || isConnecting || isImporting"
+            [disabled]="
+              !isAppOnline || selectedBooks.length === 0 || isConnecting || isImporting || !targetProgressLoaded
+            "
           >
             {{ showOverwriteConfirmation ? t("next") : t("import") }}
             <mat-icon iconPositionEnd>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -467,4 +475,15 @@
       }
     </mat-step>
   </mat-stepper>
+
+  <ng-template #targetProgressFailedNotice>
+    <app-notice type="error" icon="error" class="overwrite-check-notice">
+      {{ t("could_not_check_existing_text") }}
+    </app-notice>
+    <div class="project-retry-row">
+      <button matButton="outlined" color="primary" class="overwrite-check-retry" (click)="retryLoadingTargetProgress()">
+        <mat-icon>refresh</mat-icon> {{ t("retry") }}
+      </button>
+    </div>
+  </ng-template>
 </mat-dialog-content>

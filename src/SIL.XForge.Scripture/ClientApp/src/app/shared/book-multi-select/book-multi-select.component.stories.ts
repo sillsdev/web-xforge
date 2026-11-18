@@ -13,15 +13,27 @@ const mockedOnlineStatusService = mock(OnlineStatusService);
 // A spread across all three sections: OT (Genesis, Exodus, Leviticus), NT (Matthew, Luke), DC (Tobit, Wisdom).
 const AVAILABLE_BOOK_NUMBERS = [1, 2, 3, 40, 42, 67, 70];
 
+/** Creates a BookProgress with exactly 1 chapter, that reports the specified amount of progress */
+function completeBook(bookId: string, counts: { verses: number; blankVerses: number }): BookProgress {
+  const { verses, blankVerses } = counts;
+  return {
+    bookId,
+    verses,
+    blankVerses,
+    expectedVerses: verses,
+    chapters: [{ chapterNumber: 1, verses, blankVerses, expectedVerses: verses }]
+  };
+}
+
 // Varied progress so the bars render at a range of widths, including 0% and 100%.
 const PROGRESS: BookProgress[] = [
-  { bookId: 'GEN', verseSegments: 0, blankVerseSegments: 0 }, // no data → 0%
-  { bookId: 'EXO', verseSegments: 10_000, blankVerseSegments: 8_500 }, // 15%
-  { bookId: 'LEV', verseSegments: 10_000, blankVerseSegments: 7_000 }, // 30%
-  { bookId: 'MAT', verseSegments: 10_000, blankVerseSegments: 5_500 }, // 45%
-  { bookId: 'LUK', verseSegments: 10_000, blankVerseSegments: 4_000 }, // 60%
-  { bookId: 'TOB', verseSegments: 10_000, blankVerseSegments: 2_000 }, // 80%
-  { bookId: 'WIS', verseSegments: 10_000, blankVerseSegments: 0 } // 100%
+  completeBook('GEN', { verses: 0, blankVerses: 0 }), // no data → 0%
+  completeBook('EXO', { verses: 10_000, blankVerses: 8_500 }), // 15%
+  completeBook('LEV', { verses: 10_000, blankVerses: 7_000 }), // 30%
+  completeBook('MAT', { verses: 10_000, blankVerses: 5_500 }), // 45%
+  completeBook('LUK', { verses: 10_000, blankVerses: 4_000 }), // 60%
+  completeBook('TOB', { verses: 10_000, blankVerses: 2_000 }), // 80%
+  completeBook('WIS', { verses: 10_000, blankVerses: 0 }) // 100%
 ];
 
 interface StoryArgs {

@@ -7,7 +7,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { NEVER, of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, mock, reset, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -20,7 +20,6 @@ import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { TextDoc } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { ProjectNotificationService } from '../../../core/project-notification.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -300,7 +299,7 @@ describe('DraftImportWizardComponent', () => {
 
     // Step 1
     env.selectProject('paratext04');
-    expect(env.lowConfidenceWarning).not.toBeUndefined();
+    expect(env.lowConfidenceWarning()).not.toBeNull();
     env.clickNextButton(1);
 
     // Step 5
@@ -332,7 +331,7 @@ describe('DraftImportWizardComponent', () => {
     env.clickNextButton(1);
 
     // Step 4
-    expect(env.lowConfidenceWarning).not.toBeUndefined();
+    expect(env.lowConfidenceWarning()).not.toBeNull();
     env.clickNextButton(4);
 
     // Step 5
@@ -350,10 +349,66 @@ describe('DraftImportWizardComponent', () => {
     env.clickNextButton(7, 'done');
     verify(mockMatDialogRef.close(true)).once();
   }));
+
+  it('requests progress once when the target project is selected and reuses it when the selected books change', fakeAsync(() => {
+    configureDraft('GEN;EXO', true);
+    const env = new TestEnvironment();
+    env.wait();
+    env.selectProject('paratext04');
+    env.clickNextButton(1);
+    const genesis = env.component.availableBooksForImport.find(b => b.bookId === 'GEN')!;
+    env.component.onBookCheckboxChange(genesis, false);
+    env.wait();
+    expect(env.component.booksWithExistingText.map(b => b.bookNum)).toEqual([2]);
+    env.component.onBookCheckboxChange(genesis, true);
+    env.wait();
+
+    verify(mockProgressService.getProgress('project04', anything())).once();
+    expect(env.component.booksWithExistingText.map(b => b.bookNum)).toEqual([1, 2]);
+  }));
+
+  it('blocks moving on and shows a notice until a retried progress request succeeds', fakeAsync(() => {
+    configureDraft('GEN;EXO', true);
+    const env = new TestEnvironment();
+    env.wait();
+    reset(mockProgressService);
+    when(mockProgressService.getProgress('project04', anything())).thenReject(new Error('offline'));
+    env.selectProject('paratext04');
+    expect(env.overwriteCheckNotice).not.toBeNull();
+    expect(env.nextButton(1).disabled).toBe(true);
+
+    when(mockProgressService.getProgress('project04', anything())).thenResolve(new ProjectProgress([]));
+    env.clickOverwriteCheckRetry();
+    expect(env.overwriteCheckNotice).toBeNull();
+    env.clickNextButton(1);
+    env.isStepVisible(4);
+  }));
+
+  it('ignores progress for a project that is no longer selected', fakeAsync(() => {
+    configureDraft('GEN', false);
+    const env = new TestEnvironment();
+    env.wait();
+    let resolveProject04Progress!: (progress: ProjectProgress) => void;
+    reset(mockProgressService);
+    when(mockProgressService.getProgress('project04', anything())).thenReturn(
+      new Promise(resolve => (resolveProject04Progress = resolve))
+    );
+    when(mockProgressService.getProgress('project03', anything())).thenResolve(new ProjectProgress([]));
+    env.selectProject('paratext04');
+    env.selectProject('paratext03');
+    resolveProject04Progress(env.genesisWithTextProgress());
+    env.wait();
+
+    expect(env.component.targetProjectId).toBe('project03');
+    expect(env.component.booksWithExistingText).toEqual([]);
+    expect(env.component.showOverwriteConfirmation).toBe(false);
+  }));
 });
 
 class TestEnvironment {
   component: DraftImportWizardComponent;
+  /** The projects whose progress shows text (the project04 fixture); the others report no text at all. */
+  readonly projectsWithText = new Set<string>(['project04']);
   fixture: ComponentFixture<DraftImportWizardComponent>;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -422,18 +477,55 @@ class TestEnvironment {
       )
     });
 
-    when(mockProgressService.getProgress(anything(), anything())).thenResolve(
-      new ProjectProgress([
-        { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
-        { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
-        { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
-        { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 }
-      ])
+    // Has text in the same chapters as project04's profile (books 1-3 chapter 1, book 4 chapters 1 and 2). It also has
+    // a blank Genesis 2 and an untranslated Deuteronomy, so tests cover chapters and books that exist without text. The
+    // other projects have no text at all.
+    const project04Progress = new ProjectProgress([
+      {
+        bookId: 'GEN',
+        verses: 100,
+        blankVerses: 25,
+        expectedVerses: 100,
+        chapters: [
+          { chapterNumber: 1, verses: 75, blankVerses: 0, expectedVerses: 75 },
+          { chapterNumber: 2, verses: 25, blankVerses: 25, expectedVerses: 25 }
+        ]
+      },
+      {
+        bookId: 'EXO',
+        verses: 100,
+        blankVerses: 0,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 0, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'LEV',
+        verses: 100,
+        blankVerses: 50,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 50, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'NUM',
+        verses: 22,
+        blankVerses: 2,
+        expectedVerses: 22,
+        chapters: [
+          { chapterNumber: 1, verses: 11, blankVerses: 1, expectedVerses: 11 },
+          { chapterNumber: 2, verses: 11, blankVerses: 1, expectedVerses: 11 }
+        ]
+      },
+      {
+        bookId: 'DEU',
+        verses: 10,
+        blankVerses: 10,
+        expectedVerses: 10,
+        chapters: [{ chapterNumber: 1, verses: 10, blankVerses: 10, expectedVerses: 10 }]
+      }
+    ]);
+    when(mockProgressService.getProgress(anything(), anything())).thenCall((projectId: string) =>
+      Promise.resolve(this.projectsWithText.has(projectId) ? project04Progress : new ProjectProgress([]))
     );
-    when(mockProjectService.getText(anything())).thenResolve({
-      getNonEmptyVerses: (): string[] => ['verse_1_1']
-    } as TextDoc);
     when(mockProjectService.onlineCreate(anything())).thenResolve('project02');
     when(mockProjectService.get(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
@@ -461,6 +553,19 @@ class TestEnvironment {
 
     // Click the button
     nextButton.nativeElement.click();
+    this.wait();
+  }
+
+  nextButton(step: number): HTMLButtonElement {
+    return this.fixture.nativeElement.querySelector(`.button-strip button[data-test-id="step-${step}-next"]`);
+  }
+
+  get overwriteCheckNotice(): HTMLElement | null {
+    return this.fixture.nativeElement.querySelector('.overwrite-check-notice');
+  }
+
+  clickOverwriteCheckRetry(): void {
+    this.fixture.nativeElement.querySelector('.overwrite-check-retry').click();
     this.wait();
   }
 
@@ -505,7 +610,7 @@ class TestEnvironment {
   }
 
   lowConfidenceWarning(): HTMLElement | null {
-    return this.fixture.nativeElement.querySelector(`[data-test-id="low-confidence-warning"]`);
+    return this.fixture.nativeElement.querySelector('app-display-confidence app-notice');
   }
 
   selectProject(paratextId: string): void {
@@ -527,10 +632,24 @@ class TestEnvironment {
     this.wait();
   }
 
+  /** Finishes the target project's connection sync, after which the project holds text the import would overwrite. */
   syncTargetProject(): void {
-    this.component.isConnecting = false;
-    this.component.showOverwriteConfirmation = true;
+    this.projectsWithText.add(this.component.targetProjectId!);
+    this.component.updateConnectStatus(false);
     this.wait();
+  }
+
+  /** Progress for a project whose Genesis has text in chapter 1. */
+  genesisWithTextProgress(): ProjectProgress {
+    return new ProjectProgress([
+      {
+        bookId: 'GEN',
+        verses: 10,
+        blankVerses: 0,
+        expectedVerses: 10,
+        chapters: [{ chapterNumber: 1, verses: 10, blankVerses: 0, expectedVerses: 10 }]
+      }
+    ]);
   }
 
   wait(): void {

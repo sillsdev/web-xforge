@@ -22,7 +22,7 @@ import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/te
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
+import { BookProgress, ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
@@ -69,10 +69,10 @@ describe('TranslateOverviewComponent', () => {
 
     expect(env.progressTitle.textContent).toContain('Progress');
     expect(env.component.projectProgress?.books.length).toEqual(4);
-    env.expectContainsTextProgress(0, 'Matthew', '10 of 20 segments');
-    env.expectContainsTextProgress(1, 'Mark', '10 of 20 segments');
-    env.expectContainsTextProgress(2, 'Luke', '10 of 20 segments');
-    env.expectContainsTextProgress(3, 'John', '10 of 20 segments');
+    env.expectContainsTextProgress(0, 'Matthew', '10 of 20 verses');
+    env.expectContainsTextProgress(1, 'Mark', '10 of 20 verses');
+    env.expectContainsTextProgress(2, 'Luke', '10 of 20 verses');
+    env.expectContainsTextProgress(3, 'John', '10 of 30 verses');
 
     discardPeriodicTasks();
   }));
@@ -94,10 +94,12 @@ class TestEnvironment {
     when(mockedActivatedRoute.snapshot).thenReturn({} as any); // just needs to not be null/undefined
     when(mockedProgressService.getProgress(anything(), anything())).thenResolve(
       new ProjectProgress([
-        { bookId: 'MAT', verseSegments: 20, blankVerseSegments: 10 },
-        { bookId: 'MRK', verseSegments: 20, blankVerseSegments: 10 },
-        { bookId: 'LUK', verseSegments: 20, blankVerseSegments: 10 },
-        { bookId: 'JHN', verseSegments: 20, blankVerseSegments: 10 }
+        bookProgress('MAT', { verses: 20, blankVerses: 10 }),
+        bookProgress('MRK', { verses: 20, blankVerses: 10 }),
+        bookProgress('LUK', { verses: 20, blankVerses: 10 }),
+        // The versification expects 30 verses in John, 10 more than its one chapter holds, as if a chapter were
+        // missing from the project
+        { ...bookProgress('JHN', { verses: 20, blankVerses: 10 }), expectedVerses: 30 }
       ])
     );
 
@@ -179,4 +181,16 @@ class TestEnvironment {
       })
     });
   }
+}
+
+/** Progress for a book whose chapters are all present, as a single chapter holding the book's counts. */
+function bookProgress(bookId: string, counts: { verses: number; blankVerses: number }): BookProgress {
+  const { verses, blankVerses } = counts;
+  return {
+    bookId,
+    verses,
+    blankVerses,
+    expectedVerses: verses,
+    chapters: [{ chapterNumber: 1, verses, blankVerses, expectedVerses: verses }]
+  };
 }

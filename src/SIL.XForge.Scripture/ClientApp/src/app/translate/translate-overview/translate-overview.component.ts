@@ -34,7 +34,13 @@ import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoticeComponent } from '../../shared/notice/notice.component';
-import { BookProgress, ProgressService, ProjectProgress } from '../../shared/progress-service/progress.service';
+import {
+  BookProgress,
+  bookVerseCounts,
+  ProgressService,
+  ProjectProgress,
+  VerseCounts
+} from '../../shared/progress-service/progress.service';
 import { FontUnsupportedMessageComponent } from '../font-unsupported-message/font-unsupported-message.component';
 const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
 
@@ -66,6 +72,7 @@ const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]
 })
 export class TranslateOverviewComponent extends DataLoadingComponent implements OnInit {
   projectProgress?: ProjectProgress;
+  bookCounts: ({ bookId: string } & VerseCounts)[] = [];
   private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
 
@@ -112,14 +119,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         this.projectDoc = await this.projectService.getProfile(projectId);
 
         // Update the overview now if we are online, or when we are next online
-        void this.onlineStatusService.online.then(async () => {
-          this.loadingStarted();
-          try {
-            this.projectProgress = await this.progressService.getProgress(this.projectId!, { maxStalenessMs: 30_000 });
-          } finally {
-            this.loadingFinished();
-          }
-        });
+        void this.onlineStatusService.online.then(() => this.loadProgress(projectId));
 
         if (this.projectDataChangesSub != null) {
           this.projectDataChangesSub.unsubscribe();
@@ -130,16 +130,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
             // TODO Find a better solution than merely throttling remote changes
             throttleTime(1000, asyncScheduler, { leading: true, trailing: true })
           )
-          .subscribe(async () => {
-            this.loadingStarted();
-            try {
-              this.projectProgress = await this.progressService.getProgress(this.projectId!, {
-                maxStalenessMs: 30_000
-              });
-            } finally {
-              this.loadingFinished();
-            }
-          });
+          .subscribe(() => this.loadProgress(projectId));
       });
   }
 
@@ -148,14 +139,16 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     return this.i18n.localizeBook(bookNum);
   }
 
-  bookTranslatedSegments(bookProgress: BookProgress): number {
-    return bookProgress.verseSegments - bookProgress.blankVerseSegments;
-  }
-
-  bookTranslationRatio(bookProgress: BookProgress): number {
-    if (bookProgress.verseSegments === 0) {
-      return 0;
+  private async loadProgress(projectId: string): Promise<void> {
+    this.loadingStarted();
+    try {
+      this.projectProgress = await this.progressService.getProgress(projectId, { maxStalenessMs: 30_000 });
+      this.bookCounts = this.projectProgress.books.map((book: BookProgress) => ({
+        bookId: book.bookId,
+        ...bookVerseCounts(book)
+      }));
+    } finally {
+      this.loadingFinished();
     }
-    return this.bookTranslatedSegments(bookProgress) / bookProgress.verseSegments;
   }
 }

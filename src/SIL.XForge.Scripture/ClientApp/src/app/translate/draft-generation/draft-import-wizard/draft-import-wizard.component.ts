@@ -1,5 +1,5 @@
 import { StepperSelectionEvent } from '@angular/cdk/stepper';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, Inject, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -33,13 +33,13 @@ import { SelectableProject } from '../../../core/models/selectable-project';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { roleCanEditTexts } from '../../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
-import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { ParatextService } from '../../../core/paratext.service';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
+import { BookProgress, ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import { ChapterSet, VerboseScriptureRange } from '../../../shared/scripture-range';
 import { booksFromScriptureRange, projectLabel } from '../../../shared/utils';
 import { SyncProgressComponent } from '../../../sync/sync-progress/sync-progress.component';
@@ -98,6 +98,19 @@ export enum DraftApplyStatus {
 }
 
 /**
+ * The chapters of a book that hold any translated verse. Any existing text warrants the overwrite warning, unlike the
+ * higher bar the new draft wizard uses to decide which chapters count as having content. Chapters whose verses hold
+ * only notes (footnotes or cross references) deliberately get no warning, even though the import replaces them,
+ * because such notes usually come from copying another project's verse structure when the project was set up and
+ * are incidental.
+ */
+function getChaptersWithText(bookProgress: BookProgress | undefined): number[] {
+  return (bookProgress?.chapters ?? [])
+    .filter(chapter => chapter.verses - chapter.blankVerses > 0)
+    .map(chapter => chapter.chapterNumber);
+}
+
+/**
  * Multi-step wizard dialog for importing drafts to a project.
  * Guides users through project selection, optional connection, book selection,
  * overwrite confirmation, import progress, and sync completion.
@@ -119,6 +132,7 @@ export enum DraftApplyStatus {
     MatStepperIcon,
     MatStepperNext,
     MatStepperPrevious,
+    NgTemplateOutlet,
     TranslocoModule,
     TranslocoMarkupComponent,
     DisplayConfidenceComponent,
@@ -147,7 +161,7 @@ export class DraftImportWizardComponent implements OnInit {
   canEditProject = true;
   projectLoadingFailed = false;
   sourceProjectId?: string;
-  cannotAdvanceFromProjectSelection = false;
+  triedToAdvanceTooSoon = false;
   draftHasLowConfidence = false;
   bookNameWithLowConfidence: string = '';
   booksWithLowConfidence: string[] = [];
@@ -310,6 +324,7 @@ export class DraftImportWizardComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly draftNotificationService: DraftNotificationService,
     private readonly projectService: SFProjectService,
+    private readonly progressService: ProgressService,
     private readonly textDocService: TextDocService,
     readonly i18n: I18nService,
     private readonly locationService: LocationService,
@@ -342,6 +357,22 @@ export class DraftImportWizardComponent implements OnInit {
   private readonly draftedScriptureRange: VerboseScriptureRange;
 
   /**
+   * The target project's progress, fetched when the project is loaded (on selection, and after connecting it).
+   * Undefined before a target project is selected, while its progress is loading, and if loading it failed.
+   */
+  private targetProgress?: ProjectProgress;
+
+  /**
+   * Whether the target project's progress failed to load. While true, a notice with a Retry button is shown and the
+   * wizard does not move towards the import, because the import must not go ahead without the overwrite check.
+   */
+  targetProgressFailedToLoad = false;
+
+  get targetProgressLoaded(): boolean {
+    return this.targetProgress != null;
+  }
+
+  /**
    * The chapter numbers drafted for the given book, or `null` when the whole book was drafted (no chapter detail, e.g.
    * a legacy build or a book-level range). `null` means "do not scope to specific chapters".
    */
@@ -361,8 +392,15 @@ export class DraftImportWizardComponent implements OnInit {
     return this._selectedBooks;
   }
 
-  get projectReadyToImport(): boolean {
-    return this.projectSelectionForm.valid && !this.isConnecting && !this.isImporting && !this.isLoadingProject;
+  get readyToAdvanceFromProjectSelection(): boolean {
+    return (
+      this.projectSelectionForm.valid &&
+      !this.isConnecting &&
+      !this.isImporting &&
+      !this.isLoadingProject &&
+      // A project that still needs connecting has nothing more to load until it's connected
+      (this.needsConnection || this.targetProgressLoaded)
+    );
   }
 
   get singleBookName(): string {
@@ -529,7 +567,10 @@ export class DraftImportWizardComponent implements OnInit {
       this.targetProjectDoc$.next(undefined);
     }
 
-    await this.analyzeBooksForOverwriteConfirmation();
+    // Drop progress held for a previous load, so the overwrite check sees the project as it is now
+    this.targetProgress = undefined;
+    this.targetProgressFailedToLoad = false;
+    if (this.canEditProject) await this.loadTargetProgress();
   }
 
   private async ensureProjectExists(): Promise<boolean> {
@@ -550,12 +591,14 @@ export class DraftImportWizardComponent implements OnInit {
 
   private resetProjectValidation(): void {
     this.canEditProject = true;
+    this.targetProgress = undefined;
+    this.targetProgressFailedToLoad = false;
   }
 
   onBookCheckboxChange(book: BookForImport, checked: boolean): void {
     book.selected = checked;
     this.resetImportState();
-    void this.analyzeBooksForOverwriteConfirmation();
+    this.analyzeBooksForOverwriteConfirmation();
   }
 
   /** The label for a book's checkbox: the book name, or "Book 1-3, 7" when only some chapters were drafted. */
@@ -565,11 +608,11 @@ export class DraftImportWizardComponent implements OnInit {
   }
 
   async advanceFromProjectSelection(): Promise<void> {
-    if (!this.projectReadyToImport) {
-      this.cannotAdvanceFromProjectSelection = true;
+    if (!this.readyToAdvanceFromProjectSelection) {
+      this.triedToAdvanceTooSoon = true;
       return;
     } else {
-      this.cannotAdvanceFromProjectSelection = false;
+      this.triedToAdvanceTooSoon = false;
     }
 
     // If project needs connection, advance to connection step (targetProjectId may be undefined)
@@ -580,7 +623,7 @@ export class DraftImportWizardComponent implements OnInit {
 
     // For connected projects, ensure we have a targetProjectId before proceeding
     if (this.targetProjectId == null) {
-      this.cannotAdvanceFromProjectSelection = true;
+      this.triedToAdvanceTooSoon = true;
       return;
     }
 
@@ -591,13 +634,37 @@ export class DraftImportWizardComponent implements OnInit {
       return;
     }
 
-    await this.analyzeBooksForOverwriteConfirmation();
-
     this.stepper?.next();
     this.isLoadingProject = false;
   }
 
-  private async analyzeBooksForOverwriteConfirmation(): Promise<void> {
+  retryLoadingTargetProgress(): void {
+    void this.loadTargetProgress();
+  }
+
+  /**
+   * Fetches the target project's progress and runs the overwrite check on it. Requests fresh progress instead of a
+   * cached copy, since it's used to warn about, and prevent accidentally overwriting, chapters that already have text.
+   */
+  private async loadTargetProgress(): Promise<void> {
+    const projectId: string | undefined = this.targetProjectId;
+    if (projectId == null) return;
+    this.targetProgressFailedToLoad = false;
+
+    let progress: ProjectProgress;
+    try {
+      progress = await this.progressService.getProgress(projectId, { maxStalenessMs: 0 });
+    } catch {
+      if (projectId === this.targetProjectId) this.targetProgressFailedToLoad = true;
+      return;
+    }
+    // Ignore the result if the user chose another project while it was being fetched
+    if (projectId !== this.targetProjectId) return;
+    this.targetProgress = progress;
+    this.analyzeBooksForOverwriteConfirmation();
+  }
+
+  private analyzeBooksForOverwriteConfirmation(): void {
     if (this.targetProjectId == null) return;
 
     this.booksWithExistingText = [];
@@ -605,7 +672,8 @@ export class DraftImportWizardComponent implements OnInit {
 
     this.selectedBooksWithLowConfidence = 0;
     for (const book of booksToCheck) {
-      let chapterNumbersWithText: number[] = await this.getChaptersWithText(book.bookNum);
+      const bookProgress: BookProgress | undefined = this.targetProgress?.books.find(b => b.bookId === book.bookId);
+      let chapterNumbersWithText: number[] = getChaptersWithText(bookProgress);
       // Only warn about chapters we will actually overwrite: the drafted chapters that already have target text. For a
       // whole-book draft (draftedChapters == null) every existing chapter is in scope, as before.
       const draftedChapters = this.draftedChaptersForBook(book.bookNum);
@@ -627,32 +695,6 @@ export class DraftImportWizardComponent implements OnInit {
     }
 
     this.showOverwriteConfirmation = this.booksWithExistingText.length > 0;
-  }
-
-  private async getChaptersWithText(bookNum: number): Promise<number[]> {
-    if (this.targetProjectId == null) return [];
-
-    const project = this.targetProjectDoc$.value?.data;
-    if (project == null) return [];
-
-    const targetBook = project.texts.find(t => t.bookNum === bookNum);
-    if (targetBook == null) return [];
-
-    const chaptersWithText: number[] = [];
-    for (const chapter of targetBook.chapters) {
-      const textDocId = new TextDocId(this.targetProjectId, bookNum, chapter.number);
-      const hasText: boolean = await this.hasTextInChapter(textDocId);
-      if (hasText) {
-        chaptersWithText.push(chapter.number);
-      }
-    }
-
-    return chaptersWithText;
-  }
-
-  private async hasTextInChapter(textDocId: TextDocId): Promise<boolean> {
-    const textDoc: TextDoc = await this.projectService.getText(textDocId);
-    return textDoc.getNonEmptyVerses().length > 0;
   }
 
   async startImport(): Promise<void> {

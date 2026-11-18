@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using SIL.Converters.Usj;
+using SIL.Scripture;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -23,6 +24,7 @@ public interface IParatextService
     void ClearForcedUsernames();
     Task<Attempt<string>> TryGetProjectRoleAsync(UserSecret userSecret, string paratextId, CancellationToken token);
     ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId);
+    ScrVers? GetProjectVersification(string paratextId);
 
     Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
     bool IsResource(string? paratextId);

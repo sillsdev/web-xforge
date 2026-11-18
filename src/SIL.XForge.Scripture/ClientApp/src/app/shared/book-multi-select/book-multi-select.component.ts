@@ -10,7 +10,7 @@ import { catchError, distinctUntilChanged, filter, map, startWith, switchMap, ta
 import { L10nPercentPipe } from 'xforge-common/l10n-percent.pipe';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
-import { estimatedActualBookProgress, ProgressService, ProjectProgress } from '../progress-service/progress.service';
+import { bookVerseCounts, ProgressService, ProjectProgress } from '../progress-service/progress.service';
 import { Book } from './book-multi-select';
 
 export interface BookOption {
@@ -172,7 +172,7 @@ export class BookMultiSelectComponent implements OnInit, OnChanges {
   private rebuild(inputs: RenderInputs, progress: ProjectProgress | undefined): void {
     const progressByBookNum = (progress?.books ?? []).map(b => ({
       bookNum: Canon.bookIdToNumber(b.bookId),
-      progress: estimatedActualBookProgress(b)
+      progress: bookVerseCounts(b).ratio
     }));
 
     this.bookOptions = inputs.availableBooks.map((book: Book) => ({

@@ -429,11 +429,35 @@ function setUpMocks(args: DraftImportWizardComponentState): void {
   );
   when(mockProgressService.getProgress(anything(), anything())).thenResolve(
     new ProjectProgress([
-      { bookId: 'GEN', verseSegments: 100, blankVerseSegments: 0 },
-      { bookId: 'EXO', verseSegments: 100, blankVerseSegments: 0 },
-      { bookId: 'LEV', verseSegments: 100, blankVerseSegments: 100 },
-      { bookId: 'NUM', verseSegments: 22, blankVerseSegments: 2 },
-      { bookId: 'DEU', verseSegments: 0, blankVerseSegments: 0 }
+      {
+        bookId: 'GEN',
+        verses: 100,
+        blankVerses: 0,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 0, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'EXO',
+        verses: 100,
+        blankVerses: 0,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 0, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'LEV',
+        verses: 100,
+        blankVerses: 100,
+        expectedVerses: 100,
+        chapters: [{ chapterNumber: 1, verses: 100, blankVerses: 100, expectedVerses: 100 }]
+      },
+      {
+        bookId: 'NUM',
+        verses: 22,
+        blankVerses: 2,
+        expectedVerses: 22,
+        chapters: [{ chapterNumber: 1, verses: 22, blankVerses: 2, expectedVerses: 22 }]
+      },
+      { bookId: 'DEU', verses: 0, blankVerses: 0, expectedVerses: 0, chapters: [] }
     ])
   );
 }

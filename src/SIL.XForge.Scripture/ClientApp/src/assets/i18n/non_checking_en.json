@@ -401,6 +401,7 @@
     "connect_project": "Connect project",
     "connect_to_project": "Connect to project",
     "connect_to_the_internet": "Connect to the internet to import drafts",
+    "could_not_check_existing_text": "There was an error checking whether the project already has text in the chapters to import. Please try again.",
     "connect": "Connect",
     "connected_to_project": "Connected to project",
     "connecting_to_project": "Connecting to project",
@@ -977,7 +978,7 @@
     "progress": "Progress",
     "progress_not_available_offline": "Translation progress is not available when offline.",
     "translate_overview": "Translate Overview",
-    "translated_segments": "{{ translatedSegments }} of {{ total }} segments"
+    "translated_verses": "{{ translatedVerses }} of {{ total }} verses"
   },
   "draft_signup": {
     "additional_comments_label": "Additional comments",
