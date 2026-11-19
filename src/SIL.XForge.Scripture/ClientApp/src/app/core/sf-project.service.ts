@@ -28,6 +28,7 @@ import { BookProgressWithChapterProgress } from '../shared/progress-service/prog
 import { UserFeedbackParams } from '../shared/user-feedback/user-feedback-dialog.component';
 import { expandNumbers } from '../shared/utils';
 import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
+import { DraftApplyJobStatus } from '../translate/draft-generation/draft-import-wizard/draft-import-wizard.component';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { DraftSourceConfiguration } from './models/draft-source-configuration';
 import { InviteeStatus } from './models/invitee-status';
@@ -241,6 +242,11 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   onlineCancelSync(id: string): Promise<void> {
     return this.onlineInvoke('cancelSync', { projectId: id });
+  }
+
+  /** Gets the status of the background job that is applying a draft, as returned by applying the draft. */
+  onlineGetApplyPreTranslationStatus(jobId: string): Promise<DraftApplyJobStatus | undefined> {
+    return this.onlineInvoke<DraftApplyJobStatus>('getApplyPreTranslationStatus', { jobId });
   }
 
   onlineApplyPreTranslationToProject(

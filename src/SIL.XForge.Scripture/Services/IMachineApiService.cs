@@ -8,6 +8,7 @@ using SIL.Converters.Usj;
 using SIL.XForge.EventMetrics;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -40,6 +41,17 @@ public interface IMachineApiService
         string sfProjectId,
         CancellationToken cancellationToken
     );
+
+    /// <summary>
+    /// Gets the status of a background job started by <see cref="ApplyPreTranslationToProjectAsync"/>.
+    /// </summary>
+    /// <param name="curUserId">The current user identifier. This must be the user who started the job.</param>
+    /// <param name="jobId">The background job identifier.</param>
+    /// <returns>The job status, including the final state once the job has finished.</returns>
+    /// <exception cref="DataNotFoundException">The job does not exist, or is not a draft apply job.</exception>
+    /// <exception cref="ForbiddenException">The job was not started by the current user.</exception>
+    DraftApplyJobStatus GetApplyPreTranslationStatus(string curUserId, string jobId);
+
     Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,

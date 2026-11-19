@@ -8,6 +8,7 @@ import {
   Observable,
   ReplaySubject,
   share,
+  skip,
   switchMap,
   timer
 } from 'rxjs';
@@ -65,6 +66,16 @@ export abstract class NotificationServiceBase {
     // When offline, the connection will not start until the app is back online, so do not wait for it
     if (!this.appOnline) return;
     await firstValueFrom(this.subscribeToProject$(projectId));
+  }
+
+  /**
+   * Emits each time the app comes back online and the project has been subscribed to again. Notifications sent while
+   * the app was offline are not replayed, so use this to refresh any state that could have changed in the meantime.
+   * The connection is kept open while there are subscribers.
+   */
+  reconnected$(projectId: string): Observable<void> {
+    // The first emission is for the initial subscription, rather than for coming back online
+    return this.subscribeToProject$(projectId).pipe(skip(1));
   }
 
   /**
