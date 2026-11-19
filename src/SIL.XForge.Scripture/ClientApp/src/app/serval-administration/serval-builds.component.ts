@@ -46,6 +46,7 @@ import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -70,6 +71,11 @@ import { BuildConfidencesExportService } from './build-confidences-export.servic
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
 import { JobDetailsDialogComponent } from './job-details-dialog.component';
+import {
+  buildDraftingEngine,
+  DRAFTING_ENGINE_INFO,
+  DraftingEngineInfo
+} from '../translate/draft-generation/drafting-engine/drafting-engine';
 import { SearchRecordsComponent } from './search-records.component';
 import { ServalAdminParams } from './serval-administration.component';
 import { ServalAdministrationService } from './serval-administration.service';
@@ -97,6 +103,8 @@ export interface ServalBuildRow {
   projectNameDisplay?: string;
   durationMs?: number;
   projectServalAdminUrl?: string;
+  /** The engine the build's draft was generated with. Absent if there is no Serval build yet, or it was not reported. */
+  draftingEngine?: DraftingEngine;
   /** True if the build is not associable with any SF project currently in the database. */
   projectDeleted: boolean;
 }
@@ -217,8 +225,18 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
+  protected readonly draftingEngineInfo: Record<DraftingEngine, DraftingEngineInfo> = DRAFTING_ENGINE_INFO;
   protected DraftGenerationBuildStatus = DraftGenerationBuildStatus;
-  protected columnsToDisplay: string[] = ['status', 'project', 'training', 'source', 'language', 'requested', 'expand'];
+  protected columnsToDisplay: string[] = [
+    'status',
+    'project',
+    'training',
+    'source',
+    'language',
+    'draftingEngine',
+    'requested',
+    'expand'
+  ];
   /** Tracks which rows are currently expanded (by Serval build ID). */
   private expandedRows: Set<string> = new Set();
   /** Data rows, excluding those that might be filtered out by the includeDeleted toggle. */
@@ -656,6 +674,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         )
       );
       const translationBooks: ProjectBooks[] = toProjectBooks(report.config.translationScriptureRanges);
+      const draftingEngine: DraftingEngine | undefined = buildDraftingEngine(report.build);
 
       return {
         report: report,
@@ -664,6 +683,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         projectNameDisplay: projectNameDisplay,
         durationMs: durationMs,
         projectServalAdminUrl: projectLink,
+        draftingEngine: draftingEngine,
         projectDeleted: sfProjectId == null
       };
     });

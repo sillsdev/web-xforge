@@ -1,0 +1,60 @@
+:host {
+  display: block;
+  max-width: 60em;
+}
+
+.engine-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-block: 1.5em;
+}
+
+.engine-option {
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  padding: 0.5em 1em 1em;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--mat-sys-outline);
+  }
+
+  &.selected {
+    border-color: var(--mat-sys-primary);
+    // A second ring rather than a thicker border, so that selecting a card does not shift its contents.
+    box-shadow: 0 0 0 1px var(--mat-sys-primary);
+    background-color: var(--mat-sys-surface-container-low);
+  }
+}
+
+.engine-name {
+  font-weight: 500;
+  font-size: 1.1em;
+}
+
+.engine-detail {
+  margin: 0.5em 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.acknowledgement {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.5em;
+  margin-bottom: 1.5em;
+}
+
+.acknowledgement-required {
+  margin: -1em 0 1.5em;
+}
+
+.offline-notice {
+  margin-bottom: 1.5em;
+}
+
+.actions {
+  display: flex;
+  gap: 1em;
+}

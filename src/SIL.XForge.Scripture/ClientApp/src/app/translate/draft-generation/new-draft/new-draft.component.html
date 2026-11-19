@@ -65,6 +65,22 @@
           (bookSelect)="onDraftingBookSelect($event)"
         ></app-book-multi-select>
       }
+      @if (hasTooManyBooksForEngine) {
+        <app-notice
+          [icon]="hasTriedToContinueWithTooManyBooks ? 'error' : 'warning'"
+          mode="basic"
+          [type]="hasTriedToContinueWithTooManyBooks ? 'error' : 'warning'"
+          class="engine-notice"
+        >
+          <transloco
+            key="new_draft.engine.multiple_books_unsupported"
+            [params]="{
+              engine: draftingEngines.selectedEngineText.name | transloco,
+              engineUrl: { route: draftingEngines.pagePath }
+            }"
+          ></transloco>
+        </app-notice>
+      }
       @if (draftingExclusionNotices.length > 0) {
         <app-notice icon="info" mode="basic" type="light" class="books-hidden">
           <div class="books-hidden-container">
@@ -305,6 +321,32 @@
           }
         </mat-card-content>
       </mat-card>
+
+      @if (showDraftingEngineCard) {
+        @let engineText = draftingEngines.selectedEngineText;
+        <mat-card class="summary-card engine-card">
+          <mat-card-content>
+            <div class="card-header">
+              <div class="card-header-text">
+                <h1>{{ t("engine.heading") }}</h1>
+                <p class="summary-subtitle semi-bold">{{ engineText.name | transloco }}</p>
+              </div>
+              @if (draftingEngines.hasChoice) {
+                <a mat-button color="primary" class="card-header-action" [routerLink]="draftingEngines.pagePath">
+                  <mat-icon>edit</mat-icon>{{ t("engine.change") }}
+                </a>
+              }
+            </div>
+            <p>{{ engineText.description | transloco }}</p>
+            <p>{{ engineText.duration | transloco: { count: draftDurationHours | l10nNumber } }}</p>
+            @if (engineUsesLlm) {
+              <app-notice icon="info" mode="basic" type="light" class="third-party-reminder">
+                {{ t("engine.third_party_reminder") }}
+              </app-notice>
+            }
+          </mat-card-content>
+        </mat-card>
+      }
 
       @if (currentUserEmail != null) {
         <mat-card class="summary-card">

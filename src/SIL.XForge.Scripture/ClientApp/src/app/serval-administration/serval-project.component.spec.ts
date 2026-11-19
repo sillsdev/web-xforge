@@ -7,9 +7,9 @@ import { saveAs } from 'file-saver';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { DraftConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftConfig, DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, NEVER, of, throwError } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -69,6 +69,80 @@ describe('ServalProjectComponent', () => {
       { provide: SFProjectService, useMock: mockSFProjectService }
     ]
   }));
+
+  describe('translation engines', () => {
+    it('shows the engines available to the project and its selected engine', fakeAsync(() => {
+      const env = new TestEnvironment({
+        preTranslate: true,
+        draftConfig: {
+          availableDraftingEngines: [DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing],
+          draftingEngine: DraftingEngine.NmtWithLlmPostProcessing
+        }
+      });
+
+      expect(env.component.draftingEngineAvailability).toEqual({
+        availableEngines: [DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing],
+        selectedEngine: DraftingEngine.NmtWithLlmPostProcessing
+      });
+      expect(env.fixture.nativeElement.querySelector('app-drafting-engine-availability')).not.toBeNull();
+    }));
+
+    it('saves the engines the admin makes available and selects', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true });
+
+      void env.component.onUpdateDraftingEngineAvailability({
+        availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+        selectedEngine: DraftingEngine.Llm
+      });
+      tick();
+
+      verify(
+        mockSFProjectService.onlineSetAvailableDraftingEngines(
+          'project01',
+          deepEqual([DraftingEngine.Nmt, DraftingEngine.Llm])
+        )
+      ).once();
+      verify(mockSFProjectService.onlineSetDraftingEngine('project01', DraftingEngine.Llm)).once();
+      expect(env.component.draftingEngineAvailability.selectedEngine).toBe(DraftingEngine.Llm);
+    }));
+
+    it('goes back to showing what the project had when the engines could not be saved', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true });
+      when(mockSFProjectService.onlineSetAvailableDraftingEngines(anything(), anything())).thenReject(
+        new Error('forbidden')
+      );
+
+      let error: unknown;
+      env.component
+        .onUpdateDraftingEngineAvailability({
+          availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+          selectedEngine: DraftingEngine.Llm
+        })
+        .catch((e: unknown) => (error = e));
+      tick();
+
+      expect(error).toBeDefined();
+      expect(env.component.draftingEngineAvailability).toEqual({
+        availableEngines: [DraftingEngine.Nmt],
+        selectedEngine: DraftingEngine.Nmt
+      });
+      verify(mockSFProjectService.onlineSetDraftingEngine(anything(), anything())).never();
+    }));
+
+    it('cannot change the engines while offline', fakeAsync(() => {
+      const env = new TestEnvironment({ preTranslate: true });
+      env.testOnlineStatusService.setIsOnline(false);
+      env.fixture.detectChanges();
+      tick();
+      env.fixture.detectChanges();
+
+      const checkboxes: HTMLInputElement[] = Array.from(
+        env.fixture.nativeElement.querySelectorAll('app-drafting-engine-availability .engine-available input')
+      );
+      expect(checkboxes.length).toBe(3);
+      expect(checkboxes.every(checkbox => checkbox.disabled)).toBeTrue();
+    }));
+  });
 
   describe('onboarding request link', () => {
     it('links to the onboarding request with its status when the project has one', fakeAsync(() => {
@@ -423,7 +497,9 @@ describe('ServalProjectComponent', () => {
               lastSelectedTrainingScriptureRanges: args.draftConfig?.lastSelectedTrainingScriptureRanges ?? undefined,
               lastSelectedTranslationScriptureRanges:
                 args.draftConfig?.lastSelectedTranslationScriptureRanges ?? undefined,
-              servalConfig: args.draftConfig?.servalConfig ?? undefined
+              servalConfig: args.draftConfig?.servalConfig ?? undefined,
+              availableDraftingEngines: args.draftConfig?.availableDraftingEngines ?? undefined,
+              draftingEngine: args.draftConfig?.draftingEngine ?? undefined
             },
             preTranslate: args.preTranslate,
             source: {

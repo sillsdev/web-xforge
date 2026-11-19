@@ -14,6 +14,7 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
@@ -193,7 +194,11 @@ describe('OnboardingRequestDetailComponent', () => {
         approveDialogResult: {
           draftingSourceParatextId: 'drafting_source_pt',
           trainingSourceParatextIds: ['training_source_pt'],
-          enableBackTranslationDrafting: false
+          enableBackTranslationDrafting: false,
+          draftingEngineAvailability: {
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing],
+            selectedEngine: DraftingEngine.NmtWithLlmPostProcessing
+          }
         }
       });
       env.wait();
@@ -208,6 +213,13 @@ describe('OnboardingRequestDetailComponent', () => {
           deepEqual(['training_source_pt'])
         )
       ).once();
+      verify(
+        mockedProjectService.onlineSetAvailableDraftingEngines(
+          'project01',
+          deepEqual([DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing])
+        )
+      ).once();
+      verify(mockedProjectService.onlineSetDraftingEngine('project01', DraftingEngine.NmtWithLlmPostProcessing)).once();
       verify(
         mockedOnboardingRequestService.approveRequest(deepEqual({ requestId: REQUEST_ID, sfProjectId: 'project01' }))
       ).once();
@@ -229,7 +241,8 @@ describe('OnboardingRequestDetailComponent', () => {
         approveDialogResult: {
           draftingSourceParatextId: 'drafting_source_pt',
           trainingSourceParatextIds: ['training_source_pt'],
-          enableBackTranslationDrafting: true
+          enableBackTranslationDrafting: true,
+          draftingEngineAvailability: { availableEngines: [DraftingEngine.Nmt], selectedEngine: DraftingEngine.Nmt }
         }
       });
       env.wait();

@@ -55,3 +55,18 @@ app-notice {
   margin: 0;
   width: 100%;
 }
+
+.drafting-engine {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0.5em 1em;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.875em;
+
+  mat-icon {
+    font-size: 1.25em;
+    width: 1em;
+    height: 1em;
+  }
+}

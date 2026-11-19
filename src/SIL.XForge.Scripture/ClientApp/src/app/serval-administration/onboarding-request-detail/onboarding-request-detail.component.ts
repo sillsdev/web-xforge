@@ -55,6 +55,8 @@ import {
   SourceOption
 } from './approve-request-dialog/approve-request-dialog.component';
 import { formatBookListForSILNLP } from './draft-request-detail-utils';
+import { draftingEngineAvailabilityOf } from '../../translate/draft-generation/drafting-engine/drafting-engine';
+import { saveDraftingEngineAvailability } from '../drafting-engine-availability/drafting-engine-availability.component';
 
 /**
  * Component for displaying a single onboarding request's full details.
@@ -447,6 +449,13 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
         await this.projectService.onlineSetDraftSources(btSfProjectId, [targetParatextId], [targetParatextId]);
         await this.projectService.onlineSetPreTranslate(btSfProjectId, true);
       }
+      this.loadingMessage = 'Setting translation engines…';
+      await saveDraftingEngineAvailability(
+        this.projectService,
+        this.request.submission.projectId,
+        dialogData.draftingEngineAvailability,
+        result.draftingEngineAvailability
+      );
       this.loadingMessage = 'Approving request…';
       const request = await this.onboardingRequestService.approveRequest({
         requestId: this.request.id,
@@ -515,7 +524,8 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       draftingSourceOptions,
       trainingSourceOptions,
       defaultTrainingSource: onboardingRequestFormData.sourceProjectA,
-      backTranslation
+      backTranslation,
+      draftingEngineAvailability: draftingEngineAvailabilityOf(mainData.translateConfig.draftConfig)
     };
   }
 
