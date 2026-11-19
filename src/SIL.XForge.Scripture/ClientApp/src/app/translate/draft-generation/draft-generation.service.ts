@@ -335,51 +335,6 @@ export class DraftGenerationService {
   }
 
   /**
-   * Gets the pre-translations as delta operations for the specified book/chapter using the last completed build.
-   * @param projectId The SF project id for the target translation.
-   * @param book The book number.
-   * @param chapter The chapter number.
-   * @param timestamp The timestamp to download the draft at. If undefined, the latest draft will be downloaded.
-   * @returns An array of delta operations or an empty array at if no pre-translations exist.
-   * The 405 error that occurs when there is no USFM support is thrown to the caller.
-   */
-  getGeneratedDraftDeltaOperations(
-    projectId: string,
-    book: number,
-    chapter: number,
-    timestamp?: Date,
-    usfmConfig?: DraftUsfmConfig
-  ): Observable<DeltaOperation[]> {
-    if (!this.onlineStatusService.isOnline) {
-      return of([]);
-    }
-    let url = `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}/delta`;
-    const params = new URLSearchParams();
-    if (timestamp != null) {
-      params.append('timestamp', timestamp.toISOString());
-    }
-    if (usfmConfig != null) {
-      params.append('paragraphFormat', usfmConfig.paragraphFormat);
-      params.append('quoteFormat', usfmConfig.quoteFormat);
-    }
-    if (params.size > 0) {
-      url += `?${params.toString()}`;
-    }
-    return this.httpClient.get<Snapshot<TextData> | undefined>(url).pipe(
-      map(res => res.data?.data.ops ?? []),
-      catchError(err => {
-        // If no pre-translations exist, return empty array
-        if (err.status === 403 || err.status === 404 || err.status === 405 || err.status === 409) {
-          return of([]);
-        }
-
-        this.noticeService.showError(this.i18n.translateStatic('draft_generation.temporarily_unavailable'));
-        return of([]);
-      })
-    );
-  }
-
-  /**
    * Gets the pre-translations as delta operations for the specified book using the last completed build.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.

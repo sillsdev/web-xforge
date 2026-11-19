@@ -574,6 +574,7 @@ public class MachineApiController : ControllerBase
     /// <response code="405">Retrieving the pre-translations in this format is not supported.</response>
     /// <response code="409">The engine has not been built on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [Obsolete("Use GetPretranslationBookDelta instead. Deprecated 2026-11")]
     [HttpGet(MachineApi.GetPreTranslationDelta)]
     public async Task<ActionResult<Snapshot<TextData>?>> GetPreTranslationDeltaAsync(
         string sfProjectId,

@@ -981,6 +981,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationDeltaAsync_MachineApiDown()
     {
         // Set up test environment
@@ -1014,6 +1015,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationDeltaAsync_NoPermission()
     {
         // Set up test environment
@@ -1045,6 +1047,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationDeltaAsync_NoProject()
     {
         // Set up test environment
@@ -1076,6 +1079,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationDeltaAsync_NotBuilt()
     {
         // Set up test environment
@@ -1107,6 +1111,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationDeltaAsync_NotSupported()
     {
         // Set up test environment
@@ -1144,6 +1149,7 @@ public class MachineApiControllerTests
     [TestCase(ParagraphBreakFormatOptions.BestGuess, QuoteStyleOptions.Denormalized)]
     [TestCase(ParagraphBreakFormatOptions.MoveToEnd, QuoteStyleOptions.Denormalized)]
     [TestCase(ParagraphBreakFormatOptions.Remove, QuoteStyleOptions.Normalized)]
+    [Obsolete("Tests legacy method")]
     public async Task GetPreTranslationDeltaAsync_Success(string paragraphFormat, string quoteFormat)
     {
         // Set up test environment
@@ -1175,6 +1181,7 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    [Obsolete("Tests legacy method")]
     public async Task GetPretranslationDeltaAsync_SuccessSpecificConfig()
     {
         var env = new TestEnvironment();
