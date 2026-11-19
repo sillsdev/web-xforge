@@ -4569,15 +4569,6 @@ class TestEnvironment {
       of({ state: BuildStates.Completed } as BuildDto)
     );
     when(mockedDraftGenerationService.getLastPreTranslationBuild(anything())).thenReturn(of(undefined));
-    when(
-      mockedDraftGenerationService.getGeneratedDraftDeltaOperations(
-        anything(),
-        anything(),
-        anything(),
-        anything(),
-        anything()
-      )
-    ).thenReturn(of([]));
     when(mockedDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(of([]));
     when(mockedDraftGenerationService.getLastCompletedBuild(anything())).thenReturn(of({} as BuildDto));
     when(mockedDraftOptionsService.areFormattingOptionsAvailableButUnselected(anything())).thenReturn(false);
