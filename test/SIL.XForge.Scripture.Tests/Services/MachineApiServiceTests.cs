@@ -9,6 +9,7 @@ using System.Xml.Linq;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Hangfire.Storage;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -106,6 +107,115 @@ public class MachineApiServiceTests
         State = JobState.Completed,
         DateFinished = DateTimeOffset.UtcNow,
     };
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobDoesNotExist()
+    {
+        var env = new TestEnvironment();
+        env.JobStorageConnection.GetJobData(HangfireJobId).Returns((JobData?)null);
+
+        // SUT
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobIsNotApplyPreTranslation()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, SucceededState.StateName);
+        env.JobStorageConnection.GetJobData(HangfireJobId)
+            .Returns(
+                new JobData
+                {
+                    Job = Job.FromExpression<IMachineApiService>(s =>
+                        s.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+                    ),
+                    State = SucceededState.StateName,
+                }
+            );
+
+        // SUT
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobStartedByAnotherUser()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User02, SucceededState.StateName);
+
+        // SUT
+        Assert.Throws<ForbiddenException>(() => env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobNotFinished()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, ProcessingState.StateName);
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsFalse(status.Finished);
+        Assert.IsNull(status.State);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobSucceeded()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(
+            User01,
+            SucceededState.StateName,
+            new DraftApplyResult
+            {
+                ChangesSaved = true,
+                Applied = ["GEN 2"],
+                Failures = ["GEN 1"],
+                Log = "A warning",
+            }
+        );
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsTrue(status.Finished);
+        Assert.AreEqual(DraftApplyStatus.Successful, status.State!.Status);
+        Assert.AreEqual(0, status.State.BookNum);
+        Assert.AreEqual(0, status.State.ChapterNum);
+        Assert.AreEqual("A warning", status.State.Message);
+        Assert.AreEqual(new[] { "GEN 2" }, status.Applied);
+        Assert.AreEqual(new[] { "GEN 1" }, status.Failures);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobSucceededWithoutSavingChanges()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, SucceededState.StateName, new DraftApplyResult { ChangesSaved = false });
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsTrue(status.Finished);
+        Assert.AreEqual(DraftApplyStatus.Failed, status.State!.Status);
+        Assert.That(status.State.Message, Does.Contain(env.SiteOptions.Value.IssuesEmail));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobFailed()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, FailedState.StateName);
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsTrue(status.Finished);
+        Assert.AreEqual(DraftApplyStatus.Failed, status.State!.Status);
+        Assert.That(status.State.Message, Does.Contain(env.SiteOptions.Value.IssuesEmail));
+    }
 
     [Test]
     public async Task ApplyPreTranslationToProjectAsync_BlankUsjFromMongo()
@@ -5811,6 +5921,9 @@ public class MachineApiServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(HangfireJobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            JobStorage = Substitute.For<JobStorage>();
+            JobStorageConnection = Substitute.For<IStorageConnection>();
+            JobStorage.GetConnection().Returns(JobStorageConnection);
             DraftMetrics = new MemoryRepository<DraftMetrics>();
             EventMetricService = Substitute.For<IEventMetricService>();
             EventMetricService
@@ -5969,6 +6082,7 @@ public class MachineApiServiceTests
                 ExceptionHandler,
                 hubContext,
                 draftHubContext,
+                JobStorage,
                 MockLogger,
                 MachineProjectService,
                 ParatextService,
@@ -5991,6 +6105,40 @@ public class MachineApiServiceTests
         public IDeltaUsxMapper DeltaUsxMapper { get; }
         public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
+
+        /// <summary>
+        /// Sets up the background job storage to contain a job that applies a draft.
+        /// </summary>
+        public void SetApplyJob(string curUserId, string stateName, DraftApplyResult? result = null)
+        {
+            JobStorageConnection
+                .GetJobData(HangfireJobId)
+                .Returns(
+                    new JobData
+                    {
+                        Job = Job.FromExpression<IMachineApiService>(s =>
+                            s.ApplyPreTranslationToProjectAsync(
+                                curUserId,
+                                Project01,
+                                "GEN",
+                                Project02,
+                                DateTime.UtcNow,
+                                CancellationToken.None
+                            )
+                        ),
+                        State = stateName,
+                    }
+                );
+            var data = new Dictionary<string, string>();
+            if (result is not null)
+            {
+                data["Result"] = JsonConvert.SerializeObject(result);
+            }
+            JobStorageConnection.GetStateData(HangfireJobId).Returns(new StateData { Name = stateName, Data = data });
+        }
+
+        public JobStorage JobStorage { get; }
+        public IStorageConnection JobStorageConnection { get; }
         public IMachineProjectService MachineProjectService { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }

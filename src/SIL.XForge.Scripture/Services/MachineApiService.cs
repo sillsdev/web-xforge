@@ -7,6 +7,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
+using Hangfire.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -53,6 +56,7 @@ public partial class MachineApiService(
     IExceptionHandler exceptionHandler,
     IHubContext<NotificationHub, INotifier> hubContext,
     IHubContext<DraftNotificationHub, IDraftNotifier> draftHubContext,
+    JobStorage jobStorage,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
     IParatextService paratextService,
@@ -726,6 +730,7 @@ public partial class MachineApiService(
 
                 // A draft has been applied
                 chaptersToNotify.Add((bookNum, chapterDelta.Number));
+                result.Applied.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
                 successful = true;
             }
         }
@@ -755,15 +760,7 @@ public partial class MachineApiService(
 
             await draftHubContext.NotifyDraftApplyProgress(
                 sfProjectId,
-                new DraftApplyState
-                {
-                    BookNum = 0,
-                    ChapterNum = 0,
-                    Status = successful ? DraftApplyStatus.Successful : DraftApplyStatus.Failed,
-                    Message = successful
-                        ? result.Log
-                        : $"An error occurred applying your draft. Please email {siteOptions.Value.IssuesEmail} for help.",
-                }
+                GetFinalDraftApplyState(successful, result.Log)
             );
 
             // Notify any listening users for each chapter that was updated in the target project
@@ -789,6 +786,66 @@ public partial class MachineApiService(
 
         return result;
     }
+
+    public DraftApplyJobStatus GetApplyPreTranslationStatus(string curUserId, string jobId)
+    {
+        using IStorageConnection connection = jobStorage.GetConnection();
+
+        // Only allow the user who started the job to see its status
+        JobData? jobData = connection.GetJobData(jobId);
+        if (
+            jobData?.Job is not { } job
+            || job.Method.Name != nameof(ApplyPreTranslationToProjectAsync)
+            || job.Args.Count == 0
+        )
+        {
+            throw new DataNotFoundException("The job does not exist.");
+        }
+
+        if (job.Args[0] as string != curUserId)
+        {
+            throw new ForbiddenException();
+        }
+
+        if (jobData.State == SucceededState.StateName)
+        {
+            // The job returns a result, even if it did not save any changes
+            StateData? stateData = connection.GetStateData(jobId);
+            DraftApplyResult? result = null;
+            if (stateData?.Data.TryGetValue("Result", out string? serializedResult) == true)
+            {
+                result = SerializationHelper.Deserialize<DraftApplyResult>(serializedResult, SerializationOption.User);
+            }
+
+            return new DraftApplyJobStatus
+            {
+                Finished = true,
+                State = GetFinalDraftApplyState(result?.ChangesSaved ?? false, result?.Log),
+                Applied = [.. result?.Applied ?? []],
+                Failures = [.. result?.Failures ?? []],
+            };
+        }
+
+        if (jobData.State == FailedState.StateName || jobData.State == DeletedState.StateName)
+        {
+            return new DraftApplyJobStatus { Finished = true, State = GetFinalDraftApplyState(false, null) };
+        }
+
+        // The job is enqueued, scheduled for retry, or running
+        return new DraftApplyJobStatus { Finished = false };
+    }
+
+    /// <summary>
+    /// Gets the final state notification sent to clients when a draft has finished being applied.
+    /// </summary>
+    private static DraftApplyState GetFinalDraftApplyState(bool successful, string? log) =>
+        new DraftApplyState
+        {
+            BookNum = 0,
+            ChapterNum = 0,
+            Status = successful ? DraftApplyStatus.Successful : DraftApplyStatus.Failed,
+            Message = successful ? log : $"An error occurred applying your draft.",
+        };
 
     public async Task BuildCompletedAsync(
         string sfProjectId,
