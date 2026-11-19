@@ -50,6 +50,7 @@ import { ProjectNotificationService } from '../../../core/project-notification.s
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
+import { DraftingEngineService } from '../../draft-generation/drafting-engine/drafting-engine.service';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -144,6 +145,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
     private readonly draftHandlingService: DraftHandlingService,
     private readonly draftNotificationService: DraftNotificationService,
     private readonly draftOptionsService: DraftOptionsService,
+    protected readonly draftingEngines: DraftingEngineService,
     private readonly errorReportingService: ErrorReportingService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -193,12 +195,17 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
   }
 
   get hasLowConfidence(): boolean {
+    return hasLowConfidence(this.selectedRevisionBuild, this.bookId);
+  }
+
+  /** The most recent completed build that finished no later than the selected draft revision. */
+  protected get selectedRevisionBuild(): BuildDto | undefined {
     if (this.selectedRevision == null) {
-      return false;
+      return undefined;
     }
 
     const revisionTime = new Date(this.selectedRevision.timestamp).getTime();
-    const build = this.builds.reduce<BuildDto | undefined>((latest, current) => {
+    return this.builds.reduce<BuildDto | undefined>((latest, current) => {
       const finished = current.additionalInfo?.dateFinished;
       if (finished == null || current.state !== BuildStates.Completed) {
         return latest;
@@ -218,8 +225,6 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
 
       return currentTime > latestTime ? current : latest;
     }, undefined);
-
-    return hasLowConfidence(build, this.bookId);
   }
 
   get isLatestBuildCompleted(): boolean {

@@ -1,0 +1,20 @@
+.engine-grid {
+  display: inline-grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  justify-items: center;
+  column-gap: 2em;
+}
+
+.column-heading {
+  font-weight: 500;
+  padding-block: 0.5em;
+
+  &:first-child {
+    justify-self: start;
+  }
+}
+
+.engine-label {
+  justify-self: start;
+}

@@ -10,7 +10,7 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftingEngine, ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, NEVER, of, Subject } from 'rxjs';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -236,8 +236,19 @@ describe('DraftGenerationComponent', () => {
       mockProjectNotificationService.buildProgress$.and.returnValue(NEVER);
     }
 
+    /** Sets the engines a Serval admin has made available to the project, and the one selected for it. */
+    setDraftingEngines(available: DraftingEngine[], selected: DraftingEngine | undefined): void {
+      const draftConfig = mockActivatedProjectService.projectDoc!.data!.translateConfig.draftConfig;
+      draftConfig.availableDraftingEngines = available;
+      draftConfig.draftingEngine = selected;
+    }
+
     get configureDraftButton(): HTMLElement | null {
       return this.getElementByTestId('configure-button');
+    }
+
+    get translationEngineButton(): HTMLElement | null {
+      return (this.fixture.nativeElement as HTMLElement).querySelector('.translation-engine-button');
     }
 
     get signupResponseEmail(): HTMLElement | null {
@@ -805,6 +816,24 @@ describe('DraftGenerationComponent', () => {
           expect(env.getElementByTestId('warning-last-sync-failed')).not.toBeNull();
         });
       });
+    });
+  });
+
+  describe('translation engine', () => {
+    it('offers no choice of engine for a project with only the default engine', () => {
+      const env = new TestEnvironment();
+
+      expect(env.configureDraftButton).not.toBeNull();
+      expect(env.translationEngineButton).toBeNull();
+    });
+
+    it('offers a choice of engine beside Configure sources when the project has more than one', () => {
+      const env = new TestEnvironment();
+      env.setDraftingEngines([DraftingEngine.Nmt, DraftingEngine.Llm], undefined);
+      env.fixture.detectChanges();
+
+      expect(env.configureDraftButton).not.toBeNull();
+      expect(env.translationEngineButton).not.toBeNull();
     });
   });
 

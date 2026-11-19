@@ -45,6 +45,7 @@ import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
 import { DraftSourcesAsTranslateSourceArrays, hasLowConfidence, projectToDraftSources } from '../../draft-utils';
 import { TrainingDataService } from '../../training-data/training-data.service';
+import { DraftingEngineService } from '../../drafting-engine/drafting-engine.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
   ACTIVE: { icons: 'hourglass_empty', text: 'draft_active', color: 'grey' },
@@ -337,6 +338,7 @@ export class DraftHistoryEntryComponent {
     private readonly trainingDataService: TrainingDataService,
     private readonly activatedProjectService: ActivatedProjectService,
     protected readonly draftOptionsService: DraftOptionsService,
+    protected readonly draftingEngines: DraftingEngineService,
     private readonly permissionsService: PermissionsService,
     private readonly destroyRef: DestroyRef,
     private readonly dialogService: DialogService

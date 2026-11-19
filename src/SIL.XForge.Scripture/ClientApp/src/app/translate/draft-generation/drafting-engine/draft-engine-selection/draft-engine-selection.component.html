@@ -1,0 +1,52 @@
+<ng-container *transloco="let t; read: 'draft_engine_selection'">
+  <h1 id="engine-selection-title">{{ t("title") }}</h1>
+  <p>{{ t("description") }}</p>
+
+  <mat-radio-group
+    class="engine-options"
+    aria-labelledby="engine-selection-title"
+    [ngModel]="selectedEngine"
+    (ngModelChange)="selectEngine($event)"
+  >
+    @for (engine of availableEngines; track engine) {
+      @let info = engineInfo[engine];
+      <!-- The radio button already handles keyboard and screen reader selection. Clicking anywhere else on the card
+      is a convenience for pointer users. -->
+      <div class="engine-option" [class.selected]="selectedEngine === engine" (click)="selectEngine(engine)">
+        <mat-radio-button [value]="engine">
+          <span class="engine-name">{{ info.text.name | transloco }}</span>
+        </mat-radio-button>
+        <p class="engine-detail">{{ info.text.description | transloco }}</p>
+        @if (!info.supportsMultipleBooks) {
+          <p class="engine-detail one-book-at-a-time">{{ t("one_book_at_a_time") }}</p>
+        }
+        @if (info.usesLlm) {
+          <p class="engine-detail third-party">{{ "drafting_engine.uses_third_party" | transloco }}</p>
+        }
+      </div>
+    }
+  </mat-radio-group>
+
+  @if (selectedEngineUsesLlm) {
+    <div class="acknowledgement">
+      <mat-checkbox [(ngModel)]="hasAcknowledgedDataSharing">
+        {{ t("acknowledge") }}
+      </mat-checkbox>
+      <a class="learn-more" [href]="urlService.understandingDrafts" target="_blank">{{ t("learn_more") }}</a>
+    </div>
+    @if (showAcknowledgementRequired) {
+      <p class="acknowledgement-required error-text">{{ t("acknowledgement_required") }}</p>
+    }
+  }
+
+  @if (!isOnline) {
+    <app-notice icon="cloud_off" mode="basic" type="light" class="offline-notice">{{ t("offline") }}</app-notice>
+  }
+
+  <div class="actions">
+    <button mat-button (click)="navigateToDrafting()"><mat-icon>close</mat-icon>{{ t("cancel") }}</button>
+    <button mat-flat-button color="primary" class="save-button" [disabled]="!isOnline || saving" (click)="save()">
+      <mat-icon>check</mat-icon>{{ t("save") }}
+    </button>
+  </div>
+</ng-container>

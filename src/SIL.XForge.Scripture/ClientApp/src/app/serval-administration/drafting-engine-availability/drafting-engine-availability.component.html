@@ -1,0 +1,27 @@
+<mat-radio-group
+  class="engine-grid"
+  aria-label="Selected engine"
+  [value]="availability.selectedEngine"
+  [disabled]="disabled"
+  (change)="onSelectedChange($event.value)"
+>
+  <span class="column-heading">Engine</span>
+  <span class="column-heading" id="available-heading">Available</span>
+  <span class="column-heading">Selected</span>
+  @for (engine of engines; track engine) {
+    <span class="engine-label" [id]="'engine-label-' + engine">{{ engineInfo[engine].text.name | transloco }}</span>
+    <mat-checkbox
+      class="engine-available"
+      [attr.aria-labelledby]="'engine-label-' + engine + ' available-heading'"
+      [checked]="isAvailable(engine)"
+      [disabled]="disabled || isAlwaysAvailable(engine)"
+      (change)="onAvailableChange(engine, $event.checked)"
+    ></mat-checkbox>
+    <mat-radio-button
+      class="engine-selected"
+      [attr.aria-labelledby]="'engine-label-' + engine"
+      [value]="engine"
+      [disabled]="!isAvailable(engine)"
+    ></mat-radio-button>
+  }
+</mat-radio-group>

@@ -14,6 +14,7 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { notNull } from '../../type-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -1560,6 +1561,31 @@ describe('ServalBuildsComponent', () => {
       expect(gaps[0]).toBeUndefined();
       mockedConsole.verify();
       mockedConsole.reset();
+    });
+  });
+
+  describe('translation engine', () => {
+    it('reports the engine the server says the build was made with', () => {
+      const env = new TestEnvironment();
+      const report: ServalBuildReportDto = env.createReport();
+      report.build!.additionalInfo!.translationEngineType = DraftingEngine.NmtWithLlmPostProcessing;
+
+      // SUT
+      const rows = env.component['buildRows']([report]);
+
+      expect(rows[0].draftingEngine).toBe(DraftingEngine.NmtWithLlmPostProcessing);
+    });
+
+    it('reports no engine when the server does not say, or when there is no Serval build yet', () => {
+      const env = new TestEnvironment();
+      const withoutEngine: ServalBuildReportDto = env.createReport();
+      const withoutBuild: ServalBuildReportDto = { ...env.createReport(), build: undefined };
+
+      // SUT
+      const rows = env.component['buildRows']([withoutEngine, withoutBuild]);
+
+      expect(rows[0].draftingEngine).toBeUndefined();
+      expect(rows[1].draftingEngine).toBeUndefined();
     });
   });
 

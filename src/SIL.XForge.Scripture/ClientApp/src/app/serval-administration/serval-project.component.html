@@ -34,6 +34,19 @@
       Pre-Translation Drafting Enabled
     </mat-checkbox>
   </div>
+  <div class="admin-tool-control drafting-engine-control">
+    <h3>
+      Translation engines
+      <app-info
+        text="The engines this project's team can choose between, and the one its drafts are generated with. The team can change the selected engine."
+      ></app-info>
+    </h3>
+    <app-drafting-engine-availability
+      [availability]="draftingEngineAvailability"
+      [disabled]="!isOnline"
+      (availabilityChange)="onUpdateDraftingEngineAvailability($event)"
+    ></app-drafting-engine-availability>
+  </div>
   <div class="admin-tool-control">
     <button
       (click)="downloadDraft()"

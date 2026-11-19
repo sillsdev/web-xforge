@@ -23,6 +23,8 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { isPopulatedString, isString } from '../../../../type-utils';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { normalizeLanguageCodeToISO639_3 } from '../../../translate/draft-generation/draft-utils';
+import { DraftingEngineAvailability } from '../../../translate/draft-generation/drafting-engine/drafting-engine';
+import { DraftingEngineAvailabilityComponent } from '../../drafting-engine-availability/drafting-engine-availability.component';
 
 export interface SourceOption {
   paratextId: string;
@@ -40,12 +42,15 @@ export interface ApproveRequestDialogData {
   trainingSourceOptions: SourceOption[];
   defaultTrainingSource?: string;
   backTranslation?: BackTranslationInfo;
+  /** The engines the target project has now, which the dialog starts from. */
+  draftingEngineAvailability: DraftingEngineAvailability;
 }
 
 export interface ApproveRequestDialogResult {
   draftingSourceParatextId: string;
   trainingSourceParatextIds: string[];
   enableBackTranslationDrafting: boolean;
+  draftingEngineAvailability: DraftingEngineAvailability;
 }
 
 /** Validates that the number of selected training sources is 1 or 2. */
@@ -90,7 +95,8 @@ function languageCodesValidator(languageCodes: Map<string, string>) {
     MatRadioButton,
     MatCheckbox,
     MatTooltip,
-    NoticeComponent
+    NoticeComponent,
+    DraftingEngineAvailabilityComponent
   ]
 })
 export class ApproveRequestDialogComponent {
@@ -99,6 +105,7 @@ export class ApproveRequestDialogComponent {
   readonly form: FormGroup;
   readonly enableBackTranslationDrafting: FormControl<boolean>;
   readonly sameLanguageConfirmed = new FormControl<boolean>(false, { nonNullable: true });
+  draftingEngineAvailability: DraftingEngineAvailability;
   /** Whether the admin has clicked Approve, so that requirements they skipped can be pointed out. */
   approveAttempted = false;
   readonly backTranslationLanguageMatchesTarget: boolean;
@@ -110,6 +117,8 @@ export class ApproveRequestDialogComponent {
     @Inject(MAT_DIALOG_DATA) readonly data: ApproveRequestDialogData
   ) {
     if (data.defaultTrainingSource == null) throw new Error('defaultTrainingSource is required');
+
+    this.draftingEngineAvailability = data.draftingEngineAvailability;
 
     this.normalizedTargetLanguageCode = normalizeLanguageCodeToISO639_3(data.targetProject.languageCode);
     this.backTranslationLanguageMatchesTarget =
@@ -189,7 +198,9 @@ export class ApproveRequestDialogComponent {
       this.dialogRef.close({
         draftingSourceParatextId: this.draftingSource.value,
         trainingSourceParatextIds: this.trainingSources.value,
-        enableBackTranslationDrafting: this.canEnableBackTranslationDrafting && this.enableBackTranslationDrafting.value
+        enableBackTranslationDrafting:
+          this.canEnableBackTranslationDrafting && this.enableBackTranslationDrafting.value,
+        draftingEngineAvailability: this.draftingEngineAvailability
       });
     }
   }
