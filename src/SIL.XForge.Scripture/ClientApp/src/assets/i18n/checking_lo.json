@@ -1,9 +1,9 @@
 {
   "audio_recorder_dialog": {
-    "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
-    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "mic_access_denied": "ບໍ່ທັນມີການອະນຸມັດໃຊ້ໄມ ໃນເຄື່ອງນີ້. ທ່ານຕ້ອງກົດອະນຸມັດກ່ອນ",
+    "mic_not_found": "ບໍ່ພົບໄມ ໃນເຄື່ອງນີ້",
     "record": "ບັນທຶກຂໍ້ຄວາມ",
-    "re_record": "Re-record",
+    "re_record": "ບັນທຶກໃໝ່",
     "save": "ບັນທຶກຄຳຕອບ",
     "stop_recording": "ຢຸດບັນທຶກ"
   },
@@ -16,36 +16,36 @@
     "community_checking": "ກວດກັບຊຸມຊົນ",
     "community_support": "Community Support",
     "help": "ຊ່ວຍເຫຼືອ",
-    "install_on_device": "Install on device",
+    "install_on_device": "ຕິດຕັ້ງແອັບໃນເຄື່ອງ",
     "language": "ພາສາ",
-    "log_out": "Log out",
+    "log_out": "ອອກຈາກລະບົບ",
     "logged_in_as": "Logged in as",
     "my_progress": "My progress",
-    "offline": "Offline",
-    "online": "Online",
+    "offline": "ບໍ່ໄດ້ເຊື່ອມເນັດ",
+    "online": "ກຳລັງເຊື່ອມເນັດ",
     "open_source_licenses": "Open source licenses",
     "overview": "Overview",
-    "page_not_found": "Page not found",
+    "page_not_found": "ບໍ່ພົບໜ້ານີ້",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
-    "questions_answers": "Questions & answers",
+    "questions_answers": "ຄຳຖາມ-ຄຳຕອບ",
     "redirecting_in_moments": "Redirecting in a few moments...",
-    "refresh": "Refresh",
+    "refresh": "ໂຫຼດແອັບໃໝ່",
     "report_issue_email": "ອີເມວ {{ email }}",
     "report_issue": "Report an issue",
     "scripture_checking_not_available": "Scripture checking is not available in this project.",
-    "update_is_available": "An update is available. Please refresh the page.",
+    "update_is_available": "ທ່ານແອັບຕ້ອງການໂຫຼດແອັບໃໝ່",
     "appearance": "Appearance",
-    "appearance_device": "Device",
+    "appearance_device": "ເຄື່ອງ",
     "appearance_dark": "Dark",
     "appearance_light": "Light",
     "experimental_features": "Experimental features"
   },
   "attach_audio": {
-    "tooltip_record": "Record audio",
-    "tooltip_stop": "Stop recording",
-    "tooltip_upload": "Upload audio"
+    "tooltip_record": "ບັນທຶກສຽງ",
+    "tooltip_stop": "ຢຸດການບັນທຶກ",
+    "tooltip_upload": "ສົ່ງສຽງໄປ"
   },
   "canon": {
     "book_names": {
@@ -177,39 +177,39 @@
     "book_with_chapters_grouped": "{{ book }} ({{ chapters }})"
   },
   "chapter_nav": {
-    "previous_chapter": "Previous chapter",
-    "next_chapter": "Next chapter"
+    "previous_chapter": "ບົດກ່ອນ",
+    "next_chapter": "ບົດຕໍ່ໄປ"
   },
   "checking": {
-    "filter_questions": "Filter questions",
+    "filter_questions": "ກັ່ນຕອງສະຖານະຄຳຖາມ",
     "input_required_before_saving": "Provide text or audio before saving",
     "manage_audio": "Manage audio",
     "me": "ຂ້ອຍ",
-    "next": "ຕໍ່ໄປ",
-    "play_chapter": "Play chapter",
-    "previous": "ແຕ່ກ່ອນ",
+    "next": "ຄຳຖາມຕໍ່ໄປ",
+    "play_chapter": "ເປີດບົດນີ້ໃຫ້ຟັງ",
+    "previous": "ຄຳຖາມກ່ອນ",
     "questions": "ຄຳຖາມ",
     "question_does_not_have_audio": "No audio recordings have been uploaded for this chapter. Contact the project administrator to upload audio.",
-    "question_filter_none": "Show all",
+    "question_filter_none": "ສະແດງທັງໝົດ",
     "question_filter_exportable": "Answers flagged for review",
-    "question_filter_has_answers": "Has answers",
-    "question_filter_answered": "Answered",
-    "question_filter_no_answers": "No answers",
-    "question_filter_not_answered": "Not answered",
+    "question_filter_has_answers": "ຄຳຖາມທີ່ມີຄຳຕອບແລ້ວ",
+    "question_filter_answered": "ມີຄຳຕອບແລ້ວ",
+    "question_filter_no_answers": "ຄຳຖາມທີ່ບໍ່ທັນມີຄຳຕອບ",
+    "question_filter_not_answered": "ບໍ່ທັນມີຄຳຕອບ",
     "question_filter_not_reviewed": "Unreviewed answers",
     "question_filter_resolved": "Answers marked resolved",
     "questions_on_chapters_no_audio": "Some questions are on chapters with no audio recordings. Please upload audio for these chapters.",
-    "question_scope_all": "All books",
-    "question_scope_book": "Current book",
-    "question_scope_chapter": "Current chapter",
-    "questions_range": "Questions range",
-    "tooltip_questions_filter": "Filter questions",
+    "question_scope_all": "ພຣະທຳທຸກເຫຼ້ມ",
+    "question_scope_book": "ພຣະທຳເຫຼ້ມນີ້",
+    "question_scope_chapter": "ບົດນີ້",
+    "questions_range": "ກັ່ນຕອງຕາມພຣະຄຳພີ",
+    "tooltip_questions_filter": "ກັ່ນຕອງຄຳຖາມ",
     "unknown_author": "Unknown author",
     "upload_audio_file": "Upload Audio",
-    "view_questions": "ເບິ່ງຄຳຖາມ"
+    "view_questions": "ເບິ່ງຄຳຖາມທັງໝົດ"
   },
   "checking_answers": {
-    "add_answer": "ປະກອບຄຳຕອບ",
+    "add_answer": "ເພິ່ມຄຳຕອບ",
     "answers": "{{ count }} ຄຳຕອບ",
     "cancel": "ຍົກເລີກ",
     "cannot_like_own_answer": "You cannot like your own answer.",
@@ -219,7 +219,7 @@
     "marked_for_export": "Flagged for review",
     "mark_for_export": "Flag for review",
     "no_scripture_selected": "No scripture selected yet.",
-    "record_question": "Record question",
+    "record_question": "ບັນທຶກຄຳຖາມ",
     "resolve": "Resolve",
     "resolved": "Resolved",
     "save_answer": "ບັນທຶກຄຳຕອບ",
@@ -268,10 +268,10 @@
   },
   "checking_audio_recorder": {
     "delete": "Delete Recording",
-    "mic_access_denied": "Access to your microphone was denied. Please enable the microphone from your browser.",
-    "mic_not_found": "No microphone was found. Please connect a microphone to your device.",
+    "mic_access_denied": "ບໍ່ທັນມີການອະນຸມັດໃຊ້ໄມ ໃນເຄື່ອງນີ້. ທ່ານຕ້ອງກົດອະນຸມັດກ່ອນ",
+    "mic_not_found": "ບໍ່ພົບໄມ ໃນເຄື່ອງນີ້",
     "not_available": "Your browser currently does not support audio recording. Please try using another supported browser.",
-    "record_audio": "Record Audio",
+    "record_audio": "ບັນທຶກສຽງ",
     "stop_recording": "ຢຸດບັນທຶກ"
   },
   "checking_input_form": {
@@ -279,10 +279,10 @@
     "cancel": "ຍົກເລີກ",
     "save": "ບັນທຶກຄຳຕອບ",
     "your_answer": "ຄໍາ​ຕອບ​ຂອງ​ເຈົ້າ",
-    "your_comment": "ຂໍ້ຄວາມເຈົ້າ"
+    "your_comment": "ຄຳຕອບຂອງເຈົ້າ"
   },
   "checking_comments": {
-    "add_a_comment": "ເພີ່ມຂໍ້ຄວາມ",
+    "add_a_comment": "ເພີ່ມຄຳຕອບ",
     "delete": "ລຶບ",
     "confirm_delete": "Are you sure you want to delete this comment?",
     "edit": "ດັດແກ້",
@@ -291,10 +291,10 @@
   },
   "checking_overview": {
     "answers": "ຄຳຕອບ",
-    "comments": "ຄຳເຫັນ",
+    "comments": "ຄຳຕອບ",
     "likes": "Likes",
-    "loading_questions": "Loading questions...",
-    "manage_questions": "Manage questions",
+    "loading_questions": "ກຳລັງເປີດຄຳຖາມ...",
+    "manage_questions": "ຈັດການຄຳຖາມ",
     "my_contributions": "My contributions",
     "my_progress": "My progress",
     "project_stats": "Project stats",
@@ -304,10 +304,10 @@
   "checking_questions": {
     "go_to": "Go to questions",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
-    "loading": "Loading...",
-    "no_questions_found": "No questions found for the settings above.",
+    "loading": "ກຳລັງເປີດ...",
+    "no_questions_found": "ບໍ່ພົບຄຳຖາມ",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
-    "view_answers": "View answers"
+    "view_answers": "ເບິ່ງຄຳຕອບ"
   },
   "edit_name_dialog": {
     "cancel": "ຍົກເລີກ",
@@ -324,7 +324,7 @@
     "chrome": "Chrome",
     "close": "ປິດ",
     "error_id": "Error ID: {{ errorId }}",
-    "error_occurred": "An error has occurred",
+    "error_occurred": "ມີບັນຫາ",
     "firefox": "Firefox",
     "hide_details": "Hide details",
     "safari": "Safari",
@@ -342,8 +342,8 @@
   "exception_handling_service": {
     "firefox_private_browsing_or_no_space": "Something went wrong. Please check that you are not using Firefox in the unsupported private browsing mode and that your device has the recommended 500 MB of free space.",
     "network_request_failed": "A network request failed. Some functionality may be unavailable.",
-    "out_of_space": "An error occurred because your device is out of storage space.",
-    "unknown_error": "Unknown error"
+    "out_of_space": "ມີບັນຫາ ເພາະເຄື່ອງຂອງທ່ານຄວາມຊົງຈຳເຕັມແລ້ວ",
+    "unknown_error": "ມີບັນຫາ"
   },
   "experimental_features_dialog": {
     "title": "Experimental features",
@@ -351,7 +351,7 @@
   },
   "file_service": {
     "failed_to_save": "Failed to save your changes. Please check that you have the recommended 500 MB of free space on your device.",
-    "i_understand": "I understand",
+    "i_understand": "ເຂົ້າໃຈແລ້ວ",
     "storage_space_is_limited": "The storage space on this device is limited. It is recommended to have a minimum of 500 MB of free space to ensure all features are available. Please free up storage space."
   },
   "font_size": {
@@ -373,7 +373,7 @@
     "error_occurred_login": "An error occurred trying to join the project",
     "explain_your_name": "ຂຽນຊື່",
     "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }}",
-    "join": "Join",
+    "join": "ເຂົ້າຮ່ວມ",
     "key_already_used": "The project link has already been used by another user. Please contact the person who sent you the link and ask for a new one.",
     "key_expired": "The project link expired. Please contact the person who sent you the link and ask for a new one.",
     "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
@@ -391,7 +391,7 @@
   "my_projects": {
     "access_another_project": "If you don't see a project you are expecting, you may need to receive an invitation to the project. Or, if you use Paratext, you can log out and log back in using 'Log in with Paratext', and connect to your Paratext projects.",
     "connect_a_project_to_get_started": "Connect a project to get started",
-    "connected": "Connected",
+    "connected": "ເຊື່ອມແລ້ວ",
     "contact_admin_update_role": "Please contact your project administrator to sync this project.",
     "dbl_resource": "Digital Bible Library resource",
     "dbl_resources": "Digital Bible Library resources",
@@ -399,7 +399,7 @@
     "failed_to_connect_to_pt_server": "There was a problem connecting to Paratext to get your projects. Please try again later. If the problem persists after several hours, please report the issue for help.",
     "failed_to_join_project": "Failed to join the project. Please check your internet connection and try again later.",
     "failed_to_update_user_role": "Failed to update paratext role. Please contact your project administrator.",
-    "join": "Join",
+    "join": "ເຂົ້າຮ່ວມ",
     "loading_more_pt_projects": "Loading additional Paratext projects ...",
     "looking_for_another_project": "Looking for another project?",
     "my_projects": "My projects",
@@ -409,7 +409,7 @@
     "offline": "You will need to connect to the internet to get started with a project.",
     "offline_update": "You will need to connect to the internet to update your project.",
     "offline-accessible": "Offline Access",
-    "open": "Open",
+    "open": "ຕົກລົງ",
     "problem_getting_pt_list": "There was a problem getting the list of available Paratext projects to connect to. If this continues to happen, and logging out and back in does not fix the problem, please report the issue for help.",
     "update_role": "Update role",
     "updated_roles": "Updated roles",
@@ -502,7 +502,7 @@
   },
   "text_chooser_dialog": {
     "cancel": "ຍົກເລີກ",
-    "save": "ວັກທີ່ມີຄຳຖາມ",
+    "save": "ຕົກລົງ",
     "select_scripture": "Select scripture to attach to your answer",
     "select_text_error_message": "Select verses to attach to your answer."
   }
