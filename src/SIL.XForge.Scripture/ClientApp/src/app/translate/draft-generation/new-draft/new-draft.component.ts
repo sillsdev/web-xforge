@@ -8,8 +8,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Canon } from '@sillsdev/scripture';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftingEngine, ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -19,6 +20,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nKeyForComponent, I18nService } from 'xforge-common/i18n.service';
+import { L10nNumberPipe } from 'xforge-common/l10n-number.pipe';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
@@ -42,6 +44,8 @@ import { BuildConfig, StartBuildResult } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { CopyrightMessage, DraftSource, getCopyrightMessages } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { DRAFT_DURATION_HOURS, DRAFTING_ENGINE_INFO } from '../drafting-engine/drafting-engine';
+import { DraftingEngineService } from '../drafting-engine/drafting-engine.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftPendingUpdatesComponent } from './draft-pending-updates/draft-pending-updates.component';
 import { DraftProgressService } from './draft-progress.service';
@@ -85,7 +89,10 @@ const PAGES_BY_ORDER = [
     DraftPendingUpdatesComponent,
     FormsModule,
     TranslocoModule,
-    CommonModule
+    TranslocoMarkupModule,
+    CommonModule,
+    L10nNumberPipe,
+    RouterLink
   ]
 })
 export class NewDraftComponent {
@@ -108,6 +115,7 @@ export class NewDraftComponent {
   sendEmailOnBuildFinished: boolean = false;
   fastTraining: boolean = false;
   useEcho: boolean = false;
+  readonly draftDurationHours = DRAFT_DURATION_HOURS;
   private isTrainingOptional: boolean = false;
 
   /** All training data files currently available for the project. */
@@ -139,6 +147,7 @@ export class NewDraftComponent {
     private readonly trainingDataService: TrainingDataService,
     private readonly projectService: SFProjectService,
     private readonly permissions: PermissionsService,
+    protected readonly draftingEngines: DraftingEngineService,
     private readonly destroyRef: DestroyRef
   ) {
     this.logicHandler = new NewDraftLogicHandler(
@@ -456,7 +465,7 @@ export class NewDraftComponent {
   }
 
   private step(count: 1 | -1): void {
-    if (count === 1 && this.getForwardError() != null) {
+    if (count === 1 && (this.isBlockedByEngine || this.getForwardError() != null)) {
       this.showStepError = true;
       return;
     }
@@ -552,19 +561,6 @@ export class NewDraftComponent {
     }
   }
 
-  private get draftingEngine(): DraftingEngine {
-    const configuredDraftingEngine: DraftingEngine | undefined =
-      this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig?.draftingEngine;
-    if (this.useEcho) {
-      return DraftingEngine.Echo;
-    } else if (this.fastTraining) {
-      return DraftingEngine.NmtWithFastTraining;
-    } else if (configuredDraftingEngine != null) {
-      return configuredDraftingEngine;
-    } else {
-      return DraftingEngine.Nmt;
-    }
-  }
   /**
    * Maps a range's books to the `Book[]` shape the multi-select expects. With no `selectedBookIds`, every book is
    * marked selected (the range itself is the selection); otherwise a book is selected iff its id is in `selectedBookIds`.
@@ -988,6 +984,47 @@ export class NewDraftComponent {
     if (projectId != null) {
       void this.router.navigate(['/projects', projectId, 'draft-generation', 'configure-sources']);
     }
+  }
+
+  // Section: Translation engine
+
+  /** The engine this draft will be generated with: the project's engine, unless a developer option replaces it. */
+  private get draftingEngine(): DraftingEngine {
+    if (this.useEcho) return DraftingEngine.Echo;
+    if (this.fastTraining) return DraftingEngine.NmtWithFastTraining;
+    return this.draftingEngines.selectedEngine;
+  }
+
+  /** Whether more books are selected for drafting than the engine can draft at once. */
+  get hasTooManyBooksForEngine(): boolean {
+    return (
+      !DRAFTING_ENGINE_INFO[this.draftingEngine].supportsMultipleBooks &&
+      this.logicHandler.selectedDraftingScriptureRange.books.size > 1
+    );
+  }
+
+  /**
+   * Whether the books step cannot be left because the engine cannot draft as many books as are selected. A notice on
+   * the step already says so. Rather than adding a step error that repeats it, a failed attempt to continue turns
+   * that notice into an error (see hasTriedToContinueWithTooManyBooks).
+   */
+  private get isBlockedByEngine(): boolean {
+    return this.page === 'draft_books' && this.hasTooManyBooksForEngine;
+  }
+
+  /** Whether the user has tried to leave the books step with more books selected than the engine can draft. */
+  get hasTriedToContinueWithTooManyBooks(): boolean {
+    return this.showStepError && this.isBlockedByEngine;
+  }
+
+  /** Whether generating the draft will send text to a third-party LLM provider. */
+  get engineUsesLlm(): boolean {
+    return DRAFTING_ENGINE_INFO[this.draftingEngine].usesLlm;
+  }
+
+  /** Whether the final step says which engine the draft will be generated with. */
+  get showDraftingEngineCard(): boolean {
+    return this.draftingEngines.shouldShow(this.draftingEngine);
   }
 
   goToPage(page: 'draft_books' | 'training_books'): void {

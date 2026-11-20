@@ -74,6 +74,14 @@
       </app-notice>
     }
 
+    @let engineName = draftingEngines.nameForBuild(selectedRevisionBuild);
+    @if (engineName != null) {
+      <p class="drafting-engine">
+        <mat-icon>auto_awesome</mat-icon>
+        {{ "drafting_engine.generated_with" | transloco: { engine: engineName } }}
+      </p>
+    }
+
     @if (hasLowConfidence) {
       <app-display-confidence
         [showNotice]="true"

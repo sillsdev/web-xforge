@@ -36,3 +36,15 @@
   display: flex;
   align-items: center;
 }
+
+.admin-tool > .drafting-engine-control {
+  flex-direction: column;
+  row-gap: 8px;
+
+  h3 {
+    display: flex;
+    align-items: center;
+    column-gap: 8px;
+    margin: 0;
+  }
+}

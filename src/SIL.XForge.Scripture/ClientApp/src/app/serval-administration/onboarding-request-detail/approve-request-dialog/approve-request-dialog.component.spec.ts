@@ -1,7 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { anything, deepEqual, instance, mock, verify } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, verify } from 'ts-mockito';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import {
   ApproveRequestDialogComponent,
   ApproveRequestDialogData,
@@ -21,7 +23,8 @@ const TEST_DATA: ApproveRequestDialogData = {
     { paratextId: 'ptid-B', name: 'English Source Beta', languageCode: 'eng' },
     { paratextId: 'ptid-bt', name: 'English Back Translation', languageCode: 'eng' }
   ],
-  defaultTrainingSource: 'ptid-A'
+  defaultTrainingSource: 'ptid-A',
+  draftingEngineAvailability: { availableEngines: [DraftingEngine.Nmt], selectedEngine: DraftingEngine.Nmt }
 };
 
 const BT_NEEDS_ENABLING_DATA: ApproveRequestDialogData = {
@@ -116,11 +119,34 @@ describe('ApproveRequestDialogComponent', () => {
         deepEqual({
           draftingSourceParatextId: 'ptid-A',
           trainingSourceParatextIds: ['ptid-B', 'ptid-bt'],
-          enableBackTranslationDrafting: false
+          enableBackTranslationDrafting: false,
+          draftingEngineAvailability: TEST_DATA.draftingEngineAvailability
         } satisfies ApproveRequestDialogResult)
       )
     ).once();
     expect().nothing();
+  });
+
+  it('starts from the engines the project has', () => {
+    const env = new TestEnvironment();
+    expect(env.component.draftingEngineAvailability).toEqual({
+      availableEngines: [DraftingEngine.Nmt],
+      selectedEngine: DraftingEngine.Nmt
+    });
+  });
+
+  it('closes with the engines made available and the selected engine', () => {
+    const env = new TestEnvironment();
+    env.component.draftingEngineAvailability = {
+      availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+      selectedEngine: DraftingEngine.Llm
+    };
+    env.component.approve();
+    const [result] = capture(env.mockedDialogRef.close).last();
+    expect(result?.draftingEngineAvailability).toEqual({
+      availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+      selectedEngine: DraftingEngine.Llm
+    });
   });
 
   it('cancel button closes with undefined', () => {
@@ -179,7 +205,8 @@ describe('ApproveRequestDialogComponent', () => {
         deepEqual({
           draftingSourceParatextId: 'ptid-draft',
           trainingSourceParatextIds: ['ptid-B', 'ptid-A'],
-          enableBackTranslationDrafting: false
+          enableBackTranslationDrafting: false,
+          draftingEngineAvailability: TEST_DATA.draftingEngineAvailability
         } satisfies ApproveRequestDialogResult)
       )
     ).once();
@@ -215,7 +242,8 @@ describe('ApproveRequestDialogComponent', () => {
           deepEqual({
             draftingSourceParatextId: 'ptid-draft',
             trainingSourceParatextIds: ['ptid-A'],
-            enableBackTranslationDrafting: false
+            enableBackTranslationDrafting: false,
+            draftingEngineAvailability: TEST_DATA.draftingEngineAvailability
           } satisfies ApproveRequestDialogResult)
         )
       ).once();
@@ -243,7 +271,8 @@ describe('ApproveRequestDialogComponent', () => {
           deepEqual({
             draftingSourceParatextId: 'ptid-draft',
             trainingSourceParatextIds: ['ptid-A'],
-            enableBackTranslationDrafting: true
+            enableBackTranslationDrafting: true,
+            draftingEngineAvailability: TEST_DATA.draftingEngineAvailability
           } satisfies ApproveRequestDialogResult)
         )
       ).once();
@@ -259,7 +288,8 @@ describe('ApproveRequestDialogComponent', () => {
           deepEqual({
             draftingSourceParatextId: 'ptid-draft',
             trainingSourceParatextIds: ['ptid-A'],
-            enableBackTranslationDrafting: false
+            enableBackTranslationDrafting: false,
+            draftingEngineAvailability: TEST_DATA.draftingEngineAvailability
           } satisfies ApproveRequestDialogResult)
         )
       ).once();
@@ -296,7 +326,7 @@ class TestEnvironment {
 
   constructor(data: ApproveRequestDialogData = TEST_DATA) {
     TestBed.configureTestingModule({
-      imports: [ApproveRequestDialogComponent],
+      imports: [ApproveRequestDialogComponent, getTestTranslocoModule()],
       providers: [
         provideNoopAnimations(),
         { provide: MAT_DIALOG_DATA, useValue: data },
