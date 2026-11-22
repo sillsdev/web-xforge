@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -167,8 +166,8 @@ public class ParatextController : ControllerBase
     [HttpGet("projects")]
     public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
     {
-        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-        if (!attempt.TryResult(out UserSecret userSecret))
+        Attempt<UserSecret?> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret? userSecret))
             return NoContent();
         try
         {
@@ -207,8 +206,8 @@ public class ParatextController : ControllerBase
         DateTime timestamp
     )
     {
-        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-        if (!attempt.TryResult(out UserSecret userSecret))
+        Attempt<UserSecret?> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret? userSecret))
         {
             return Forbid();
         }
@@ -249,8 +248,8 @@ public class ParatextController : ControllerBase
         int chapter
     )
     {
-        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-        if (!attempt.TryResult(out UserSecret userSecret))
+        Attempt<UserSecret?> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret? userSecret))
         {
             return Forbid();
         }
@@ -281,8 +280,8 @@ public class ParatextController : ControllerBase
     [ProducesResponseType(typeof(IEnumerable<ParatextNote>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ParatextNote>>> GetNotesAsync(string projectId)
     {
-        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-        if (!attempt.TryResult(out UserSecret userSecret))
+        Attempt<UserSecret?> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret? userSecret))
         {
             return Forbid();
         }
@@ -387,10 +386,10 @@ public class ParatextController : ControllerBase
     [HttpGet("username")]
     public async Task<ActionResult<string>> UsernameAsync()
     {
-        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-        if (!attempt.TryResult(out UserSecret userSecret))
+        Attempt<UserSecret?> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret? userSecret))
             return NoContent();
-        string username = _paratextService.GetParatextUsername(userSecret);
+        string? username = _paratextService.GetParatextUsername(userSecret);
         return Ok(username);
     }
 }

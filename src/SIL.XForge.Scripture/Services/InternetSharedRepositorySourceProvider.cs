@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -42,7 +41,7 @@ public class InternetSharedRepositorySourceProvider : IInternetSharedRepositoryS
             throw new ArgumentException();
         }
 
-        string ptUsername = _jwtTokenHelper.GetParatextUsername(userSecret);
+        string? ptUsername = _jwtTokenHelper.GetParatextUsername(userSecret);
         if (string.IsNullOrEmpty(ptUsername))
         {
             throw new Exception($"Failed to get a PT username for SF user id {userSecret.Id}.");

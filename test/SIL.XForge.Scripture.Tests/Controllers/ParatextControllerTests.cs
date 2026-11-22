@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -87,7 +86,7 @@ public class ParatextControllerTests
         ActionResult<string> actual = await env.Controller.CreateProjectAsync(settings);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        Assert.That((actual.Result as OkObjectResult).Value, Is.EqualTo(Project01));
+        Assert.That((actual.Result as OkObjectResult)?.Value, Is.EqualTo(Project01));
     }
 
     [Test]
@@ -235,7 +234,7 @@ public class ParatextControllerTests
         ActionResult<IEnumerable<ParatextProject>> actual = await env.Controller.GetAsync();
 
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, ((ObjectResult)actual.Result).StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, ((ObjectResult)actual.Result!).StatusCode);
     }
 
     [Test]
@@ -497,7 +496,7 @@ public class ParatextControllerTests
         ActionResult<Dictionary<string, string[]>> actual = await env.Controller.ResourcesAsync();
 
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, ((ObjectResult)actual.Result).StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, ((ObjectResult)actual.Result!).StatusCode);
     }
 
     [Test]
@@ -566,7 +565,7 @@ public class ParatextControllerTests
         ActionResult<string> actual = await env.Controller.SyncAsync(Project01);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
-        Assert.That((actual.Result as OkObjectResult).Value, Is.EqualTo(Project01));
+        Assert.That((actual.Result as OkObjectResult)?.Value, Is.EqualTo(Project01));
     }
 
     [Test]

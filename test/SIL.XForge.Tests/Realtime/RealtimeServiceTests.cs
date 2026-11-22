@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -21,7 +20,7 @@ public class RealtimeServiceTests
     public async Task DeleteProjectAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(null));
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(null!));
         await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteProjectAsync(""));
     }
 
@@ -70,7 +69,7 @@ public class RealtimeServiceTests
     public async Task DeleteUserAsync_BadArguments()
     {
         var env = new TestEnvironment();
-        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(null));
+        await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(null!));
         await Assert.ThrowsAsync<ArgumentException>(() => env.Service.DeleteUserAsync(""));
     }
 
@@ -128,7 +127,7 @@ public class RealtimeServiceTests
             .Returns(Task.FromResult(cursorMock));
 
         // SUT
-        string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
+        string? userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
         Assert.IsNull(userId);
     }
 
@@ -150,7 +149,7 @@ public class RealtimeServiceTests
             .Returns(Task.FromResult(cursorMock));
 
         // SUT
-        string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
+        string? userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
         Assert.IsNull(userId);
     }
 
@@ -172,7 +171,7 @@ public class RealtimeServiceTests
             .Returns(Task.FromResult(cursorMock));
 
         // SUT
-        string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
+        string? userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
         Assert.AreEqual("abcdef", userId);
     }
 
@@ -195,7 +194,7 @@ public class RealtimeServiceTests
             .Returns(Task.FromResult(cursorMock));
 
         // SUT
-        string userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
+        string? userId = await env.Service.GetLastModifiedUserIdAsync<User>(id, version);
         Assert.AreEqual("ghijkl", userId);
     }
 

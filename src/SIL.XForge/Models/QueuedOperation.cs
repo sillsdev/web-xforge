@@ -42,7 +42,7 @@ internal class QueuedOperation
     /// <remarks>
     /// This is required for <see cref="QueuedAction.Create" />.
     /// </remarks>
-    public object Data { get; set; }
+    public object? Data { get; set; }
 
     /// <summary>
     /// Gets or sets the handle.

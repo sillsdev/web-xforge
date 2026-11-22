@@ -1,4 +1,3 @@
-#nullable disable warnings
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
@@ -19,7 +18,7 @@ public class TextAnchor
     public int Start { get; set; } = 0;
     public int Length { get; set; } = 0;
 
-    public override bool Equals(object other)
+    public override bool Equals(object? other)
     {
         if (other is not TextAnchor compared)
             return false;

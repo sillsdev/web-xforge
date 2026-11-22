@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using SIL.XForge.Models;
@@ -9,7 +8,7 @@ public class SFProjectUserConfig : ProjectData
 {
     public static string GetDocId(string projectId, string userId) => $"{projectId}:{userId}";
 
-    public string SelectedTask { get; set; }
+    public string? SelectedTask { get; set; }
     public int? SelectedBookNum { get; set; }
     public int? SelectedChapterNum { get; set; }
 

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -119,7 +118,7 @@ public class Connection : DisposableBase, IConnection
         if (_isTransaction)
         {
             // Execute the queued operations
-            while (_queuedOperations.TryDequeue(out QueuedOperation queuedOperation))
+            while (_queuedOperations.TryDequeue(out QueuedOperation? queuedOperation))
             {
                 switch (queuedOperation.Action)
                 {
@@ -534,7 +533,7 @@ public class Connection : DisposableBase, IConnection
     /// Starts the realtime server asynchronously.
     /// </summary>
     /// <param name="userId">The user identifier.</param>
-    internal async Task StartAsync(string userId = null) =>
+    internal async Task StartAsync(string? userId = null) =>
         _handle = await _realtimeService.Server.ConnectAsync(userId);
 
     /// <summary>

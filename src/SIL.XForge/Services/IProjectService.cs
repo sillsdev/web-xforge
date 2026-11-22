@@ -8,7 +8,7 @@ public interface IProjectService
     Task AddUserAsync(string curUserId, string projectId, string? projectRole = null);
     Task RemoveUserAsync(string curUserId, string projectId, string projectUserId);
     Task RemoveUserWithoutPermissionsCheckAsync(string curUserId, string projectId, string projectUserId);
-    Task<string> GetProjectRoleAsync(string curUserId, string projectId);
+    Task<string?> GetProjectRoleAsync(string curUserId, string projectId);
     Task UpdateRoleAsync(string curUserId, string[] systemRoles, string projectId, string userId, string projectRole);
     Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string path);
     Task DeleteAudioAsync(string curUserId, string projectId, string ownerId, string dataId);

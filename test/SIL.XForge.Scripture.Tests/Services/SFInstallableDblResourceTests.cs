@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.IO;
 using System.Text;
@@ -61,11 +60,11 @@ public sealed class SFInstallableDblResourceTests
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
-        InvalidNameException exception = await Assert.ThrowsAsync<InvalidNameException>(async () =>
+        InvalidNameException? exception = await Assert.ThrowsAsync<InvalidNameException>(async () =>
             await env.Resource.ExtractAllAsync(zip, env.DestinationRoot)
         );
 
-        Assert.That(exception.Message, Does.Contain("Parent traversal in paths is not allowed"));
+        Assert.That(exception?.Message, Does.Contain("Parent traversal in paths is not allowed"));
         env.FileSystem.DidNotReceive().CreateDirectory(Arg.Any<string>());
         env.FileSystem.DidNotReceive().CreateFile(Arg.Any<string>());
     }
@@ -82,11 +81,11 @@ public sealed class SFInstallableDblResourceTests
         using ZipFile zip = new ZipFile(zipStream);
         zip.IsStreamOwner = false;
 
-        InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        InvalidOperationException? exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await env.Resource.ExtractAllAsync(zip, env.DestinationRoot)
         );
 
-        Assert.That(exception.Message, Does.Contain("The zip file contains a symbolic link"));
+        Assert.That(exception?.Message, Does.Contain("The zip file contains a symbolic link"));
         env.FileSystem.DidNotReceive().CreateDirectory(Arg.Any<string>());
         env.FileSystem.DidNotReceive().CreateFile(Arg.Any<string>());
     }

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,7 +41,8 @@ public class MockLogger<T> : ILogger<T>
 
     public MockLogger() { }
 
-    public IDisposable BeginScope<TState>(TState state) => throw new NotImplementedException();
+    public IDisposable BeginScope<TState>(TState state)
+        where TState : notnull => throw new NotImplementedException();
 
     public bool IsEnabled(LogLevel logLevel) => throw new NotImplementedException();
 
@@ -50,8 +50,8 @@ public class MockLogger<T> : ILogger<T>
         LogLevel logLevel,
         EventId eventId,
         TState state,
-        Exception exception,
-        Func<TState, Exception, string> formatter
+        Exception? exception,
+        Func<TState, Exception?, string> formatter
     )
     {
         LogEvents.Add(
@@ -68,7 +68,7 @@ public class MockLogger<T> : ILogger<T>
     /// <summary>
     /// Assert that at least one event was logged that matches <param name="predicate"/>.
     /// </summary>
-    public void AssertHasEvent(Func<LogEvent, bool> predicate, string explanation = null)
+    public void AssertHasEvent(Func<LogEvent, bool> predicate, string? explanation = null)
     {
         bool has = LogEvents.Any<LogEvent>(predicate);
         if (!has)
@@ -89,13 +89,13 @@ public class MockLogger<T> : ILogger<T>
     /// <summary>
     /// Assert that no event was logged that matches <param name="predicate"/>.
     /// </summary>
-    public void AssertNoEvent(Func<LogEvent, bool> predicate, string explanation = null) =>
+    public void AssertNoEvent(Func<LogEvent, bool> predicate, string? explanation = null) =>
         AssertEventCount(predicate, 0, explanation);
 
     /// <summary>
     /// Assert that exactly <param name="expectedCount"/> events were logged that match <param name="predicate"/>.
     /// </summary>
-    public void AssertEventCount(Func<LogEvent, bool> predicate, int expectedCount, string explanation = null)
+    public void AssertEventCount(Func<LogEvent, bool> predicate, int expectedCount, string? explanation = null)
     {
         int actualCount = LogEvents.Count<LogEvent>(predicate);
         if (expectedCount != actualCount)

@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,7 +7,7 @@ namespace SIL.XForge.Realtime;
 public interface IRealtimeServer
 {
     Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op);
-    Task<int> ConnectAsync(string userId = null);
+    Task<int> ConnectAsync(string? userId = null);
     Task<Snapshot<T>> CreateDocAsync<T>(
         int handle,
         string collection,

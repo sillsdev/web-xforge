@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -377,7 +376,7 @@ public class ConnectionTests
             .Returns([
                 new Snapshot<Project>
                 {
-                    Data = null,
+                    Data = null!,
                     Id = "id1",
                     Version = 1,
                 },
