@@ -52,15 +52,15 @@ import { DraftGenerationService } from '../translate/draft-generation/draft-gene
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import {
-  OnboardingRequestService,
-  OpenOnboardingRequest
-} from '../translate/draft-generation/onboarding-request.service';
-import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
-import {
   DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
   DraftingEngineAvailability,
   draftingEngineAvailabilityOf
 } from '../translate/draft-generation/drafting-engine/drafting-engine';
+import {
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
+import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
 import {
   DraftingEngineAvailabilityComponent,
   saveDraftingEngineAvailability

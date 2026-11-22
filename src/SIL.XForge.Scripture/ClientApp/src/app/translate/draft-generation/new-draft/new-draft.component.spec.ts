@@ -16,7 +16,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { UserService } from 'xforge-common/user.service';
-import { DraftingEngineService } from '../drafting-engine/drafting-engine.service';
 import { ParatextProject } from '../../../core/models/paratext-project';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { ParatextService } from '../../../core/paratext.service';
@@ -27,6 +26,7 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { DraftingEngineService } from '../drafting-engine/drafting-engine.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftProgressService } from './draft-progress.service';
 import { NewDraftComponent } from './new-draft.component';
@@ -808,15 +808,29 @@ describe('NewDraftComponent', () => {
       expect(buildConfig.draftingEngine).toBe(DraftingEngine.NmtWithLlmPostProcessing);
     }));
 
-    it('generates the draft with a developer engine in place of the project engine when one is chosen', fakeAsync(() => {
+    it('does not allow several books to be drafted when a developer engine in place of the project engine when one is chosen', fakeAsync(() => {
       const env = new TestEnvironment(testState, { draftingEngine: DraftingEngine.Llm });
       tick();
+      env.component.page = 'draft_books';
       env.component.useEcho = true;
       env.component.logicHandler.selectDraftingBooks(['GEN', 'MAT']);
 
-      // The developer engine does not use an LLM, so it is not limited to one book and shares no text.
+      // Even though Echo allows multiple books, LLM does not, so we use LLM's restrictions
+      expect(env.component.hasTooManyBooksForEngine).toBeTrue();
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeFalse();
+      env.component.next();
+      expect(env.component.page).toBe('draft_books');
+      // The notice on the step already explains the problem. Trying to continue turns it into an error rather than
+      // adding a step error that repeats it.
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeTrue();
+      expect(env.component.stepError).toBeNull();
+
+      // Selecting a single book resolves it.
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
       expect(env.component.hasTooManyBooksForEngine).toBeFalse();
-      expect(env.component.engineUsesLlm).toBeFalse();
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeFalse();
+      env.component.next();
+      expect(env.component.page).toBe('training_books');
       env.component.generateDraftClicked();
       tick();
 

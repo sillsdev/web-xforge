@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -14,7 +15,6 @@ import { TestOnlineStatusService } from 'xforge-common/test-online-status.servic
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
-import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { notNull } from '../../type-utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';

@@ -50,7 +50,6 @@ import { ProjectNotificationService } from '../../../core/project-notification.s
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDocService } from '../../../core/text-doc.service';
 import { BuildDto } from '../../../machine-api/build-dto';
-import { DraftingEngineService } from '../../draft-generation/drafting-engine/drafting-engine.service';
 import { BuildStates } from '../../../machine-api/build-states';
 import { NoticeComponent } from '../../../shared/notice/notice.component';
 import { TextComponent } from '../../../shared/text/text.component';
@@ -65,6 +64,7 @@ import { DraftNotificationService } from '../../draft-generation/draft-notificat
 import { DraftOptionsService } from '../../draft-generation/draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-generation/draft-preview-books/draft-preview-books.component';
 import { hasLowConfidence } from '../../draft-generation/draft-utils';
+import { DraftingEngineService } from '../../draft-generation/drafting-engine/drafting-engine.service';
 import { HistoryRevisionFormatPipe } from '../editor-history/history-chooser/history-revision-format.pipe';
 
 @Component({
@@ -296,6 +296,7 @@ export class EditorDraftComponent implements AfterViewInit, OnChanges {
                     this.selectedRevision = this.findClosestRevision(date, this.draftRevisions);
                     return { textDocId, timestamp: this.selectedRevision?.timestamp };
                   } else {
+                    this.selectedRevision = undefined;
                     return { textDocId };
                   }
                 })

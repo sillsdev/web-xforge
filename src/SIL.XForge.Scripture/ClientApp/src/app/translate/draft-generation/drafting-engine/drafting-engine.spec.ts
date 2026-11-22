@@ -103,6 +103,7 @@ describe('drafting engine', () => {
   });
 });
 
+/** Provides helpers for constructing test data for drafting engine tests. */
 class TestEnvironment {
   static build(draftingEngine: string | undefined): BuildDto {
     return { additionalInfo: { translationEngineType: draftingEngine } } as BuildDto;

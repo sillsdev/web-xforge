@@ -26,6 +26,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import {
   BehaviorSubject,
   catchError,
@@ -46,7 +47,6 @@ import { CopyComponent } from 'xforge-common/copy/copy.component';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -67,15 +67,15 @@ import {
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
-import { BuildConfidencesExportService } from './build-confidences-export.service';
-import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
-import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
-import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import {
   buildDraftingEngine,
   DRAFTING_ENGINE_INFO,
   DraftingEngineInfo
 } from '../translate/draft-generation/drafting-engine/drafting-engine';
+import { BuildConfidencesExportService } from './build-confidences-export.service';
+import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
+import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
+import { JobDetailsDialogComponent } from './job-details-dialog.component';
 import { SearchRecordsComponent } from './search-records.component';
 import { ServalAdminParams } from './serval-administration.component';
 import { ServalAdministrationService } from './serval-administration.service';

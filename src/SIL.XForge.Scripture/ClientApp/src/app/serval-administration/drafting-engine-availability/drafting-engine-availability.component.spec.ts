@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import {
-  DraftingEngineAvailabilityComponent,
-  saveDraftingEngineAvailability
-} from './drafting-engine-availability.component';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
   DraftingEngineAvailability
 } from '../../translate/draft-generation/drafting-engine/drafting-engine';
+import {
+  DraftingEngineAvailabilityComponent,
+  saveDraftingEngineAvailability
+} from './drafting-engine-availability.component';
 
 describe('DraftingEngineAvailabilityComponent', () => {
   configureTestingModule(() => ({ imports: [DraftingEngineAvailabilityComponent, getTestTranslocoModule()] }));
@@ -153,6 +153,7 @@ describe('saveDraftingEngineAvailability', () => {
   });
 });
 
+/** Provides helpers for constructing test data for DraftingEngineAvailabilityComponent tests. */
 class TestEnvironment {
   readonly fixture: ComponentFixture<DraftingEngineAvailabilityComponent>;
   readonly component: DraftingEngineAvailabilityComponent;
