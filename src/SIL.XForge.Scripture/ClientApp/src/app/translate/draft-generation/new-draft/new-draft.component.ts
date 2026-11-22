@@ -10,8 +10,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Router, RouterLink } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
-import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { Canon } from '@sillsdev/scripture';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
 import { DraftingEngine, ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { filter, firstValueFrom, take } from 'rxjs';
@@ -998,7 +998,7 @@ export class NewDraftComponent {
   /** Whether more books are selected for drafting than the engine can draft at once. */
   get hasTooManyBooksForEngine(): boolean {
     return (
-      !DRAFTING_ENGINE_INFO[this.draftingEngine].supportsMultipleBooks &&
+      !DRAFTING_ENGINE_INFO[this.draftingEngines.selectedEngine].supportsMultipleBooks &&
       this.logicHandler.selectedDraftingScriptureRange.books.size > 1
     );
   }

@@ -83,7 +83,8 @@
               {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
             </p>
           }
-          @if (hasTrainingConfiguration || hasTrainingDataFiles) {
+          @let engineName = draftingEngines.nameForBuild(entry);
+          @if (hasTrainingConfiguration || hasTrainingDataFiles || engineName != null) {
             @if (draftIsAvailable) {
               <p>
                 <a
@@ -96,7 +97,6 @@
                 </a>
               </p>
             }
-            @let engineName = draftingEngines.nameForBuild(entry);
             @if (trainingConfigurationOpen && engineName != null) {
               <p class="drafting-engine">
                 {{ "drafting_engine.translation_engine" | transloco: { engine: engineName } }}

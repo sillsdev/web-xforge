@@ -1,5 +1,5 @@
-import { DraftConfig, DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { DraftConfig, DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -95,6 +95,7 @@ describe('DraftingEngineService', () => {
   });
 });
 
+/** Provides helpers for constructing test data for DraftingEngineService tests. */
 class TestEnvironment {
   readonly service: DraftingEngineService;
 

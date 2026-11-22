@@ -221,6 +221,7 @@ interface TestProjectEngines {
   selectedEngine?: DraftingEngine;
 }
 
+/** Provides helpers for constructing test data for DraftEngineSelectionComponent tests. */
 class TestEnvironment {
   readonly fixture: ComponentFixture<DraftEngineSelectionComponent>;
   readonly component: DraftEngineSelectionComponent;
