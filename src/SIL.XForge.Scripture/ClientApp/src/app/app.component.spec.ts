@@ -28,6 +28,7 @@ import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FileService } from 'xforge-common/file.service';
 import { FontService } from 'xforge-common/font.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -40,7 +41,7 @@ import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
-import { AppComponent } from './app.component';
+import { AppComponent, DRAWER_HIDDEN_SETTING } from './app.component';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
@@ -67,6 +68,7 @@ const mockedFileService = mock(FileService);
 const mockedFontService = mock(FontService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
+const mockedLocalSettingsService = mock(LocalSettingsService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -123,6 +125,7 @@ describe('AppComponent', () => {
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: BreakpointObserver, useClass: TestBreakpointObserver },
       { provide: DialogService, useMock: mockedDialogService },
+      { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
       provideNoopAnimations()
     ]
   }));
@@ -240,6 +243,63 @@ describe('AppComponent', () => {
     expect(env.component['isExpanded']).toBe(false);
     expect(env.menuDrawer).not.toBeNull();
     expect(env.hamburgerMenuButton).not.toBeNull();
+
+    discardPeriodicTasks();
+    flush();
+  }));
+
+  it('hides and shows the docked drawer in a large viewport', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    // The drawer is docked, and the menu button is there to hide it.
+    expect(env.isDrawerVisible).toBe(true);
+    expect(env.hamburgerMenuButton).not.toBeNull();
+    expect(env.hamburgerMenuButton.nativeElement.getAttribute('aria-expanded')).toBe('true');
+
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.menuDrawer).not.toBeNull();
+    expect(env.hamburgerMenuButton.nativeElement.getAttribute('aria-expanded')).toBe('false');
+    verify(mockedLocalSettingsService.set(DRAWER_HIDDEN_SETTING, true)).once();
+
+    // Navigating from the menu does not bring a hidden drawer back.
+    env.component['collapseDrawer']();
+    env.fixture.detectChanges();
+    expect(env.isDrawerVisible).toBe(false);
+
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    verify(mockedLocalSettingsService.set(DRAWER_HIDDEN_SETTING, false)).once();
+
+    discardPeriodicTasks();
+    flush();
+  }));
+
+  it('remembers a hidden drawer, and only applies it to large viewports', fakeAsync(() => {
+    when(mockedLocalSettingsService.get<boolean>(DRAWER_HIDDEN_SETTING)).thenReturn(true);
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.isDrawerVisible).toBe(false);
+    expect(env.hamburgerMenuButton).not.toBeNull();
+
+    // In a small viewport the drawer pops over as before.
+    env.breakpointObserver.emitObserveValue(false);
+    env.fixture.detectChanges();
+    expect(env.isDrawerVisible).toBe(false);
+    env.click(env.hamburgerMenuButton);
+    expect(env.isDrawerVisible).toBe(true);
+    verify(mockedLocalSettingsService.set(anything(), anything())).never();
+
+    // Back in a large viewport, the drawer is hidden again as the user left it.
+    env.breakpointObserver.emitObserveValue(true);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.isDrawerVisible).toBe(false);
 
     discardPeriodicTasks();
     flush();
