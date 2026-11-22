@@ -1,16 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
-import {
-  DraftingEngineAvailabilityComponent,
-  saveDraftingEngineAvailability
-} from './drafting-engine-availability.component';
-import { SFProjectService } from '../../core/sf-project.service';
-import {
-  DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
-  DraftingEngineAvailability
-} from '../../translate/draft-generation/drafting-engine/drafting-engine';
+import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
+import { DraftingEngineAvailability } from '../../translate/draft-generation/drafting-engine/drafting-engine';
+import { DraftingEngineAvailabilityComponent } from './drafting-engine-availability.component';
 
 describe('DraftingEngineAvailabilityComponent', () => {
   configureTestingModule(() => ({ imports: [DraftingEngineAvailabilityComponent, getTestTranslocoModule()] }));
@@ -91,68 +83,7 @@ describe('DraftingEngineAvailabilityComponent', () => {
   });
 });
 
-describe('saveDraftingEngineAvailability', () => {
-  it('saves the available engines before the selected engine, which the server requires to be available', async () => {
-    const mockedProjectService = mock(SFProjectService);
-    const calls: string[] = [];
-    when(mockedProjectService.onlineSetAvailableDraftingEngines(anything(), anything())).thenCall(async () => {
-      calls.push('available');
-    });
-    when(mockedProjectService.onlineSetDraftingEngine(anything(), anything())).thenCall(async () => {
-      calls.push('selected');
-    });
-
-    await saveDraftingEngineAvailability(
-      instance(mockedProjectService),
-      'project01',
-      DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
-      { availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm], selectedEngine: DraftingEngine.Llm }
-    );
-
-    expect(calls).toEqual(['available', 'selected']);
-    verify(
-      mockedProjectService.onlineSetAvailableDraftingEngines(
-        'project01',
-        deepEqual([DraftingEngine.Nmt, DraftingEngine.Llm])
-      )
-    ).once();
-    verify(mockedProjectService.onlineSetDraftingEngine('project01', DraftingEngine.Llm)).once();
-  });
-
-  it('saves nothing when nothing changed', async () => {
-    const mockedProjectService = mock(SFProjectService);
-
-    await saveDraftingEngineAvailability(
-      instance(mockedProjectService),
-      'project01',
-      { availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm], selectedEngine: DraftingEngine.Llm },
-      { availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm], selectedEngine: DraftingEngine.Llm }
-    );
-
-    verify(mockedProjectService.onlineSetAvailableDraftingEngines(anything(), anything())).never();
-    verify(mockedProjectService.onlineSetDraftingEngine(anything(), anything())).never();
-    expect().nothing();
-  });
-
-  it('does not save the selected engine when the available engines could not be saved', async () => {
-    const mockedProjectService = mock(SFProjectService);
-    when(mockedProjectService.onlineSetAvailableDraftingEngines(anything(), anything())).thenReject(
-      new Error('forbidden')
-    );
-
-    await expectAsync(
-      saveDraftingEngineAvailability(
-        instance(mockedProjectService),
-        'project01',
-        DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
-        { availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm], selectedEngine: DraftingEngine.Llm }
-      )
-    ).toBeRejected();
-
-    verify(mockedProjectService.onlineSetDraftingEngine(anything(), anything())).never();
-  });
-});
-
+/** Provides helpers for constructing test data for DraftingEngineAvailabilityComponent tests. */
 class TestEnvironment {
   readonly fixture: ComponentFixture<DraftingEngineAvailabilityComponent>;
   readonly component: DraftingEngineAvailabilityComponent;

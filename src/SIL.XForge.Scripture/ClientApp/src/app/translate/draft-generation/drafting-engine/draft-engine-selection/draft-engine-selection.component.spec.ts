@@ -94,10 +94,10 @@ describe('DraftEngineSelectionComponent', () => {
     verify(mockedRouter.navigate(anything())).never();
   }));
 
-  it('stops explaining as soon as data sharing is acknowledged, and then saves', fakeAsync(() => {
+  it('stops explaining as soon as data sharing is acknowledged, and then saves', fakeAsync(async () => {
     const env = new TestEnvironment({ availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm] });
     env.component.selectEngine(DraftingEngine.Llm);
-    void env.component.save();
+    await env.component.save();
     tick();
     env.fixture.detectChanges();
     expect(env.acknowledgementRequired).not.toBeNull();
@@ -106,17 +106,17 @@ describe('DraftEngineSelectionComponent', () => {
     env.fixture.detectChanges();
     expect(env.acknowledgementRequired).toBeNull();
 
-    void env.component.save();
+    await env.component.save();
     tick();
     verify(mockedProjectService.onlineSetDraftingEngine('project01', DraftingEngine.Llm)).once();
   }));
 
-  it('asks for acknowledgement again, without an error, when a different engine is selected', fakeAsync(() => {
+  it('asks for acknowledgement again, without an error, when a different engine is selected', fakeAsync(async () => {
     const env = new TestEnvironment({
       availableEngines: [DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing, DraftingEngine.Llm],
       selectedEngine: DraftingEngine.NmtWithLlmPostProcessing
     });
-    void env.component.save();
+    await env.component.save();
     tick();
     expect(env.component.showAcknowledgementRequired).toBeTrue();
     env.component.hasAcknowledgedDataSharing = true;
@@ -127,14 +127,14 @@ describe('DraftEngineSelectionComponent', () => {
     expect(env.component.showAcknowledgementRequired).toBeFalse();
   }));
 
-  it('saves the chosen engine and returns to the draft page', fakeAsync(() => {
+  it('saves the chosen engine and returns to the draft page', fakeAsync(async () => {
     const env = new TestEnvironment({
       availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
       selectedEngine: DraftingEngine.Llm
     });
     env.component.selectEngine(DraftingEngine.Nmt);
 
-    void env.component.save();
+    await env.component.save();
     tick();
 
     verify(mockedProjectService.onlineSetDraftingEngine('project01', DraftingEngine.Nmt)).once();
@@ -142,10 +142,10 @@ describe('DraftEngineSelectionComponent', () => {
     expect(env.component.saving).toBeFalse();
   }));
 
-  it('returns to the draft page without saving when the engine was not changed', fakeAsync(() => {
+  it('returns to the draft page without saving when the engine was not changed', fakeAsync(async () => {
     const env = new TestEnvironment({ availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm] });
 
-    void env.component.save();
+    await env.component.save();
     tick();
 
     verify(mockedProjectService.onlineSetDraftingEngine(anything(), anything())).never();
@@ -179,7 +179,7 @@ describe('DraftEngineSelectionComponent', () => {
     expect().nothing();
   });
 
-  it('cannot save while offline, and says why', fakeAsync(() => {
+  it('cannot save while offline, and says why', fakeAsync(async () => {
     const env = new TestEnvironment({ availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm] });
     env.component.selectEngine(DraftingEngine.Nmt);
     expect(env.offlineNotice).toBeNull();
@@ -189,7 +189,7 @@ describe('DraftEngineSelectionComponent', () => {
 
     expect(env.offlineNotice).not.toBeNull();
     expect(env.saveButton.disabled).toBeTrue();
-    void env.component.save();
+    await env.component.save();
     tick();
     verify(mockedRouter.navigate(anything())).never();
   }));
@@ -221,6 +221,7 @@ interface TestProjectEngines {
   selectedEngine?: DraftingEngine;
 }
 
+/** Provides helpers for constructing test data for DraftEngineSelectionComponent tests. */
 class TestEnvironment {
   readonly fixture: ComponentFixture<DraftEngineSelectionComponent>;
   readonly component: DraftEngineSelectionComponent;

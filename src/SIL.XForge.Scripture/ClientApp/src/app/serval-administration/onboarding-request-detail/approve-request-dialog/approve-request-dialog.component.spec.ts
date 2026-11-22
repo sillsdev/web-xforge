@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { anything, capture, deepEqual, instance, mock, verify } from 'ts-mockito';
 import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { anything, capture, deepEqual, instance, mock, verify } from 'ts-mockito';
 import { getTestTranslocoModule } from 'xforge-common/test-utils';
 import {
   ApproveRequestDialogComponent,

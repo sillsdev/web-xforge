@@ -5,6 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -14,7 +15,6 @@ import { provideTestOnlineStatus } from 'xforge-common/test-online-status-provid
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
 import { UserService } from 'xforge-common/user.service';
-import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
@@ -171,14 +171,14 @@ describe('OnboardingRequestDetailComponent', () => {
 
     const mainProjectDoc = createProjectDoc('project01', MAIN_PARATEXT_ID, 'MAIN');
 
-    it('returns early without calling services when dialog is cancelled', fakeAsync(() => {
+    it('returns early without calling services when dialog is cancelled', fakeAsync(async () => {
       const env = new TestEnvironment({
         mainProjectDoc,
         approveDialogResult: null
       });
       env.wait();
 
-      void env.component.approveRequest();
+      await env.component.approveRequest();
       flush();
 
       verify(mockedProjectService.onlineSetDraftSources(anything(), anything(), anything())).never();
@@ -186,7 +186,7 @@ describe('OnboardingRequestDetailComponent', () => {
       expect().nothing();
     }));
 
-    it('configures drafting sources and approves the request when the dialog is confirmed', fakeAsync(() => {
+    it('configures drafting sources and approves the request when the dialog is confirmed', fakeAsync(async () => {
       const approvedRequest = createTestRequest({ resolution: 'approved' });
       when(mockedOnboardingRequestService.approveRequest(anything())).thenResolve(approvedRequest);
       const env = new TestEnvironment({
@@ -203,7 +203,7 @@ describe('OnboardingRequestDetailComponent', () => {
       });
       env.wait();
 
-      void env.component.approveRequest();
+      env.component.approveRequest();
       flush();
 
       verify(
@@ -214,19 +214,22 @@ describe('OnboardingRequestDetailComponent', () => {
         )
       ).once();
       verify(
-        mockedProjectService.onlineSetAvailableDraftingEngines(
+        mockedProjectService.saveDraftingEngineAvailability(
           'project01',
-          deepEqual([DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing])
+          anything(),
+          deepEqual({
+            selectedEngine: DraftingEngine.NmtWithLlmPostProcessing,
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.NmtWithLlmPostProcessing]
+          })
         )
       ).once();
-      verify(mockedProjectService.onlineSetDraftingEngine('project01', DraftingEngine.NmtWithLlmPostProcessing)).once();
       verify(
         mockedOnboardingRequestService.approveRequest(deepEqual({ requestId: REQUEST_ID, sfProjectId: 'project01' }))
       ).once();
       expect(env.component.request?.resolution).toBe('approved');
     }));
 
-    it('enables back translation drafting when enableBackTranslationDrafting is true', fakeAsync(() => {
+    it('enables back translation drafting when enableBackTranslationDrafting is true', fakeAsync(async () => {
       when(mockedOnboardingRequestService.approveRequest(anything())).thenResolve(createTestRequest());
       const defaultSubmission = createTestRequest().submission;
       const env = new TestEnvironment({
@@ -247,7 +250,7 @@ describe('OnboardingRequestDetailComponent', () => {
       });
       env.wait();
 
-      void env.component.approveRequest();
+      await env.component.approveRequest();
       flush();
 
       verify(

@@ -44,8 +44,8 @@ import { DraftImportWizardComponent } from '../../draft-import-wizard/draft-impo
 import { DraftOptionsService } from '../../draft-options.service';
 import { DraftPreviewBooksComponent } from '../../draft-preview-books/draft-preview-books.component';
 import { DraftSourcesAsTranslateSourceArrays, hasLowConfidence, projectToDraftSources } from '../../draft-utils';
-import { TrainingDataService } from '../../training-data/training-data.service';
 import { DraftingEngineService } from '../../drafting-engine/drafting-engine.service';
+import { TrainingDataService } from '../../training-data/training-data.service';
 
 const STATUS_INFO: Record<BuildStates, { icons: string; text: string; color: string }> = {
   ACTIVE: { icons: 'hourglass_empty', text: 'draft_active', color: 'grey' },

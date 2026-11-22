@@ -1,9 +1,19 @@
+@use '@angular/material' as mat;
+
+:host {
+  // Reduce the density so that the radio buttons and checkboxes will not create an unnecessary vertical scrollbar
+  // when used in the ApproveRequestDialogComponent.
+  @include mat.checkbox-density(-1);
+  @include mat.radio-density(-1);
+}
+
 .engine-grid {
   display: inline-grid;
   grid-template-columns: auto auto auto;
   align-items: center;
   justify-items: center;
   column-gap: 2em;
+  padding-bottom: 10px;
 }
 
 .column-heading {

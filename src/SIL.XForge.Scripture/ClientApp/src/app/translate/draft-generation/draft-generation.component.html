@@ -32,9 +32,9 @@
           {{ t("instructions_keep_in_mind_subtext") }}
         </p>
         <p>
-          <b>{{
-            draftingEngines.selectedEngineText.duration | transloco: { count: draftDurationHours | l10nNumber }
-          }}</b>
+          <b>
+            {{ draftingEngines.selectedEngineText.duration | transloco: { count: draftDurationHours | l10nNumber } }}
+          </b>
           <br />
           {{ t("instructions_draft_process_subtext") }}
         </p>

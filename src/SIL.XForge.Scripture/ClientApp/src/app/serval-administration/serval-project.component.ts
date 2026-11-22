@@ -52,19 +52,16 @@ import { DraftGenerationService } from '../translate/draft-generation/draft-gene
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import {
-  OnboardingRequestService,
-  OpenOnboardingRequest
-} from '../translate/draft-generation/onboarding-request.service';
-import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
-import {
   DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
   DraftingEngineAvailability,
   draftingEngineAvailabilityOf
 } from '../translate/draft-generation/drafting-engine/drafting-engine';
 import {
-  DraftingEngineAvailabilityComponent,
-  saveDraftingEngineAvailability
-} from './drafting-engine-availability/drafting-engine-availability.component';
+  OnboardingRequestService,
+  OpenOnboardingRequest
+} from '../translate/draft-generation/onboarding-request.service';
+import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
+import { DraftingEngineAvailabilityComponent } from './drafting-engine-availability/drafting-engine-availability.component';
 import { ServalAdministrationService } from './serval-administration.service';
 interface Row {
   id: string;
@@ -99,7 +96,6 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     MatLabel,
     MatInput,
     MatCheckbox,
-    DraftingEngineAvailabilityComponent,
     MatIcon,
     MatCard,
     MatCardHeader,
@@ -122,6 +118,7 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     ReactiveFormsModule,
     RouterLinkDirective,
     DraftInformationComponent,
+    DraftingEngineAvailabilityComponent,
     MobileNotSupportedComponent,
     WriteStatusComponent,
     JsonViewerComponent
@@ -385,7 +382,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
     const previous: DraftingEngineAvailability = this.draftingEngineAvailability;
     this.draftingEngineAvailability = availability;
     try {
-      await saveDraftingEngineAvailability(this.projectService, projectId, previous, availability);
+      await this.projectService.saveDraftingEngineAvailability(projectId, previous, availability);
     } catch (error) {
       // Show what the project still has, as far as this page knows, rather than what could not be saved. A copy is
       // needed for the engine controls to notice the change, as they already hold the previous object.

@@ -87,28 +87,28 @@ describe('ServalProjectComponent', () => {
       expect(env.fixture.nativeElement.querySelector('app-drafting-engine-availability')).not.toBeNull();
     }));
 
-    it('saves the engines the admin makes available and selects', fakeAsync(() => {
+    it('saves the engines the admin makes available and selects', fakeAsync(async () => {
       const env = new TestEnvironment({ preTranslate: true });
 
-      void env.component.onUpdateDraftingEngineAvailability({
+      await env.component.onUpdateDraftingEngineAvailability({
         availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
         selectedEngine: DraftingEngine.Llm
       });
       tick();
 
       verify(
-        mockSFProjectService.onlineSetAvailableDraftingEngines(
+        mockSFProjectService.saveDraftingEngineAvailability(
           'project01',
-          deepEqual([DraftingEngine.Nmt, DraftingEngine.Llm])
+          anything(),
+          deepEqual({ selectedEngine: DraftingEngine.Llm, availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm] })
         )
       ).once();
-      verify(mockSFProjectService.onlineSetDraftingEngine('project01', DraftingEngine.Llm)).once();
       expect(env.component.draftingEngineAvailability.selectedEngine).toBe(DraftingEngine.Llm);
     }));
 
     it('goes back to showing what the project had when the engines could not be saved', fakeAsync(() => {
       const env = new TestEnvironment({ preTranslate: true });
-      when(mockSFProjectService.onlineSetAvailableDraftingEngines(anything(), anything())).thenReject(
+      when(mockSFProjectService.saveDraftingEngineAvailability(anything(), anything(), anything())).thenReject(
         new Error('forbidden')
       );
 
@@ -126,7 +126,6 @@ describe('ServalProjectComponent', () => {
         availableEngines: [DraftingEngine.Nmt],
         selectedEngine: DraftingEngine.Nmt
       });
-      verify(mockSFProjectService.onlineSetDraftingEngine(anything(), anything())).never();
     }));
 
     it('cannot change the engines while offline', fakeAsync(() => {
@@ -527,6 +526,9 @@ describe('ServalProjectComponent', () => {
       when(mockDraftGenerationService.getBuildProgress(anything())).thenReturn(of({ additionalInfo: {} } as BuildDto));
       when(mockSFProjectService.hasDraft(anything())).thenReturn(args.preTranslate);
       when(mockSFProjectService.onlineSetServalConfig(this.mockProjectId, anything())).thenResolve();
+      when(
+        mockSFProjectService.saveDraftingEngineAvailability(this.mockProjectId, anything(), anything())
+      ).thenResolve();
       const trainingData: TrainingData[] = [
         {
           fileUrl: 'file-url',
