@@ -50,7 +50,6 @@ public class MachineApiServiceTests
     private const string TrainingDataId01 = "trainingDataId01";
     private const string User01 = "user01";
     private const string User02 = "user02";
-    private const string User03 = "user03";
     private const string Paratext01 = "paratext01";
     private const string Paratext02 = "paratext02";
     private const string ParatextUserId01 = "paratextUser01";
@@ -2957,6 +2956,19 @@ public class MachineApiServiceTests
                     StepCount = 20,
                 },
             ],
+        };
+        DraftingEngine? actual = MachineApiService.GetDraftingEngine(translationBuild);
+        Assert.That(actual, Is.EqualTo(DraftingEngine.NmtWithFastTraining));
+    }
+
+    [Test]
+    public void GetDraftingEngine_NmtWithFastTrainingAndNoBooksSelected()
+    {
+        var translationBuild = new TranslationBuild
+        {
+            EngineType = MachineProjectService.Nmt,
+            Phases = [new Phase { Stage = PhaseStage.Train }],
+            Options = new JObject { ["max_steps"] = 20 },
         };
         DraftingEngine? actual = MachineApiService.GetDraftingEngine(translationBuild);
         Assert.That(actual, Is.EqualTo(DraftingEngine.NmtWithFastTraining));
@@ -6326,7 +6338,7 @@ public class MachineApiServiceTests
                 {
                     var usxDoc = callInfo.Arg<XDocument>();
                     string chapterNumber = usxDoc.Descendants("chapter").First().Attribute("number")!.Value;
-                    return new[] { chapterDeltas.Single(c => c.Number == int.Parse(chapterNumber)) };
+                    return [chapterDeltas.Single(c => c.Number == int.Parse(chapterNumber))];
                 });
 
             // Update the permissions for the user applying the draft

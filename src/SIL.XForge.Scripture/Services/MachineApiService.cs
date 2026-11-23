@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Serval.Client;
 using SIL.Converters.Usj;
 using SIL.Machine.Corpora;
@@ -3719,15 +3720,20 @@ public partial class MachineApiService(
     /// Gets the <see cref="DraftingEngine" /> value for the <see cref="TranslationBuild" />.
     /// </summary>
     /// <param name="translationBuild">The build from Serval.</param>
-    /// <returns>The drafting engine. Returns <c>null</c> if the drafting enging could not be determined.</returns>
+    /// <returns>The drafting engine. Returns <c>null</c> if the drafting engine could not be determined.</returns>
     internal static DraftingEngine? GetDraftingEngine(TranslationBuild translationBuild)
     {
-        // Normalise the engine types to handle kebab-case and PascalCase (bug in Serval 1.22.0 and 1.23.0-rc.1)
+        // Normalize the engine types to handle kebab-case and PascalCase (bug in Serval 1.22.0 and 1.23.0-rc.1)
         string? engineType = translationBuild.EngineType?.ToLowerInvariant();
         if (engineType == MachineProjectService.Llm.Replace("-", string.Empty, StringComparison.OrdinalIgnoreCase))
         {
             engineType = MachineProjectService.Llm;
         }
+
+        int? trainedOnSteps = translationBuild.Phases?.FirstOrDefault(p => p.Stage == PhaseStage.Train)?.StepCount;
+        int? maxSteps = (translationBuild.Options as JObject)?["max_steps"] is JValue { Type: JTokenType.Integer } tags
+            ? tags.Value<int>()
+            : null;
 
         return engineType switch
         {
@@ -3735,9 +3741,8 @@ public partial class MachineApiService(
             MachineProjectService.Llm => DraftingEngine.Llm,
             MachineProjectService.Nmt when translationBuild.Enhancements?.Count > 0 =>
                 DraftingEngine.NmtWithLlmPostProcessing,
-            MachineProjectService.Nmt
-                when translationBuild.Phases?.FirstOrDefault(p => p.Stage == PhaseStage.Train)?.StepCount
-                    == MachineProjectService.FastTrainingSteps => DraftingEngine.NmtWithFastTraining,
+            MachineProjectService.Nmt when (trainedOnSteps ?? maxSteps) == MachineProjectService.FastTrainingSteps =>
+                DraftingEngine.NmtWithFastTraining,
             MachineProjectService.Nmt => DraftingEngine.Nmt,
             _ => null,
         };
