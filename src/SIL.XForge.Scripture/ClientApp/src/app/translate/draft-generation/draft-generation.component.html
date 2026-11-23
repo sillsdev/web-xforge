@@ -1,334 +1,324 @@
 <ng-container *transloco="let t; read: 'draft_generation'">
-  @if (currentPage === "initial") {
-    @if (isBackTranslation) {
-      <h1>{{ t("generate_back_translation_drafts_header") }}</h1>
-    } @else {
-      <h1>
-        {{ t("generate_forward_translation_drafts_header") }}
-      </h1>
-    }
-    <section>
-      @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
-        <div class="drafting-instructions">
-          @if (isBackTranslation) {
-            <div>
-              <p>
-                <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
-                <br />
-                {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
-              </p>
-            </div>
-          } @else {
-            <div>
-              <p>
-                <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
-                <br />
-                {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
-              </p>
-            </div>
-          }
-          <p>
-            <b>{{ t("instructions_keep_in_mind") }}</b>
-            <br />
-            {{ t("instructions_keep_in_mind_subtext") }}
-          </p>
-          <p>
-            <b>{{ t("instructions_draft_process", { count: draftDurationHours | l10nNumber }) }}</b>
-            <br />
-            {{ t("instructions_draft_process_subtext") }}
-          </p>
-          <p>
-            @for (i of draftHelp | async; track i) {
-              <!-- prettier-ignore -->
-              @if (i.id == null) {{{ i.text }}}
-              @if (i.id === 1) {
-                <a [href]="urlService.understandingDrafts" target="_blank">{{ i.text }}</a>
-              }
+  @if (isBackTranslation) {
+    <h1>{{ t("generate_back_translation_drafts_header") }}</h1>
+  } @else {
+    <h1>
+      {{ t("generate_forward_translation_drafts_header") }}
+    </h1>
+  }
+  <section>
+    @if (isDraftJobFetched && !isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
+      <div class="drafting-instructions">
+        @if (isBackTranslation) {
+          <div>
+            <p>
+              <b>{{ t("instructions_scripture_forge_assist_back_translation") }}</b>
+              <br />
+              {{ t("instructions_scripture_forge_assist_back_translation_subtext") }}
+            </p>
+          </div>
+        } @else {
+          <div>
+            <p>
+              <b>{{ t("instructions_scripture_forge_assist_forward_translation") }}</b>
+              <br />
+              {{ t("instructions_scripture_forge_assist_forward_translation_subtext") }}
+            </p>
+          </div>
+        }
+        <p>
+          <b>{{ t("instructions_keep_in_mind") }}</b>
+          <br />
+          {{ t("instructions_keep_in_mind_subtext") }}
+        </p>
+        <p>
+          <b>{{ t("instructions_draft_process", { count: draftDurationHours | l10nNumber }) }}</b>
+          <br />
+          {{ t("instructions_draft_process_subtext") }}
+        </p>
+        <p>
+          @for (i of draftHelp | async; track i) {
+            <!-- prettier-ignore -->
+            @if (i.id == null) {{{ i.text }}}
+            @if (i.id === 1) {
+              <a [href]="urlService.understandingDrafts" target="_blank">{{ i.text }}</a>
             }
-          </p>
-        </div>
-      }
+          }
+        </p>
+      </div>
+    }
 
-      @if (isBackTranslation && !isTargetLanguageSupported) {
-        <app-notice type="warning" class="requirements">
-          <p>
-            <transloco
-              key="draft_generation.back_translation_requirement"
-              [params]="{ supportedLanguagesUrl }"
-            ></transloco>
-          </p>
-          <ul>
-            <li>
-              <mat-icon class="criteria-not-met">clear</mat-icon>
-              <p>
-                <transloco
-                  key="draft_generation.criteria_project_language_not_in_nllb_with_language"
-                  [params]="{ targetLanguageDisplayName }"
-                ></transloco>
-              </p>
-            </li>
-          </ul>
+    @if (isBackTranslation && !isTargetLanguageSupported) {
+      <app-notice type="warning" class="requirements">
+        <p>
+          <transloco
+            key="draft_generation.back_translation_requirement"
+            [params]="{ supportedLanguagesUrl }"
+          ></transloco>
+        </p>
+        <ul>
+          <li>
+            <mat-icon class="criteria-not-met">clear</mat-icon>
+            <p>
+              <transloco
+                key="draft_generation.criteria_project_language_not_in_nllb_with_language"
+                [params]="{ targetLanguageDisplayName }"
+              ></transloco>
+            </p>
+          </li>
+        </ul>
+      </app-notice>
+    }
+
+    <!-- Only show warnings if target language is supported and sources have been configured -->
+    @if (draftEnabled && isTargetLanguageSupported && isSourcesConfigurationComplete) {
+      @if (!canAccessDraftSourceIfAvailable(source)) {
+        <app-notice type="warning" icon="warning" data-test-id="warning-source-no-access">
+          <transloco
+            key="draft_generation.info_alert_no_source_access"
+            [params]="{
+              connectProjectUrl: { route: '/connect-project' },
+              name: projectLabel(source)
+            }"
+          ></transloco>
         </app-notice>
       }
-
-      <!-- Only show warnings if target language is supported and sources have been configured -->
-      @if (draftEnabled && isTargetLanguageSupported && isSourcesConfigurationComplete) {
-        @if (!canAccessDraftSourceIfAvailable(source)) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-source-no-access">
-            <transloco
-              key="draft_generation.info_alert_no_source_access"
-              [params]="{
-                connectProjectUrl: { route: '/connect-project' },
-                name: projectLabel(source)
-              }"
-            ></transloco>
-          </app-notice>
-        }
-        @if (!canAccessDraftSourceIfAvailable(trainingSource)) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-training-source-no-access">
-            <transloco
-              key="draft_generation.info_alert_no_training_source_access"
-              [params]="{
-                connectProjectUrl: { route: '/connect-project' },
-                name: projectLabel(trainingSource)
-              }"
-            ></transloco>
-          </app-notice>
-        }
-        @if (!canAccessDraftSourceIfAvailable(secondTrainingSource)) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-mix-source-no-access">
-            <transloco
-              key="draft_generation.info_alert_no_additional_training_source_access"
-              [params]="{
-                connectProjectUrl: { route: '/connect-project' },
-                name: projectLabel(secondTrainingSource)
-              }"
-            ></transloco>
-          </app-notice>
-        }
+      @if (!canAccessDraftSourceIfAvailable(trainingSource)) {
+        <app-notice type="warning" icon="warning" data-test-id="warning-training-source-no-access">
+          <transloco
+            key="draft_generation.info_alert_no_training_source_access"
+            [params]="{
+              connectProjectUrl: { route: '/connect-project' },
+              name: projectLabel(trainingSource)
+            }"
+          ></transloco>
+        </app-notice>
       }
-
-      <!-- Only show sync related messages if approved or a back translation and a build is not underway -->
-      @if (draftEnabled && !isDraftInProgress(draftJob)) {
-        @if (!lastSyncSuccessful) {
-          <app-notice type="warning" icon="warning" data-test-id="warning-last-sync-failed">
-            {{ t("info_alert_last_sync_failed") }}
-          </app-notice>
-        }
+      @if (!canAccessDraftSourceIfAvailable(secondTrainingSource)) {
+        <app-notice type="warning" icon="warning" data-test-id="warning-mix-source-no-access">
+          <transloco
+            key="draft_generation.info_alert_no_additional_training_source_access"
+            [params]="{
+              connectProjectUrl: { route: '/connect-project' },
+              name: projectLabel(secondTrainingSource)
+            }"
+          ></transloco>
+        </app-notice>
       }
+    }
+
+    <!-- Only show sync related messages if approved or a back translation and a build is not underway -->
+    @if (draftEnabled && !isDraftInProgress(draftJob)) {
+      @if (!lastSyncSuccessful) {
+        <app-notice type="warning" icon="warning" data-test-id="warning-last-sync-failed">
+          {{ t("info_alert_last_sync_failed") }}
+        </app-notice>
+      }
+    }
+  </section>
+
+  @if (!isOnline) {
+    <section>
+      <p class="offline-text">{{ t("offline_message") }}</p>
     </section>
-
-    @if (!isOnline) {
-      <section>
-        <p class="offline-text">{{ t("offline_message") }}</p>
-      </section>
-    } @else {
-      @if (!draftEnabled) {
-        <section data-test-id="approval-needed">
-          @if (!onboardingRequest) {
-            <button mat-flat-button color="primary" [routerLink]="['signup']">
-              {{ t("sign_up_for_drafting") }}
-            </button>
-          } @else {
-            <app-notice type="primary" icon="checkmark" mode="fill-dark">
-              <p>
-                {{
-                  t("signup_already_submitted", {
-                    name: onboardingRequest.submittedBy.name,
-                    date: onboardingRequest.submittedAt | date: "medium",
-                    min: responseDays.min,
-                    max: responseDays.max
-                  })
-                }}
+  } @else {
+    @if (!draftEnabled) {
+      <section data-test-id="approval-needed">
+        @if (!onboardingRequest) {
+          <button mat-flat-button color="primary" [routerLink]="['signup']">
+            {{ t("sign_up_for_drafting") }}
+          </button>
+        } @else {
+          <app-notice type="primary" icon="checkmark" mode="fill-dark">
+            <p>
+              {{
+                t("signup_already_submitted", {
+                  name: onboardingRequest.submittedBy.name,
+                  date: onboardingRequest.submittedAt | date: "medium",
+                  min: responseDays.min,
+                  max: responseDays.max
+                })
+              }}
+            </p>
+            @if (onboardingRequest.contactEmail != null) {
+              <p class="signup-response-email">
+                <transloco
+                  key="draft_generation.signup_response_will_be_emailed"
+                  [params]="{ email: onboardingRequest.contactEmail }"
+                ></transloco>
               </p>
-              @if (onboardingRequest.contactEmail != null) {
-                <p class="signup-response-email">
-                  <transloco
-                    key="draft_generation.signup_response_will_be_emailed"
-                    [params]="{ email: onboardingRequest.contactEmail }"
-                  ></transloco>
-                </p>
-              }
-              @if (onboardingRequestAged(onboardingRequest)) {
-                <p>
-                  @for (
-                    portion of i18n.interpolateVariables("draft_generation.have_not_heard_back", { issueEmail });
-                    track portion.text
-                  ) {
-                    @if (portion.id == null) {
-                      {{ portion.text }}
-                    }
-                    @if (portion.id === "issueEmail") {
-                      <a href="mailto:{{ issueEmail }}" target="_blank" rel="noopener noreferrer">{{ issueEmail }}</a>
-                    }
+            }
+            @if (onboardingRequestAged(onboardingRequest)) {
+              <p>
+                @for (
+                  portion of i18n.interpolateVariables("draft_generation.have_not_heard_back", { issueEmail });
+                  track portion.text
+                ) {
+                  @if (portion.id == null) {
+                    {{ portion.text }}
                   }
-                </p>
-              }
+                  @if (portion.id === "issueEmail") {
+                    <a href="mailto:{{ issueEmail }}" target="_blank" rel="noopener noreferrer">{{ issueEmail }}</a>
+                  }
+                }
+              </p>
+            }
+          </app-notice>
+        }
+      </section>
+    }
+    @if (isDraftJobFetched) {
+      <div class="draft-generation-header">
+        @if (isGenerationSupported) {
+          @if (isDraftFaulted(draftJob)) {
+            <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
+              <div class="draft-generation-failed-message">
+                <span
+                  ><transloco
+                    key="draft_generation.warning_generation_faulted"
+                    [params]="{
+                      generateButtonText: hasAnyCompletedBuild ? t('generate_new_draft') : t('generate_draft_button')
+                    }"
+                  ></transloco
+                ></span>
+                <a mat-flat-button target="_blank" [href]="issueMailTo">
+                  {{ t("report_problem") }}
+                </a>
+              </div>
             </app-notice>
           }
-        </section>
-      }
-      @if (isDraftJobFetched) {
-        <div class="draft-generation-header">
-          @if (isGenerationSupported) {
-            @if (isDraftFaulted(draftJob)) {
-              <app-notice type="error" icon="error" data-test-id="warning-generation-failed">
-                <div class="draft-generation-failed-message">
-                  <span
-                    ><transloco
-                      key="draft_generation.warning_generation_faulted"
-                      [params]="{
-                        generateButtonText: hasAnyCompletedBuild ? t('generate_new_draft') : t('generate_draft_button')
-                      }"
-                    ></transloco
-                  ></span>
-                  <a mat-flat-button target="_blank" [href]="issueMailTo">
-                    {{ t("report_problem") }}
-                  </a>
-                </div>
-              </app-notice>
-            }
-            @if (showUserFeedbackNotice) {
-              <app-user-feedback [requireReferenceProject]="true"></app-user-feedback>
-            }
-            @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
-              <section class="action-button-strip">
-                @if (isSourcesConfigurationComplete) {
-                  <button mat-flat-button color="primary" (click)="generateDraftClicked()">
-                    <mat-icon>auto_awesome</mat-icon>
-                    {{ t("generate_draft_button") }}
-                  </button>
-                  @if (hasConfigureSourcePermission) {
-                    <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
-                      <mat-icon>settings</mat-icon>
-                      {{ t("configure_sources") }}
-                    </button>
-                  }
-                } @else if (hasConfigureSourcePermission) {
-                  <button
-                    mat-flat-button
-                    data-test-id="configure-button"
-                    color="primary"
-                    [routerLink]="configureSourcesPath"
-                  >
+          @if (showUserFeedbackNotice) {
+            <app-user-feedback [requireReferenceProject]="true"></app-user-feedback>
+          }
+          @if (!isDraftInProgress(draftJob) && !hasAnyCompletedBuild) {
+            <section class="action-button-strip">
+              @if (isSourcesConfigurationComplete) {
+                <button mat-flat-button color="primary" (click)="generateDraftClicked()">
+                  <mat-icon>auto_awesome</mat-icon>
+                  {{ t("generate_draft_button") }}
+                </button>
+                @if (hasConfigureSourcePermission) {
+                  <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
                     <mat-icon>settings</mat-icon>
                     {{ t("configure_sources") }}
                   </button>
                 }
-              </section>
-            }
-          }
-          @if (isPreviewSupported) {
-            @if (draftJob != null) {
-              @if (isDraftInProgress(draftJob)) {
-                <mat-card class="draft-progress-card">
-                  <mat-card-header>
-                    <mat-card-title>
-                      @if (isDraftQueued(draftJob)) {
-                        @if (isSyncing()) {
-                          {{ t("draft_syncing") }}
-                        } @else {
-                          {{ t("draft_queued_header") }}
-                        }
-                      } @else if (isDraftActive(draftJob)) {
-                        {{ t("draft_active_header") }}
-                      } @else if (isDraftFinishing(draftJob)) {
-                        {{ t("draft_finishing_header") }}
-                      }
-                      •
-                      {{ getTranslationScriptureRange(draftJob) }}
-                    </mat-card-title>
-                    <mat-card-subtitle>
-                      @if (hasDraftQueueDepth(draftJob)) {
-                        {{ t("draft_queued_multiple", { count: draftJob.queueDepth }) }}
-                      } @else if (isDraftActive(draftJob)) {
-                        {{ t("draft_percent_complete", { percent: draftJob.percentCompleted | l10nPercent }) }}
-                      }
-                    </mat-card-subtitle>
-                  </mat-card-header>
-                  <mat-card-content class="progress-wrapper">
-                    <mat-progress-bar
-                      [mode]="
-                        draftJob.percentCompleted === 0 && !isDraftActive(draftJob) ? 'indeterminate' : 'determinate'
-                      "
-                      [value]="draftJob.percentCompleted * 100"
-                    />
-                    @if (canCancel(draftJob)) {
-                      <button mat-flat-button color="primary" (click)="cancel()">
-                        {{ t("cancel_generation_button") }}
-                      </button>
-                    }
-                  </mat-card-content>
-                </mat-card>
+              } @else if (hasConfigureSourcePermission) {
+                <button
+                  mat-flat-button
+                  data-test-id="configure-button"
+                  color="primary"
+                  [routerLink]="configureSourcesPath"
+                >
+                  <mat-icon>settings</mat-icon>
+                  {{ t("configure_sources") }}
+                </button>
               }
+            </section>
+          }
+        }
+        @if (isPreviewSupported) {
+          @if (draftJob != null) {
+            @if (isDraftInProgress(draftJob)) {
+              <mat-card class="draft-progress-card">
+                <mat-card-header>
+                  <mat-card-title>
+                    @if (isDraftQueued(draftJob)) {
+                      @if (isSyncing()) {
+                        {{ t("draft_syncing") }}
+                      } @else {
+                        {{ t("draft_queued_header") }}
+                      }
+                    } @else if (isDraftActive(draftJob)) {
+                      {{ t("draft_active_header") }}
+                    } @else if (isDraftFinishing(draftJob)) {
+                      {{ t("draft_finishing_header") }}
+                    }
+                    •
+                    {{ getTranslationScriptureRange(draftJob) }}
+                  </mat-card-title>
+                  <mat-card-subtitle>
+                    @if (hasDraftQueueDepth(draftJob)) {
+                      {{ t("draft_queued_multiple", { count: draftJob.queueDepth }) }}
+                    } @else if (isDraftActive(draftJob)) {
+                      {{ t("draft_percent_complete", { percent: draftJob.percentCompleted | l10nPercent }) }}
+                    }
+                  </mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content class="progress-wrapper">
+                  <mat-progress-bar
+                    [mode]="
+                      draftJob.percentCompleted === 0 && !isDraftActive(draftJob) ? 'indeterminate' : 'determinate'
+                    "
+                    [value]="draftJob.percentCompleted * 100"
+                  />
+                  @if (canCancel(draftJob)) {
+                    <button mat-flat-button color="primary" (click)="cancel()">
+                      {{ t("cancel_generation_button") }}
+                    </button>
+                  }
+                </mat-card-content>
+              </mat-card>
             }
           }
-        </div>
-      }
-    }
-
-    <!-- Without more change to the structure of the template, and with apology for how this is done, conditionally show
-    generate-draft and configure-sources action buttons. -->
-    <section class="action-button-strip">
-      <!-- Show "New draft" button here when viewing the Preview card, when appropriate. Using the same if conditions.
-      -->
-      @if (
-        isOnline &&
-        isDraftJobFetched &&
-        isPreviewSupported &&
-        draftJob != null &&
-        (isDraftComplete(draftJob) || hasAnyCompletedBuild) &&
-        isGenerationSupported &&
-        !isDraftInProgress(draftJob) &&
-        hasAnyCompletedBuild &&
-        isSourcesConfigurationComplete
-      ) {
-        <button mat-flat-button color="primary" type="button" (click)="generateDraftClicked()">
-          <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
-        </button>
-        @if (hasConfigureSourcePermission) {
-          <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
-            <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
-          </button>
         }
-      } @else if (hasConfigureSourcePermission) {
-        <!-- Show Configure sources button when we don't have permission to the current sources and when there is not a
+      </div>
+    }
+  }
+
+  <!-- Without more change to the structure of the template, and with apology for how this is done, conditionally show
+    generate-draft and configure-sources action buttons. -->
+  <section class="action-button-strip">
+    <!-- Show "New draft" button here when viewing the Preview card, when appropriate. Using the same if conditions.
+      -->
+    @if (
+      isOnline &&
+      isDraftJobFetched &&
+      isPreviewSupported &&
+      draftJob != null &&
+      (isDraftComplete(draftJob) || hasAnyCompletedBuild) &&
+      isGenerationSupported &&
+      !isDraftInProgress(draftJob) &&
+      hasAnyCompletedBuild &&
+      isSourcesConfigurationComplete
+    ) {
+      <button mat-flat-button color="primary" type="button" (click)="generateDraftClicked()">
+        <mat-icon>add</mat-icon> {{ t("generate_new_draft") }}
+      </button>
+      @if (hasConfigureSourcePermission) {
+        <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
+          <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
+        </button>
+      }
+    } @else if (hasConfigureSourcePermission) {
+      <!-- Show Configure sources button when we don't have permission to the current sources and when there is not a
         prior draft job. But don't show it if it's already been shown above or if the user is not signed up for
         drafting.
 
         This first check regards what leads up to the first configure button. -->
-        @if (!isGenerationSupported || isDraftInProgress(draftJob) || hasAnyCompletedBuild) {
-          @if (draftEnabled && isOnline) {
-            <button mat-button data-test-id="configure-button" color="primary" [routerLink]="configureSourcesPath">
-              <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
-            </button>
-          }
+      @if (!isGenerationSupported || isDraftInProgress(draftJob) || hasAnyCompletedBuild) {
+        @if (draftEnabled && isOnline) {
+          <button mat-button data-test-id="configure-button" color="primary" [routerLink]="configureSourcesPath">
+            <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
+          </button>
         }
       }
+    }
+  </section>
+
+  <app-draft-history-list [style.display]="isOnline ? 'flex' : 'none'"></app-draft-history-list>
+
+  @if (canShowAdditionalInfo(draftJob)) {
+    @if (isOnline) {
+      <h2>Further information</h2>
+    }
+    <section>
+      <mat-expansion-panel class="diagnostics-info">
+        <mat-expansion-panel-header>Diagnostic Information</mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <app-draft-information [draftJob]="draftJob"></app-draft-information>
+        </ng-template>
+      </mat-expansion-panel>
     </section>
-
-    <app-draft-history-list [style.display]="isOnline ? 'flex' : 'none'"></app-draft-history-list>
-
-    @if (canShowAdditionalInfo(draftJob)) {
-      @if (isOnline) {
-        <h2>Further information</h2>
-      }
-      <section>
-        <mat-expansion-panel class="diagnostics-info">
-          <mat-expansion-panel-header>Diagnostic Information</mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <app-draft-information [draftJob]="draftJob"></app-draft-information>
-          </ng-template>
-        </mat-expansion-panel>
-      </section>
-    }
-  } @else if (currentPage === "steps") {
-    <app-draft-generation-steps
-      (done)="onPreGenerationStepsComplete($event)"
-      (cancel)="currentPage = 'initial'"
-    ></app-draft-generation-steps>
-    @if (!isOnline) {
-      <p class="offline-text">{{ t("offline_message") }}</p>
-    }
   }
 </ng-container>

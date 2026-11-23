@@ -12,7 +12,7 @@ import { Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { DraftingEngine, ProjectScriptureRange } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { filter, firstValueFrom, take } from 'rxjs';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -526,8 +526,7 @@ export class NewDraftComponent {
         trainingScriptureRanges,
         trainingDataFiles,
         availableTrainingDataFiles,
-        fastTraining: this.fastTraining,
-        useEcho: this.useEcho,
+        draftingEngine: this.draftingEngine,
         sendEmailOnBuildFinished: this.sendEmailOnBuildFinished
       };
 
@@ -553,6 +552,19 @@ export class NewDraftComponent {
     }
   }
 
+  private get draftingEngine(): DraftingEngine {
+    const configuredDraftingEngine: DraftingEngine | undefined =
+      this.activatedProjectService.projectDoc?.data?.translateConfig?.draftConfig?.draftingEngine;
+    if (this.useEcho) {
+      return DraftingEngine.Echo;
+    } else if (this.fastTraining) {
+      return DraftingEngine.NmtWithFastTraining;
+    } else if (configuredDraftingEngine != null) {
+      return configuredDraftingEngine;
+    } else {
+      return DraftingEngine.Nmt;
+    }
+  }
   /**
    * Maps a range's books to the `Book[]` shape the multi-select expects. With no `selectedBookIds`, every book is
    * marked selected (the range itself is the selection); otherwise a book is selected iff its id is in `selectedBookIds`.
