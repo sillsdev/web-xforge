@@ -29,6 +29,7 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource, DraftSourcesAsArrays } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { DraftingEngineService } from '../drafting-engine/drafting-engine.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftProgressService } from './draft-progress.service';
 import { NewDraftComponent } from './new-draft.component';
@@ -334,7 +335,12 @@ const meta: Meta<StoryArgs> = {
           { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
           { provide: PermissionsService, useValue: instance(mockedPermissionsService) },
           { provide: DialogService, useValue: instance(mockedDialogService) },
-          { provide: AuthService, useValue: instance(mockedAuthService) }
+          { provide: AuthService, useValue: instance(mockedAuthService) },
+          // DraftingEngineService depends on ActivatedProjectService. Listing it here makes Angular create it with the
+          // mocked ActivatedProjectService from this list. Without this line, Angular would create it at the
+          // application level, where the mocks in this list do not apply. It would then get the real
+          // ActivatedProjectService, which cannot be created in Storybook.
+          DraftingEngineService
         ]
       }
     };

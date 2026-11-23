@@ -83,7 +83,8 @@
               {{ t("requested_at", { requestedAtTime: buildRequestedAtDate }) }}
             </p>
           }
-          @if (hasTrainingConfiguration || hasTrainingDataFiles) {
+          @let engineName = draftingEngines.nameForBuild(entry);
+          @if (hasTrainingConfiguration || hasTrainingDataFiles || engineName != null) {
             @if (draftIsAvailable) {
               <p>
                 <a
@@ -92,14 +93,13 @@
                   class="training-configuration-link"
                 >
                   <mat-icon>expand_{{ trainingConfigurationOpen ? "less" : "more" }}</mat-icon>
-                  {{
-                    t(
-                      trainingConfigurationOpen
-                        ? "hide_model_training_configuration"
-                        : "show_model_training_configuration"
-                    )
-                  }}
+                  {{ t(trainingConfigurationOpen ? "hide_draft_settings" : "show_draft_settings") }}
                 </a>
+              </p>
+            }
+            @if (trainingConfigurationOpen && engineName != null) {
+              <p class="drafting-engine">
+                {{ "drafting_engine.translation_engine" | transloco: { engine: engineName } }}
               </p>
             }
             @if (trainingConfigurationOpen && hasTrainingConfiguration) {

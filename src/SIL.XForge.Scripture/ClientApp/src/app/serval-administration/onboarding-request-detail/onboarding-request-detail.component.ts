@@ -36,6 +36,7 @@ import { MobileNotSupportedComponent } from '../../shared/mobile-not-supported/m
 import { NoticeComponent } from '../../shared/notice/notice.component';
 import { projectLabel } from '../../shared/utils';
 import { draftingEnabled, normalizeLanguageCodeToISO639_3 } from '../../translate/draft-generation/draft-utils';
+import { draftingEngineAvailabilityOf } from '../../translate/draft-generation/drafting-engine/drafting-engine';
 import {
   ONBOARDING_REQUEST_RESOLUTION_OPTIONS,
   OnboardingRequest,
@@ -447,6 +448,12 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
         await this.projectService.onlineSetDraftSources(btSfProjectId, [targetParatextId], [targetParatextId]);
         await this.projectService.onlineSetPreTranslate(btSfProjectId, true);
       }
+      this.loadingMessage = 'Setting translation engines…';
+      await this.projectService.saveDraftingEngineAvailability(
+        this.request.submission.projectId,
+        dialogData.draftingEngineAvailability,
+        result.draftingEngineAvailability
+      );
       this.loadingMessage = 'Approving request…';
       const request = await this.onboardingRequestService.approveRequest({
         requestId: this.request.id,
@@ -515,7 +522,8 @@ export class OnboardingRequestDetailComponent extends DataLoadingComponent imple
       draftingSourceOptions,
       trainingSourceOptions,
       defaultTrainingSource: onboardingRequestFormData.sourceProjectA,
-      backTranslation
+      backTranslation,
+      draftingEngineAvailability: draftingEngineAvailabilityOf(mainData.translateConfig.draftConfig)
     };
   }
 

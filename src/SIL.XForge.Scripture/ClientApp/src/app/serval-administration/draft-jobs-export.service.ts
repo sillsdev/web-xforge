@@ -14,6 +14,7 @@ import { encodeRsv } from './rsv';
 export interface SpreadsheetRow {
   draftGenerationRequestId?: string;
   servalBuildId?: string;
+  draftingEngine?: string;
   /** To be populated with locale-less UTC timestamp. */
   startTime?: string;
   endTime?: string;
@@ -108,6 +109,7 @@ export class DraftJobsExportService extends BaseExportService {
     const headers: string[] = [
       'draftGenerationRequestId',
       'servalBuildId',
+      'draftingEngine',
       'startTime',
       'endTime',
       'durationMinutes',
@@ -122,6 +124,7 @@ export class DraftJobsExportService extends BaseExportService {
     const dataRows: (string | null)[][] = spreadsheetRows.map(row => [
       row.draftGenerationRequestId ?? null,
       row.servalBuildId ?? null,
+      row.draftingEngine ?? null,
       row.startTime ?? null,
       row.endTime ?? null,
       row.durationMinutes ?? null,

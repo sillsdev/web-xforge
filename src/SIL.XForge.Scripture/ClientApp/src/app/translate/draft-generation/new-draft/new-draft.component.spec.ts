@@ -26,6 +26,7 @@ import { NllbLanguageService } from '../../nllb-language.service';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftSource } from '../draft-source';
 import { DraftSourcesService } from '../draft-sources.service';
+import { DraftingEngineService } from '../drafting-engine/drafting-engine.service';
 import { TrainingDataService } from '../training-data/training-data.service';
 import { DraftProgressService } from './draft-progress.service';
 import { NewDraftComponent } from './new-draft.component';
@@ -708,6 +709,136 @@ describe('NewDraftComponent', () => {
     }));
   });
 
+  describe('translation engine', () => {
+    beforeEach(() => {
+      reset(mockedDraftGenerationService);
+      when(mockedDraftGenerationService.startBuildOrGetActiveBuild(anything())).thenReturn(
+        of({ joinedExistingBuild: false, job: undefined })
+      );
+    });
+
+    it('has the same steps whichever engine is selected', fakeAsync(() => {
+      for (const draftingEngine of [
+        DraftingEngine.Nmt,
+        DraftingEngine.NmtWithLlmPostProcessing,
+        DraftingEngine.Llm
+      ] as const) {
+        const env = new TestEnvironment(testState, { trainingOptional: true, draftingEngine: draftingEngine });
+        tick();
+        env.component.logicHandler.selectDraftingBooks(['GEN']);
+        env.component.page = 'training_books';
+
+        env.component.next();
+
+        expect(env.component.page).toBe('summary');
+        expect(env.component.totalStepCount).toBe(4);
+      }
+    }));
+
+    it('allows several books to be drafted with an engine that supports it', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { draftingEngine: DraftingEngine.Nmt });
+      tick();
+      env.component.page = 'draft_books';
+      env.component.logicHandler.selectDraftingBooks(['GEN', 'MAT']);
+
+      expect(env.component.hasTooManyBooksForEngine).toBeFalse();
+      expect(env.component.engineUsesLlm).toBeFalse();
+      env.component.next();
+
+      expect(env.component.page).toBe('training_books');
+    }));
+
+    it('does not allow several books to be drafted with an engine that drafts one book at a time', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { draftingEngine: DraftingEngine.NmtWithLlmPostProcessing });
+      tick();
+      env.component.page = 'draft_books';
+      env.component.logicHandler.selectDraftingBooks(['GEN', 'MAT']);
+
+      expect(env.component.hasTooManyBooksForEngine).toBeTrue();
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeFalse();
+      env.component.next();
+      expect(env.component.page).toBe('draft_books');
+      // The notice on the step already explains the problem. Trying to continue turns it into an error rather than
+      // adding a step error that repeats it.
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeTrue();
+      expect(env.component.stepError).toBeNull();
+
+      // Selecting a single book resolves it.
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      expect(env.component.hasTooManyBooksForEngine).toBeFalse();
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeFalse();
+      env.component.next();
+      expect(env.component.page).toBe('training_books');
+    }));
+
+    it('does not mention the engine on the final step for a project that only has the default engine', fakeAsync(() => {
+      const env = new TestEnvironment(testState);
+      tick();
+
+      expect(env.component.showDraftingEngineCard).toBeFalse();
+    }));
+
+    it('says which engine will be used on the final step for a project with more than one engine', fakeAsync(() => {
+      const env = new TestEnvironment(testState, {
+        draftingEngine: DraftingEngine.Nmt,
+        availableDraftingEngines: [DraftingEngine.Nmt, DraftingEngine.Llm]
+      });
+      tick();
+
+      expect(env.component.showDraftingEngineCard).toBeTrue();
+      expect(env.component.engineUsesLlm).toBeFalse();
+    }));
+
+    it('knows when the draft will send text to a third-party LLM provider', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { draftingEngine: DraftingEngine.Llm });
+      tick();
+
+      expect(env.component.engineUsesLlm).toBeTrue();
+    }));
+
+    it('generates the draft with the engine selected for the project', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { draftingEngine: DraftingEngine.NmtWithLlmPostProcessing });
+      tick();
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+
+      env.component.generateDraftClicked();
+      tick();
+
+      const [buildConfig] = capture(mockedDraftGenerationService.startBuildOrGetActiveBuild).last();
+      expect(buildConfig.draftingEngine).toBe(DraftingEngine.NmtWithLlmPostProcessing);
+    }));
+
+    it('does not allow several books to be drafted when a developer engine in place of the project engine when one is chosen', fakeAsync(() => {
+      const env = new TestEnvironment(testState, { draftingEngine: DraftingEngine.Llm });
+      tick();
+      env.component.page = 'draft_books';
+      env.component.useEcho = true;
+      env.component.logicHandler.selectDraftingBooks(['GEN', 'MAT']);
+
+      // Even though Echo allows multiple books, LLM does not, so we use LLM's restrictions
+      expect(env.component.hasTooManyBooksForEngine).toBeTrue();
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeFalse();
+      env.component.next();
+      expect(env.component.page).toBe('draft_books');
+      // The notice on the step already explains the problem. Trying to continue turns it into an error rather than
+      // adding a step error that repeats it.
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeTrue();
+      expect(env.component.stepError).toBeNull();
+
+      // Selecting a single book resolves it.
+      env.component.logicHandler.selectDraftingBooks(['GEN']);
+      expect(env.component.hasTooManyBooksForEngine).toBeFalse();
+      expect(env.component.hasTriedToContinueWithTooManyBooks).toBeFalse();
+      env.component.next();
+      expect(env.component.page).toBe('training_books');
+      env.component.generateDraftClicked();
+      tick();
+
+      const [buildConfig] = capture(mockedDraftGenerationService.startBuildOrGetActiveBuild).last();
+      expect(buildConfig.draftingEngine).toBe(DraftingEngine.Echo);
+    }));
+  });
+
   describe('training data file selection', () => {
     it('defaults selection from the last build, keeping used and newly added files', fakeAsync(() => {
       const env = new TestEnvironment({
@@ -1226,6 +1357,10 @@ class TestEnvironment {
       trainingData$?: Observable<TrainingData[]>;
       /** When true, the target project is already syncing on entry (baseline for the sync watcher). */
       targetSyncing?: boolean;
+      /** The engine selected for the project. */
+      draftingEngine?: DraftingEngine;
+      /** The engines a Serval admin made available to the project. Defaults to NMT and the selected engine. */
+      availableDraftingEngines?: DraftingEngine[];
     } = {}
   ) {
     const project = createTestProjectProfile({
@@ -1249,6 +1384,11 @@ class TestEnvironment {
             shortName: `TS-${projectId}`,
             writingSystem: { script: 'Latn', tag: 'es' }
           })),
+          availableDraftingEngines: options.availableDraftingEngines ?? [
+            DraftingEngine.Nmt,
+            options.draftingEngine ?? DraftingEngine.Nmt
+          ],
+          draftingEngine: options.draftingEngine,
           lastSelectedTrainingScriptureRanges: [],
           lastSelectedTrainingDataFiles: state.lastSelectedTrainingDataFiles ?? [],
           lastAvailableTrainingDataFiles: state.lastAvailableTrainingDataFiles,
@@ -1369,6 +1509,7 @@ class TestEnvironment {
       instance(mockedTrainingDataService),
       instance(mockedSFProjectService),
       instance(mockedPermissionsService),
+      new DraftingEngineService(instance(mockedActivatedProjectService), instance(mockedI18nService)),
       { onDestroy: () => () => {} } as unknown as DestroyRef
     );
   }

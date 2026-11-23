@@ -7,6 +7,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { CommandService } from 'xforge-common/command.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
+import { DEFAULT_DRAFTING_ENGINE_AVAILABILITY } from '../translate/draft-generation/drafting-engine/drafting-engine';
 import { SFProjectService } from './sf-project.service';
 
 const mockedCommandService = mock(CommandService);
@@ -191,6 +192,77 @@ describe('SFProjectService', () => {
         verify(mockedCommandService.onlineInvoke(anything(), 'setDraftingEngine', anything())).once();
         expect().nothing();
       }));
+    });
+
+    describe('saveDraftingEngineAvailability', () => {
+      it('should invoke the command service when the selected engine and available engines change', async () => {
+        const env = new TestEnvironment();
+        const projectId = 'project01';
+        await env.service.saveDraftingEngineAvailability(projectId, DEFAULT_DRAFTING_ENGINE_AVAILABILITY, {
+          availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+          selectedEngine: DraftingEngine.Llm
+        });
+        verify(mockedCommandService.onlineInvoke(anything(), 'setDraftingEngine', anything())).once();
+        expect().nothing();
+        verify(mockedCommandService.onlineInvoke(anything(), 'setAvailableDraftingEngines', anything())).once();
+      });
+
+      it('should invoke the command service when the selected engine change', async () => {
+        const env = new TestEnvironment();
+        const projectId = 'project01';
+        await env.service.saveDraftingEngineAvailability(
+          projectId,
+          {
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+            selectedEngine: DraftingEngine.Llm
+          },
+          {
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+            selectedEngine: DraftingEngine.Nmt
+          }
+        );
+        verify(mockedCommandService.onlineInvoke(anything(), 'setDraftingEngine', anything())).once();
+        verify(mockedCommandService.onlineInvoke(anything(), 'setAvailableDraftingEngines', anything())).never();
+        expect().nothing();
+      });
+
+      it('should invoke the command service when the available engines change', async () => {
+        const env = new TestEnvironment();
+        const projectId = 'project01';
+        await env.service.saveDraftingEngineAvailability(
+          projectId,
+          {
+            availableEngines: [DraftingEngine.Nmt],
+            selectedEngine: DraftingEngine.Nmt
+          },
+          {
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+            selectedEngine: DraftingEngine.Nmt
+          }
+        );
+        verify(mockedCommandService.onlineInvoke(anything(), 'setDraftingEngine', anything())).never();
+        verify(mockedCommandService.onlineInvoke(anything(), 'setAvailableDraftingEngines', anything())).once();
+        expect().nothing();
+      });
+
+      it('should not invoke the command service when the available engines change', async () => {
+        const env = new TestEnvironment();
+        const projectId = 'project01';
+        await env.service.saveDraftingEngineAvailability(
+          projectId,
+          {
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+            selectedEngine: DraftingEngine.Llm
+          },
+          {
+            availableEngines: [DraftingEngine.Nmt, DraftingEngine.Llm],
+            selectedEngine: DraftingEngine.Llm
+          }
+        );
+        verify(mockedCommandService.onlineInvoke(anything(), 'setDraftingEngine', anything())).never();
+        verify(mockedCommandService.onlineInvoke(anything(), 'setAvailableDraftingEngines', anything())).never();
+        expect().nothing();
+      });
     });
   });
 

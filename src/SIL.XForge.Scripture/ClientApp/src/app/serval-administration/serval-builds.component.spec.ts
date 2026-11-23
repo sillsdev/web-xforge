@@ -1,6 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, firstValueFrom, Observable, skip, Subject, take } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -1560,6 +1561,31 @@ describe('ServalBuildsComponent', () => {
       expect(gaps[0]).toBeUndefined();
       mockedConsole.verify();
       mockedConsole.reset();
+    });
+  });
+
+  describe('translation engine', () => {
+    it('reports the engine the server says the build was made with', () => {
+      const env = new TestEnvironment();
+      const report: ServalBuildReportDto = env.createReport();
+      report.build!.additionalInfo!.translationEngineType = DraftingEngine.NmtWithLlmPostProcessing;
+
+      // SUT
+      const rows = env.component['buildRows']([report]);
+
+      expect(rows[0].draftingEngine).toBe(DraftingEngine.NmtWithLlmPostProcessing);
+    });
+
+    it('reports no engine when the server does not say, or when there is no Serval build yet', () => {
+      const env = new TestEnvironment();
+      const withoutEngine: ServalBuildReportDto = env.createReport();
+      const withoutBuild: ServalBuildReportDto = { ...env.createReport(), build: undefined };
+
+      // SUT
+      const rows = env.component['buildRows']([withoutEngine, withoutBuild]);
+
+      expect(rows[0].draftingEngine).toBeUndefined();
+      expect(rows[1].draftingEngine).toBeUndefined();
     });
   });
 

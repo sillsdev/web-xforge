@@ -1,5 +1,6 @@
 import { DestroyRef, Injectable } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { isEqual } from 'lodash-es';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -28,6 +29,7 @@ import { BookProgressWithChapterProgress } from '../shared/progress-service/prog
 import { UserFeedbackParams } from '../shared/user-feedback/user-feedback-dialog.component';
 import { expandNumbers } from '../shared/utils';
 import { SyncMetricsDisplay } from '../sync/sync-log/sync-metrics-display';
+import { DraftingEngineAvailability } from '../translate/draft-generation/drafting-engine/drafting-engine';
 import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { DraftSourceConfiguration } from './models/draft-source-configuration';
 import { InviteeStatus } from './models/invitee-status';
@@ -462,5 +464,27 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       projectId,
       draftingEngine
     });
+  }
+
+  /**
+   * Saves the parts of `availability` that differ from `previous` to the project. The available engines are saved
+   * before the selected engine, because the server only accepts a selected engine that is available.
+   *
+   * DraftingEngineAvailabilityComponent does not call this itself. It only reports what the admin chose, because the
+   * pages that show it save at different times: the Serval project page saves each change straight away, and the
+   * onboarding request page saves when the request is approved. Those pages call this, and it lives here so that the
+   * way to save the component's value is found beside the component.
+   */
+  async saveDraftingEngineAvailability(
+    projectId: string,
+    previous: DraftingEngineAvailability,
+    availability: DraftingEngineAvailability
+  ): Promise<void> {
+    if (!isEqual(previous.availableEngines, availability.availableEngines)) {
+      await this.onlineSetAvailableDraftingEngines(projectId, availability.availableEngines);
+    }
+    if (previous.selectedEngine !== availability.selectedEngine) {
+      await this.onlineSetDraftingEngine(projectId, availability.selectedEngine);
+    }
   }
 }

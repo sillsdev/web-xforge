@@ -52,10 +52,16 @@ import { DraftGenerationService } from '../translate/draft-generation/draft-gene
 import { DraftInformationComponent } from '../translate/draft-generation/draft-information/draft-information.component';
 import { DraftSourcesAsTranslateSourceArrays, projectToDraftSources } from '../translate/draft-generation/draft-utils';
 import {
+  DEFAULT_DRAFTING_ENGINE_AVAILABILITY,
+  DraftingEngineAvailability,
+  draftingEngineAvailabilityOf
+} from '../translate/draft-generation/drafting-engine/drafting-engine';
+import {
   OnboardingRequestService,
   OpenOnboardingRequest
 } from '../translate/draft-generation/onboarding-request.service';
 import { TrainingDataService } from '../translate/draft-generation/training-data/training-data.service';
+import { DraftingEngineAvailabilityComponent } from './drafting-engine-availability/drafting-engine-availability.component';
 import { ServalAdministrationService } from './serval-administration.service';
 interface Row {
   id: string;
@@ -112,6 +118,7 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
     ReactiveFormsModule,
     RouterLinkDirective,
     DraftInformationComponent,
+    DraftingEngineAvailabilityComponent,
     MobileNotSupportedComponent,
     WriteStatusComponent,
     JsonViewerComponent
@@ -120,6 +127,7 @@ function projectType(project: TranslateSource | SFProjectProfile): string {
 export class ServalProjectComponent extends DataLoadingComponent implements OnInit {
   @Input() showProjectTitle = true;
   preTranslate = false;
+  draftingEngineAvailability: DraftingEngineAvailability = DEFAULT_DRAFTING_ENGINE_AVAILABILITY;
   projectName = '';
   onboardingRequest: OpenOnboardingRequest | undefined;
   onboardingRequestLink: string[] | undefined;
@@ -181,6 +189,7 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
           if (projectDoc.data == null) return of(undefined);
           const project: SFProjectProfile = projectDoc.data;
           this.preTranslate = project.translateConfig.preTranslate;
+          this.draftingEngineAvailability = draftingEngineAvailabilityOf(project.translateConfig.draftConfig);
           this.projectName = projectLabel(project);
           const draftSources: DraftSourcesAsTranslateSourceArrays = projectToDraftSources(project);
           const draftConfig: DraftConfig = project.translateConfig.draftConfig;
@@ -365,6 +374,21 @@ export class ServalProjectComponent extends DataLoadingComponent implements OnIn
 
   onUpdatePreTranslate(newValue: boolean): Promise<void> {
     return this.projectService.onlineSetPreTranslate(this.activatedProjectService.projectId!, newValue);
+  }
+
+  async onUpdateDraftingEngineAvailability(availability: DraftingEngineAvailability): Promise<void> {
+    const projectId: string | undefined = this.activatedProjectService.projectId;
+    if (projectId == null) return;
+    const previous: DraftingEngineAvailability = this.draftingEngineAvailability;
+    this.draftingEngineAvailability = availability;
+    try {
+      await this.projectService.saveDraftingEngineAvailability(projectId, previous, availability);
+    } catch (error) {
+      // Show what the project still has, as far as this page knows, rather than what could not be saved. A copy is
+      // needed for the engine controls to notice the change, as they already hold the previous object.
+      this.draftingEngineAvailability = { ...previous };
+      throw error;
+    }
   }
 
   async retrievePreTranslationStatus(): Promise<void> {

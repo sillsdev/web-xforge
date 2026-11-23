@@ -544,6 +544,34 @@ describe('EditorDraftComponent', () => {
     flush();
   }));
 
+  it('should say which engine the selected draft was generated with', fakeAsync(() => {
+    const testProjectDoc: SFProjectProfileDoc = {
+      data: createTestProjectProfile()
+    } as SFProjectProfileDoc;
+    when(mockI18nService.translateStatic('drafting_engine.name_llm')).thenReturn('Frontier Drafting');
+    when(mockDraftGenerationService.getGeneratedDraftHistory(anything(), anything(), anything())).thenReturn(
+      of([draftHistory[1]])
+    );
+    when(mockDraftGenerationService.getBuildHistory(anything())).thenReturn(
+      of([
+        {
+          state: BuildStates.Completed,
+          additionalInfo: { dateFinished: draftHistory[1].timestamp, translationEngineType: 'Llm' }
+        } as BuildDto
+      ])
+    );
+    when(mockActivatedProjectService.changes$).thenReturn(of(testProjectDoc));
+    spyOn<any>(component, 'getTargetOps').and.returnValue(of(targetDelta.ops!));
+
+    fixture.detectChanges();
+    tick(EDITOR_READY_TIMEOUT);
+    fixture.detectChanges();
+
+    const engineLine: HTMLElement | null = fixture.nativeElement.querySelector('.drafting-engine');
+    expect(engineLine?.textContent).toContain('Frontier Drafting');
+    flush();
+  }));
+
   it('should not reload the build history when the chapter changes', fakeAsync(() => {
     const testProjectDoc: SFProjectProfileDoc = {
       data: createTestProjectProfile()

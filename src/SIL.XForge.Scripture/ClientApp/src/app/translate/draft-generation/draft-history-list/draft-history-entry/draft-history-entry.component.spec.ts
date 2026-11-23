@@ -4,7 +4,11 @@ import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/use
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TrainingData } from 'realtime-server/lib/esm/scriptureforge/models/training-data';
-import { ParagraphBreakFormat, QuoteFormat } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import {
+  DraftingEngine,
+  ParagraphBreakFormat,
+  QuoteFormat
+} from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -166,6 +170,47 @@ describe('DraftHistoryEntryComponent', () => {
       expect(component.translationSource).toEqual('src \u2022');
       expect(component.sourceLanguage).toBe('fr');
       expect(component.trainingConfiguration).toEqual([{ target: 'tar', source: 'src', scriptureRange: 'GEN' }]);
+    }));
+
+    it('should show the engine among the draft settings when the draft was made with an LLM', fakeAsync(() => {
+      const entry = getStandardBuildDto({});
+      entry.additionalInfo!.translationEngineType = DraftingEngine.NmtWithLlmPostProcessing;
+
+      component.entry = entry;
+      tick();
+      fixture.detectChanges();
+      // The settings are collapsed to begin with.
+      expect(fixture.nativeElement.querySelector('.drafting-engine')).toBeNull();
+
+      component.trainingConfigurationOpen = true;
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.drafting-engine')).not.toBeNull();
+    }));
+
+    it('should not show the engine among the draft settings when the project has only the default engine', fakeAsync(() => {
+      const entry = getStandardBuildDto({});
+      entry.additionalInfo!.translationEngineType = DraftingEngine.Nmt;
+
+      component.entry = entry;
+      tick();
+      component.trainingConfigurationOpen = true;
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('.drafting-engine')).toBeNull();
+    }));
+
+    it('should show a developer engine among the draft settings, so developers and testers can see it', fakeAsync(() => {
+      const entry = getStandardBuildDto({});
+      entry.additionalInfo!.translationEngineType = DraftingEngine.Echo;
+
+      component.entry = entry;
+      tick();
+      component.trainingConfigurationOpen = true;
+      fixture.detectChanges();
+
+      const engineLine: HTMLElement | null = fixture.nativeElement.querySelector('.drafting-engine');
+      expect(engineLine?.textContent).toContain('Echo');
     }));
 
     it('should state that the model did not have training configuration', fakeAsync(() => {

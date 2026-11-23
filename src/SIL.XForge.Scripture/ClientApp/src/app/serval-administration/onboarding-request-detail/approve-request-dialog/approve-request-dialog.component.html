@@ -46,6 +46,8 @@
         }
       </p>
     }
+    <h3>Translation engines</h3>
+    <app-drafting-engine-availability [(availability)]="draftingEngineAvailability"></app-drafting-engine-availability>
     @if (form.hasError("languageCodesDiffer")) {
       <app-notice type="error" mode="outline">All source projects must be in the same language.</app-notice>
     }

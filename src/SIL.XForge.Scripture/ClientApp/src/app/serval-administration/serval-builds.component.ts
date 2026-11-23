@@ -26,6 +26,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { DraftingEngine } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import {
   BehaviorSubject,
   catchError,
@@ -66,6 +67,11 @@ import {
 import { DisplayConfidenceComponent } from '../translate/draft-generation/build-confidences/display-confidence.component';
 import { DraftGenerationService } from '../translate/draft-generation/draft-generation.service';
 import { hasLowConfidence } from '../translate/draft-generation/draft-utils';
+import {
+  buildDraftingEngine,
+  DRAFTING_ENGINE_INFO,
+  DraftingEngineInfo
+} from '../translate/draft-generation/drafting-engine/drafting-engine';
 import { BuildConfidencesExportService } from './build-confidences-export.service';
 import { DateRangePickerComponent, NormalizedDateRange } from './date-range-picker.component';
 import { DraftJobsExportService, SpreadsheetRow } from './draft-jobs-export.service';
@@ -97,6 +103,8 @@ export interface ServalBuildRow {
   projectNameDisplay?: string;
   durationMs?: number;
   projectServalAdminUrl?: string;
+  /** The engine the build's draft was generated with. Absent if there is no Serval build yet, or it was not reported. */
+  draftingEngine?: DraftingEngine;
   /** True if the build is not associable with any SF project currently in the database. */
   projectDeleted: boolean;
 }
@@ -217,8 +225,18 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
 
   /** Help template access static methods. */
   protected ServalBuildsComponent = ServalBuildsComponent;
+  protected readonly draftingEngineInfo: Record<DraftingEngine, DraftingEngineInfo> = DRAFTING_ENGINE_INFO;
   protected DraftGenerationBuildStatus = DraftGenerationBuildStatus;
-  protected columnsToDisplay: string[] = ['status', 'project', 'training', 'source', 'language', 'requested', 'expand'];
+  protected columnsToDisplay: string[] = [
+    'status',
+    'project',
+    'training',
+    'source',
+    'language',
+    'draftingEngine',
+    'requested',
+    'expand'
+  ];
   /** Tracks which rows are currently expanded (by Serval build ID). */
   private expandedRows: Set<string> = new Set();
   /** Data rows, excluding those that might be filtered out by the includeDeleted toggle. */
@@ -656,6 +674,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         )
       );
       const translationBooks: ProjectBooks[] = toProjectBooks(report.config.translationScriptureRanges);
+      const draftingEngine: DraftingEngine | undefined = buildDraftingEngine(report.build);
 
       return {
         report: report,
@@ -664,6 +683,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
         projectNameDisplay: projectNameDisplay,
         durationMs: durationMs,
         projectServalAdminUrl: projectLink,
+        draftingEngine: draftingEngine,
         projectDeleted: sfProjectId == null
       };
     });
@@ -1033,6 +1053,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
     return rows.map((row: ServalBuildRow) => {
       const trainingBooksList = ServalBuildsComponent.formatProjectBooks(row.trainingBooks);
       const translationBooksList = ServalBuildsComponent.formatProjectBooks(row.translationBooks);
+      const draftingEngine = row.draftingEngine;
       const servalCreated: Date | undefined = row.report.timeline.servalCreated;
       const servalFinish: Date | undefined = row.report.timeline.servalFinished;
       // Use SF timestamps if available, with fallback to Serval timestamps
@@ -1044,6 +1065,7 @@ export class ServalBuildsComponent extends DataLoadingComponent implements OnIni
       return {
         draftGenerationRequestId: row.report.draftGenerationRequestId,
         servalBuildId: row.report.build?.additionalInfo?.buildId,
+        draftingEngine: draftingEngine,
         startTime: effectiveStart?.toISOString(),
         endTime: effectiveEnd?.toISOString(),
         durationMinutes: durationMinutes,

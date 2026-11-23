@@ -1,4 +1,4 @@
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
@@ -52,6 +52,8 @@ import { DraftOptionsService } from './draft-options.service';
 import { DRAFT_SIGNUP_RESPONSE_DAYS } from './draft-signup-form/draft-onboarding-form.component';
 import { DraftSource } from './draft-source';
 import { DraftSourcesService } from './draft-sources.service';
+import { DRAFT_DURATION_HOURS } from './drafting-engine/drafting-engine';
+import { DraftingEngineService } from './drafting-engine/drafting-engine.service';
 import { OnboardingRequestService, OpenOnboardingRequest } from './onboarding-request.service';
 import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
@@ -80,6 +82,7 @@ const USER_FEEDBACK_SUBMISSION_DAYS = 365;
     MatExpansionPanelHeader,
     MatExpansionPanelContent,
     NgRouterLink,
+    NgTemplateOutlet,
     TranslocoModule,
     TranslocoMarkupModule,
     NoticeComponent,
@@ -139,7 +142,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   cancelDialogRef?: MatDialogRef<any>;
 
-  readonly draftDurationHours = 1.5;
+  readonly draftDurationHours = DRAFT_DURATION_HOURS;
   /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
   private readonly projectChangeThrottlingMs = 500;
 
@@ -163,6 +166,7 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
     protected readonly draftOptionsService: DraftOptionsService,
+    protected readonly draftingEngines: DraftingEngineService,
     private readonly projectService: SFProjectService,
     private readonly featureFlags: FeatureFlagService,
     private readonly permissions: PermissionsService,

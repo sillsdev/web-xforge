@@ -32,7 +32,9 @@
           {{ t("instructions_keep_in_mind_subtext") }}
         </p>
         <p>
-          <b>{{ t("instructions_draft_process", { count: draftDurationHours | l10nNumber }) }}</b>
+          <b>
+            {{ draftingEngines.selectedEngineText.duration | transloco: { count: draftDurationHours | l10nNumber } }}
+          </b>
           <br />
           {{ t("instructions_draft_process_subtext") }}
         </p>
@@ -202,6 +204,7 @@
                     <mat-icon>settings</mat-icon>
                     {{ t("configure_sources") }}
                   </button>
+                  <ng-container [ngTemplateOutlet]="translationEngineButton"></ng-container>
                 }
               } @else if (hasConfigureSourcePermission) {
                 <button
@@ -213,6 +216,7 @@
                   <mat-icon>settings</mat-icon>
                   {{ t("configure_sources") }}
                 </button>
+                <ng-container [ngTemplateOutlet]="translationEngineButton"></ng-container>
               }
             </section>
           }
@@ -289,6 +293,7 @@
         <button mat-button data-test-id="configure-button" [routerLink]="configureSourcesPath">
           <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
         </button>
+        <ng-container [ngTemplateOutlet]="translationEngineButton"></ng-container>
       }
     } @else if (hasConfigureSourcePermission) {
       <!-- Show Configure sources button when we don't have permission to the current sources and when there is not a
@@ -301,6 +306,7 @@
           <button mat-button data-test-id="configure-button" color="primary" [routerLink]="configureSourcesPath">
             <mat-icon>settings</mat-icon> {{ t("configure_sources") }}
           </button>
+          <ng-container [ngTemplateOutlet]="translationEngineButton"></ng-container>
         }
       }
     }
@@ -321,4 +327,13 @@
       </mat-expansion-panel>
     </section>
   }
+
+  <!-- Shown beside each Configure sources button. -->
+  <ng-template #translationEngineButton>
+    @if (draftingEngines.hasChoice) {
+      <button mat-button class="translation-engine-button" [routerLink]="draftingEngines.pagePath">
+        <mat-icon>auto_awesome</mat-icon> {{ t("choose_translation_engine") }}
+      </button>
+    }
+  </ng-template>
 </ng-container>
