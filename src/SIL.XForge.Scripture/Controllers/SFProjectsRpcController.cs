@@ -26,6 +26,7 @@ public class SFProjectsRpcController(
     IBackgroundJobClient backgroundJobClient,
     IExceptionHandler exceptionHandler,
     IHttpRequestAccessor httpRequestAccessor,
+    IMachineApiService machineApiService,
     ISFProjectService projectService,
     ITrainingDataService trainingDataService,
     IUserAccessor userAccessor
@@ -35,6 +36,34 @@ public class SFProjectsRpcController(
 
     // Keep a reference in this class to prevent duplicate allocation (Warning CS9107)
     private readonly IExceptionHandler _exceptionHandler = exceptionHandler;
+
+    /// <summary>
+    /// Gets the status of a background job that is applying a draft to a project. This allows a client that missed
+    /// the final notification to find out how applying the draft ended.
+    /// </summary>
+    /// <param name="jobId">The job identifier returned by <see cref="ApplyPreTranslationToProject"/>.</param>
+    public IRpcMethodResult GetApplyPreTranslationStatus(string jobId)
+    {
+        try
+        {
+            return Ok(machineApiService.GetApplyPreTranslationStatus(UserId, jobId));
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "GetApplyPreTranslationStatus" }, { "jobId", jobId } }
+            );
+            throw;
+        }
+    }
 
     public async Task<IRpcMethodResult> ApplyPreTranslationToProject(
         string projectId,

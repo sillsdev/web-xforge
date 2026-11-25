@@ -57,6 +57,58 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public void GetApplyPreTranslationStatus_Success()
+    {
+        var env = new TestEnvironment();
+        var status = new DraftApplyJobStatus { Finished = true };
+        env.MachineApiService.GetApplyPreTranslationStatus(User01, "job01").Returns(status);
+
+        // SUT
+        var result = env.Controller.GetApplyPreTranslationStatus("job01");
+
+        Assert.IsInstanceOf<RpcMethodSuccessResult>(result);
+        Assert.AreSame(status, ((RpcMethodSuccessResult)result).ReturnObject);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_Forbidden()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetApplyPreTranslationStatus(User01, "job01").Throws(new ForbiddenException());
+
+        // SUT
+        var result = env.Controller.GetApplyPreTranslationStatus("job01");
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.ForbiddenErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_NotFound()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetApplyPreTranslationStatus(User01, "job01")
+            .Throws(new DataNotFoundException("Job Not Found"));
+
+        // SUT
+        var result = env.Controller.GetApplyPreTranslationStatus("job01");
+
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.NotFoundErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_UnknownError()
+    {
+        var env = new TestEnvironment();
+        env.MachineApiService.GetApplyPreTranslationStatus(User01, "job01").Throws(new ArgumentNullException());
+
+        // SUT
+        Assert.Throws<ArgumentNullException>(() => env.Controller.GetApplyPreTranslationStatus("job01"));
+        env.ExceptionHandler.Received().RecordEndpointInfoForException(Arg.Any<Dictionary<string, string>>());
+    }
+
+    [Test]
     public async Task ApplyPreTranslationToProject_Forbidden()
     {
         var env = new TestEnvironment();
@@ -2425,6 +2477,7 @@ public class SFProjectsRpcControllerTests
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             var httpRequestAccessor = Substitute.For<IHttpRequestAccessor>();
             httpRequestAccessor.SiteRoot.Returns(WebsiteUrl);
+            MachineApiService = Substitute.For<IMachineApiService>();
             SFProjectService = Substitute.For<ISFProjectService>();
             TrainingDataService = Substitute.For<ITrainingDataService>();
             var userAccessor = Substitute.For<IUserAccessor>();
@@ -2434,6 +2487,7 @@ public class SFProjectsRpcControllerTests
                 BackgroundJobClient,
                 ExceptionHandler,
                 httpRequestAccessor,
+                MachineApiService,
                 SFProjectService,
                 TrainingDataService,
                 userAccessor
@@ -2443,6 +2497,7 @@ public class SFProjectsRpcControllerTests
         public IBackgroundJobClient BackgroundJobClient { get; }
         public IExceptionHandler ExceptionHandler { get; }
         public SFProjectsRpcController Controller { get; }
+        public IMachineApiService MachineApiService { get; }
         public ISFProjectService SFProjectService { get; }
         public ITrainingDataService TrainingDataService { get; }
     }

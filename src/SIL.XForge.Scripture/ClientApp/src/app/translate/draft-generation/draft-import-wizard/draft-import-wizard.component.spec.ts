@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { NEVER, of } from 'rxjs';
+import { NEVER, of, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -29,7 +29,12 @@ import { BuildDto, ServalBuildDiagnostic, ServalDiagnosticCode } from '../../../
 import { ProjectSelectComponent } from '../../../project-select/project-select.component';
 import { ProgressService, ProjectProgress } from '../../../shared/progress-service/progress.service';
 import { DraftNotificationService } from '../draft-notification.service';
-import { DraftApplyState, DraftApplyStatus, DraftImportWizardComponent } from './draft-import-wizard.component';
+import {
+  DraftApplyJobStatus,
+  DraftApplyState,
+  DraftApplyStatus,
+  DraftImportWizardComponent
+} from './draft-import-wizard.component';
 
 const mockMatDialogRef = mock(MatDialogRef<DraftImportWizardComponent, boolean>);
 const mockParatextService = mock(ParatextService);
@@ -268,6 +273,117 @@ describe('DraftImportWizardComponent', () => {
     verify(mockMatDialogRef.close(true)).once();
   }));
 
+  describe('when the connection is restored', () => {
+    const finalState = (status: DraftApplyStatus, message?: string): DraftApplyState => ({
+      bookNum: 0,
+      chapterNum: 0,
+      totalChapters: 0,
+      status,
+      message
+    });
+
+    /** Starts importing, with the connection to be restored by calling `next` on the returned subject. */
+    function startImport(jobStatus: DraftApplyJobStatus): { env: TestEnvironment; reconnected$: Subject<void> } {
+      configureDraft('GEN30-32', false);
+      const env = new TestEnvironment();
+      const reconnected$ = new Subject<void>();
+      when(mockDraftNotificationService.reconnected$(anything())).thenReturn(reconnected$);
+      when(
+        mockProjectService.onlineApplyPreTranslationToProject(anything(), anything(), anything(), anything())
+      ).thenResolve('job01');
+      when(mockProjectService.onlineGetApplyPreTranslationStatus('job01')).thenResolve(jobStatus);
+
+      env.wait();
+      env.selectProject('paratext04');
+      env.clickNextButton(1);
+      expect(env.component.isImporting).toBe(true);
+      return { env, reconnected$ };
+    }
+
+    it('completes the import if the draft was applied while disconnected', fakeAsync(() => {
+      const { env, reconnected$ } = startImport({
+        finished: true,
+        state: finalState(DraftApplyStatus.Successful),
+        applied: [],
+        failures: []
+      });
+
+      reconnected$.next();
+      env.wait();
+
+      verify(mockProjectService.onlineGetApplyPreTranslationStatus('job01')).once();
+      expect(env.component.isImporting).toBe(false);
+      expect(env.component.importComplete).toBe(true);
+      expect(env.component.importError).toBeUndefined();
+    }));
+
+    it('reports the error if applying the draft failed while disconnected', fakeAsync(() => {
+      const { env, reconnected$ } = startImport({
+        finished: true,
+        state: finalState(DraftApplyStatus.Failed, 'Something went wrong'),
+        applied: [],
+        failures: []
+      });
+
+      reconnected$.next();
+      env.wait();
+
+      expect(env.component.isImporting).toBe(false);
+      expect(env.component.importComplete).toBe(false);
+      expect(env.component.importError).toBe('Something went wrong');
+    }));
+
+    it('reports the chapters that failed if applying the draft partially failed while disconnected', fakeAsync(() => {
+      const { env, reconnected$ } = startImport({
+        finished: true,
+        state: finalState(DraftApplyStatus.Successful),
+        applied: ['GEN 31', 'GEN 32'],
+        failures: ['GEN 30']
+      });
+
+      reconnected$.next();
+      env.wait();
+
+      expect(env.component.isImporting).toBe(false);
+      expect(env.component.importComplete).toBe(false);
+      expect(env.component.importError).toBeDefined();
+      expect(env.component.importProgress[0].completedChapters).toEqual([31, 32]);
+      expect(env.component.importProgress[0].failedChapters.map(c => c.chapterNum)).toEqual([30]);
+    }));
+
+    it('keeps waiting if the draft is still being applied', fakeAsync(() => {
+      const { env, reconnected$ } = startImport({ finished: false, applied: [], failures: [] });
+
+      reconnected$.next();
+      env.wait();
+
+      verify(mockProjectService.onlineGetApplyPreTranslationStatus('job01')).once();
+      expect(env.component.isImporting).toBe(true);
+      expect(env.component.importComplete).toBe(false);
+
+      // The final notification is still handled when it arrives
+      env.importDraft();
+      expect(env.component.isImporting).toBe(false);
+      expect(env.component.importComplete).toBe(true);
+    }));
+
+    it('does not check the job status if the final notification was received', fakeAsync(() => {
+      const { env, reconnected$ } = startImport({
+        finished: true,
+        state: finalState(DraftApplyStatus.Failed),
+        applied: [],
+        failures: []
+      });
+
+      env.importDraft();
+      reconnected$.next();
+      env.wait();
+
+      expect(env.component.importComplete).toBe(true);
+      expect(env.component.importError).toBeUndefined();
+    }));
+  });
+
   it('can populate project select with previously selected project', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
@@ -360,6 +476,7 @@ class TestEnvironment {
 
   constructor() {
     when(mockDraftNotificationService.draftApplyProgress$(anything())).thenReturn(NEVER);
+    when(mockDraftNotificationService.reconnected$(anything())).thenReturn(NEVER);
     when(mockProjectNotificationService.syncProgress$(anything())).thenReturn(NEVER);
     this.fixture = TestBed.createComponent(DraftImportWizardComponent);
     this.component = this.fixture.componentInstance;

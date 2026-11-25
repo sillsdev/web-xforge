@@ -89,6 +89,17 @@ export interface DraftApplyState {
   status: DraftApplyStatus;
 }
 
+/** The status of the background job that applies a draft. */
+export interface DraftApplyJobStatus {
+  finished: boolean;
+  /** The final state of the job, which is the same as the final notification. Only set once the job has finished. */
+  state?: DraftApplyState;
+  /** The chapters that were applied, in the format "GEN 1". */
+  applied: string[];
+  /** The books and chapters that failed to apply, in the format "GEN" and "GEN 1". */
+  failures: string[];
+}
+
 export enum DraftApplyStatus {
   None = 0,
   InProgress = 1,
@@ -704,6 +715,34 @@ export class DraftImportWizardComponent implements OnInit {
       .draftApplyProgress$(sourceProjectId)
       .pipe(quietTakeUntilDestroyed(this.destroyRef))
       .subscribe(draftApplyState => this.updateDraftApplyState(sourceProjectId, draftApplyState));
+
+    // Notifications sent while the connection was lost are not replayed, so the final notification could be missed.
+    // When the connection is back, ask the server how applying the draft ended.
+    let jobId: string | undefined;
+    let reconnectedBeforeJobStarted = false;
+    const checkJobStatus = async (): Promise<void> => {
+      if (jobId == null) {
+        reconnectedBeforeJobStarted = true;
+        return;
+      }
+      try {
+        const status: DraftApplyJobStatus | undefined =
+          await this.projectService.onlineGetApplyPreTranslationStatus(jobId);
+        // Ignore the status if the final notification arrived while the status was being retrieved
+        if (status?.finished === true && status.state != null && this.isImporting) {
+          draftApplyProgress.unsubscribe();
+          this.applyFinishedJobStatus(sourceProjectId, status);
+        }
+      } catch {
+        // The job status will be checked again the next time the connection is restored
+      }
+    };
+    draftApplyProgress.add(
+      this.draftNotificationService
+        .reconnected$(sourceProjectId)
+        .pipe(quietTakeUntilDestroyed(this.destroyRef))
+        .subscribe(() => void checkJobStatus())
+    );
     await this.draftNotificationService.whenListening(sourceProjectId);
 
     // Build a scripture range and timestamp to import. Scope to the chapters that were actually drafted for each
@@ -720,12 +759,14 @@ export class DraftImportWizardComponent implements OnInit {
 
     // Apply the pre-translation draft to the project
     try {
-      await this.projectService.onlineApplyPreTranslationToProject(
+      jobId = await this.projectService.onlineApplyPreTranslationToProject(
         this.sourceProjectId,
         scriptureRange,
         this.targetProjectId,
         timestamp
       );
+      // The connection may have been restored before the job was started
+      if (reconnectedBeforeJobStarted) await checkJobStatus();
     } catch (error) {
       draftApplyProgress.unsubscribe();
       if (error instanceof CommandError && error.code === CommandErrorCode.NotFound) {
@@ -739,6 +780,47 @@ export class DraftImportWizardComponent implements OnInit {
       }
       this.isImporting = false;
     }
+  }
+
+  /**
+   * Applies the outcome of a finished job when the notifications for it were missed.
+   *
+   * @param projectId The project identifier.
+   * @param status The status of the finished job.
+   */
+  private applyFinishedJobStatus(projectId: string, status: DraftApplyJobStatus): void {
+    if (status.state == null) return;
+
+    // Replay the chapter notifications that were missed, so that the completed and failed chapters are correct
+    if (status.state.status === DraftApplyStatus.Successful) {
+      for (const progress of this.importProgress) {
+        for (const failure of status.failures) {
+          const [bookId, chapter] = failure.split(' ');
+          const chapterNum: number = chapter == null ? 0 : +chapter;
+          if (bookId === progress.bookId && !progress.failedChapters.some(c => c.chapterNum === chapterNum)) {
+            this.updateDraftApplyState(projectId, {
+              bookNum: progress.bookNum,
+              chapterNum,
+              totalChapters: 0,
+              status: DraftApplyStatus.Failed
+            });
+          }
+        }
+        for (const applied of status.applied) {
+          const [bookId, chapter] = applied.split(' ');
+          if (bookId === progress.bookId && chapter != null) {
+            this.updateDraftApplyState(projectId, {
+              bookNum: progress.bookNum,
+              chapterNum: +chapter,
+              totalChapters: 0,
+              status: DraftApplyStatus.Successful
+            });
+          }
+        }
+      }
+    }
+
+    this.updateDraftApplyState(projectId, status.state);
   }
 
   /**
