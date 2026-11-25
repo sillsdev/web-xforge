@@ -18,6 +18,11 @@ public class DraftApplyResult
     public HashSet<string> Failures = [];
 
     /// <summary>
+    /// A list of the chapters that were applied in the format "GEN 1".
+    /// </summary>
+    public HashSet<string> Applied = [];
+
+    /// <summary>
     /// A log containing any warnings or errors that occurred while applying the draft.
     /// </summary>
     public string Log { get; set; } = string.Empty;

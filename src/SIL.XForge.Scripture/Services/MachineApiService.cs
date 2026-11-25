@@ -53,6 +53,7 @@ public partial class MachineApiService(
     IExceptionHandler exceptionHandler,
     IHubContext<NotificationHub, INotifier> hubContext,
     IHubContext<DraftNotificationHub, IDraftNotifier> draftHubContext,
+    IHangfireJobService hangfireJobService,
     ILogger<MachineApiService> logger,
     IMachineProjectService machineProjectService,
     IParatextService paratextService,
@@ -726,6 +727,7 @@ public partial class MachineApiService(
 
                 // A draft has been applied
                 chaptersToNotify.Add((bookNum, chapterDelta.Number));
+                result.Applied.Add($"{Canon.BookNumberToId(bookNum)} {chapterDelta.Number}");
                 successful = true;
             }
         }
@@ -755,15 +757,7 @@ public partial class MachineApiService(
 
             await draftHubContext.NotifyDraftApplyProgress(
                 sfProjectId,
-                new DraftApplyState
-                {
-                    BookNum = 0,
-                    ChapterNum = 0,
-                    Status = successful ? DraftApplyStatus.Successful : DraftApplyStatus.Failed,
-                    Message = successful
-                        ? result.Log
-                        : $"An error occurred applying your draft. Please email {siteOptions.Value.IssuesEmail} for help.",
-                }
+                GetFinalDraftApplyState(successful, result.Log)
             );
 
             // Notify any listening users for each chapter that was updated in the target project
@@ -789,6 +783,57 @@ public partial class MachineApiService(
 
         return result;
     }
+
+    public DraftApplyJobStatus GetApplyPreTranslationStatus(string curUserId, string jobId)
+    {
+        HangfireJobInfo<DraftApplyResult>? jobInfo = hangfireJobService.GetJobInfo<DraftApplyResult>(jobId);
+        if (jobInfo?.MethodName != nameof(ApplyPreTranslationToProjectAsync) || jobInfo.Arguments.Count == 0)
+        {
+            throw new DataNotFoundException("The job does not exist.");
+        }
+
+        // Only allow the user who started the job to see its status
+        if (jobInfo.Arguments[0] as string != curUserId)
+        {
+            throw new ForbiddenException();
+        }
+
+        if (jobInfo.State == BackgroundJobState.Succeeded)
+        {
+            // The job returns a result, even if it did not save any changes
+            DraftApplyResult? result = jobInfo.Result;
+
+            return new DraftApplyJobStatus
+            {
+                Finished = true,
+                State = GetFinalDraftApplyState(result?.ChangesSaved ?? false, result?.Log),
+                Applied = [.. result?.Applied ?? []],
+                Failures = [.. result?.Failures ?? []],
+            };
+        }
+
+        if (jobInfo.State is BackgroundJobState.Failed or BackgroundJobState.Deleted)
+        {
+            return new DraftApplyJobStatus { Finished = true, State = GetFinalDraftApplyState(false, null) };
+        }
+
+        // The job is enqueued, scheduled for retry, or running
+        return new DraftApplyJobStatus { Finished = false };
+    }
+
+    /// <summary>
+    /// Gets the final state notification sent to clients when a draft has finished being applied.
+    /// </summary>
+    private DraftApplyState GetFinalDraftApplyState(bool successful, string? log) =>
+        new DraftApplyState
+        {
+            BookNum = 0,
+            ChapterNum = 0,
+            Status = successful ? DraftApplyStatus.Successful : DraftApplyStatus.Failed,
+            Message = successful
+                ? log
+                : $"An error occurred applying your draft. Please email {siteOptions.Value.IssuesEmail} for help.",
+        };
 
     public async Task BuildCompletedAsync(
         string sfProjectId,

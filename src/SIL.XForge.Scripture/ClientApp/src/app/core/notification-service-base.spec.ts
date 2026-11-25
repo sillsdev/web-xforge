@@ -201,6 +201,26 @@ describe('NotificationServiceBase', () => {
     tick(CONNECTION_IDLE_TIMEOUT_MS);
   }));
 
+  it('emits reconnected$ each time the app comes back online, but not for the initial subscription', fakeAsync(() => {
+    let reconnectedCount = 0;
+    const subscription = service.reconnected$('project01').subscribe(() => reconnectedCount++);
+    flushMicrotasks();
+    expect(reconnectedCount).toBe(0);
+
+    online$.next(false);
+    connection.state = HubConnectionState.Disconnected;
+    online$.next(true);
+    flushMicrotasks();
+    expect(reconnectedCount).toBe(1);
+
+    online$.next(false);
+    online$.next(true);
+    flushMicrotasks();
+    expect(reconnectedCount).toBe(2);
+    subscription.unsubscribe();
+    tick(CONNECTION_IDLE_TIMEOUT_MS);
+  }));
+
   it('waits until online to start the connection', fakeAsync(() => {
     online$.next(false);
     const subscription = service.testNotifications$('project01').subscribe();

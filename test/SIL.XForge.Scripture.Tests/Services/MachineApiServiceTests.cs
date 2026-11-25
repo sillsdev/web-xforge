@@ -108,6 +108,114 @@ public class MachineApiServiceTests
     };
 
     [Test]
+    public void GetApplyPreTranslationStatus_JobDoesNotExist()
+    {
+        var env = new TestEnvironment();
+        env.HangfireJobService.GetJobInfo<DraftApplyResult>(HangfireJobId)
+            .Returns((HangfireJobInfo<DraftApplyResult>?)null);
+
+        // SUT
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobIsNotApplyPreTranslation()
+    {
+        var env = new TestEnvironment();
+        env.HangfireJobService.GetJobInfo<DraftApplyResult>(HangfireJobId)
+            .Returns(
+                new HangfireJobInfo<DraftApplyResult>(
+                    BackgroundJobState.Succeeded,
+                    nameof(IMachineApiService.CancelPreTranslationBuildAsync),
+                    [User01, Project01, CancellationToken.None],
+                    null
+                )
+            );
+
+        // SUT
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobStartedByAnotherUser()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User02, BackgroundJobState.Succeeded);
+
+        // SUT
+        Assert.Throws<ForbiddenException>(() => env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobNotFinished()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, BackgroundJobState.Pending);
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsFalse(status.Finished);
+        Assert.IsNull(status.State);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobSucceeded()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(
+            User01,
+            BackgroundJobState.Succeeded,
+            new DraftApplyResult
+            {
+                ChangesSaved = true,
+                Applied = ["GEN 2"],
+                Failures = ["GEN 1"],
+                Log = "A warning",
+            }
+        );
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsTrue(status.Finished);
+        Assert.AreEqual(DraftApplyStatus.Successful, status.State!.Status);
+        Assert.AreEqual(0, status.State.BookNum);
+        Assert.AreEqual(0, status.State.ChapterNum);
+        Assert.AreEqual("A warning", status.State.Message);
+        Assert.AreEqual(new[] { "GEN 2" }, status.Applied);
+        Assert.AreEqual(new[] { "GEN 1" }, status.Failures);
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobSucceededWithoutSavingChanges()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, BackgroundJobState.Succeeded, new DraftApplyResult { ChangesSaved = false });
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsTrue(status.Finished);
+        Assert.AreEqual(DraftApplyStatus.Failed, status.State!.Status);
+        Assert.That(status.State.Message, Does.Contain(env.SiteOptions.Value.IssuesEmail));
+    }
+
+    [Test]
+    public void GetApplyPreTranslationStatus_JobFailed()
+    {
+        var env = new TestEnvironment();
+        env.SetApplyJob(User01, BackgroundJobState.Failed);
+
+        // SUT
+        DraftApplyJobStatus status = env.Service.GetApplyPreTranslationStatus(User01, HangfireJobId);
+
+        Assert.IsTrue(status.Finished);
+        Assert.AreEqual(DraftApplyStatus.Failed, status.State!.Status);
+        Assert.That(status.State.Message, Does.Contain(env.SiteOptions.Value.IssuesEmail));
+    }
+
+    [Test]
     public async Task ApplyPreTranslationToProjectAsync_BlankUsjFromMongo()
     {
         // Set up test environment
@@ -5811,6 +5919,7 @@ public class MachineApiServiceTests
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(HangfireJobId);
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            HangfireJobService = Substitute.For<IHangfireJobService>();
             DraftMetrics = new MemoryRepository<DraftMetrics>();
             EventMetricService = Substitute.For<IEventMetricService>();
             EventMetricService
@@ -5969,6 +6078,7 @@ public class MachineApiServiceTests
                 ExceptionHandler,
                 hubContext,
                 draftHubContext,
+                HangfireJobService,
                 MockLogger,
                 MachineProjectService,
                 ParatextService,
@@ -5991,6 +6101,23 @@ public class MachineApiServiceTests
         public IDeltaUsxMapper DeltaUsxMapper { get; }
         public IEventMetricService EventMetricService { get; }
         public IExceptionHandler ExceptionHandler { get; }
+
+        /// <summary>
+        /// Sets up the background job storage to contain a job that applies a draft.
+        /// </summary>
+        public void SetApplyJob(string curUserId, BackgroundJobState state, DraftApplyResult? result = null) =>
+            HangfireJobService
+                .GetJobInfo<DraftApplyResult>(HangfireJobId)
+                .Returns(
+                    new HangfireJobInfo<DraftApplyResult>(
+                        state,
+                        nameof(IMachineApiService.ApplyPreTranslationToProjectAsync),
+                        [curUserId, Project01, "GEN", Project02, DateTime.UtcNow, CancellationToken.None],
+                        result
+                    )
+                );
+
+        public IHangfireJobService HangfireJobService { get; }
         public IMachineProjectService MachineProjectService { get; }
         public MockLogger<MachineApiService> MockLogger { get; }
         public IParatextService ParatextService { get; }
