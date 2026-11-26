@@ -1,87 +1,91 @@
-<div class="projects-controls">
-  <mat-form-field>
-    <mat-label>Filter projects...</mat-label>
-    <input matInput (input)="updateSearchTerm($event.target)" id="project-filter" />
-  </mat-form-field>
-  <mat-checkbox [(ngModel)]="showProjectsWithCustomServalConfig" (change)="updateServalConfigFilter()">
-    Projects with custom Serval Configuration only
-  </mat-checkbox>
-</div>
-@if (!isLoading) {
-  @if (length > 0) {
-    <table mat-table id="projects-table" [dataSource]="rows">
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Name</th>
-        <td mat-cell *matCellDef="let row">
-          <a [appRouterLink]="['/serval-administration', row.id]">{{ row.name }}</a>
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="preTranslate">
-        <th mat-header-cell *matHeaderCellDef>Pre-translation</th>
-        <td mat-cell *matCellDef="let row">
-          @if (row.preTranslate) {
-            <strong>Enabled</strong>
-          } @else {
-            <span>Disabled</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="source">
-        <th mat-header-cell *matHeaderCellDef>Translate source</th>
-        <td mat-cell *matCellDef="let row">
-          @if (row.sourceId != null) {
-            <a [appRouterLink]="['/serval-administration', row.sourceId]">{{ row.source }}</a>
-          } @else {
-            <span>{{ row.source }}</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="draftingSource">
-        <th mat-header-cell *matHeaderCellDef>Draft source</th>
-        <td mat-cell *matCellDef="let row">
-          @for (source of row.draftingSources; track source.id) {
-            <p>
-              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
-            </p>
-          } @empty {
-            <span>None</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="trainingSource">
-        <th mat-header-cell *matHeaderCellDef>Reference projects</th>
-        <td mat-cell *matCellDef="let row">
-          @for (source of row.trainingSources; track source.id) {
-            <p>
-              <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
-            </p>
-          } @empty {
-            <span>None</span>
-          }
-        </td>
-      </ng-container>
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef>Actions</th>
-        <td mat-cell *matCellDef="let row">
-          <button mat-stroked-button (click)="viewDraftJobs(row.id)" class="draft-jobs-button">
-            <mat-icon>list</mat-icon>
-            Serval Builds
-          </button>
-        </td>
-      </ng-container>
-      <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
-    </table>
-    <mat-paginator
-      [pageIndex]="pageIndex"
-      [length]="length"
-      [pageSize]="pageSize"
-      [pageSizeOptions]="[5, 10, 20, 50, 100]"
-      (page)="updatePage($event.pageIndex, $event.pageSize)"
-    >
-    </mat-paginator>
+@if (isOnline) {
+  <div class="projects-controls">
+    <mat-form-field>
+      <mat-label>Filter projects...</mat-label>
+      <input matInput (input)="updateSearchTerm($event.target)" id="project-filter" />
+    </mat-form-field>
+    <mat-checkbox [(ngModel)]="showProjectsWithCustomServalConfig" (change)="updateServalConfigFilter()">
+      Projects with custom Serval Configuration only
+    </mat-checkbox>
+  </div>
+  @if (!isLoading) {
+    @if (length > 0) {
+      <table mat-table id="projects-table" [dataSource]="rows">
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let row">
+            <a [appRouterLink]="['/serval-administration', row.id]">{{ row.name }}</a>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="preTranslate">
+          <th mat-header-cell *matHeaderCellDef>Pre-translation</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.preTranslate) {
+              <strong>Enabled</strong>
+            } @else {
+              <span>Disabled</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="source">
+          <th mat-header-cell *matHeaderCellDef>Translate source</th>
+          <td mat-cell *matCellDef="let row">
+            @if (row.sourceId != null) {
+              <a [appRouterLink]="['/serval-administration', row.sourceId]">{{ row.source }}</a>
+            } @else {
+              <span>{{ row.source }}</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="draftingSource">
+          <th mat-header-cell *matHeaderCellDef>Draft source</th>
+          <td mat-cell *matCellDef="let row">
+            @for (source of row.draftingSources; track source.id) {
+              <p>
+                <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+              </p>
+            } @empty {
+              <span>None</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="trainingSource">
+          <th mat-header-cell *matHeaderCellDef>Reference projects</th>
+          <td mat-cell *matCellDef="let row">
+            @for (source of row.trainingSources; track source.id) {
+              <p>
+                <a [appRouterLink]="['/serval-administration', source.id]">{{ source.label }}</a>
+              </p>
+            } @empty {
+              <span>None</span>
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let row">
+            <button mat-stroked-button (click)="viewDraftJobs(row.id)" class="draft-jobs-button">
+              <mat-icon>list</mat-icon>
+              Serval Builds
+            </button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnsToDisplay"></tr>
+      </table>
+      <mat-paginator
+        [pageIndex]="pageIndex"
+        [length]="length"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50, 100]"
+        (page)="updatePage($event.pageIndex, $event.pageSize)"
+      >
+      </mat-paginator>
+    }
+    @if (length === 0) {
+      <div class="no-projects-label">No projects found</div>
+    }
   }
-  @if (length === 0) {
-    <div class="no-projects-label">No projects found</div>
-  }
+} @else {
+  <p>You are offline.</p>
 }

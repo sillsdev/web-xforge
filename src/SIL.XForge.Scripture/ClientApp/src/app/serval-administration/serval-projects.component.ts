@@ -23,10 +23,11 @@ import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter, switchMap, tap } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RouterLinkDirective } from 'xforge-common/router-link.directive';
 import { quietTakeUntilDestroyed } from 'xforge-common/util/rxjs-util';
@@ -126,6 +127,7 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     readonly i18n: I18nService,
     private readonly router: Router,
     private readonly servalAdministrationService: ServalAdministrationService,
+    private readonly onlineStatusService: OnlineStatusService,
     private destroyRef: DestroyRef
   ) {
     super(noticeService, 'ServalProjectsComponent');
@@ -133,18 +135,28 @@ export class ServalProjectsComponent extends DataLoadingComponent implements OnI
     this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
   }
 
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
+  }
+
   get isLoading(): boolean {
     return this.projectDocs == null;
   }
 
   ngOnInit(): void {
-    this.loadingStarted();
-    this.servalAdministrationService
-      .onlineQuery(this.searchTerm$, this.queryParameters$, [
-        obj<Project>().pathStr(p => p.name),
-        obj<SFProjectProfile>().pathStr(p => p.shortName)
-      ])
-      .pipe(quietTakeUntilDestroyed(this.destroyRef))
+    this.onlineStatusService.onlineStatus$
+      .pipe(
+        filter(isOnline => isOnline),
+        tap(() => this.loadingStarted()),
+        // Only query while online; re-run the query when connectivity returns
+        switchMap(() =>
+          this.servalAdministrationService.onlineQuery(this.searchTerm$, this.queryParameters$, [
+            obj<Project>().pathStr(p => p.name),
+            obj<SFProjectProfile>().pathStr(p => p.shortName)
+          ])
+        ),
+        quietTakeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(searchResults => {
         this.projectDocs = searchResults.docs;
         this.length = searchResults.unpagedCount;

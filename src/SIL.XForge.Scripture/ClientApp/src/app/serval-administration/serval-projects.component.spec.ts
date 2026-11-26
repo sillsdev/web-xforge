@@ -1,7 +1,5 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatCheckboxHarness } from '@angular/material/checkbox/testing';
@@ -14,10 +12,13 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
-import { anything, mock, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { ProjectDoc } from 'xforge-common/models/project-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryFilter, QueryParameters } from 'xforge-common/query-parameters';
+import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { provideTestRealtime } from 'xforge-common/test-realtime-providers';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getTestTranslocoModule } from 'xforge-common/test-utils';
@@ -33,9 +34,9 @@ describe('ServalProjectsComponent', () => {
     providers: [
       provideRouter([]),
       { provide: ServalAdministrationService, useMock: mockedServalAdministrationService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       provideTestRealtime(new TypeRegistry([TestProjectDoc], [FileType.Audio], [])),
-      provideHttpClient(withInterceptorsFromDi()),
-      provideHttpClientTesting()
+      provideTestOnlineStatus()
     ]
   }));
 
@@ -109,6 +110,18 @@ describe('ServalProjectsComponent', () => {
     expect(env.rows.length).toEqual(3);
   }));
 
+  it('should display offline message and not query when offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.onlineStatusService.setIsOnline(false);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.fixture.nativeElement.textContent).toContain('You are offline.');
+    expect(env.fixture.debugElement.query(By.css('#project-filter'))).toBeNull();
+    verify(mockedServalAdministrationService.onlineQuery(anything(), anything(), anything())).never();
+  }));
+
   it('should page', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
@@ -136,6 +149,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ServalProjectsComponent>;
   readonly loader: HarnessLoader;
 
+  readonly onlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
