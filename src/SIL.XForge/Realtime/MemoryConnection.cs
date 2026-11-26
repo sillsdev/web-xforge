@@ -1,4 +1,3 @@
-#nullable disable warnings
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -92,7 +91,7 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
     /// Fetches a document snapshot at a point in time asynchronously.
     /// </summary>
     public async Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         var doc = Get<T>(id);
         await doc.FetchAsync();
@@ -115,20 +114,20 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
     /// Fetches a snapshot of each of the specified documents at a point in time asynchronously.
     /// </summary>
     public async Task<Snapshot<T>[]> FetchSnapshotsAsync<T>(IReadOnlyCollection<string> ids, DateTime timestamp)
-        where T : IIdentifiable => await Task.WhenAll(ids.Select(id => FetchSnapshotAsync<T>(id, timestamp)));
+        where T : class, IIdentifiable => await Task.WhenAll(ids.Select(id => FetchSnapshotAsync<T>(id, timestamp)));
 
     /// <summary>
     /// Gets the ops for a document.
     /// </summary>
     /// <returns>An Op array.</returns>
     public Task<Op[]> GetOpsAsync<T>(string id)
-        where T : IIdentifiable => Task.FromResult(realtimeService.GetRepository<T>().GetOps(id));
+        where T : class, IIdentifiable => Task.FromResult(realtimeService.GetRepository<T>().GetOps(id));
 
     public IDocument<T> Get<T>(string id)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         DocConfig docConfig = realtimeService.GetDocConfig<T>();
-        if (_documents.TryGetValue((docConfig.CollectionName, id), out object docObj))
+        if (_documents.TryGetValue((docConfig.CollectionName, id), out object? docObj))
             return (IDocument<T>)docObj;
 
         MemoryRepository<T> repo = realtimeService.GetRepository<T>();
@@ -138,7 +137,7 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
     }
 
     public async Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
-        where T : IIdentifiable
+        where T : class, IIdentifiable
     {
         List<IDocument<T>> docs = [];
         foreach (IDocument<T> doc in ids.Select(Get<T>))
@@ -173,8 +172,9 @@ public class MemoryConnection(MemoryRealtimeService realtimeService) : IConnecti
         object op,
         T currentDoc,
         int currentVersion,
-        OpSource? source
-    ) => throw new NotImplementedException();
+        SubmitOptions? options
+    )
+        where T : class => throw new NotImplementedException();
 
     /// <summary>
     /// Replaces a document asynchronously.

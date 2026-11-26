@@ -3295,7 +3295,7 @@ public class MachineApiServiceTests
             null,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data?.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
     }
 
@@ -3319,7 +3319,7 @@ public class MachineApiServiceTests
             null,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data?.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
     }
 
@@ -3344,7 +3344,7 @@ public class MachineApiServiceTests
             config,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data?.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
         Attempt<TextDocument?> attempt = await env
             .RealtimeService.GetRepository<TextDocument>()
@@ -3382,7 +3382,7 @@ public class MachineApiServiceTests
             config,
             CancellationToken.None
         );
-        Assert.AreEqual(expected.Ops[0], actual["1"].Data.Ops[0]);
+        Assert.AreEqual(expected.Ops[0], actual["1"].Data?.Ops[0]);
         Assert.AreEqual(TextData.GetTextDocId(Project01, "MAT", 1), actual["1"].Id);
         Attempt<TextDocument?> attempt = await env
             .RealtimeService.GetRepository<TextDocument>()
@@ -6165,7 +6165,7 @@ public class MachineApiServiceTests
                 {
                     string userId = callInfo.ArgAt<string>(0);
                     var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(1);
-                    foreach (var text in projectDoc.Data.Texts)
+                    foreach (var text in projectDoc.Data!.Texts)
                     {
                         text.Permissions.TryAdd(
                             userId,
@@ -6201,7 +6201,7 @@ public class MachineApiServiceTests
                 {
                     UserSecret userSecret = callInfo.ArgAt<UserSecret>(0);
                     var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(2);
-                    foreach (var text in projectDoc.Data.Texts)
+                    foreach (var text in projectDoc.Data!.Texts)
                     {
                         text.Permissions.TryAdd(
                             userSecret.Id,
@@ -6236,7 +6236,7 @@ public class MachineApiServiceTests
                     var projectDoc = callInfo.ArgAt<IDocument<SFProject>>(2);
                     int[] booksToUpdate = callInfo.ArgAt<int[]>(3);
                     var addedChapters = callInfo.ArgAt<IReadOnlyDictionary<int, int[]>?>(6);
-                    foreach (var text in projectDoc.Data.Texts.Where(t => booksToUpdate.Contains(t.BookNum)))
+                    foreach (var text in projectDoc.Data!.Texts.Where(t => booksToUpdate.Contains(t.BookNum)))
                     {
                         text.Permissions.TryAdd(
                             userSecret.Id,

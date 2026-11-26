@@ -576,7 +576,7 @@ public class TrainingDataServiceTests
         await using IConnection conn2 = await env.RealtimeService.ConnectAsync(User01);
         trainingDataDoc = await conn2.FetchAsync<TrainingData>(TrainingData.GetDocId(Project01, Data01));
 
-        Assert.That(trainingDataDoc.Data.Deleted, Is.True);
+        Assert.That(trainingDataDoc.Data?.Deleted, Is.True);
     }
 
     [Test]
