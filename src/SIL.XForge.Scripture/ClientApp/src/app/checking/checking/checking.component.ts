@@ -587,6 +587,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                     this.onRemovedFromProject();
                   } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
                     this.onRemovedFromProject();
+                  } else {
+                    // The user's permissions may have changed, so refresh the available question filters
+                    this.initQuestionFilters();
                   }
                 }
               });
@@ -1638,6 +1641,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.questionFilters
         .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
         .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
+    }
+
+    if (!this.questionFilters.has(this.activeQuestionFilter)) {
+      this.setQuestionFilter(QuestionFilter.None);
     }
   }
 

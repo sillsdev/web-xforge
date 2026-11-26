@@ -954,6 +954,33 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('updates filter options and resets active filter when answer status permission is removed', fakeAsync(() => {
+      const env = new TestEnvironment({ user: TRANSLATOR_USER });
+      const answerStatusPermission = SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.AnswerStatus, Operation.Edit);
+
+      // Grant the translator permission to edit answer status
+      env.component.projectDoc!.submitJson0Op(
+        op => op.set<string[]>(p => p.userPermissions[TRANSLATOR_USER.id], [answerStatusPermission]),
+        false
+      );
+      env.waitForSliderUpdate();
+      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).toBe(true);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered)).toBe(false);
+
+      env.component.setQuestionFilter(QuestionFilter.StatusExport);
+      expect(env.component.activeQuestionFilter).toEqual(QuestionFilter.StatusExport);
+
+      // Remove the permission
+      env.component.projectDoc!.submitJson0Op(op => op.unset(p => p.userPermissions[TRANSLATOR_USER.id]), false);
+      env.waitForSliderUpdate();
+
+      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).toBe(false);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered)).toBe(true);
+      expect(env.component.activeQuestionFilter).toEqual(QuestionFilter.None);
+      flush();
+      discardPeriodicTasks();
+    }));
+
     it('can filter questions', fakeAsync(() => {
       const env = new TestEnvironment({
         user: ADMIN_USER,
