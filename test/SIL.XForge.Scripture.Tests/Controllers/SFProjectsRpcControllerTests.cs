@@ -1254,6 +1254,18 @@ public class SFProjectsRpcControllerTests
     }
 
     [Test]
+    public async Task Sync_ParatextTokenExpired()
+    {
+        var env = new TestEnvironment();
+        env.SFProjectService.SyncAsync(User01, Project01).Throws(new ParatextTokenExpiredException());
+
+        // SUT
+        var result = await env.Controller.Sync(Project01);
+        Assert.IsInstanceOf<RpcMethodErrorResult>(result);
+        Assert.AreEqual(RpcControllerBase.UnauthorizedErrorCode, (result as RpcMethodErrorResult)!.ErrorCode);
+    }
+
+    [Test]
     public async Task Sync_Unauthorized()
     {
         var env = new TestEnvironment();

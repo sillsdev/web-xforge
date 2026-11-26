@@ -83,9 +83,9 @@ public class ParatextController : ControllerBase
         {
             return Conflict();
         }
-        catch (UnauthorizedAccessException)
+        catch (ParatextTokenExpiredException e)
         {
-            return Unauthorized();
+            return Unauthorized(e.Message);
         }
     }
 
@@ -179,9 +179,9 @@ public class ParatextController : ControllerBase
         {
             return NoContent();
         }
-        catch (UnauthorizedAccessException)
+        catch (ParatextTokenExpiredException e)
         {
-            return Unauthorized();
+            return Unauthorized(e.Message);
         }
         catch (CannotConnectException)
         {
@@ -339,9 +339,9 @@ public class ParatextController : ControllerBase
         {
             return NoContent();
         }
-        catch (UnauthorizedAccessException)
+        catch (ParatextTokenExpiredException e)
         {
-            return Unauthorized();
+            return Unauthorized(e.Message);
         }
         catch (CannotConnectException)
         {
@@ -369,13 +369,13 @@ public class ParatextController : ControllerBase
         {
             return NotFound();
         }
-        catch (ForbiddenException)
+        catch (Exception ex) when (ex is ForbiddenException or UnauthorizedAccessException)
         {
             return Forbid();
         }
-        catch (UnauthorizedAccessException)
+        catch (ParatextTokenExpiredException e)
         {
-            return Unauthorized();
+            return Unauthorized(e.Message);
         }
     }
 

@@ -123,6 +123,8 @@ describe('HistoryChooserComponent', () => {
     env.draftApplyProgress$.next(state);
     env.wait();
     verify(mockedParatextService.getRevisions(anything(), anything(), anything())).twice();
+    expect(env.component.selectedRevision).toBeDefined();
+    expect(env.historySelect).toBeDefined();
   }));
 
   it('should allow no revisions', fakeAsync(() => {

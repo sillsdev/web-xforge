@@ -1008,9 +1008,9 @@ public class MachineApiController : ControllerBase
         {
             return StatusCode(StatusCodes.Status429TooManyRequests, e.Message);
         }
-        catch (UnauthorizedAccessException)
+        catch (ParatextTokenExpiredException e)
         {
-            return Unauthorized();
+            return Unauthorized(e.Message);
         }
     }
 

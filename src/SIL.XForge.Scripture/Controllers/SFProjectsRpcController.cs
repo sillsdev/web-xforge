@@ -633,6 +633,10 @@ public class SFProjectsRpcController(
         {
             return ForbiddenError();
         }
+        catch (ParatextTokenExpiredException e)
+        {
+            return UnauthorizedError(e.Message);
+        }
         catch (DataNotFoundException dnfe)
         {
             return NotFoundError(dnfe.Message);

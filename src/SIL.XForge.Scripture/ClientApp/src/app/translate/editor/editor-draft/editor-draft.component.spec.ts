@@ -174,6 +174,7 @@ describe('EditorDraftComponent', () => {
 
     buildNotification$.next(undefined);
     verify(mockDraftGenerationService.getBuildHistory('targetProjectId')).once();
+    expect(component.isLatestBuildCompleted).toBe(true);
     flush();
   }));
 
@@ -565,6 +566,7 @@ describe('EditorDraftComponent', () => {
     tick(EDITOR_READY_TIMEOUT);
 
     verify(mockDraftGenerationService.getBuildHistory(anything())).once();
+    expect(component.isLatestBuildCompleted).toBe(true);
     flush();
   }));
 

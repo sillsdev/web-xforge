@@ -572,7 +572,7 @@ public class ParatextServiceTests
                 Arg.Any<HttpClient>(),
                 CancellationToken.None
             )
-            .Throws(new UnauthorizedAccessException());
+            .Throws(new ParatextTokenExpiredException());
 
         // SUT
         await Assert.ThrowsAsync<ParatextTokenExpiredException>(() =>
@@ -987,7 +987,7 @@ public class ParatextServiceTests
         DateTime date = DateTime.Now; // This must be consistent as it is a part of the comment id
 
         // Configure the Paratext data helper to throw an error
-        var exception = new UnauthorizedAccessException();
+        var exception = new InvalidOperationException();
         env.MockParatextDataHelper.When(pd => pd.CommitVersionedText(Arg.Any<ScrText>(), Arg.Any<string>()))
             .Throws(exception);
 
@@ -996,7 +996,7 @@ public class ParatextServiceTests
         const string content = "Content for comment to update.";
         const string verseRef = "RUT 1:1";
         XElement updateNotesXml = TestEnvironment.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
-        Assert.Throws<UnauthorizedAccessException>(() => env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml));
+        Assert.Throws<InvalidOperationException>(() => env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml));
 
         // Ensure that the error has logged too
         env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == exception);
@@ -5058,7 +5058,7 @@ public class ParatextServiceTests
         );
 
         // One SUT
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentNullException>(
             () =>
                 env.Service.CanUserAuthenticateToPTRegistryAsync(new UserSecret() { Id = null, ParatextTokens = null }),
             "the user secret does not have usable content"
@@ -5071,6 +5071,14 @@ public class ParatextServiceTests
             await env.Service.CanUserAuthenticateToPTRegistryAsync(user01Secret),
             Is.False,
             "authorization token is not accepted by server. unauthorized."
+        );
+
+        env.MakeRegistryClientReturn(env.TokensExpiredHttpResponseMessage);
+
+        // One SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(
+            () => env.Service.CanUserAuthenticateToPTRegistryAsync(user01Secret),
+            "the paratext tokens are not throwing the correct exception when expired"
         );
 
         using HttpResponseMessage okResponse = TestEnvironment.MakeOkHttpResponseMessage(
@@ -5097,7 +5105,7 @@ public class ParatextServiceTests
         string userSFId = env.User01;
 
         // One SUT
-        await Assert.ThrowsAsync<ArgumentException>(
+        await Assert.ThrowsAsync<ArgumentNullException>(
             () => env.Service.CanUserAuthenticateToPTArchivesAsync(null),
             "unacceptable null input"
         );
@@ -5125,6 +5133,14 @@ public class ParatextServiceTests
 
         // One SUT
         Assert.That(await env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId), Is.True, "authorized");
+
+        mockSource.CanUserAuthenticateToPTArchives().Throws(new ParatextTokenExpiredException());
+
+        // One SUT
+        await Assert.ThrowsAsync<ParatextTokenExpiredException>(
+            () => env.Service.CanUserAuthenticateToPTArchivesAsync(userSFId),
+            "unauthorized"
+        );
     }
 
     [Test]
@@ -6887,6 +6903,14 @@ public class ParatextServiceTests
         {
             RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
             Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem")),
+        };
+
+        public readonly HttpResponseMessage TokensExpiredHttpResponseMessage = new HttpResponseMessage(
+            HttpStatusCode.BadRequest
+        )
+        {
+            RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
+            Content = new ByteArrayContent(Encoding.UTF8.GetBytes("tokens are invalid or have expired")),
         };
 
         public readonly HttpResponseMessage NotFoundHttpResponseMessage = new HttpResponseMessage(

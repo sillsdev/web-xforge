@@ -933,8 +933,28 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     private async Task PreflightAuthenticationReportAsync()
     {
-        bool canAuthToRegistry = await _paratextService.CanUserAuthenticateToPTRegistryAsync(_userSecret);
-        bool canAuthToArchives = await _paratextService.CanUserAuthenticateToPTArchivesAsync(_userSecret.Id);
+        bool canAuthToRegistry;
+        try
+        {
+            canAuthToRegistry = await _paratextService.CanUserAuthenticateToPTRegistryAsync(_userSecret);
+        }
+        catch (ParatextTokenExpiredException e)
+        {
+            LogMetric($"Paratext Token Expired Exception when accessing PT Registry: {e.Message}.");
+            canAuthToRegistry = false;
+        }
+
+        bool canAuthToArchives;
+        try
+        {
+            canAuthToArchives = await _paratextService.CanUserAuthenticateToPTArchivesAsync(_userSecret.Id);
+        }
+        catch (ParatextTokenExpiredException e)
+        {
+            LogMetric($"Paratext Token Expired Exception when accessing PT Archives: {e.Message}.");
+            canAuthToArchives = false;
+        }
+
         LogMetric($"User can authenticate to PT Registry: {canAuthToRegistry}, to PT Archives: {canAuthToArchives}.");
     }
 

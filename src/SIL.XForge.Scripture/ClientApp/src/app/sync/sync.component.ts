@@ -228,7 +228,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     this._syncActive = true;
     this.projectService.onlineSync(this.projectDoc.id).catch((error: any) => {
       this.checkSyncStatus();
-      if ('code' in error && error.code === CommandErrorCode.Forbidden) {
+      if ('code' in error && error.code === CommandErrorCode.Unauthorized) {
         this.authService.requestParatextCredentialUpdate();
       } else {
         throw error;
