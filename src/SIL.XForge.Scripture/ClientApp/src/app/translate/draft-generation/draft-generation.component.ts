@@ -1,22 +1,18 @@
 import { AsyncPipe, DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, ViewChild } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle, MatCardTitle } from '@angular/material/card';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { MatExpansionPanel, MatExpansionPanelContent, MatExpansionPanelHeader } from '@angular/material/expansion';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressBar } from '@angular/material/progress-bar';
-import { MatTabGroup } from '@angular/material/tabs';
 import { ActivatedRoute, RouterLink as NgRouterLink, Router } from '@angular/router';
 import { TranslocoModule } from '@ngneat/transloco';
-import { NgCircleProgressModule } from 'ng-circle-progress';
 import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { asyncScheduler, combineLatest, of, Subscription } from 'rxjs';
-import { catchError, filter, switchMap, tap, throttleTime } from 'rxjs/operators';
+import { filter, switchMap, tap, throttleTime } from 'rxjs/operators';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -36,7 +32,6 @@ import { SelectableProject } from '../../core/models/selectable-project';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { PermissionsService } from '../../core/permissions.service';
-import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NoticeComponent } from '../../shared/notice/notice.component';
@@ -45,11 +40,7 @@ import { formatScriptureRangeWithChapters } from '../../shared/scripture-range-d
 import { UserFeedbackComponent } from '../../shared/user-feedback/user-feedback.component';
 import { projectLabel } from '../../shared/utils';
 import { NllbLanguageService } from '../nllb-language.service';
-import { activeBuildStates, BuildConfig, StartBuildResult } from './draft-generation';
-import {
-  DraftGenerationStepsComponent,
-  DraftGenerationStepsResult
-} from './draft-generation-steps/draft-generation-steps.component';
+import { activeBuildStates } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 import { DraftHistoryListComponent } from './draft-history-list/draft-history-list.component';
 import { DraftInformationComponent } from './draft-information/draft-information.component';
@@ -88,17 +79,14 @@ const USER_FEEDBACK_SUBMISSION_DAYS = 365;
     TranslocoModule,
     TranslocoMarkupModule,
     NoticeComponent,
-    NgCircleProgressModule,
     L10nNumberPipe,
     L10nPercentPipe,
-    DraftGenerationStepsComponent,
     DraftInformationComponent,
     DraftHistoryListComponent,
     UserFeedbackComponent
   ]
 })
 export class DraftGenerationComponent extends DataLoadingComponent implements OnInit {
-  @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   @ViewChild(DraftHistoryListComponent) draftHistoryList?: DraftHistoryListComponent;
   draftJob?: BuildDto;
 
@@ -106,7 +94,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
   supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
   draftHelp = this.i18n.interpolate('draft_generation.instructions_help');
 
-  sourceLanguage?: string;
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
   isTargetLanguageSupported = true;
@@ -118,8 +105,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   jobSubscription?: Subscription;
   isOnline = true;
-
-  currentPage: 'initial' | 'steps' = 'initial';
 
   /**
    * Once true, UI can proceed with display according to status of fetched job.
@@ -135,17 +120,11 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
    */
   lastCompletedBuild: BuildDto | undefined;
 
-  /**
-   * Determines if there are draft books available for download.
-   */
-  hasDraftBooksAvailable = false;
-
   isPreTranslationApproved = false;
   onboardingRequest?: OpenOnboardingRequest | null;
   responseDays = DRAFT_SIGNUP_RESPONSE_DAYS;
 
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
-  cancelDialogRef?: MatDialogRef<any>;
 
   readonly draftDurationHours = 1.5;
   /** Duration to throttle large amounts of incoming project changes. 500 is a guess for what may be useful. */
@@ -171,7 +150,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     protected readonly noticeService: NoticeService,
     protected readonly urlService: ExternalUrlService,
     protected readonly draftOptionsService: DraftOptionsService,
-    private readonly projectService: SFProjectService,
     private readonly featureFlags: FeatureFlagService,
     private readonly permissions: PermissionsService,
     private destroyRef: DestroyRef
@@ -302,7 +280,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
           this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
           this.targetLanguage = projectDoc.data?.writingSystem.tag;
           this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
-          this.hasDraftBooksAvailable = projectDoc.data != null && this.projectService.hasDraft(projectDoc.data);
         })
       ),
       this.draftSourcesService.getDraftProjectSources().pipe(
@@ -397,18 +374,14 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       return;
     }
 
-    if (this.featureFlags.partialBookDrafting.enabled) {
-      const projectId = this.activatedProject.projectId;
-      if (projectId != null) {
-        await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
-      }
-    } else {
-      this.currentPage = 'steps';
+    const projectId = this.activatedProject.projectId;
+    if (projectId != null) {
+      await this.router.navigate(['/projects', projectId, 'draft-generation', 'new-draft']);
     }
   }
 
   async cancel(): Promise<void> {
-    const { dialogRef, result } = this.dialogService.openGenericDialog({
+    const { result } = this.dialogService.openGenericDialog({
       title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
       message: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_message'),
       options: [
@@ -421,7 +394,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
       ]
     });
 
-    this.cancelDialogRef = dialogRef;
     const isConfirmed: boolean | undefined = await result;
 
     if (!isConfirmed) {
@@ -429,22 +401,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
     }
 
     this.cancelBuild();
-  }
-
-  onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
-    const sfProjectId: string | undefined = this.activatedProject.projectId;
-    if (sfProjectId == null) {
-      throw new Error('SF Project ID is not set');
-    }
-    this.startBuild({
-      projectId: sfProjectId,
-      trainingDataFiles: result.trainingDataFiles,
-      trainingScriptureRanges: result.trainingScriptureRanges,
-      translationScriptureRanges: result.translationScriptureRanges || [],
-      fastTraining: result.fastTraining,
-      useEcho: result.useEcho,
-      sendEmailOnBuildFinished: result.sendEmailOnBuildFinished
-    });
   }
 
   /**
@@ -505,46 +461,6 @@ export class DraftGenerationComponent extends DataLoadingComponent implements On
 
   canCancel(job?: BuildDto): boolean {
     return job == null || this.isDraftInProgress(job);
-  }
-
-  startBuild(buildConfig: BuildConfig): void {
-    let userNotified = false;
-    this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.draftGenerationService
-      .startBuildOrGetActiveBuild(buildConfig)
-      .pipe(
-        tap((result?: StartBuildResult) => {
-          // If a build was already active (started by another user, or by this user elsewhere), the submitted
-          // configuration was not used, so tell the user
-          if (result?.joinedExistingBuild === true && !userNotified) {
-            userNotified = true;
-            void this.dialogService.message('draft_generation.draft_already_running');
-          }
-
-          const job: BuildDto | undefined = result?.job;
-          this.currentPage = 'initial';
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-
-          // Ensure flag is set for case where first completed build happens while component is loaded
-          if (this.isDraftComplete(job)) {
-            this.lastCompletedBuild = job;
-          }
-        }),
-        catchError(error => {
-          if (error instanceof HttpErrorResponse && error.status === 401) {
-            this.authService.requestParatextCredentialUpdate();
-          }
-
-          return of(undefined);
-        }),
-        quietTakeUntilDestroyed(this.destroyRef)
-      )
-      .subscribe((result?: StartBuildResult) => (this.draftJob = result?.job));
   }
 
   projectLabel(project?: SelectableProject): string {
