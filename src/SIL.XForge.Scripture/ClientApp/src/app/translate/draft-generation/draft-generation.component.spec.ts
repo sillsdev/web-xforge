@@ -1,10 +1,8 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { defaultTranslocoMarkupTranspilers } from 'ngx-transloco-markup';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { DraftResult } from 'realtime-server/lib/esm/scriptureforge/models/draft-result';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -13,14 +11,12 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { createTestProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config-test-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { EMPTY, NEVER, of, Subject, throwError } from 'rxjs';
-import { instance, mock, verify, when } from 'ts-mockito';
+import { EMPTY, NEVER, of, Subject } from 'rxjs';
 import { ActivatedProjectUserConfigService } from 'xforge-common/activated-project-user-config.service';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { createTestFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { provideTestOnlineStatus } from 'xforge-common/test-online-status-providers';
@@ -170,7 +166,6 @@ describe('DraftGenerationComponent', () => {
 
       mockBrandingService = jasmine.createSpyObj<BrandingService>([], { siteName: 'Scripture Forge' });
       mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>([], {
-        partialBookDrafting: createTestFeatureFlag(true),
         userFeedbackNotice: createTestFeatureFlag(true)
       });
     }
@@ -356,18 +351,10 @@ describe('DraftGenerationComponent', () => {
       env.fixture.detectChanges();
       expect(env.offlineTextElement).not.toBeNull();
       expect(env.configureDraftButton).toBeNull();
-
-      env.component.currentPage = 'steps';
-      env.fixture.detectChanges();
-      expect(env.offlineTextElement).not.toBeNull();
     });
 
     it('should not display offline message when online', () => {
       const env = new TestEnvironment();
-      env.fixture.detectChanges();
-      expect(env.offlineTextElement).toBeNull();
-
-      env.component.currentPage = 'steps';
       env.fixture.detectChanges();
       expect(env.offlineTextElement).toBeNull();
     });
@@ -940,303 +927,6 @@ describe('DraftGenerationComponent', () => {
       tick();
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(false);
-    }));
-  });
-
-  describe('currentPage', () => {
-    it('should navigate to pre-generate steps', fakeAsync(() => {
-      const env = new TestEnvironment(() => {
-        mockUserService.getCurrentUser.and.returnValue(
-          new Promise<UserDoc>(() => ({
-            data: createTestUser()
-          }))
-        );
-        const projectDoc = {
-          data: createTestProjectProfile()
-        };
-
-        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-          projectId: projectId,
-          projectId$: of(projectId),
-          projectDoc: projectDoc,
-          projectDoc$: of(projectDoc),
-          changes$: of(null)
-        });
-      });
-
-      env.component.currentPage = 'steps';
-      env.fixture.detectChanges();
-      tick();
-      expect(env.preGenerationStepper).not.toBeNull();
-    }));
-  });
-
-  describe('startBuild', () => {
-    it('should start the draft build', () => {
-      const env = new TestEnvironment();
-      mockDraftGenerationService.getBuildProgress.and.returnValue(of(undefined));
-
-      env.component.currentPage = 'steps';
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.fixture.detectChanges();
-      expect(env.component.currentPage).toBe('steps');
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        sendEmailOnBuildFinished: false
-      });
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: buildDto });
-      env.fixture.detectChanges();
-      expect(env.component.currentPage).toBe('initial');
-    });
-
-    it('should inform the user when an already-running build was joined', () => {
-      const env = new TestEnvironment();
-      env.component['draftJob'] = undefined; //clear the known draft job
-
-      env.component.currentPage = 'steps';
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.fixture.detectChanges();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledTimes(1);
-
-      // The service reports that an active build was joined instead of a new build started
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: true, job: buildDto });
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: true, job: buildDto });
-      env.fixture.detectChanges();
-
-      // The user is told exactly once, and the joined build becomes the displayed job
-      expect(mockDialogService.message).toHaveBeenCalledOnceWith('draft_generation.draft_already_running');
-      expect(env.component.currentPage).toBe('initial');
-      expect(env.component['draftJob']).not.toBeNull();
-    });
-
-    it('should not show a dialog when a new build was started', () => {
-      const env = new TestEnvironment();
-
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.fixture.detectChanges();
-
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: buildDto });
-      env.fixture.detectChanges();
-
-      expect(mockDialogService.message).not.toHaveBeenCalled();
-    });
-
-    it('should not attempt "cancel dialog" close for queued build', () => {
-      const env = new TestEnvironment();
-
-      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
-      env.component.cancelDialogRef = instance(mockDialogRef);
-
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Queued } });
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        sendEmailOnBuildFinished: false
-      });
-      verify(mockDialogRef.getState()).never();
-      verify(mockDialogRef.close()).never();
-    });
-
-    it('should not attempt "cancel dialog" close for pending build', () => {
-      const env = new TestEnvironment();
-
-      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
-      env.component.cancelDialogRef = instance(mockDialogRef);
-
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Pending } });
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        sendEmailOnBuildFinished: false
-      });
-      verify(mockDialogRef.getState()).never();
-      verify(mockDialogRef.close()).never();
-    });
-
-    it('should not attempt "cancel dialog" close for active build', () => {
-      const env = new TestEnvironment();
-
-      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
-      env.component.cancelDialogRef = instance(mockDialogRef);
-
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Active } });
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        sendEmailOnBuildFinished: false
-      });
-      verify(mockDialogRef.getState()).never();
-      verify(mockDialogRef.close()).never();
-    });
-
-    it('should attempt "cancel dialog" close for cancelled build', () => {
-      const env = new TestEnvironment();
-
-      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
-      when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
-      env.component.cancelDialogRef = instance(mockDialogRef);
-
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      env.startedOrActiveBuild$.next({ joinedExistingBuild: false, job: { ...buildDto, state: BuildStates.Canceled } });
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        sendEmailOnBuildFinished: false
-      });
-      verify(mockDialogRef.close()).once();
-    });
-
-    it('should track whether the current project is not syncing', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.fixture.detectChanges();
-      tick();
-
-      expect(env.component.isSyncing()).toBe(false);
-    }));
-
-    it('should track whether the current project is syncing', fakeAsync(() => {
-      const projectDoc: SFProjectProfileDoc = {
-        data: createTestProjectProfile({
-          writingSystem: {
-            tag: 'xyz'
-          },
-          translateConfig: {
-            projectType: ProjectType.BackTranslation,
-            source: {
-              projectRef: 'testSourceProjectId',
-              writingSystem: {
-                tag: 'en'
-              }
-            }
-          },
-          sync: {
-            queuedCount: 1
-          }
-        })
-      } as SFProjectProfileDoc;
-      const env = new TestEnvironment(() => {
-        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-          projectId: projectId,
-          projectId$: of(projectId),
-          projectDoc: projectDoc,
-          projectDoc$: of(projectDoc),
-          changes$: of(projectDoc)
-        });
-      });
-      env.fixture.detectChanges();
-      tick();
-
-      expect(env.component.isSyncing()).toBe(true);
-    }));
-
-    it('should display the Paratext credentials update prompt when startBuild throws a forbidden error', fakeAsync(() => {
-      const env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
-          throwError(() => new HttpErrorResponse({ status: 401 }))
-        );
-      });
-
-      env.component.startBuild({
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        projectId: projectId,
-        sendEmailOnBuildFinished: false
-      });
-      tick();
-
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
-        projectId: projectId,
-        trainingDataFiles: [],
-        trainingScriptureRanges: [],
-        translationScriptureRanges: [],
-        fastTraining: false,
-        useEcho: false,
-        sendEmailOnBuildFinished: false
-      });
-      expect(mockAuthService.requestParatextCredentialUpdate).toHaveBeenCalled();
     }));
   });
 

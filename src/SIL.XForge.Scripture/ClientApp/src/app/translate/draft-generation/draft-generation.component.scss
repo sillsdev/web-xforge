@@ -1,5 +1,4 @@
 @use 'src/variables';
-@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
 :host {
   // Needed to style inside <transloco> element
@@ -10,13 +9,6 @@
   }
 
   padding-block-end: 10px;
-}
-
-h3 {
-  font-size: 20px;
-  font-weight: 500;
-  display: flex;
-  gap: 10px;
 }
 
 .requirements {
@@ -43,9 +35,6 @@ h3 {
   mat-icon {
     flex-shrink: 0;
 
-    &.criteria-met {
-      color: green;
-    }
     &.criteria-not-met {
       color: var(--sf-error-color);
     }
@@ -60,45 +49,6 @@ app-notice {
   font-weight: 500;
 }
 
-// Hide the tab headers
-mat-tab-group {
-  ::ng-deep .mat-mdc-tab-header {
-    display: none;
-  }
-}
-
-mat-divider.mat-divider-inset {
-  margin: 0;
-}
-
-.draft-complete {
-  max-width: 500px;
-  margin-inline-start: 1px;
-  display: flex;
-  flex-direction: column;
-  row-gap: 16px;
-
-  .preview-card {
-    flex-shrink: 0;
-  }
-
-  h2 {
-    font-weight: 500;
-  }
-}
-
-.button-strip {
-  display: flex;
-  gap: 20px;
-}
-
-@include media-breakpoint('<', sm) {
-  // Hide the button icons on side-by-side buttons to save space on mobile
-  .button-strip mat-icon {
-    display: none;
-  }
-}
-
 .draft-generation-header {
   display: flex;
   flex-direction: column;
@@ -111,61 +61,8 @@ mat-divider.mat-divider-inset {
   align-items: center;
 }
 
-.error-text {
-  color: var(--sf-error-color);
-}
-
 section {
   padding: 10px 0;
-}
-
-.mat-mdc-card-actions {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-}
-
-.progress-active {
-  display: grid;
-  grid-template-areas:
-    'header progress'
-    'text progress'
-    'button progress';
-  grid-template-columns: minmax(208px, 380px) minmax(100px, 150px);
-  place-items: center start;
-
-  h3 {
-    grid-area: header;
-  }
-
-  .progress-text {
-    grid-area: text;
-  }
-
-  p:first-child {
-    margin-top: 0;
-  }
-
-  .button-strip {
-    grid-area: button;
-  }
-
-  circle-progress {
-    grid-area: progress;
-    margin: 20px 0 0 20px;
-    animation: pulse 1s infinite alternate ease-out;
-  }
-}
-
-@keyframes pulse {
-  from {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.03);
-  }
 }
 
 .drafting-instructions b {
